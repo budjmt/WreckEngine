@@ -1,10 +1,12 @@
 #pragma once
 
-#include "Shape.h"
+#include "Drawable.h"
+#include "Transform.h"
 
 enum EntityType {
 	NORMAL,
-	COLLIDER
+	COLLIDER,
+	CAMERA
 };
 
 class Entity
@@ -15,22 +17,16 @@ public:
 	Entity(glm::vec3 p,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s);
 	Entity(const Entity& other);
 	~Entity(void);
-	glm::vec3& pos;
-	glm::vec3& scale;
-	glm::vec3& rotAxis;
-	float& rot;
+	Transform& transform;
 	bool& active;
 	glm::vec4& color;
 	EntityType getType();
 	virtual void update(double dt);
-	void draw();
+	virtual void draw();
 protected:
 	Drawable* shape;
 	glm::vec4 ecolor;
-	glm::vec3 epos;
-	glm::vec3 escale;
-	glm::vec3 erotAxis;
-	float erot;
+	Transform etransform;
 	bool eactive = true;
 	EntityType type;
 };

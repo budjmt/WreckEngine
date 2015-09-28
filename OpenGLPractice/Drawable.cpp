@@ -43,6 +43,10 @@ void Drawable::draw(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotAxis, float rot
 	glBindVertexArray(vArray);
 }
 
+void Drawable::draw(Transform t) {
+	draw(t.position, t.scale, t.rotAxis, t.rotation);
+}
+
 void Drawable::setWorldMatrix(glm::vec3 pos, glm::vec3 scaleV, glm::vec3 rotAxis, float rot) {
 	glm::mat4 translate = glm::translate(pos);
 	glm::mat4 scale = glm::scale(scaleV);

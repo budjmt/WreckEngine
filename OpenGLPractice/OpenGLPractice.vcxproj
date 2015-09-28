@@ -154,6 +154,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="ColliderEntity.cpp" />
     <ClCompile Include="Drawable.cpp" />
@@ -165,9 +166,11 @@
     <ClCompile Include="ShaderHelper.cpp" />
     <ClCompile Include="Shape.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="Transform.cpp" />
     <ClCompile Include="TriPlay.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="ColliderEntity.h" />
     <ClInclude Include="Drawable.h" />
@@ -178,6 +181,7 @@
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="ShaderHelper.h" />
     <ClInclude Include="Shape.h" />
+    <ClInclude Include="Transform.h" />
     <ClInclude Include="TriPlay.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
