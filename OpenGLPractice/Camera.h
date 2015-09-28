@@ -9,11 +9,11 @@ public:
 	void update(double dt);
 	void draw();
 	void turn(float dx,float dy);
-	glm::vec3 getLocation();//necessary?
-	glm::vec3 getForward();//n?
+	glm::vec3 getLocation();
+	glm::vec3 getForward();
 	glm::vec3 getLookAt();
-	glm::vec3 getUp();//n?
-	glm::vec3 getRight();//n?
+	glm::vec3 getUp();
+	glm::vec3 getRight();
 private:
 	float yaw, pitch;
 };
