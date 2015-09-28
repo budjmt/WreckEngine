@@ -45,6 +45,7 @@ Transform Transform::computeTransform() {
 	//t.rotation = parent->rotation + rotation;
 	t.rotAxis = rotAxis;
 	t.rotation = rotation;
+	t.parent = parent->parent;
 	return t.computeTransform();
 }
 
