@@ -5,6 +5,7 @@
 #include "glm/gtc/constants.hpp"
 
 #include "Mouse.h"
+#include "Camera.h"
 #include "ColliderEntity.h"
 #include "ModelHelper.h"
 
@@ -15,7 +16,7 @@ class TriPlay :
 {
 public:
 	TriPlay();
-	TriPlay(GLuint prog, int width, int height);
+	TriPlay(GLuint prog, GLFWwindow* w);
 	TriPlay(const TriPlay& other);
 	~TriPlay();
 	void update(GLFWwindow* window, Mouse* m, double prevFrame, double dt);
@@ -23,5 +24,7 @@ public:
 private:
 	//std::vector<ColliderEntity*> triangles;
 	Entity* mesh;
+	Camera* camera;
+	GLFWwindow* window;
 };
 

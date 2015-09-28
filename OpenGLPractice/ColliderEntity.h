@@ -8,8 +8,8 @@ class ColliderEntity :
 	public Entity
 {
 public:
-	ColliderEntity(Shape* s);
-	ColliderEntity(glm::vec3 p,glm::vec3 dims,glm::vec3 sc,glm::vec3 rA,float r,Shape* s);
+	ColliderEntity(Drawable* s);
+	ColliderEntity(glm::vec3 p,glm::vec3 dims,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s);
 	ColliderEntity(const ColliderEntity& other);
 	~ColliderEntity(void);
 	int& staticObj;

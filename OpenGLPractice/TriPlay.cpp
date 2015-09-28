@@ -4,9 +4,13 @@ TriPlay::TriPlay()
 {
 }
 
-TriPlay::TriPlay(GLuint prog, int width, int height)
+TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	: Game(prog)
 {
+	window = w;
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+
 	/*GLfloat triVerts[3 * FLOATS_PER_VERT] = {
 	-0.75f, -0.75f, 1, 1, 1,
 	0.75f, -0.75f, 1, 1, 1,
@@ -42,9 +46,13 @@ TriPlay::TriPlay(GLuint prog, int width, int height)
 	Mesh* m = loadOBJ("Assets/basic.obj", "Assets/texture.png", prog);
 	shapes.push_back(m);
 	mesh = new Entity(m);
-	mesh->rotAxis = glm::vec3(0, 1, 0);
-	mesh->pos.z = 0;
+	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
+	mesh->transform.position.z = 0;
 	entities.push_back(mesh);
+
+	camera = new Camera(prog);
+	camera->window = window;
+	entities.push_back(camera);
 }
 
 TriPlay::TriPlay(const TriPlay& other)
@@ -72,8 +80,37 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double prevFrame, double dt) 
 	spawnTriangle(pos,vel);
 	m->lastClick = prevFrame + dt;
 	}*/
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
 	if (m->down) {
-		mesh->rot += (float)(2 * M_PI * dt);
+		//mesh->transform.rotation += (float)(2 * M_PI * dt);
+		if (m->button == GLFW_MOUSE_BUTTON_LEFT) {
+			camera->turn((float)(m->x - m->prevx), (float)(m->y - m->prevy));
+		}
+		else if (m->button == GLFW_MOUSE_BUTTON_RIGHT) {
+			camera->zoom += (float)((m->y - m->prevy) / height);
+		}
+		else if (m->button == GLFW_MOUSE_BUTTON_MIDDLE) {
+			camera->transform.position += glm::vec3(m->x - m->prevx, m->y - m->prevy, 0);
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+		//quit the game
+		glfwTerminate();
+		exit('q');
+	}
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		camera->transform.position += camera->getForward() * 5.f * (float)dt;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		camera->transform.position += camera->getForward() * -5.f * (float)dt;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		camera->transform.position += camera->getRight() * 5.f * (float)dt;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		camera->transform.position += camera->getRight() * -5.f * (float)dt;
 	}
 }
 

@@ -8,9 +8,10 @@ out vec2 fragTexUV;
 out vec3 fragNormal;
 
 uniform mat4 worldMatrix;
+uniform mat4 cameraMatrix;
 
 void main() {
-	gl_Position = worldMatrix * vec4(vecPos, 1);
+	gl_Position = cameraMatrix * worldMatrix * vec4(vecPos, 1);
 	//vec3 color = vec3(0,1,0);
 	fragPos = gl_Position.xyz;
 	fragTexUV = vecTexUV;

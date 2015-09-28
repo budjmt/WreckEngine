@@ -1,13 +1,14 @@
 #include "Entity.h"
 
+Entity::Entity() 
+	: transform(etransform), active(eactive), color(ecolor)
+{
+
+}
 
 Entity::Entity(Drawable* s)
 	: transform(etransform), active(eactive), color(ecolor)
 {
-	transform.position = glm::vec3(0,0,0);
-	transform.scale = glm::vec3(1,1,1);
-	transform.rotAxis = glm::vec3(0,0,1);
-	transform.rotation = 0;
 	shape = s;
 	color = glm::vec4(1, 1, 1, 1);
 }

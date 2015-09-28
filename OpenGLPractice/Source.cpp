@@ -21,27 +21,9 @@ TriPlay* game;
 
 void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *msg, const void *data);
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-	if (button == GLFW_MOUSE_BUTTON_LEFT) {
-		if (action == GLFW_PRESS) {
-			//cout << "Mouse: " << mousex << "," << mousey << endl;
-			//entities[0].setPos(glm::vec3(mousex,mousey,0));
-			mouse->down = true;
-		}
-		else if (action == GLFW_RELEASE) {
-			mouse->down = false;
-		}
-	}
-}
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
-void mouse_move_callback(GLFWwindow* window, double x, double y) {
-	double cursorx, cursory;
-	int windowWidth, windowHeight;
-	glfwGetCursorPos(window, &cursorx, &cursory);
-	glfwGetWindowSize(window, &windowWidth, &windowHeight);
-	mouse->x = 2 * cursorx / windowWidth - 1;
-	mouse->y = (2 * cursory / windowHeight - 1) * -1;
-}
+void mouse_move_callback(GLFWwindow* window, double x, double y);
 
 void init() {
 	shaderProg = loadShaderProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
@@ -54,13 +36,13 @@ void init() {
 
 	mouse = new Mouse();
 	mouse_move_callback(window,0,0);//this is cheating but it works
+
+	game = new TriPlay(shaderProg, window);
 }
 
 void initGraphics(GLFWwindow* window) {
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
-
-	game = new TriPlay(shaderProg, width, height);//lazy, probably should be in init for semantic reasons
 
 	float aspect = (float)width / (float)height;
 	glViewport(0, 0, width, height);
@@ -138,6 +120,27 @@ int main(int argc, char** argv) {
 	delete mouse;
 	glfwTerminate();
 	return 0;
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	mouse->button = button;
+	if (action == GLFW_PRESS) {
+		//cout << "Mouse: " << mousex << "," << mousey << endl;
+		//entities[0].setPos(glm::vec3(mousex,mousey,0));
+		mouse->down = true;
+	}
+	else if (action == GLFW_RELEASE) {
+		mouse->down = false;
+	}
+}
+
+void mouse_move_callback(GLFWwindow* window, double x, double y) {
+	double cursorx, cursory;
+	int windowWidth, windowHeight;
+	glfwGetCursorPos(window, &cursorx, &cursory);
+	glfwGetWindowSize(window, &windowWidth, &windowHeight);
+	mouse->x = 2 * cursorx / windowWidth - 1;
+	mouse->y = (2 * cursory / windowHeight - 1) * -1;
 }
 
 void APIENTRY GLDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *msg, const void *data) {

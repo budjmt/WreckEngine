@@ -1,20 +1,20 @@
 #include "ColliderEntity.h"
 
 
-ColliderEntity::ColliderEntity(Shape* s)
+ColliderEntity::ColliderEntity(Drawable*s)
 	: Entity(s), staticObj(estaticObj)
 	, vel(evel), angVel(eangVel), collider(ecollider)
 {
-	collider = new Collider(pos,scale);
+	collider = new Collider(transform.position,transform.scale);
 	mass = 1;
 	staticObj = 0;
 }
 
-ColliderEntity::ColliderEntity(glm::vec3 p,glm::vec3 dims,glm::vec3 sc,glm::vec3 rA,float r,Shape* s) 
+ColliderEntity::ColliderEntity(glm::vec3 p,glm::vec3 dims,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s) 
 	: Entity(p,sc,rA,r,s), staticObj(estaticObj)
 	, vel(evel), angVel(eangVel), collider(ecollider)
 {
-	collider = new Collider(pos,dims);
+	collider = new Collider(transform.position,dims);
 	mass = 1;
 	staticObj = 0;
 }
@@ -40,14 +40,14 @@ ColliderEntity::~ColliderEntity(void)
 void ColliderEntity::update(double dt) {
 	calcForces();
 	vel += netForce  * (float)dt;
-	pos += vel  * (float)dt;
-	rot += angVel.length() * (float)dt;
+	transform.position += vel  * (float)dt;
+	transform.rotation += angVel.length() * (float)dt;
 	//lazy fix is lazy also wat why is it using open gl coordinates
-	if (pos.x > 1 || pos.x < -1) {
+	if (transform.position.x > 1 || transform.position.x < -1) {
 		vel.x *= -1;
 		angVel.x *= -1;
 	}
-	if (pos.y > 1 || pos.y < -1) {
+	if (transform.position.y > 1 || transform.position.y < -1) {
 		vel.y *= -1;
 		angVel.y *= -1;
 	}
@@ -99,23 +99,23 @@ void ColliderEntity::handleCollision(ColliderEntity* other, glm::vec3 norm, floa
 	//correct positions
 	glm::vec3 correction = norm * 0.2f / (1 / mass + 1 / other->mass);
 	correction *= glm::max(depth - 0.05f, 0.0f);
-	pos -= correction / mass;
-	other->pos += correction / other->mass;
+	transform.position -= correction / mass;
+	other->transform.position += correction / other->mass;
 }
 
 void ColliderEntity::updateCorners() {
 	std::vector<glm::vec3> corners;
 	glm::vec3 toCorner = collider->dims * 0.5f;
 	glm::vec3 toOppCorner = glm::vec3(toCorner.x, -toCorner.y, 0);
-	toCorner = toCorner * glm::cos(rot) + glm::vec3(-toCorner.y,toCorner.x,0) * glm::sin(rot);
-	toOppCorner = toOppCorner * glm::cos(rot) + glm::vec3(-toOppCorner.y,toOppCorner.x,0) * glm::sin(rot);
+	toCorner = toCorner * glm::cos(transform.rotation) + glm::vec3(-toCorner.y,toCorner.x,0) * glm::sin(transform.rotation);
+	toOppCorner = toOppCorner * glm::cos(transform.rotation) + glm::vec3(-toOppCorner.y,toOppCorner.x,0) * glm::sin(transform.rotation);
 	//top left
-	corners.push_back(pos - toCorner);
-	//top right
-	corners.push_back(pos + toOppCorner);
+	corners.push_back(transform.position - toCorner);
+	//top right	
+	corners.push_back(transform.position + toOppCorner);
 	//bottom right
-	corners.push_back(pos + toCorner);
+	corners.push_back(transform.position + toCorner);
 	//bottom left
-	corners.push_back(pos - toOppCorner);
+	corners.push_back(transform.position - toOppCorner);
 	collider->setCorners(corners);
 }

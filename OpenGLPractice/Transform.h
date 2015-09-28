@@ -17,6 +17,9 @@ public:
 	Transform* parent;
 	Transform computeTransform();
 	void updateNormals();
+	glm::vec3 getForward();
+	glm::vec3 getUp();
+	glm::vec3 getRight();
 private:
 	glm::vec3 tposition;
 	glm::vec3 tscale;

@@ -12,7 +12,7 @@ enum EntityType {
 class Entity
 {
 public:
-	//Entity();
+	Entity();
 	Entity(Drawable* s);
 	Entity(glm::vec3 p,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s);
 	Entity(const Entity& other);
