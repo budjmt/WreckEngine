@@ -6,6 +6,9 @@
 
 #include "Entity.h"
 
+const float PI = 3.141592f;
+const float CAM_FOV = 2 * PI / 5;
+
 class Camera :
 	public Entity
 {
@@ -23,8 +26,7 @@ public:
 	void turn(float dx,float dy);
 	glm::vec3 getLookAt();
 	void updateProjection();
-	glm::mat4 orthographic(float znear, float zfar, int width, int height);
-	glm::mat4 perspective(float znear, float zfar, int width, int height);
+
 private:
 	glm::mat4 projection;
 	GLuint cameraMatrix;

@@ -1,5 +1,7 @@
 #include "TriPlay.h"
 
+#include <iostream>
+
 TriPlay::TriPlay()
 {
 }
@@ -51,6 +53,8 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	entities.push_back(mesh);
 
 	camera = new Camera(prog, window);
+	//camera->transform.position = glm::vec3(0, 0, -1);
+	//camera->pitch = M_PI / 6;
 	entities.push_back(camera);
 }
 
@@ -84,7 +88,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double prevFrame, double dt) 
 	if (m->down) {
 		//mesh->transform.rotation += (float)(2 * M_PI * dt);
 		if (m->button == GLFW_MOUSE_BUTTON_LEFT) {
-			camera->turn((float)(m->x - m->prevx), (float)(m->y - m->prevy));
+			camera->turn((float)glm::pow((m->x - m->prevx),2) * glm::sign(m->x - m->prevx), (float)glm::pow((m->y - m->prevy),2) * glm::sign(m->y - m->prevy));
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_RIGHT) {
 			camera->zoom += (float)((m->y - m->prevy) / height);
@@ -93,6 +97,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double prevFrame, double dt) 
 			camera->transform.position += glm::vec3(m->x - m->prevx, m->y - m->prevy, 0);
 		}
 		//glfwSetCursorPos(window, width / 2, height / 2);
+		std::cout << "Position: " << camera->transform.position.x << "," << camera->transform.position.y << "," << camera->transform.position.z << std::endl << "Pitch: " << camera->pitch << std::endl << "Yaw: " << camera->yaw << std::endl;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {

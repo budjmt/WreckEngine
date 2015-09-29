@@ -139,6 +139,8 @@ void mouse_move_callback(GLFWwindow* window, double x, double y) {
 	int windowWidth, windowHeight;
 	glfwGetCursorPos(window, &cursorx, &cursory);
 	glfwGetWindowSize(window, &windowWidth, &windowHeight);
+	mouse->prevx = mouse->x;
+	mouse->prevy = mouse->y;
 	mouse->x = 2 * cursorx / windowWidth - 1;
 	mouse->y = (2 * cursory / windowHeight - 1) * -1;
 }

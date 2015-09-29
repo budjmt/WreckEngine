@@ -14,16 +14,11 @@ Camera::~Camera()
 }
 
 void Camera::update(double dt) {
-	float cp = cos(pitch), sp = sin(pitch), cy = cos(yaw), sy = sin(yaw);
-	glm::vec3 x = { cy, 0, -sy };
-	glm::vec3 y = { sy * sp, cp, cy * sp };
-	glm::vec3 z = { sy * cp, -sp, cp * cy };
-	glm::mat4 view = { glm::vec4(x.x,y.x,z.x,1)
-		, glm::vec4(x.y,y.y,z.y,1)
-		, glm::vec4(x.z,y.z,z.z,1)
-		, glm::vec4(-glm::dot(x,transform.position),-glm::dot(y,transform.position),-glm::dot(z,transform.position),1) };
+	glm::mat4 view = glm::lookAt(transform.position,getLookAt(),glm::vec3(0,1,0));
 	//update projection
-	glUniformMatrix4fv(cameraMatrix,1,GL_FALSE,&(projection * view)[0][0]);
+	//updateProjection();
+	glm::mat4 tmp = projection * view;
+	glUniformMatrix4fv(cameraMatrix,1,GL_FALSE,&(tmp[0][0]));
 }
 
 void Camera::draw() {
@@ -45,32 +40,18 @@ void Camera::updateProjection() {
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
 
-	float znear = 0.05f;
-	float zfar = 5;
-	projection = orthographic(znear, zfar, width, height);
-}
-
-glm::mat4 Camera::orthographic(float znear, float zfar, int width, int height) {
-	return glm::translate(glm::vec3(0, 0, (zfar + znear) * -1 / (zfar - znear))) 
-		* glm::scale(glm::vec3(1.f / width, 1.f / height, -2 / (zfar - znear)));
-}
-
-glm::mat4 Camera::perspective(float znear, float zfar, int width, int height) {
-	float fovx, fovy;
-	glm::mat4 p = glm::translate(glm::vec3(0, 0, -2 * znear * zfar / (zfar - znear))) 
-		* glm::scale(glm::vec3(glm::atan(fovx / 2), glm::atan(fovy / 2), -2 * znear * zfar / (zfar - znear)));
-	p[3][3] = 0;
-	p[2][3] = -1;
-	return p;
+	float znear = 0.01f;
+	float zfar = 1000.f;
+	projection = glm::perspective(CAM_FOV, width * 1.f / height, znear, zfar);
 }
 
 glm::vec3 Camera::getForward() {
-	glm::mat4 m = glm::translate(transform.position) * glm::rotate(pitch, glm::vec3(1, 0, 0)) * glm::rotate(yaw, glm::vec3(0, 1, 0));
+	glm::mat4 m = glm::rotate(pitch, glm::vec3(1, 0, 0)) * glm::rotate(yaw, glm::vec3(0, 1, 0));
 	return (glm::vec3)(m * glm::vec4(0, 0, 1, 1));
 }
 
 glm::vec3 Camera::getUp() {
-	glm::mat4 m = glm::translate(transform.position) * glm::rotate(pitch, glm::vec3(1, 0, 0)) * glm::rotate(yaw, glm::vec3(0, 1, 0));
+	glm::mat4 m = glm::rotate(pitch, glm::vec3(1, 0, 0)) * glm::rotate(yaw, glm::vec3(0, 1, 0));
 	return (glm::vec3)(m * glm::vec4(0, 1, 0, 1));
 }
 
