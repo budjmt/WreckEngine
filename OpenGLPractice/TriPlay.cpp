@@ -50,8 +50,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	mesh->transform.position.z = 0;
 	entities.push_back(mesh);
 
-	camera = new Camera(prog);
-	camera->window = window;
+	camera = new Camera(prog, window);
 	entities.push_back(camera);
 }
 
@@ -93,6 +92,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double prevFrame, double dt) 
 		else if (m->button == GLFW_MOUSE_BUTTON_MIDDLE) {
 			camera->transform.position += glm::vec3(m->x - m->prevx, m->y - m->prevy, 0);
 		}
+		//glfwSetCursorPos(window, width / 2, height / 2);
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {

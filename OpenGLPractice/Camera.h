@@ -10,7 +10,7 @@ class Camera :
 	public Entity
 {
 public:
-	Camera(GLuint shaderProg);
+	Camera(GLuint shaderProg, GLFWwindow* w);
 	~Camera();
 	GLFWwindow* window;
 	void update(double dt);

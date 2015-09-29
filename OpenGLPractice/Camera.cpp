@@ -1,7 +1,9 @@
 #include "Camera.h"
 
-Camera::Camera(GLuint shaderProg)
+Camera::Camera(GLuint shaderProg, GLFWwindow* w)
 {
+	window = w;
+
 	updateProjection();
 
 	cameraMatrix = glGetUniformLocation(shaderProg, "cameraMatrix");
