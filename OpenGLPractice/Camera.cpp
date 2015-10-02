@@ -29,6 +29,7 @@ void Camera::draw() {
 
 void Camera::turn(float dx, float dy) {
 	pitch += dy;
+	glm::clamp(pitch, - PI / 2, PI / 2);
 	yaw += dx;
 }
 

@@ -6,12 +6,12 @@ class Quaternion
 {
 public:
 	Quaternion();
-	Quaternion(float qx, float qy, float qz, float qw);
+	Quaternion(float w, float qx, float qy, float qz);
 	~Quaternion();
 	Quaternion& operator*(const Quaternion& other);
 	void setRotation(float rot, glm::vec3 axis);
 	Quaternion getInverse();
 private:
-	float x, y, z, w;
+	float w, x, y, z;
 };
 

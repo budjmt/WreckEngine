@@ -88,15 +88,20 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double prevFrame, double dt) 
 	if (m->down) {
 		//mesh->transform.rotation += (float)(2 * M_PI * dt);
 		if (m->button == GLFW_MOUSE_BUTTON_LEFT) {
-			float rot = 32 * M_PI;
-			camera->turn((float)(m->x - m->prevx) / width * rot, (float)(m->y - m->prevy) / height * rot);
+			float rot = 2 * M_PI / dt;
+			float dp = (float)(m->x - m->prevx) / width * rot;
+			float dy = -(float)(m->y - m->prevy) / height * rot;
+			glm::vec3 look = camera->getLookAt();
+			camera->turn(dp, dy);
+			camera->transform.position = look- camera->getForward();
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_RIGHT) {
-			camera->transform.position += (float)(((m->y - m->prevy) + (m->x - m->prevx)) / 2 * dt) * camera->getForward();
+			camera->transform.position += (float)(((m->y - m->prevy) + (m->x - m->prevx)) / 2 * 0.5f / dt) * camera->getForward();
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_MIDDLE) {
 			camera->transform.position += glm::vec3(m->x - m->prevx, m->y - m->prevy, 0);
 		}
+		//I have this commented out on purpose. I don't want it
 		//glfwSetCursorPos(window, width / 2, height / 2);
 		//std::cout << "Position: " << camera->transform.position.x << "," << camera->transform.position.y << "," << camera->transform.position.z << std::endl << "Pitch: " << camera->pitch << std::endl << "Yaw: " << camera->yaw << std::endl;
 	}
