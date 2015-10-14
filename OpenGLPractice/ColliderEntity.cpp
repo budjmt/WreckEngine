@@ -41,7 +41,7 @@ void ColliderEntity::update(double dt) {
 	calcForces();
 	vel += netForce  * (float)dt;
 	transform.position += vel  * (float)dt;
-	transform.rotation += angVel.length() * (float)dt;
+	transform.rotate(angVel * (float)dt);
 	//lazy fix is lazy also wat why is it using open gl coordinates
 	if (transform.position.x > 1 || transform.position.x < -1) {
 		vel.x *= -1;

@@ -44,7 +44,7 @@ void Drawable::draw(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotAxis, float rot
 }
 
 void Drawable::draw(Transform t) {
-	draw(t.position, t.scale, t.rotAxis, t.rotation);
+	draw(t.position, t.scale, t.rotAxis, t.rotAngle);
 }
 
 void Drawable::setWorldMatrix(glm::vec3 pos, glm::vec3 scaleV, glm::vec3 rotAxis, float rot) {

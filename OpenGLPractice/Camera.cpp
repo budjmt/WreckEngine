@@ -28,9 +28,7 @@ void Camera::draw() {
 }
 
 void Camera::turn(float dx, float dy) {
-	pitch += dy;
-	glm::clamp(pitch, - PI / 2, PI / 2);
-	yaw += dx;
+	transform.rotate(dx, dy, 0);
 }
 
 glm::vec3 Camera::getLookAt() {
@@ -47,15 +45,13 @@ void Camera::updateProjection() {
 }
 
 glm::vec3 Camera::getForward() {
-	glm::mat4 m = glm::rotate(pitch, glm::vec3(1, 0, 0)) * glm::rotate(yaw, glm::vec3(0, 1, 0));
-	return (glm::vec3)(m * glm::vec4(0, 0, 1, 1));
+	return transform.getForward();
 }
 
 glm::vec3 Camera::getUp() {
-	glm::mat4 m = glm::rotate(pitch, glm::vec3(1, 0, 0)) * glm::rotate(yaw, glm::vec3(0, 1, 0));
-	return (glm::vec3)(m * glm::vec4(0, 1, 0, 1));
+	return transform.getUp();
 }
 
 glm::vec3 Camera::getRight() {
-	return glm::cross(getForward(), getUp());
+	return transform.getRight();
 }

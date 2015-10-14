@@ -18,8 +18,7 @@ Entity::Entity(glm::vec3 p,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s)
 {
 	transform.position = p;
 	transform.scale = sc;
-	transform.rotAxis = rA;
-	transform.rotation = r;
+	transform.rotate(r, rA);
 	shape = s;
 	color = glm::vec4(1, 1, 1, 1);
 }

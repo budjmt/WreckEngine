@@ -19,7 +19,6 @@ public:
 	void update(double dt);
 	void draw();
 	float zoom;
-	GLfloat yaw, pitch;
 	glm::vec3 getForward();
 	glm::vec3 getUp();
 	glm::vec3 getRight();

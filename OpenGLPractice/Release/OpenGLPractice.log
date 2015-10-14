@@ -1,36 +1,27 @@
-﻿Build started 10/2/2015 1:33:07 PM.
+﻿Build started 10/14/2015 4:52:25 PM.
      1>Project "\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\OpenGLPractice.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Release\\" /Fd"Release\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt Camera.cpp
-         Camera.cpp
-       Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\Release\OpenGLPractice.exe" /INCREMENTAL:NO /NOLOGO SOIL.lib glew32.lib glfw3.lib opengl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\Release\OpenGLPractice.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG:incremental /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\Release\OpenGLPractice.lib" /MACHINE:X86 /SAFESEH Release\Camera.obj
-         Release\Collider.obj
-         Release\ColliderEntity.obj
-         Release\Drawable.obj
-         Release\Entity.obj
-         Release\Game.obj
-         Release\GLDebugMessageCallback.obj
-         Release\Mesh.obj
-         Release\ModelHelper.obj
-         Release\Quaternion.obj
-         Release\ShaderHelper.obj
-         Release\Shape.obj
-         Release\Source.obj
-         Release\Transform.obj
-         Release\TriPlay.obj
-         Generating code
-         2 of 969 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
-           0 functions were new in current compilation
-           3 functions had inline decision re-evaluated but remain unchanged
-         Finished generating code
-     1>SOIL.lib(SOIL.obj) : warning LNK4099: PDB 'SOIL.pdb' was not found with 'SOIL.lib(SOIL.obj)' or at '\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\Release\SOIL.pdb'; linking object as if no debug info
-     1>SOIL.lib(image_helper.obj) : warning LNK4099: PDB 'SOIL.pdb' was not found with 'SOIL.lib(image_helper.obj)' or at '\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\Release\SOIL.pdb'; linking object as if no debug info
-     1>SOIL.lib(stb_image_aug.obj) : warning LNK4099: PDB 'SOIL.pdb' was not found with 'SOIL.lib(stb_image_aug.obj)' or at '\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\Release\SOIL.pdb'; linking object as if no debug info
-     1>SOIL.lib(image_DXT.obj) : warning LNK4099: PDB 'SOIL.pdb' was not found with 'SOIL.lib(image_DXT.obj)' or at '\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\Release\SOIL.pdb'; linking object as if no debug info
-         OpenGLPractice.vcxproj -> \\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\Release\OpenGLPractice.exe
-     1>Done Building Project "\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\OpenGLPractice.vcxproj" (Build target(s)).
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Release\\" /Fd"Release\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt ColliderEntity.cpp Entity.cpp
+         ColliderEntity.cpp
+     1>\\banner.main.ad.rit.edu\students\mxc8518\igmprofile\desktop\dsa2\wreckengine\openglpractice\lib\glm-0.9.7.0\glm\detail\func_trigonometric.inl(84): error C2039: 'call': is not a member of 'glm::detail::functor1<T,T,0,vecType>'
+                 with
+                 [
+                     T=float,
+                     vecType=glm::tquat
+                 ]
+         ColliderEntity.cpp(110): note: see reference to function template instantiation 'glm::tquat<float,0> glm::cos<float,0,glm::tquat>(const glm::tquat<float,0> &)' being compiled
+     1>\\banner.main.ad.rit.edu\students\mxc8518\igmprofile\desktop\dsa2\wreckengine\openglpractice\lib\glm-0.9.7.0\glm\detail\func_trigonometric.inl(84): error C3861: 'call': identifier not found
+     1>\\banner.main.ad.rit.edu\students\mxc8518\igmprofile\desktop\dsa2\wreckengine\openglpractice\lib\glm-0.9.7.0\glm\detail\func_trigonometric.inl(75): error C2039: 'call': is not a member of 'glm::detail::functor1<T,T,0,vecType>'
+                 with
+                 [
+                     T=float,
+                     vecType=glm::tquat
+                 ]
+         ColliderEntity.cpp(110): note: see reference to function template instantiation 'glm::tquat<float,0> glm::sin<float,0,glm::tquat>(const glm::tquat<float,0> &)' being compiled
+     1>\\banner.main.ad.rit.edu\students\mxc8518\igmprofile\desktop\dsa2\wreckengine\openglpractice\lib\glm-0.9.7.0\glm\detail\func_trigonometric.inl(75): error C3861: 'call': identifier not found
+         Entity.cpp
+     1>Done Building Project "\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\OpenGLPractice.vcxproj" (Build target(s)) -- FAILED.
 
-Build succeeded.
+Build FAILED.
 
-Time Elapsed 00:00:03.86
+Time Elapsed 00:00:03.36
