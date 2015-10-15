@@ -1,27 +1,9 @@
-﻿Build started 10/14/2015 4:52:25 PM.
+﻿Build started 10/15/2015 9:37:05 AM.
      1>Project "\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\OpenGLPractice.vcxproj" on node 2 (Build target(s)).
-     1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Release\\" /Fd"Release\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt ColliderEntity.cpp Entity.cpp
-         ColliderEntity.cpp
-     1>\\banner.main.ad.rit.edu\students\mxc8518\igmprofile\desktop\dsa2\wreckengine\openglpractice\lib\glm-0.9.7.0\glm\detail\func_trigonometric.inl(84): error C2039: 'call': is not a member of 'glm::detail::functor1<T,T,0,vecType>'
-                 with
-                 [
-                     T=float,
-                     vecType=glm::tquat
-                 ]
-         ColliderEntity.cpp(110): note: see reference to function template instantiation 'glm::tquat<float,0> glm::cos<float,0,glm::tquat>(const glm::tquat<float,0> &)' being compiled
-     1>\\banner.main.ad.rit.edu\students\mxc8518\igmprofile\desktop\dsa2\wreckengine\openglpractice\lib\glm-0.9.7.0\glm\detail\func_trigonometric.inl(84): error C3861: 'call': identifier not found
-     1>\\banner.main.ad.rit.edu\students\mxc8518\igmprofile\desktop\dsa2\wreckengine\openglpractice\lib\glm-0.9.7.0\glm\detail\func_trigonometric.inl(75): error C2039: 'call': is not a member of 'glm::detail::functor1<T,T,0,vecType>'
-                 with
-                 [
-                     T=float,
-                     vecType=glm::tquat
-                 ]
-         ColliderEntity.cpp(110): note: see reference to function template instantiation 'glm::tquat<float,0> glm::sin<float,0,glm::tquat>(const glm::tquat<float,0> &)' being compiled
-     1>\\banner.main.ad.rit.edu\students\mxc8518\igmprofile\desktop\dsa2\wreckengine\openglpractice\lib\glm-0.9.7.0\glm\detail\func_trigonometric.inl(75): error C3861: 'call': identifier not found
-         Entity.cpp
-     1>Done Building Project "\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\OpenGLPractice.vcxproj" (Build target(s)) -- FAILED.
+     1>Link:
+         OpenGLPractice.vcxproj -> \\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\Release\OpenGLPractice.exe
+     1>Done Building Project "\\banner.main.ad.rit.edu\students\mxc8518\IGMProfile\Desktop\DSA2\WreckEngine\OpenGLPractice\OpenGLPractice.vcxproj" (Build target(s)).
 
-Build FAILED.
+Build succeeded.
 
-Time Elapsed 00:00:03.36
+Time Elapsed 00:00:00.28

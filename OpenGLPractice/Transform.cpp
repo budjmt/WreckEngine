@@ -59,12 +59,12 @@ void Transform::updateNormals() {
 }
 
 glm::vec3 Transform::getForward() {
-	glm::mat4 m = glm::translate(position) * glm::rotate(rotAngle, rotAxis);
+	glm::mat4 m = glm::rotate(rotAngle, rotAxis);
 	return (glm::vec3)(m * glm::vec4(0, 0, 1, 1));
 }
 
 glm::vec3 Transform::getUp() {
-	glm::mat4 m = glm::translate(position) * glm::rotate(rotAngle, rotAxis);
+	glm::mat4 m = glm::rotate(rotAngle, rotAxis);
 	return (glm::vec3)(m * glm::vec4(0, 1, 0, 1));
 }
 

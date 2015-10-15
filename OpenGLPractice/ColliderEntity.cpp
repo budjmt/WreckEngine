@@ -107,8 +107,8 @@ void ColliderEntity::updateCorners() {
 	std::vector<glm::vec3> corners;
 	glm::vec3 toCorner = collider->dims * 0.5f;
 	glm::vec3 toOppCorner = glm::vec3(toCorner.x, -toCorner.y, 0);
-	toCorner = toCorner * glm::cos(transform.rotation) + glm::vec3(-toCorner.y,toCorner.x,0) * glm::sin(transform.rotation);
-	toOppCorner = toOppCorner * glm::cos(transform.rotation) + glm::vec3(-toOppCorner.y,toOppCorner.x,0) * glm::sin(transform.rotation);
+	toCorner = toCorner * glm::cos(transform.rotAngle) + glm::vec3(-toCorner.y,toCorner.x,0) * glm::sin(transform.rotAngle);//these won't work any more
+	toOppCorner = toOppCorner * glm::cos(transform.rotAngle) + glm::vec3(-toOppCorner.y,toOppCorner.x,0) * glm::sin(transform.rotAngle);
 	//top left
 	corners.push_back(transform.position - toCorner);
 	//top right	
