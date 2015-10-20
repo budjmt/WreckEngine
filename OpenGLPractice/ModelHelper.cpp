@@ -215,8 +215,64 @@ void genCylinder(const char* file, int res) {
 void genSphere(const char* file, int res) {
 	std::vector<GLfloat> verts, uvs, norms;
 	std::vector<GLuint> vertFaces, uvFaces, normFaces;
-	for (int i = 0; i < res; i++) {
 
+	//this adds the vertices in the first half circle, to prevent redundancy later
+	//i is implied to be 0
+	//once this is done, there are res vertices in verts, with the first and last ones not being repeated in subsequent ones, so res - 2 unique ones
+	//top vert index is 0, bottom index is res
+	for (int j = 0; j < res + 1; j++) {
+		float x = cosf(M_PI / res * j);
+		float y = sinf(M_PI / res * j);
+		float z = 0;
+		verts.push_back(x); verts.push_back(y); verts.push_back(z);
+	}
+
+	for (int i = 1; i < res; i++) {
+		//current half circle
+		float x = 1, y = 0, z = 0;
+		//one notch down on the current half circle
+		float x1 = cosf(M_PI / res);
+		float y1 = sinf(M_PI / res) * cosf(2 * M_PI / res * i);
+		float z1 = sinf(M_PI / res) * sinf(2 * M_PI / res * i);
+		
+		int ind = 0;//1,0,0 is always the first vertex added to verts; ind begins at the top and moves down
+		int ind1 = verts.size();//x1, y1, z1 is always new and always the last one added.
+		int indp = 0;//prev half circle, begins at top and moves down
+		int indp1 = verts.size() - res;//one notch down prev half circle
+		
+		verts.push_back(x1); verts.push_back(y1); verts.push_back(z1);
+		vertFaces.push_back(ind); vertFaces.push_back(ind1); vertFaces.push_back(indp1);
+
+		x = x1; y = y1; z = z1;
+		indp = indp1; ind = ind1;
+
+		for (int j = 1; j < res - 1; j++) {
+			int nextCircle = j + 1;
+			//one notch down on the current half circle
+			x1 = cosf(M_PI / res * nextCircle);
+			y1 = sinf(M_PI / res * nextCircle) * cosf(2 * M_PI / res * i);
+			z1 = sinf(M_PI / res * nextCircle) * sinf(2 * M_PI / res * i);
+
+			int ind = 0;
+			int ind1 = verts.size() / FLOATS_PER_VERT;//x1, y1, z1 is always new and always the last one added
+
+			//add only the next verts, as current ones will always be already added
+			verts.push_back(x1); verts.push_back(y1); verts.push_back(z1);
+			
+			/*
+			indp	---		ind
+			|			/	  |
+			|		  /		  |
+			|		/		  |
+			|	  /			  |
+			indp1	---		ind1
+			*/
+			vertFaces.push_back(ind); vertFaces.push_back(indp); vertFaces.push_back(indp1);
+			vertFaces.push_back(indp1); vertFaces.push_back(ind1); vertFaces.push_back(ind);
+			//update current with next
+			x = x1; y = y1; z = z1;
+			indp = ind;	indp1 = ind1;
+		}
 	}
 	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
 }
