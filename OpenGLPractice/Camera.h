@@ -6,8 +6,7 @@
 
 #include "Entity.h"
 
-const float PI = 3.141592f;
-const float CAM_FOV = 2 * PI / 5;
+const float CAM_FOV = 2 * glm::pi<GLfloat>() / 5;
 
 class Camera :
 	public Entity
