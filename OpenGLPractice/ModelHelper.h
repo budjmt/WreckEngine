@@ -4,6 +4,7 @@
 #include "GL\glew.h"
 #include "glm\glm.hpp"
 #include "Mesh.h"
+#include "UV.h"
 #include <string>
 #include <vector>
 
@@ -22,10 +23,6 @@ void genSphere(const char* file, int res);
 //void genTorus(const char* file, float r1, float r2);//hole rad, ring rad
 void genBezierSurface(const char* file);
 
-void genUVs(std::vector<GLfloat> verts, std::vector<GLfloat> uvs, std::vector<GLuint> uvFaces);
-void genUVCylindrical(std::vector<GLfloat> verts, std::vector<GLfloat> uvs, std::vector<GLuint> uvFaces);
-void genUVSpherical(std::vector<GLfloat> verts, std::vector<GLfloat> uvs, std::vector<GLuint> uvFaces);
-//void genUVCubic(std::vector<GLfloat>& verts, std::vector<GLfloat>& norms, std::vector<GLfloat>& uvs, std::vector<GLuint>& uvFaces);
 void genNormals(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces
 					, std::vector<GLfloat>& norms, std::vector<GLuint>& normFaces);
 glm::vec3 genNormal(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3);

@@ -47,10 +47,20 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	*/
 	Mesh* m = loadOBJ("Assets/basic.obj", "Assets/texture.png", prog);
 	shapes.push_back(m);
-	mesh = new Entity(m);
+	Entity* mesh = new Entity(m);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
 	mesh->transform.position.z = 0;
 	entities.push_back(mesh);
+	meshes.push_back(mesh);
+
+	genSphere("Assets/sphere.obj",8);
+	Mesh* cube = loadOBJ("Assets/sphere.obj", "Assets/texture.png", prog);
+	shapes.push_back(cube);
+	mesh = new Entity(cube);
+	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
+	mesh->transform.position.z = 10;
+	entities.push_back(mesh);
+	meshes.push_back(mesh);
 
 	camera = new Camera(prog, window);
 	//camera->transform.position = glm::vec3(0, 0, -1);
@@ -69,7 +79,10 @@ TriPlay::~TriPlay()
 	delete triangles[0];
 	triangles.pop_back();
 	}*/
-	delete mesh;
+	while (meshes.size()) {
+		delete meshes[0];
+		meshes.pop_back();
+	}
 }
 
 void TriPlay::update(GLFWwindow* window, Mouse* m, double prevFrame, double dt) {

@@ -168,6 +168,7 @@
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="TriPlay.cpp" />
+    <ClCompile Include="UV.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -183,6 +184,7 @@
     <ClInclude Include="Shape.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TriPlay.h" />
+    <ClInclude Include="UV.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

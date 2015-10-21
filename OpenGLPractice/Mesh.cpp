@@ -13,10 +13,10 @@ Mesh::Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> 
 	int numVerts = verts.size() / FLOATS_PER_VERT;
 	int numUvs = uvs.size() / FLOATS_PER_UV;
 	
-	for (int i = 0; i < faces.verts.size(); i++) {
+	for (unsigned int i = 0; i < faces.verts.size(); i++) {
 		//std::cout << i << std::endl;
 		bool inArr = false;
-		int index;
+		unsigned int index;
 		for (index = 0; !inArr && index < faces.combined.size();index++) {
 			if (faces.combined[index].x == faces.verts[i] && faces.combined[index].y == faces.uvs[i] && faces.combined[index].z == faces.normals[i]) {
 				inArr = true;
