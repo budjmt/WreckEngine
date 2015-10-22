@@ -182,17 +182,17 @@ void genCylinder(const char* file, int res) {
 	//these are the tops and bottoms for each pair of verts, 0 is the very first (and would be last) ones added
 	glm::vec3 t0, b0, tprev, tcurr, bprev, bcurr;
 	
-	t0 = glm::vec3(1, 0.5f, 0);
-	b0 = glm::vec3(1, -0.5f, 0);
+	t0 = glm::vec3(0.5f, 0.5f, 0);
+	b0 = glm::vec3(0.5f, -0.5f, 0);
 	verts.push_back(t0.x); verts.push_back(t0.y); verts.push_back(t0.z);
 	verts.push_back(b0.x); verts.push_back(b0.y); verts.push_back(b0.z);
 
 	tprev = t0;
 	bcurr = b0;
-	for (int i = 1; i < res - 1; i++) {
+	for (int i = 1; i < res; i++) {
 		float a = (float)(i * M_PI * 2 / res);
-		tcurr = glm::vec3(cosf(a), 0.5f, sinf(a));
-		bcurr = glm::vec3(cosf(a), -0.5f, sinf(a));
+		tcurr = glm::vec3(cosf(a), 1.0f, sinf(a)) * 0.5f;
+		bcurr = glm::vec3(cosf(a), -1.0f, sinf(a)) * 0.5f;
 		
 		verts.push_back(tcurr.x); verts.push_back(tcurr.y); verts.push_back(tcurr.z);
 		verts.push_back(bcurr.x); verts.push_back(bcurr.y); verts.push_back(bcurr.z);
@@ -217,12 +217,12 @@ void genCylinder(const char* file, int res) {
 		bprev = bprev;
 	}
 	//final top face
-	vertFaces.push_back(3); vertFaces.push_back(1); vertFaces.push_back(2 * (res - 1) + 1);
+	vertFaces.push_back(3); vertFaces.push_back(1); vertFaces.push_back(2 * (res - 1) + 2 + 1);
 	//final bottom face
-	vertFaces.push_back(4); vertFaces.push_back(2); vertFaces.push_back(2 * (res - 1) + 1 + 1);
+	vertFaces.push_back(4); vertFaces.push_back(2); vertFaces.push_back(2 * (res - 1) + 3 + 1);
 	//final side faces
-	vertFaces.push_back(2 * (res - 1) + 1); vertFaces.push_back(2 * (res - 1)); vertFaces.push_back(2);
-	vertFaces.push_back(2); vertFaces.push_back(3); vertFaces.push_back(2 * (res - 1) + 1);
+	vertFaces.push_back(2 * (res - 1) + 2 + 1); vertFaces.push_back(2 * (res - 1) + 3 + 1); vertFaces.push_back(3);
+	vertFaces.push_back(3); vertFaces.push_back(4); vertFaces.push_back(2 * (res - 1) + 3 + 1);
 
 	//generate normals
 	genNormals(verts, vertFaces, norms, normFaces);
@@ -243,8 +243,8 @@ void genSphere(const char* file, int res) {
 	//top vert index is 0, bottom index is res
 	cout << "Row 1" << endl;
 	for (int j = 0; j < res; j++) {
-		float x = cosf((float)(M_PI / res * j));
-		float y = sinf((float)(M_PI / res * j));
+		float x = cosf((float)(M_PI / res * j)) * 0.5f;
+		float y = sinf((float)(M_PI / res * j)) * 0.5f;
 		float z = 0;
 		verts.push_back(x); verts.push_back(y); verts.push_back(z);
 	}
@@ -253,9 +253,9 @@ void genSphere(const char* file, int res) {
 	for (int i = 1; i < res; i++) {
 		cout << "Row " << i << endl;
 		//one notch down on the current half circle
-		float x1 = cosf((float)(M_PI / res));
-		float y1 = sinf((float)(M_PI / res)) * cosf((float)(2 * M_PI / res * i));
-		float z1 = sinf((float)(M_PI / res)) * sinf((float)(2 * M_PI / res * i));
+		float x1 = cosf((float)(M_PI / res)) * 0.5f;
+		float y1 = sinf((float)(M_PI / res)) * cosf((float)(2 * M_PI / res * i)) * 0.5f;
+		float z1 = sinf((float)(M_PI / res)) * sinf((float)(2 * M_PI / res * i)) * 0.5f;
 		
 		int ind = 0;//1,0,0 is always the first vertex added to verts; ind begins at the top and moves down
 		int ind1 = i * (res - 1) + 1;//the offset accounts for the top and bottom
@@ -270,9 +270,9 @@ void genSphere(const char* file, int res) {
 		for (int j = 1; j < res - 1; j++) {
 			int nextCircle = j + 1;
 			//one notch down on the current half circle
-			x1 = cosf((float)(M_PI / res * nextCircle));
-			y1 = sinf((float)(M_PI / res * nextCircle)) * cosf((float)(2 * M_PI / res * i));
-			z1 = sinf((float)(M_PI / res * nextCircle)) * sinf((float)(2 * M_PI / res * i));
+			x1 = cosf((float)(M_PI / res * nextCircle)) * 0.5f;
+			y1 = sinf((float)(M_PI / res * nextCircle)) * cosf((float)(2 * M_PI / res * i)) * 0.5f;
+			z1 = sinf((float)(M_PI / res * nextCircle)) * sinf((float)(2 * M_PI / res * i)) * 0.5f;
 
 			ind1 = i * (res - 1) + 1 + j;//x1, y1, z1 is always new and always the last one added
 			indp1 = (i - 1) * (res - 1) + 1 + j;//one notch down on previous half circle
@@ -298,7 +298,7 @@ void genSphere(const char* file, int res) {
 		vertFaces.push_back(ind + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(indp + 1);
 	}
 	//bottom of sphere; goes in last
-	verts.push_back(-1); verts.push_back(0); verts.push_back(0);
+	verts.push_back(-0.5f); verts.push_back(0); verts.push_back(0);
 
 	//add the last few vertFaces
 	//i is assumed to be res
