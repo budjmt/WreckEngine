@@ -79,11 +79,11 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 
 	cout << "Generating " << file << endl;
 
-	cout << "Num Verts: " << verts.size() << endl;
+	cout << "Num Verts: " << verts.size() / FLOATS_PER_VERT << endl;
 	cout << "Num Vert Faces: " << vertFaces.size() << endl;
-	cout << "Num UVs: " << uvs.size() << endl;
+	cout << "Num UVs: " << uvs.size() / FLOATS_PER_VERT << endl;
 	cout << "Num UV Faces: " << uvFaces.size() << endl;
-	cout << "Num Normals: " << norms.size() << endl;
+	cout << "Num Normals: " << norms.size() / FLOATS_PER_VERT << endl;
 	cout << "Num Normal Faces: " << normFaces.size() << endl;
 	string fileContents = "";
 	for (unsigned int i = 0; i < verts.size(); i += FLOATS_PER_VERT) {
@@ -206,20 +206,20 @@ void genCylinder(const char* file, int res) {
 		2 * i + 1 --- 2 * i + 3
 		*/
 		//top face
-		vertFaces.push_back(2 * i + 2); vertFaces.push_back(0); vertFaces.push_back(2 * i);
+		vertFaces.push_back(2 * i + 2 + 1); vertFaces.push_back(1); vertFaces.push_back(2 * i + 1);
 		//bottom face
-		vertFaces.push_back(2 * i + 3); vertFaces.push_back(1); vertFaces.push_back(2 * i + 1);
+		vertFaces.push_back(2 * i + 3 + 1); vertFaces.push_back(2); vertFaces.push_back(2 * i + 1 + 1);
 		//side faces
-		vertFaces.push_back(2 * i + 2); vertFaces.push_back(2 * i); vertFaces.push_back(2 * i + 1);
-		vertFaces.push_back(2 * i + 1); vertFaces.push_back(2 * i + 3); vertFaces.push_back(2 * i + 2);
+		vertFaces.push_back(2 * i + 2 + 1); vertFaces.push_back(2 * i + 1); vertFaces.push_back(2 * i + 1 + 1);
+		vertFaces.push_back(2 * i + 1 + 1); vertFaces.push_back(2 * i + 3 + 1); vertFaces.push_back(2 * i + 2 + 1);
 
 		tprev = tprev;
 		bprev = bprev;
 	}
 	//final top face
-	vertFaces.push_back(2); vertFaces.push_back(0); vertFaces.push_back(2 * (res - 1));
-	//final bottom face
 	vertFaces.push_back(3); vertFaces.push_back(1); vertFaces.push_back(2 * (res - 1) + 1);
+	//final bottom face
+	vertFaces.push_back(4); vertFaces.push_back(2); vertFaces.push_back(2 * (res - 1) + 1 + 1);
 	//final side faces
 	vertFaces.push_back(2 * (res - 1) + 1); vertFaces.push_back(2 * (res - 1)); vertFaces.push_back(2);
 	vertFaces.push_back(2); vertFaces.push_back(3); vertFaces.push_back(2 * (res - 1) + 1);
@@ -241,41 +241,41 @@ void genSphere(const char* file, int res) {
 	//i is implied to be 0
 	//once this is done, there are res vertices in verts, with the first and last ones not being repeated in subsequent ones, so res - 2 unique ones
 	//top vert index is 0, bottom index is res
-	for (int j = 0; j < res + 1; j++) {
+	cout << "Row 1" << endl;
+	for (int j = 0; j < res; j++) {
 		float x = cosf((float)(M_PI / res * j));
 		float y = sinf((float)(M_PI / res * j));
 		float z = 0;
 		verts.push_back(x); verts.push_back(y); verts.push_back(z);
 	}
 
+	int numVerts = (res - 1) * res + 1;
 	for (int i = 1; i < res; i++) {
-		//current half circle
-		float x = 1, y = 0, z = 0;
+		cout << "Row " << i << endl;
 		//one notch down on the current half circle
 		float x1 = cosf((float)(M_PI / res));
 		float y1 = sinf((float)(M_PI / res)) * cosf((float)(2 * M_PI / res * i));
 		float z1 = sinf((float)(M_PI / res)) * sinf((float)(2 * M_PI / res * i));
 		
 		int ind = 0;//1,0,0 is always the first vertex added to verts; ind begins at the top and moves down
-		int ind1 = verts.size();//x1, y1, z1 is always new and always the last one added.
+		int ind1 = i * (res - 1) + 1;//the offset accounts for the top and bottom
 		int indp = 0;//prev half circle, begins at top and moves down
-		int indp1 = verts.size() - res;//one notch down prev half circle
+		int indp1 = (i - 1) * (res - 1) + 1;//one notch down prev half circle
 		
 		verts.push_back(x1); verts.push_back(y1); verts.push_back(z1);
-		vertFaces.push_back(ind); vertFaces.push_back(ind1); vertFaces.push_back(indp1);
+		vertFaces.push_back(ind + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(indp1 + 1);
 
-		x = x1; y = y1; z = z1;
 		indp = indp1; ind = ind1;
 
-		for (int j = 1; j < res; j++) {
+		for (int j = 1; j < res - 1; j++) {
 			int nextCircle = j + 1;
 			//one notch down on the current half circle
 			x1 = cosf((float)(M_PI / res * nextCircle));
 			y1 = sinf((float)(M_PI / res * nextCircle)) * cosf((float)(2 * M_PI / res * i));
 			z1 = sinf((float)(M_PI / res * nextCircle)) * sinf((float)(2 * M_PI / res * i));
 
-			ind1 = verts.size();//x1, y1, z1 is always new and always the last one added
-			indp1 = verts.size() - res;//one notch down on previous half circle
+			ind1 = i * (res - 1) + 1 + j;//x1, y1, z1 is always new and always the last one added
+			indp1 = (i - 1) * (res - 1) + 1 + j;//one notch down on previous half circle
 
 			//add only the next verts, as current ones will always be already added
 			verts.push_back(x1); verts.push_back(y1); verts.push_back(z1);
@@ -288,22 +288,59 @@ void genSphere(const char* file, int res) {
 			|	  /			  |
 			indp1	---		ind1
 			*/
-			vertFaces.push_back(ind); vertFaces.push_back(indp); vertFaces.push_back(indp1);
-			vertFaces.push_back(indp1); vertFaces.push_back(ind1); vertFaces.push_back(ind);
+			vertFaces.push_back(ind + 1); vertFaces.push_back(indp + 1); vertFaces.push_back(indp1 + 1);
+			vertFaces.push_back(indp1 + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(ind + 1);
 			//update current with next
-			x = x1; y = y1; z = z1;
-			indp = indp1;	ind = ind1;
+			indp = indp1; ind = ind1;
 		}
-		ind1 = res;
-		indp1 = res;
-		vertFaces.push_back(ind); vertFaces.push_back(ind1); vertFaces.push_back(indp);
+		ind1 = numVerts;
+		indp1 = numVerts;
+		vertFaces.push_back(ind + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(indp + 1);
 	}
+	//bottom of sphere; goes in last
+	verts.push_back(-1); verts.push_back(0); verts.push_back(0);
+
+	//add the last few vertFaces
+	//i is assumed to be res
+	int ind = 0;
+	int ind1 = res * (res - 1) + 1;//the offset accounts for the top and bottom
+	int indp = 0;//prev half circle, begins at top and moves down
+	int indp1 = (res - 1) * (res - 1) + 1;//one notch down prev half circle
+	
+	//to account for the loop back
+	ind1++;//this part I don't really get, but it works
+	ind1 %= numVerts;
+	indp1 %= numVerts;
+	
+	vertFaces.push_back(ind + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(indp1 + 1);
+	
+	indp = indp1; ind = ind1;
+
+	cout << "Row " << res << endl;
+	for (int j = 1; j < res - 1; j++) {
+		ind1 = res * (res - 1) + 1 + j;//x1, y1, z1 is always new and always the last one added
+		indp1 = (res - 1) * (res - 1) + 1 + j;//one notch down on previous half circle
+		//account for the loop back
+		ind1++;
+		ind1 %= numVerts;
+		indp1 %= numVerts;
+		//add the vertFace information
+		vertFaces.push_back(ind + 1); vertFaces.push_back(indp + 1); vertFaces.push_back(indp1 + 1);
+		vertFaces.push_back(indp1 + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(ind + 1);
+		//update current with next
+		//these keep their data from the previous loop
+		indp = indp1; ind = ind1;
+	}
+	ind1 = numVerts;
+	indp1 = numVerts;
+	vertFaces.push_back(ind + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(indp + 1);
 
 	//generate normals
 	genNormals(verts, vertFaces, norms, normFaces);
-
+	cout << "Normals done" << endl;
 	//generate uvs
 	genUVSpherical(verts, vertFaces, uvs, uvFaces);
+	cout << "UVs done" << endl;
 
 	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
 }

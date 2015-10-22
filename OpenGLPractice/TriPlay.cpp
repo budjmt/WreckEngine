@@ -53,7 +53,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
-	genSphere("Assets/sphere.obj",8);
+	genSphere("Assets/sphere.obj",64);
 	Mesh* cube = loadOBJ("Assets/sphere.obj", "Assets/texture.png", prog);
 	shapes.push_back(cube);
 	mesh = new Entity(cube);
@@ -101,18 +101,19 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double prevFrame, double dt) 
 	if (m->down) {
 		//mesh->transform.rotation += (float)(2 * M_PI * dt);
 		if (m->button == GLFW_MOUSE_BUTTON_LEFT) {
-			float rot = 2 * M_PI / dt;
-			float dp = (float)(m->x - m->prevx) / width * rot;
-			float dy = -(float)(m->y - m->prevy) / height * rot;
+			float rot = (float)(2 * M_PI / dt);
+			float dx = (float)(m->x - m->prevx) / width * rot;
+			float dy = (float)(m->y - m->prevy) / height * rot;
 			glm::vec3 look = camera->getLookAt();
-			camera->turn(dp, dy);
-			camera->transform.position = look- camera->getForward();
+			camera->turn(dx, dy);
+			camera->transform.position = look - camera->getForward();
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_RIGHT) {
 			camera->transform.position += (float)(((m->y - m->prevy) + (m->x - m->prevx)) / 2 * 0.5f / dt) * camera->getForward();
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_MIDDLE) {
-			camera->transform.position += glm::vec3(m->x - m->prevx, m->y - m->prevy, 0);
+			camera->transform.position += camera->getRight() * (float)(m->x - m->prevx);
+			camera->transform.position += camera->getUp() * (float)(m->y - m->prevy);
 		}
 		//I have this commented out on purpose. I don't want it
 		//glfwSetCursorPos(window, width / 2, height / 2);

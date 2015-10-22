@@ -1,5 +1,7 @@
 #include "UV.h"
 
+using namespace std;
+
 void genUVs(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces, std::vector<GLfloat>& uvs, std::vector<GLuint>& uvFaces) {
 	genUVCylindrical(verts, vertFaces, uvs, uvFaces);
 }

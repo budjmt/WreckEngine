@@ -14,7 +14,7 @@ Camera::~Camera()
 }
 
 void Camera::update(double dt) {
-	glm::mat4 view = glm::lookAt(transform.position,getLookAt(),glm::vec3(0,1,0));
+	glm::mat4 view = glm::lookAt(transform.position,getLookAt(),getUp());
 	//update projection
 	//updateProjection();
 	glm::mat4 tmp = projection * view;
@@ -28,7 +28,7 @@ void Camera::draw() {
 }
 
 void Camera::turn(float dx, float dy) {
-	transform.rotate(dx, dy, 0);
+	transform.rotate(dy, dx, 0);
 }
 
 glm::vec3 Camera::getLookAt() {
