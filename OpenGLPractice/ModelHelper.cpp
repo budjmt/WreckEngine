@@ -79,12 +79,6 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 
 	cout << "Generating " << file << endl;
 
-	cout << "Num Verts: " << verts.size() / FLOATS_PER_VERT << endl;
-	cout << "Num Vert Faces: " << vertFaces.size() << endl;
-	cout << "Num UVs: " << uvs.size() / FLOATS_PER_VERT << endl;
-	cout << "Num UV Faces: " << uvFaces.size() << endl;
-	cout << "Num Normals: " << norms.size() / FLOATS_PER_VERT << endl;
-	cout << "Num Normal Faces: " << normFaces.size() << endl;
 	string fileContents = "";
 	for (unsigned int i = 0; i < verts.size(); i += FLOATS_PER_VERT) {
 		fileContents += "v";
@@ -94,6 +88,10 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 		}
 		fileContents += "\n";
 	}
+	fileContents += "# ";
+	fileContents += to_string(verts.size() / FLOATS_PER_VERT);
+	fileContents += " vertices\n\n";
+
 	for (unsigned int i = 0; i < uvs.size(); i += FLOATS_PER_VERT) {
 		fileContents += "vt";
 		for (int j = 0; j < FLOATS_PER_VERT; j++) {
@@ -102,6 +100,10 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 		}
 		fileContents += "\n";
 	}
+	fileContents += "# ";
+	fileContents += to_string(uvs.size() / FLOATS_PER_VERT);
+	fileContents += " UVs\n\n";
+
 	for (unsigned int i = 0; i < norms.size(); i += FLOATS_PER_VERT) {
 		fileContents += "vn";
 		for (int j = 0; j < FLOATS_PER_VERT; j++) {
@@ -110,6 +112,10 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 		}
 		fileContents += "\n";
 	}
+	fileContents += "# ";
+	fileContents += to_string(norms.size() / FLOATS_PER_VERT);
+	fileContents += " normals\n\n";
+
 	for (unsigned int i = 0; i < vertFaces.size(); i += FLOATS_PER_VERT) {
 		fileContents += "f";
 		for (int j = 0; j < FLOATS_PER_VERT; j++) {
@@ -122,6 +128,9 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 		}
 		fileContents += "\n";
 	}
+	fileContents += "# ";
+	fileContents += to_string(vertFaces.size());
+	fileContents += " faces\n\n";
 
 	cout << "Writing..." << endl;
 	//write fileContents to the file, overwrite its contents
@@ -241,7 +250,7 @@ void genSphere(const char* file, int res) {
 	//i is implied to be 0
 	//once this is done, there are res vertices in verts, with the first and last ones not being repeated in subsequent ones, so res - 2 unique ones
 	//top vert index is 0, bottom index is res
-	cout << "Row 1" << endl;
+	//cout << "Row 1" << endl;
 	for (int j = 0; j < res; j++) {
 		float x = cosf((float)(M_PI / res * j)) * 0.5f;
 		float y = sinf((float)(M_PI / res * j)) * 0.5f;
@@ -251,7 +260,7 @@ void genSphere(const char* file, int res) {
 
 	int numVerts = (res - 1) * res + 1;
 	for (int i = 1; i < res; i++) {
-		cout << "Row " << i << endl;
+		//cout << "Row " << i << endl;
 		//one notch down on the current half circle
 		float x1 = cosf((float)(M_PI / res)) * 0.5f;
 		float y1 = sinf((float)(M_PI / res)) * cosf((float)(2 * M_PI / res * i)) * 0.5f;
@@ -316,7 +325,7 @@ void genSphere(const char* file, int res) {
 	
 	indp = indp1; ind = ind1;
 
-	cout << "Row " << res << endl;
+	//cout << "Row " << res << endl;
 	for (int j = 1; j < res - 1; j++) {
 		ind1 = res * (res - 1) + 1 + j;//x1, y1, z1 is always new and always the last one added
 		indp1 = (res - 1) * (res - 1) + 1 + j;//one notch down on previous half circle
@@ -337,19 +346,55 @@ void genSphere(const char* file, int res) {
 
 	//generate normals
 	genNormals(verts, vertFaces, norms, normFaces);
-	cout << "Normals done" << endl;
+	//cout << "Normals done" << endl;
 	//generate uvs
 	genUVSpherical(verts, vertFaces, uvs, uvFaces);
-	cout << "UVs done" << endl;
+	//cout << "UVs done" << endl;
 
 	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
 }
 
-void genBezierSurface(const char* file) {
+void genBezierSurface(const char* file, int res, std::vector<std::vector<glm::vec3>> k) {
 	std::vector<GLfloat> verts, uvs, norms;
 	std::vector<GLuint> vertFaces, uvFaces, normFaces;
-	//code
+	
+	
+
 	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
+}
+
+glm::vec3 bezierSurface(float u, float v, std::vector<std::vector<glm::vec3>> k) {
+	glm::vec3 p;
+	int n = k.size();
+	int m = k[0].size();
+	for (int i = 0; i < n; i++) {
+		for (int j = 0; j < m; j++) {
+			p += k[i][j] * bernsteinPolynomial(i, n - 1, u) * bernsteinPolynomial(j, m - 1, v);
+		}
+	}
+	return p;
+}
+
+float bernsteinPolynomial(int i, int n, float u) {
+	return binomialCoeff(n, i) * pow(u, i) * pow(1 - u, n - i);
+}
+
+float binomialCoeff(int n, int i) {
+	//this is the partial factorial, cancelling out part of the denominator
+	int num = 1;
+	int start, den;
+	if (i > n - i) { start = i; den = n - i; }
+	else { start = n - i; den = i; }
+	for (int k = start + 1; k < n + 1; k++)
+		num *= k;
+	return num / factorial(den);
+}
+
+int factorial(int n) {
+	int fact = 1;
+	for (int i = 2; i < n; i++) 
+		fact *= i;
+	return fact;
 }
 
 void genNormals(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces

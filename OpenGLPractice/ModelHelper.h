@@ -22,6 +22,10 @@ void genCylinder(const char* file, int res);
 void genSphere(const char* file, int res);
 //void genTorus(const char* file, float r1, float r2);//hole rad, ring rad
 void genBezierSurface(const char* file);
+glm::vec3 bezierSurface(float u, float v, std::vector<std::vector<glm::vec3>> k);
+float bernsteinPolynomial(int i, int n, float u);
+float binomialCoeff(int n, int i);
+int factorial(int n);
 
 void genNormals(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces
 					, std::vector<GLfloat>& norms, std::vector<GLuint>& normFaces);

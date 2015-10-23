@@ -53,7 +53,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
-	genSphere("Assets/sphere.obj",64);
+	genCylinder("Assets/sphere.obj",64);
 	Mesh* cube = loadOBJ("Assets/sphere.obj", "Assets/texture.png", prog);
 	shapes.push_back(cube);
 	mesh = new Entity(cube);
