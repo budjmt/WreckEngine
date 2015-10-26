@@ -39,6 +39,7 @@ Transform& Transform::operator=(const Transform& other)
 	forward = other.forward;
 	up = other.up;
 	right = other.right;
+	return *this;
 }
 
 Transform Transform::computeTransform() {

@@ -53,12 +53,18 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
-	genCylinder("Assets/sphere.obj",64);
-	Mesh* cube = loadOBJ("Assets/sphere.obj", "Assets/texture.png", prog);
+	std::vector<std::vector<glm::vec3>> k = {
+		{ glm::vec3( 1,-1,-1), glm::vec3( 1,-1, 1), glm::vec3( 1, 1, 1) },
+		{ glm::vec3(-1, 1,-1), glm::vec3(-1, 1, 1), glm::vec3(-1,-1, 1) },
+		{ glm::vec3(-1,-1, 1), glm::vec3(-1,-1,-1), glm::vec3(-1, 1,-1) },
+		{ glm::vec3( 1, 1,-1), glm::vec3( 1, 1, 1), glm::vec3( 1,-1, 1) }
+	};
+	genBezierSurface("Assets/bezier.obj",6,6,k);
+	Mesh* cube = loadOBJ("Assets/bezier.obj", "Assets/texture.png", prog);
 	shapes.push_back(cube);
 	mesh = new Entity(cube);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
-	mesh->transform.position.z = 10;
+	mesh->transform.position.z = 5;
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 

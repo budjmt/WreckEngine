@@ -46,7 +46,11 @@ void initGraphics(GLFWwindow* window) {
 
 	float aspect = (float)width / (float)height;
 	glViewport(0, 0, width, height);
+
 	glEnable(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 

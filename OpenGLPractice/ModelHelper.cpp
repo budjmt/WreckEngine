@@ -354,16 +354,50 @@ void genSphere(const char* file, int res) {
 	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
 }
 
-void genBezierSurface(const char* file, int res, std::vector<std::vector<glm::vec3>> k) {
+void genBezierSurface(const char* file, int ures, int vres, std::vector<std::vector<glm::vec3>>& k) {
 	std::vector<GLfloat> verts, uvs, norms;
 	std::vector<GLuint> vertFaces, uvFaces, normFaces;
 	
-	
+	for (int ui = 0; ui < ures; ui++) {
+		float u0 = (float)ui / ures;
+		float u1 = (float)(ui + 1) / ures;
+
+		glm::vec3 a = bezierSurface(u0, 0, k);
+		glm::vec3 b = bezierSurface(u1, 0, k);
+		verts.push_back(a.x); verts.push_back(a.y); verts.push_back(a.z);
+		verts.push_back(b.x); verts.push_back(b.y); verts.push_back(b.z);
+
+		uvs.push_back(u0); uvs.push_back(0); uvs.push_back(0);
+		uvs.push_back(u1); uvs.push_back(0); uvs.push_back(0);
+
+		for (int vi = 0; vi < vres; vi++) {
+			//float v0 = (float)vi / vres;
+			float v1 = (float)(vi + 1) / vres;
+
+			glm::vec3 c = bezierSurface(u0, v1, k);
+			glm::vec3 d = bezierSurface(u1, v1, k);
+
+			verts.push_back(c.x); verts.push_back(c.y); verts.push_back(c.z);
+			verts.push_back(d.x); verts.push_back(d.y); verts.push_back(d.z);
+			
+			int ai = (ui * vres + vi) * 2;
+			vertFaces.push_back(ai + 1 + 1); vertFaces.push_back(ai + 1); vertFaces.push_back(ai + 2 + 1);
+			vertFaces.push_back(ai + 2 + 1); vertFaces.push_back(ai + 3 + 1); vertFaces.push_back(ai + 1 + 1);
+
+			uvs.push_back(u0); uvs.push_back(v1); uvs.push_back(0);
+			uvs.push_back(u1); uvs.push_back(v1); uvs.push_back(0);
+
+			uvFaces.push_back(ai + 1 + 1); uvFaces.push_back(ai + 1); uvFaces.push_back(ai + 2 + 1);
+			uvFaces.push_back(ai + 2 + 1); uvFaces.push_back(ai + 3 + 1); uvFaces.push_back(ai + 1 + 1);
+		}
+	}
+
+	genNormals(verts, vertFaces, norms, normFaces);
 
 	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
 }
 
-glm::vec3 bezierSurface(float u, float v, std::vector<std::vector<glm::vec3>> k) {
+glm::vec3 bezierSurface(float u, float v, std::vector<std::vector<glm::vec3>>& k) {
 	glm::vec3 p;
 	int n = k.size();
 	int m = k[0].size();

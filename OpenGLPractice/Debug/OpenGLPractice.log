@@ -1,5 +1,47 @@
-﻿Build started 10/19/2015 3:15:34 PM.
+﻿Build started 10/25/2015 12:00:03 AM.
+     1>Project "C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\OpenGLPractice.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt Camera.cpp Collider.cpp ColliderEntity.cpp Drawable.cpp Entity.cpp Game.cpp Mesh.cpp ShaderHelper.cpp Shape.cpp Transform.cpp
+         Transform.cpp
+         Shape.cpp
+         ShaderHelper.cpp
+         Mesh.cpp
+         Game.cpp
+         Entity.cpp
+         Drawable.cpp
+         ColliderEntity.cpp
+         Collider.cpp
+         Camera.cpp
+         Generating Code...
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\Debug\OpenGLPractice.exe" /INCREMENTAL /NOLOGO SOIL.lib glew32.lib glfw3.lib opengl32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\Debug\OpenGLPractice.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\Debug\OpenGLPractice.lib" /MACHINE:X86 /NODEFAULTLIB:MSVCRT Debug\Camera.obj
+         Debug\Collider.obj
+         Debug\ColliderEntity.obj
+         Debug\Drawable.obj
+         Debug\Entity.obj
+         Debug\Game.obj
+         Debug\GLDebugMessageCallback.obj
+         Debug\Mesh.obj
+         Debug\ModelHelper.obj
+         Debug\ShaderHelper.obj
+         Debug\Shape.obj
+         Debug\Source.obj
+         Debug\Transform.obj
+         Debug\TriPlay.obj
+         Debug\UV.obj
+         SOIL.lib(SOIL.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
+     1>LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
+     1>Camera.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:LBR' specification
+         Generating code
+         Finished generating code
+     1>SOIL.lib(SOIL.obj) : warning LNK4099: PDB 'SOIL.pdb' was not found with 'SOIL.lib(SOIL.obj)' or at 'C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\Debug\SOIL.pdb'; linking object as if no debug info
+     1>SOIL.lib(image_helper.obj) : warning LNK4099: PDB 'SOIL.pdb' was not found with 'SOIL.lib(image_helper.obj)' or at 'C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\Debug\SOIL.pdb'; linking object as if no debug info
+     1>SOIL.lib(stb_image_aug.obj) : warning LNK4099: PDB 'SOIL.pdb' was not found with 'SOIL.lib(stb_image_aug.obj)' or at 'C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\Debug\SOIL.pdb'; linking object as if no debug info
+     1>SOIL.lib(image_DXT.obj) : warning LNK4099: PDB 'SOIL.pdb' was not found with 'SOIL.lib(image_DXT.obj)' or at 'C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\Debug\SOIL.pdb'; linking object as if no debug info
+     1>GLDebugMessageCallback.obj : warning LNK4204: 'C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\Debug\vc140.pdb' is missing debugging information for referencing module; linking object as if no debug info
+         OpenGLPractice.vcxproj -> C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\Debug\OpenGLPractice.exe
+     1>Done Building Project "C:\Users\Owner\Documents\RIT\Junior Year\Data Structures and Algorithms 2\WreckEngine\OpenGLPractice\OpenGLPractice.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:00.02
+Time Elapsed 00:00:27.24
