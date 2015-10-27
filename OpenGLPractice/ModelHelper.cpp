@@ -358,16 +358,17 @@ void genBezierSurface(const char* file, int ures, int vres, std::vector<std::vec
 	std::vector<GLfloat> verts, uvs, norms;
 	std::vector<GLuint> vertFaces, uvFaces, normFaces;
 	
+	//first u0, i.e. 0
+	glm::vec3 a = bezierSurface(0, 0, k);
+	verts.push_back(a.x); verts.push_back(a.y); verts.push_back(a.z);
+	uvs.push_back(0); uvs.push_back(0); uvs.push_back(0);
 	for (int ui = 0; ui < ures; ui++) {
 		float u0 = (float)ui / ures;
 		float u1 = (float)(ui + 1) / ures;
 
-		glm::vec3 a = bezierSurface(u0, 0, k);
 		glm::vec3 b = bezierSurface(u1, 0, k);
-		verts.push_back(a.x); verts.push_back(a.y); verts.push_back(a.z);
 		verts.push_back(b.x); verts.push_back(b.y); verts.push_back(b.z);
 
-		uvs.push_back(u0); uvs.push_back(0); uvs.push_back(0);
 		uvs.push_back(u1); uvs.push_back(0); uvs.push_back(0);
 
 		for (int vi = 0; vi < vres; vi++) {
@@ -421,12 +422,12 @@ float binomialCoeff(int n, int i) {
 	else { start = n - i; den = i; }
 	for (int k = start + 1; k < n + 1; k++)
 		num *= k;
-	return num / factorial(den);
+	return (float)num / factorial(den);
 }
 
 int factorial(int n) {
 	int fact = 1;
-	for (int i = 2; i < n; i++) 
+	for (int i = 2; i < n + 1; i++) 
 		fact *= i;
 	return fact;
 }

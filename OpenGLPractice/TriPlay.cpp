@@ -49,22 +49,26 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	shapes.push_back(m);
 	Entity* mesh = new Entity(m);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
-	mesh->transform.position.z = 0;
+	mesh->transform.position.x = 0;
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
-	std::vector<std::vector<glm::vec3>> k = {
+	/*std::vector<std::vector<glm::vec3>> k = {
 		{ glm::vec3( 1,-1,-1), glm::vec3( 1,-1, 1), glm::vec3( 1, 1, 1) },
 		{ glm::vec3(-1, 1,-1), glm::vec3(-1, 1, 1), glm::vec3(-1,-1, 1) },
 		{ glm::vec3(-1,-1, 1), glm::vec3(-1,-1,-1), glm::vec3(-1, 1,-1) },
 		{ glm::vec3( 1, 1,-1), glm::vec3( 1, 1, 1), glm::vec3( 1,-1, 1) }
+	};*/
+	std::vector<std::vector<glm::vec3>> k = {
+		{ glm::vec3( 1, 1, 0), glm::vec3(-1, 1, 0) },
+		{ glm::vec3(1,-1, 0), glm::vec3(-1,-1, 0) }
 	};
-	genBezierSurface("Assets/bezier.obj",6,6,k);
+	genBezierSurface("Assets/bezier.obj",4,4,k);
 	Mesh* cube = loadOBJ("Assets/bezier.obj", "Assets/texture.png", prog);
 	shapes.push_back(cube);
 	mesh = new Entity(cube);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
-	mesh->transform.position.z = 5;
+	mesh->transform.position.x = 5;
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
