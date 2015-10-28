@@ -359,11 +359,14 @@ void genBezierSurface(const char* file, int ures, int vres, std::vector<std::vec
 	std::vector<GLuint> vertFaces, uvFaces, normFaces;
 	
 	//first u0, i.e. 0
-	glm::vec3 a = bezierSurface(0, 0, k);
-	verts.push_back(a.x); verts.push_back(a.y); verts.push_back(a.z);
-	uvs.push_back(0); uvs.push_back(0); uvs.push_back(0);
+	for (int vi = 0; vi < vres + 1; vi++) {
+		float v0 = (float)vi / vres;
+		glm::vec3 a = bezierSurface(0, v0, k);//c is no longer a thing, as this handles it
+		verts.push_back(a.x); verts.push_back(a.y); verts.push_back(a.z);
+		uvs.push_back(0); uvs.push_back(v0); uvs.push_back(0);
+	}
 	for (int ui = 0; ui < ures; ui++) {
-		float u0 = (float)ui / ures;
+		//float u0 = (float)ui / ures;
 		float u1 = (float)(ui + 1) / ures;
 
 		glm::vec3 b = bezierSurface(u1, 0, k);
@@ -375,21 +378,22 @@ void genBezierSurface(const char* file, int ures, int vres, std::vector<std::vec
 			//float v0 = (float)vi / vres;
 			float v1 = (float)(vi + 1) / vres;
 
-			glm::vec3 c = bezierSurface(u0, v1, k);
+			//glm::vec3 c = bezierSurface(u0, v1, k);
 			glm::vec3 d = bezierSurface(u1, v1, k);
 
-			verts.push_back(c.x); verts.push_back(c.y); verts.push_back(c.z);
+			//verts.push_back(c.x); verts.push_back(c.y); verts.push_back(c.z);
 			verts.push_back(d.x); verts.push_back(d.y); verts.push_back(d.z);
 			
-			int ai = (ui * vres + vi) * 2;
-			vertFaces.push_back(ai + 1 + 1); vertFaces.push_back(ai + 1); vertFaces.push_back(ai + 2 + 1);
-			vertFaces.push_back(ai + 2 + 1); vertFaces.push_back(ai + 3 + 1); vertFaces.push_back(ai + 1 + 1);
+			int prev = ui * (vres + 1) + vi;//prev would be a, prev + 1 would be c
+			int curr = prev + vres + 1;//curr would be b, curr + 1 would be d
+			vertFaces.push_back(curr + 1); vertFaces.push_back(prev + 1); vertFaces.push_back(prev + 1 + 1);
+			vertFaces.push_back(prev + 1 + 1); vertFaces.push_back(curr + 1 + 1); vertFaces.push_back(curr + 1);
 
-			uvs.push_back(u0); uvs.push_back(v1); uvs.push_back(0);
+			//uvs.push_back(u0); uvs.push_back(v1); uvs.push_back(0);
 			uvs.push_back(u1); uvs.push_back(v1); uvs.push_back(0);
 
-			uvFaces.push_back(ai + 1 + 1); uvFaces.push_back(ai + 1); uvFaces.push_back(ai + 2 + 1);
-			uvFaces.push_back(ai + 2 + 1); uvFaces.push_back(ai + 3 + 1); uvFaces.push_back(ai + 1 + 1);
+			uvFaces.push_back(curr + 1); uvFaces.push_back(prev + 1); uvFaces.push_back(prev + 1 + 1);
+			uvFaces.push_back(prev + 1 + 1); uvFaces.push_back(curr + 1 + 1); uvFaces.push_back(curr + 1);
 		}
 	}
 

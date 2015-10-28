@@ -53,17 +53,17 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
-	/*std::vector<std::vector<glm::vec3>> k = {
+	std::vector<std::vector<glm::vec3>> k = {
 		{ glm::vec3( 1,-1,-1), glm::vec3( 1,-1, 1), glm::vec3( 1, 1, 1) },
 		{ glm::vec3(-1, 1,-1), glm::vec3(-1, 1, 1), glm::vec3(-1,-1, 1) },
 		{ glm::vec3(-1,-1, 1), glm::vec3(-1,-1,-1), glm::vec3(-1, 1,-1) },
 		{ glm::vec3( 1, 1,-1), glm::vec3( 1, 1, 1), glm::vec3( 1,-1, 1) }
-	};*/
-	std::vector<std::vector<glm::vec3>> k = {
+	};
+	/*std::vector<std::vector<glm::vec3>> k = {
 		{ glm::vec3( 1, 1, 0), glm::vec3(-1, 1, 0) },
 		{ glm::vec3(1,-1, 0), glm::vec3(-1,-1, 0) }
-	};
-	genBezierSurface("Assets/bezier.obj",4,4,k);
+	};*/
+	genBezierSurface("Assets/bezier.obj",16,16,k);
 	Mesh* cube = loadOBJ("Assets/bezier.obj", "Assets/texture.png", prog);
 	shapes.push_back(cube);
 	mesh = new Entity(cube);
