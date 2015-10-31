@@ -64,11 +64,38 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 		{ glm::vec3(1,-1, 0), glm::vec3(-1,-1, 0) }
 	};*/
 	genBezierSurface("Assets/bezier.obj",16,16,k);
-	Mesh* cube = loadOBJ("Assets/bezier.obj", "Assets/texture.png", prog);
+	Mesh* bezier = loadOBJ("Assets/bezier.obj", "Assets/texture.png", prog);
+	shapes.push_back(bezier);
+	mesh = new Entity(bezier);
+	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
+	mesh->transform.position.x = 2.5f;
+	entities.push_back(mesh);
+	meshes.push_back(mesh);
+
+	genCylinder("Assets/cylinder.obj", 64);
+	Mesh* cylinder = loadOBJ("Assets/cylinder.obj", "Assets/texture.png", prog);
+	shapes.push_back(cylinder);
+	mesh = new Entity(cylinder);
+	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
+	mesh->transform.position.x = -2.5f;
+	entities.push_back(mesh);
+	meshes.push_back(mesh);
+
+	genSphere("Assets/sphere.obj", 64);
+	Mesh* sphere = loadOBJ("Assets/sphere.obj", "Assets/texture.png", prog);
+	shapes.push_back(sphere);
+	mesh = new Entity(sphere);
+	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
+	mesh->transform.position.y = 2.5f;
+	entities.push_back(mesh);
+	meshes.push_back(mesh);
+
+	genCube("Assets/cube.obj");
+	Mesh* cube = loadOBJ("Assets/cube.obj", "Assets/texture.png", prog);
 	shapes.push_back(cube);
 	mesh = new Entity(cube);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
-	mesh->transform.position.x = 5;
+	mesh->transform.position.y = -2.5f;
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 

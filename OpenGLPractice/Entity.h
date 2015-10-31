@@ -17,10 +17,12 @@ public:
 	Entity(glm::vec3 p,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s);
 	Entity(const Entity& other);
 	~Entity(void);
+
 	Transform& transform;
 	bool& active;
-	glm::vec4& color;
-	EntityType getType();
+	glm::vec4 color() const; void color(glm::vec4& c);
+	EntityType type();
+
 	virtual void update(double dt);
 	virtual void draw();
 protected:
@@ -28,6 +30,6 @@ protected:
 	glm::vec4 ecolor;
 	Transform etransform;
 	bool eactive = true;
-	EntityType type;
+	EntityType etype;
 };
 

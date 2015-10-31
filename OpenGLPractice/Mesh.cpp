@@ -83,7 +83,8 @@ Mesh::Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> 
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 
-	textures.push_back(SOIL_load_OGL_texture(texFile, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_INVERT_Y));
+	//FIBITMAP* texture = ;
+	//textures.push_back();
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 
 	textureLoc = glGetUniformLocation(shader, "uniformTex");
