@@ -83,8 +83,21 @@ Mesh::Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> 
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
 
-	//FIBITMAP* texture = ;
-	//textures.push_back();
+	FIBITMAP* bitmap = FreeImage_Load(FreeImage_GetFileType(texFile), texFile);
+	//we convert the 24bit bitmap to 32bits
+	FIBITMAP* image = FreeImage_ConvertTo32Bits(bitmap);
+	//delete the 24bit bitmap from memory
+	FreeImage_Unload(bitmap);
+	int w = FreeImage_GetWidth(image);
+	int h = FreeImage_GetHeight(image);
+	GLubyte* textureData = FreeImage_GetBits(image);
+	
+	GLuint texture = 0;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)textureData);
+
+	textures.push_back(texture);
 	glBindTexture(GL_TEXTURE_2D, textures[0]);
 
 	textureLoc = glGetUniformLocation(shader, "uniformTex");

@@ -71,8 +71,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/SOIL/include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/SOIL/lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/FreeImage/lib/x32;$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -82,9 +82,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/SOIL/include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;$(IncludePath)</IncludePath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/SOIL/lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/FreeImage/lib/x32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -100,7 +100,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SOIL.lib;glew32.lib;glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>FreeImage.lib;glew32.lib;glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/NODEFAULTLIB:MSVCRT /LTCG %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -133,7 +133,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>SOIL.lib;glew32.lib;glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>FreeImage.lib;glew32.lib;glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
