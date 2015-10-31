@@ -55,3 +55,42 @@ glm::vec3 Camera::getUp() {
 glm::vec3 Camera::getRight() {
 	return transform.getRight();
 }
+
+void Camera::mayaCam(GLFWwindow* window, Mouse* m, double dt, Camera* camera) {
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	if (m->down) {
+		if (m->button == GLFW_MOUSE_BUTTON_LEFT) {
+			float rot = (float)(glm::pi<float>() / 2 / dt);
+			float dx = (float)(m->x - m->prevx) / width * rot;
+			float dy = (float)(m->y - m->prevy) / height * rot;
+			glm::vec3 look = camera->getLookAt();
+			camera->turn(dx, dy);
+			camera->transform.position = look - camera->getForward();
+		}
+		else if (m->button == GLFW_MOUSE_BUTTON_RIGHT) {
+			float avg = ((m->y - m->prevy) + (m->x - m->prevx)) / 2;
+			camera->transform.position += avg * camera->getForward();
+		}
+		else if (m->button == GLFW_MOUSE_BUTTON_MIDDLE) {
+			camera->transform.position += camera->getRight() * (float)(m->x - m->prevx);
+			camera->transform.position += camera->getUp() * (float)(m->y - m->prevy);
+		}
+		//I have this commented out on purpose. I don't want it
+		//glfwSetCursorPos(window, width / 2, height / 2);
+		//std::cout << "Position: " << camera->transform.position.x << "," << camera->transform.position.y << "," << camera->transform.position.z << std::endl << "Pitch: " << camera->pitch << std::endl << "Yaw: " << camera->yaw << std::endl;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		camera->transform.position += camera->getForward() * 5.f * (float)dt;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		camera->transform.position += camera->getForward() * -5.f * (float)dt;
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		camera->transform.position += camera->getRight() * 5.f * (float)dt;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		camera->transform.position += camera->getRight() * -5.f * (float)dt;
+	}
+}

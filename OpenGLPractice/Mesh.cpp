@@ -95,6 +95,7 @@ Mesh::Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> 
 	GLuint texture = 0;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
+	//the texture is loaded in BGRA format
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)textureData);
 
 	textures.push_back(texture);

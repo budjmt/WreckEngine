@@ -18,9 +18,6 @@
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GLDebugMessageCallback.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="ShaderHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -58,6 +55,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UV.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GLDebug.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GLDebug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -102,6 +105,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UV.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GLError.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

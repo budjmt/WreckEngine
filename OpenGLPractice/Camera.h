@@ -5,6 +5,7 @@
 #include "glm/gtx/transform.hpp"
 
 #include "Entity.h"
+#include "Mouse.h"
 
 const float CAM_FOV = 2 * glm::pi<GLfloat>() / 5;
 
@@ -24,6 +25,8 @@ public:
 	void turn(float dx,float dy);
 	glm::vec3 getLookAt();
 	void updateProjection();
+
+	static void mayaCam(GLFWwindow* window, Mouse* m, double dt, Camera* camera);
 
 private:
 	glm::mat4 projection;

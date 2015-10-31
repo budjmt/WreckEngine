@@ -160,7 +160,8 @@
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="GLDebugMessageCallback.h" />
+    <ClCompile Include="GLDebug.cpp" />
+    <ClCompile Include="GLDebug.h" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ModelHelper.cpp" />
     <ClCompile Include="ShaderHelper.cpp" />
@@ -177,6 +178,7 @@
     <ClInclude Include="Drawable.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GLError.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ModelHelper.h" />
     <ClInclude Include="Mouse.h" />

@@ -19,7 +19,7 @@ public:
 	TriPlay(GLuint prog, GLFWwindow* w);
 	TriPlay(const TriPlay& other);
 	~TriPlay();
-	void update(GLFWwindow* window, Mouse* m, double prevFrame, double dt);
+	void update(GLFWwindow* window, Mouse* m, double dt);
 	//void spawnTriangle(glm::vec3 pos, glm::vec3 vel);
 private:
 	//std::vector<ColliderEntity*> triangles;
