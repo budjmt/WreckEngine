@@ -2,7 +2,6 @@
 
 #include "GL/glew.h"
 #include "glm/glm.hpp"
-#include "FreeImage.h"
 
 #include <vector>
 
@@ -14,22 +13,19 @@ struct Face {
 	std::vector<glm::vec3> combined;
 };
 
-class Mesh : public Drawable
+class Mesh
 {
 public:
-	Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> u, Face f, char* texFile, GLuint shader);
+	Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> u, Face f);
 	~Mesh(void);
-	std::vector<GLfloat> verts, uvs, normals;
-	Face faces;
-	GLuint vertBuffer;
-	void draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale);
-	void draw(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotAxis, float rot);
-private:
-	//public right now because of weird initialization issue
-	//std::vector<GLfloat> mverts, mnormals, mtCoords;
-	//std::vector<Face> mfaces;
-	GLuint textureLoc;
-	std::vector<GLuint> textures;
+	std::vector<GLfloat> verts() const; void verts(std::vector<GLfloat>& v);
+	std::vector<GLfloat> uvs() const; void uvs(std::vector<GLfloat>& u);
+	std::vector<GLfloat> normals() const; void normals(std::vector<GLfloat>& n);
+	Face faces() const; void faces(Face& f);
+protected:
+	std::vector<GLfloat> mverts, mnormals, muvs;
+	Face mfaces;
 	std::vector<GLfloat> meshArray;
 	std::vector<GLuint> meshElementArray;
+	friend class DrawMesh;
 };

@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "ColliderEntity.h"
 #include "ModelHelper.h"
+#include "DrawMesh.h"
 
 //class constants go here
 

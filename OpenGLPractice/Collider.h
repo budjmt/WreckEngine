@@ -4,6 +4,7 @@
 #include "glm/gtc/constants.hpp"
 #include <vector>
 
+//2D
 enum ColliderType {
 	CIRCLE,
 	RECT,

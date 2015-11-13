@@ -1,4 +1,6 @@
-#pragma once
+#ifndef P_GL_ERROR
+#define P_GL_ERROR
+
 #include "GL/glew.h"
 #include "glfw/glfw3.h"
 
@@ -32,3 +34,5 @@ static void GLPrintError(GLenum error) {
 		break;
 	}
 }
+
+#endif

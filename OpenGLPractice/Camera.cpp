@@ -56,20 +56,26 @@ glm::vec3 Camera::getRight() {
 	return transform.getRight();
 }
 
+#include <iostream>
+
 void Camera::mayaCam(GLFWwindow* window, Mouse* m, double dt, Camera* camera) {
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
 	if (m->down) {
 		if (m->button == GLFW_MOUSE_BUTTON_LEFT) {
 			float rot = (float)(glm::pi<float>() / 2 / dt);
-			float dx = (float)(m->x - m->prevx) / width * rot;
-			float dy = (float)(m->y - m->prevy) / height * rot;
+			float xDiff = (float)(m->x - m->prevx);
+			float dx = glm::sign(xDiff) * xDiff * xDiff / width * rot;
+			dx = glm::min(glm::pi<float>() / 2, dx);
+			float yDiff = (float)(m->y - m->prevy);
+			float dy = glm::sign(yDiff) * yDiff * yDiff / height * rot;
+			dy = glm::min(glm::pi<float>() / 2, dy);
 			glm::vec3 look = camera->getLookAt();
 			camera->turn(dx, dy);
 			camera->transform.position = look - camera->getForward();
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_RIGHT) {
-			float avg = ((m->y - m->prevy) + (m->x - m->prevx)) / 2;
+			float avg = (float)((m->y - m->prevy) + (m->x - m->prevx)) / 2;
 			camera->transform.position += avg * camera->getForward();
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_MIDDLE) {
@@ -92,5 +98,18 @@ void Camera::mayaCam(GLFWwindow* window, Mouse* m, double dt, Camera* camera) {
 	}
 	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		camera->transform.position += camera->getRight() * -5.f * (float)dt;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+		camera->transform.position += glm::vec3(0, 1, 0) * 5.f * (float)dt;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+		camera->transform.position += glm::vec3(0, 1, 0) * -5.f * (float)dt;
+	}
+	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+		camera->transform.position += glm::vec3(1, 0, 0) * 5.f * (float)dt;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+		camera->transform.position += glm::vec3(1, 0, 0) * -5.f * (float)dt;
 	}
 }

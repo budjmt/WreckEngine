@@ -9,7 +9,7 @@
 #include <vector>
 
 //char* loadFBX(const char* file);
-Mesh* loadOBJ(const char* file, char* texture, GLuint shader);//loads a .obj
+Mesh* loadOBJ(const char* file);//loads a .obj
 void genOBJ(const char* file, std::vector<GLfloat> v, std::vector<GLfloat> uv, std::vector<GLfloat> n, std::vector<GLuint> f);
 
 //general generation process is:

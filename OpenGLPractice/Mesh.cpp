@@ -1,38 +1,36 @@
 #include "Mesh.h"
 #include <iostream>
 
-Mesh::Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> u, Face f, char* texFile, GLuint shader)
-	//: verts(mverts), normals(mnormals), tCoords(mtCoords), faces(mfaces)
+Mesh::Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> u, Face f)
 {
-	verts = v;
-	normals = n;
-	uvs = u;
-	faces = f;
-	shaderProg = shader;
+	verts(v);
+	normals(n);
+	uvs(u);
+	faces(f);
 
-	int numVerts = verts.size() / FLOATS_PER_VERT;
-	int numUvs = uvs.size() / FLOATS_PER_UV;
+	int numVerts = verts().size() / FLOATS_PER_VERT;
+	int numUvs = uvs().size() / FLOATS_PER_UV;
 	
-	for (unsigned int i = 0; i < faces.verts.size(); i++) {
+	for (unsigned int i = 0; i < mfaces.verts.size(); i++) {
 		//std::cout << i << std::endl;
 		bool inArr = false;
 		unsigned int index;
-		for (index = 0; !inArr && index < faces.combined.size();index++) {
-			if (faces.combined[index].x == faces.verts[i] && faces.combined[index].y == faces.uvs[i] && faces.combined[index].z == faces.normals[i]) {
+		for (index = 0; !inArr && index < mfaces.combined.size();index++) {
+			if (mfaces.combined[index].x == mfaces.verts[i] && mfaces.combined[index].y == mfaces.uvs[i] && mfaces.combined[index].z == mfaces.normals[i]) {
 				inArr = true;
 				index--;
 			}
 		}
 		if (!inArr) {
-			faces.combined.push_back(glm::vec3(faces.verts[i], faces.uvs[i], faces.normals[i]));
-			meshArray.push_back(verts[faces.verts[i] * FLOATS_PER_VERT]);
-			meshArray.push_back(verts[faces.verts[i] * FLOATS_PER_VERT + 1]);
-			meshArray.push_back(verts[faces.verts[i] * FLOATS_PER_VERT + 2]);
-			meshArray.push_back(uvs[faces.uvs[i] * FLOATS_PER_UV]);
-			meshArray.push_back(uvs[faces.uvs[i] * FLOATS_PER_UV + 1]);
-			meshArray.push_back(normals[faces.normals[i] * FLOATS_PER_NORM]);
-			meshArray.push_back(normals[faces.normals[i] * FLOATS_PER_NORM + 1]);
-			meshArray.push_back(normals[faces.normals[i] * FLOATS_PER_NORM + 2]);
+			mfaces.combined.push_back(glm::vec3(mfaces.verts[i], mfaces.uvs[i], mfaces.normals[i]));
+			meshArray.push_back(mverts[mfaces.verts[i] * FLOATS_PER_VERT]);
+			meshArray.push_back(mverts[mfaces.verts[i] * FLOATS_PER_VERT + 1]);
+			meshArray.push_back(mverts[mfaces.verts[i] * FLOATS_PER_VERT + 2]);
+			meshArray.push_back(muvs[mfaces.uvs[i] * FLOATS_PER_UV]);
+			meshArray.push_back(muvs[mfaces.uvs[i] * FLOATS_PER_UV + 1]);
+			meshArray.push_back(mnormals[mfaces.normals[i] * FLOATS_PER_NORM]);
+			meshArray.push_back(mnormals[mfaces.normals[i] * FLOATS_PER_NORM + 1]);
+			meshArray.push_back(mnormals[mfaces.normals[i] * FLOATS_PER_NORM + 2]);
 		}
 		meshElementArray.push_back(index);
 	}
@@ -52,77 +50,15 @@ Mesh::Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> 
 		if ((i + 1) % 3 == 0)
 			std::cout << std::endl;
 	}*/
-
-	//generate 1 vertex array at the address of the var
-	//then make it active by binding it
-	glGenVertexArrays(1, &vArray);
-	glBindVertexArray(vArray);
-
-	//generate 1 buffer at the address of the var
-	//then make it active by binding it to the main buffer
-	glGenBuffers(1, &vertBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
-	//move the data in coords to the buffer and tell it how it'll be used
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * meshArray.size(), &meshArray[0], GL_STATIC_DRAW);
-
-	//generates the element array buffer for faces
-	glGenBuffers(1, &vBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GL_UNSIGNED_INT) * meshElementArray.size(), &meshElementArray[0], GL_STATIC_DRAW);
-
-	//set up an attribute for how the coordinates will be read
-	//verts
-	glVertexAttribPointer(0, FLOATS_PER_VERT, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * (FLOATS_PER_VERT + FLOATS_PER_UV + FLOATS_PER_NORM), 0);
-	//uvs
-	glVertexAttribPointer(1, FLOATS_PER_UV, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * (FLOATS_PER_VERT + FLOATS_PER_UV + FLOATS_PER_NORM), (void *)(sizeof(GL_FLOAT) * FLOATS_PER_VERT));
-	//normals
-	glVertexAttribPointer(2, FLOATS_PER_NORM, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * (FLOATS_PER_VERT + FLOATS_PER_UV + FLOATS_PER_NORM), (void *)(sizeof(GL_FLOAT) * (FLOATS_PER_VERT + FLOATS_PER_UV)));
-
-	//enable that attribute at 0
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glEnableVertexAttribArray(2);
-
-	FIBITMAP* bitmap = FreeImage_Load(FreeImage_GetFileType(texFile), texFile);
-	//we convert the 24bit bitmap to 32bits
-	FIBITMAP* image = FreeImage_ConvertTo32Bits(bitmap);
-	//delete the 24bit bitmap from memory
-	FreeImage_Unload(bitmap);
-	int w = FreeImage_GetWidth(image);
-	int h = FreeImage_GetHeight(image);
-	GLubyte* textureData = FreeImage_GetBits(image);
-	
-	GLuint texture = 0;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
-	//the texture is loaded in BGRA format
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)textureData);
-
-	textures.push_back(texture);
-	glBindTexture(GL_TEXTURE_2D, textures[0]);
-
-	textureLoc = glGetUniformLocation(shader, "uniformTex");
-	glUniform1ui(textureLoc, 0);
-
-	//std::cout << vArray << "," << vertBuffer << "," << vBuffer << std::endl;
-
-	worldMatrix = glGetUniformLocation(shaderProg, "worldMatrix");
-	colorLoc = glGetUniformLocation(shaderProg, "tint");
 }
 
 Mesh::~Mesh()
 {
-	glDeleteBuffers(1, &vertBuffer);
 	//delete[] meshArray;
 	//delete[] meshElementArray;
 }
 
-void Mesh::draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale) {
-	Drawable::draw(x, y, xScale, yScale);
-	glDrawElements(GL_TRIANGLES, faces.verts.size(), GL_UNSIGNED_INT, (void *)0);
-}
-
-void Mesh::draw(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotAxis, float rot) {
-	Drawable::draw(pos, scale, rotAxis, rot);
-	glDrawElements(GL_TRIANGLES, meshElementArray.size(), GL_UNSIGNED_INT, (void *)0);
-}
+std::vector<GLfloat> Mesh::verts() const { return mverts; } void Mesh::verts(std::vector<GLfloat>& v) { mverts = v; }
+std::vector<GLfloat> Mesh::uvs() const { return muvs; } void Mesh::uvs(std::vector<GLfloat>& u) { muvs = u; }
+std::vector<GLfloat> Mesh::normals() const { return mnormals; } void Mesh::normals(std::vector<GLfloat>& n) { mnormals = n; }
+Face Mesh::faces() const { return mfaces; } void Mesh::faces(Face& f) { mfaces = f; }

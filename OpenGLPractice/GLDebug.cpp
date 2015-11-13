@@ -34,7 +34,7 @@ void APIENTRY GLDebugMessageCallbackAMD(GLuint id, GLenum category, GLenum sever
 
 // REQUIREMENTS: OpenGL version with the KHR_debug extension available.
 
-//Minor changes made by Michael Cohen on 10/31/2015
+//Minor changes made by Michael Cohen 2015
 void GLPrintDebugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *msg, const GLvoid *userParam) {
 	char* _source;
 	char* _type;

@@ -12,8 +12,8 @@ ostream& operator<<(ostream& os, glm::vec3 v) {
 	return os;
 }
 
-Mesh* loadOBJ(const char* file, char* texture, GLuint shader) {
-	cout << "Loading " << file << endl;
+Mesh* loadOBJ(const char* file) {
+	//cout << "Loading " << file << endl;
 	ifstream infile;
 	infile.open(file, ios::in);
 	if (!infile.is_open()) {
@@ -21,7 +21,7 @@ Mesh* loadOBJ(const char* file, char* texture, GLuint shader) {
 		return 0;
 	}
 	else
-		cout << "File Loaded" << endl;
+		cout << "File " << file << " Loaded" << endl;
 
 	vector<GLfloat> verts,normals,uvs;
 	Face faces = Face();
@@ -69,15 +69,15 @@ Mesh* loadOBJ(const char* file, char* texture, GLuint shader) {
 		if((i + 1) % 3 == 0)
 			cout << endl;
 	}*/
-	cout << "Complete!" << endl;
-	Mesh* mesh = new Mesh(verts, normals, uvs, faces, texture, shader);
+	//cout << "Complete!" << endl;
+	Mesh* mesh = new Mesh(verts, normals, uvs, faces);
 	return mesh;
 }
 
 void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>& uvs, std::vector<GLfloat>& norms
 							, std::vector<GLuint>& vertFaces, std::vector<GLuint>& uvFaces, std::vector<GLuint>& normFaces) {
 
-	cout << "Generating " << file << endl;
+	//cout << "Generating " << file << endl;
 
 	string fileContents = "";
 	for (unsigned int i = 0; i < verts.size(); i += FLOATS_PER_VERT) {
@@ -132,13 +132,13 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 	fileContents += to_string(vertFaces.size());
 	fileContents += " faces\n\n";
 
-	cout << "Writing..." << endl;
+	//cout << "Writing..." << endl;
 	//write fileContents to the file, overwrite its contents
 	std::ofstream ofile;
 	ofile.open(file, ios::out | ios::trunc);
 	ofile.write(fileContents.c_str(), fileContents.length());
 	ofile.close();
-	cout << "File successfully generated." << endl;
+	//cout << "File successfully generated." << endl;
 }
 
 void genCube(const char* file) {

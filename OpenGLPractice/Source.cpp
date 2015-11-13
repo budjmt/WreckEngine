@@ -22,7 +22,6 @@ Mouse* mouse;
 TriPlay* game;
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-
 void mouse_move_callback(GLFWwindow* window, double x, double y);
 
 void init() {
@@ -62,7 +61,8 @@ void initGraphics(GLFWwindow* window) {
 	glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
 	//glClearColor(0.f, 0.f, 0.f, 1.f);
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);//render as wireframe
+	//render as wireframe
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 void update() {

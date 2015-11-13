@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GL_DEBUG
+#define GL_DEBUG
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
@@ -29,3 +30,5 @@ glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 glDebugMessageCallback(GLDebugMessageCallback, NULL);
 
 */
+
+#endif

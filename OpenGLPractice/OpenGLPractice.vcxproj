@@ -158,10 +158,11 @@
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="ColliderEntity.cpp" />
     <ClCompile Include="Drawable.cpp" />
+    <ClCompile Include="DrawMesh.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GLDebug.cpp" />
-    <ClCompile Include="GLDebug.h" />
+    <ClInclude Include="GLDebug.h" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ModelHelper.cpp" />
     <ClCompile Include="ShaderHelper.cpp" />
@@ -176,6 +177,7 @@
     <ClInclude Include="Collider.h" />
     <ClInclude Include="ColliderEntity.h" />
     <ClInclude Include="Drawable.h" />
+    <ClInclude Include="DrawMesh.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GLError.h" />
