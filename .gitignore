@@ -1,3 +1,6 @@
+!/OpenGLPractice/bin/*
+!/OpenGLPractice/lib/*
+
 # Compiled Object files
 *.slo
 *.lo
@@ -9,17 +12,17 @@
 *.pch
 
 # Compiled Dynamic libraries
-*.so
-*.dylib
+#*.so
+#*.dylib
 #*.dll
 
 # Fortran module files
 *.mod
 
 # Compiled Static libraries
-*.lai
-*.la
-*.a
+#*.lai
+#*.la
+#*.a
 #*.lib
 
 # Executables
