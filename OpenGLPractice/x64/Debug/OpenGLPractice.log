@@ -1,8 +1,0 @@
-﻿Build started 9/27/2015 2:49:15 PM.
-     1>Project "Z:\IGMProfile\Desktop\DSA2\OpenGLPractice\OpenGLPractice.vcxproj" on node 2 (Build target(s)).
-     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V110\Microsoft.Cpp.Platform.targets(44,5): error MSB8020: The builds tools for v140 (Platform Toolset = 'v140') cannot be found. To build using the v140 build tools, either click the Project menu or right-click the solution, and then select "Update VC++ Projects...". Install v140 to build using the v140 build tools.
-     1>Done Building Project "Z:\IGMProfile\Desktop\DSA2\OpenGLPractice\OpenGLPractice.vcxproj" (Build target(s)) -- FAILED.
-
-Build FAILED.
-
-Time Elapsed 00:00:00.03
