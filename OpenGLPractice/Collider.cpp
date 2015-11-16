@@ -27,6 +27,7 @@ Collider::~Collider(void)
 }
 
 Transform* Collider::transform() { return ctrans; }
+glm::vec3 Collider::framePos() { return cframePos; }
 glm::vec3 Collider::dims() { return cdims; } void Collider::dims(glm::vec3 v) { cdims = v; }
 
 bool Collider::intersects2D(Collider other) 
@@ -86,7 +87,7 @@ Manifold Collider::getAxisMinPen(Collider* other) {
 Manifold Collider::intersects(Collider other) {
 	//quick circle collision optimization
 	Manifold manifold;
-	glm::vec3 d = center - other.center;
+	glm::vec3 d = cframePos - other.framePos().;//I'm going to ignore displaced colliders for now
 	float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
 	float rad = glm::max(glm::max(cdims.x, cdims.y), cdims.z) + glm::max(glm::max(other.dims().x, other.dims().y), other.dims().z);
 	if (distSq > rad * rad)
@@ -189,7 +190,7 @@ void Collider::updateNormals() {
 	case BOX:
 		glm::mat4 rot = glm::rotate(ctrans->rotAngle,ctrans->rotAxis);
 		for (unsigned int i = 0; i < normals.size(); i++) {
-			currNormals[i] = (glm::vec3)(rot * normals[i]);
+			currNormals[i] = (glm::vec3)(rot * glm::vec4(normals[i], 1));
 		}
 	}
 }

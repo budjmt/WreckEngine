@@ -38,6 +38,7 @@ public:
 	~Collider(void);
 	ColliderType& type;
 	Transform* transform();
+	glm::vec3 framePos();
 	glm::vec3 dims(); void dims(glm::vec3 v);
 
 	bool intersects2D(Collider other);
@@ -58,6 +59,7 @@ public:
 	void addUniqueAxis(std::vector<glm::vec3>& axes, glm::vec3 axis);
 private:
 	Transform* ctrans;
+	glm::vec3 cframePos;
 	glm::vec3 cdims;
 	ColliderType etype;
 
