@@ -62,7 +62,7 @@ void initGraphics(GLFWwindow* window) {
 	//glClearColor(0.f, 0.f, 0.f, 1.f);
 
 	//render as wireframe
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
 void update() {

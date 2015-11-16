@@ -9,7 +9,7 @@
 #include "Mesh.h"
 
 //2D
-enum ColliderType {
+enum class ColliderType {
 	//CIRCLE,
 	//RECT,
 	//TRIANGLE
@@ -39,6 +39,7 @@ public:
 	ColliderType& type;
 	Transform* transform();
 	glm::vec3 dims(); void dims(glm::vec3 v);
+	float radius() const;
 
 	bool intersects2D(Collider other);
 	Manifold intersects(Collider other);
@@ -50,6 +51,7 @@ public:
 
 	void getMaxMin(glm::vec3 axis,float* maxmin);
 
+	bool fuzzySameDir(glm::vec3 v1, glm::vec3 v2);
 	SupportPoint getSupportPoint(glm::vec3 dir);
 	Manifold getAxisMinPen(Collider* other);
 
@@ -59,6 +61,7 @@ public:
 private:
 	Transform* ctrans;
 	glm::vec3 cdims;
+	float cradius;
 	ColliderType etype;
 
 	std::vector<glm::vec3> normals, edges, currNormals;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
