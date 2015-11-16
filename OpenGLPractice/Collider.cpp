@@ -48,11 +48,12 @@ bool Collider::intersects2D(Collider other)
 }
 
 SupportPoint Collider::getSupportPoint(glm::vec3 dir) {
-	SupportPoint support{ corners[0], corners[0].dot(dir) };
-	for (int i = 1; i < corners.length; i++) {
-		float proj = glm::dot(corners[i], dir);
+	SupportPoint support{ verts[0], verts[0].dot(dir) };
+	int numVerts = verts.size();
+	for (int i = 1; i < numVerts; i++) {
+		float proj = glm::dot(verts[i], dir);
 		if (proj > support.proj) {
-			support.point = corners[i];
+			support.point = verts[i];
 			support.proj = proj;
 		}
 	}
@@ -70,7 +71,7 @@ Manifold Collider::getAxisMinPen(Collider* other) {
 	for (int i = 0; i < numNormals; i++) {
 		glm::vec3 norm = currNormals[i];
 		SupportPoint support = other->getSupportPoint(-norm);
-		glm::vec3 vert = corners[i];
+		glm::vec3 vert = verts[i];//no
 
 		float pen = glm::dot(norm, support.point - vert);
 		if (pen > axis.pen) {
@@ -84,23 +85,24 @@ Manifold Collider::getAxisMinPen(Collider* other) {
 
 Manifold Collider::intersects(Collider other) {
 	//quick circle collision optimization
+	Manifold manifold;
 	glm::vec3 d = center - other.center;
 	float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
-	if (distSq > max(cdims.x, cdims.y, cdims.z) + max(other.dims().x, other.dims().y, other.dims().z))
-		return false;
+	float rad = glm::max(glm::max(cdims.x, cdims.y), cdims.z) + glm::max(glm::max(other.dims().x, other.dims().y), other.dims().z);
+	if (distSq > rad * rad)
+		return manifold;//originator will be null, i.e. there's no collision
 
 	//separating axis theorem 2: electric boogaloo
 	//this contains the collision data
-	Manifold manifold;
 
-	var minAxis = getAxisMinPen(&other);
+	Manifold minAxis = getAxisMinPen(&other);
 	if (minAxis.pen > 0)
-		return NULL;
+		return manifold;
 
-	var otherMinAxis = other.getAxisMinPen(this);
+	Manifold otherMinAxis = other.getAxisMinPen(this);
 	//this may be unnecessary
 	if (otherMinAxis.pen > 0)
-		return NULL;
+		return manifold;
 
 	manifold = (minAxis.pen > otherMinAxis.pen) ? minAxis : otherMinAxis;
 	//console.log(manifold.pen);
