@@ -75,6 +75,7 @@ GLuint Drawable::genTexture(const char* texFile) {
 	glBindTexture(GL_TEXTURE_2D, texture);
 	//the texture is loaded in BGRA format
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)textureData);
+	FreeImage_Unload(image);
 
 	loadedTextures[texFile] = texture;
 	return texture;

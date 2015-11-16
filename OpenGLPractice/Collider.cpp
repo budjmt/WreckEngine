@@ -5,14 +5,15 @@ Collider::Collider(void)
 	: type(etype)
 {
 	cdims = glm::vec3(0,0,0);
+	cradius = 0;
 }
 
 Collider::Collider(Transform* t, glm::vec3 d)
 	: type(etype)
 {
-	cdims = d;
+	dims(d);
 	ctrans = t;
-	etype = BOX;
+	etype = ColliderType::BOX;
 	genNormals();
 }
 
@@ -28,12 +29,14 @@ Collider::~Collider(void)
 
 Transform* Collider::transform() { return ctrans; }
 glm::vec3 Collider::framePos() { return cframePos; }
-glm::vec3 Collider::dims() { return cdims; } void Collider::dims(glm::vec3 v) { cdims = v; }
+
+glm::vec3 Collider::dims() { return cdims; } void Collider::dims(glm::vec3 v) { cdims = v; cradius = glm::max(glm::max(cdims.x, cdims.y), cdims.z); }
+float Collider::radius() const { return cradius; }
 
 bool Collider::intersects2D(Collider other) 
 {
 	//circle collision optimization
-	if ((ctrans->position - other.transform()->position).length() > glm::max(cdims.x, cdims.y) + glm::max(other.dims().x, other.dims().y))// || (type == CIRCLE && other.type == CIRCLE))
+	if ((ctrans->position - other.transform()->position).length() > cradius + other.radius())// || (type == CIRCLE && other.type == CIRCLE))
 		return false;
 	//separating axis theorem
 	std::vector<glm::vec3> axes = getAxes(other);
@@ -67,7 +70,9 @@ SupportPoint Collider::getSupportPoint(glm::vec3 dir) {
 //so the greatest NEGATIVE value has the least penetration
 //if the value is positive, then there is no penetration i.e. there is a separating axis
 Manifold Collider::getAxisMinPen(Collider* other) {
-	Manifold axis = { this, 0, 0, -1 / 0.f };
+	Manifold axis;
+	axis.originator = this;
+	axis.pen = -1 / 0.f;
 	int numNormals = currNormals.size();
 	for (int i = 0; i < numNormals; i++) {
 		glm::vec3 norm = currNormals[i];
@@ -89,7 +94,7 @@ Manifold Collider::intersects(Collider other) {
 	Manifold manifold;
 	glm::vec3 d = cframePos - other.framePos().;//I'm going to ignore displaced colliders for now
 	float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
-	float rad = glm::max(glm::max(cdims.x, cdims.y), cdims.z) + glm::max(glm::max(other.dims().x, other.dims().y), other.dims().z);
+	float rad = cradius + other.radius();
 	if (distSq > rad * rad)
 		return manifold;//originator will be null, i.e. there's no collision
 
@@ -117,9 +122,9 @@ Manifold Collider::intersects(Collider other) {
 
 void Collider::genNormals() {
 	switch (etype) {
-	case SPHERE:
+	case ColliderType::SPHERE:
 		break;
-	case BOX:
+	case ColliderType::BOX:
 		normals.push_back(glm::vec3(1, 0, 0));
 		normals.push_back(glm::vec3(0, 1, 0));
 		normals.push_back(glm::vec3(0, 0, 1));
@@ -127,7 +132,7 @@ void Collider::genNormals() {
 		edges.push_back(glm::vec3(0, 1, 0));
 		edges.push_back(glm::vec3(0, 0, 1));
 		break;
-	case MESH:
+	case ColliderType::MESH:
 		//stating here and now that this is not robust enough for detailed collision meshes
 		//so they should be as low VERTEX count as possible
 		//since I haven't optimized edges yet
@@ -155,12 +160,20 @@ void Collider::genNormals() {
 	}
 }
 
+bool Collider::fuzzySameDir(glm::vec3 v1, glm::vec3 v2) {
+	if (v1 == v2)
+		return true;
+	float propx = v2.x / v1.x;
+	float eps = glm::epsilon<float>();
+	return fabs((v2.y / v1.y - propx) / propx) < eps && fabs(propx - v2.z / v1.z) < eps;
+}
+
 void Collider::addUniqueAxis(std::vector<glm::vec3>& axes, glm::vec3 axis) {
 	//this really should be optimized, but I'll worry about that later
 	int numAxes = axes.size();
 	for (int i = 0; i < numAxes - 1; i++) {
 		glm::vec3 v = axes[i];
-		if (v == axis || -v == axis)
+		if (fuzzySameDir(v,axis))
 			return;
 		//the vector is sorted in ascending order, by x, then y, then z, which is why this works
 		bool greater = v.x < axis.x && v.y < axis.y && v.z < axis.z;
@@ -177,7 +190,7 @@ void Collider::addUniqueAxis(std::vector<glm::vec3>& axes, glm::vec3 axis) {
 void Collider::updateNormals() {
 	//normals.empty();
 	switch (type) {
-	case SPHERE:
+	case ColliderType::SPHERE:
 		break;
 	/*case RECT:
 		for (unsigned int i = 0; i < corners.size(); i++) {
@@ -187,7 +200,7 @@ void Collider::updateNormals() {
 			normals.push_back(norm);
 		}
 		break;*/
-	case BOX:
+	case ColliderType::BOX:
 		glm::mat4 rot = glm::rotate(ctrans->rotAngle,ctrans->rotAxis);
 		for (unsigned int i = 0; i < normals.size(); i++) {
 			currNormals[i] = (glm::vec3)(rot * glm::vec4(normals[i], 1));
@@ -213,10 +226,8 @@ void Collider::getMaxMin(glm::vec3 axis, float* maxmin) {
 }
 
 std::vector<glm::vec3> Collider::getAxes(const Collider& other) {
-	std::vector<glm::vec3> combNormals = currNormals;
-	int numNormals = other.getNormals().size();
-	std::vector<glm::vec3> otherNormals = other.getNormals();
-	for (int i = 0; i < numNormals;i++)
-		combNormals.push_back(otherNormals[i]);
+	std::vector<glm::vec3> combNormals = currNormals
+						 , otherNormals = other.getNormals();
+	combNormals.insert(combNormals.end(), otherNormals.begin(), otherNormals.end());
 	return combNormals;
 }
