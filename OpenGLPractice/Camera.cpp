@@ -44,19 +44,9 @@ void Camera::updateProjection() {
 	projection = glm::perspective(CAM_FOV, width * 1.f / height, znear, zfar);
 }
 
-glm::vec3 Camera::getForward() {
-	return transform.getForward();
-}
-
-glm::vec3 Camera::getUp() {
-	return transform.getUp();
-}
-
-glm::vec3 Camera::getRight() {
-	return transform.getRight();
-}
-
-#include <iostream>
+glm::vec3 Camera::getForward() { return transform.forward(); }
+glm::vec3 Camera::getUp() {	return transform.up(); }
+glm::vec3 Camera::getRight() { return transform.right(); }
 
 void Camera::mayaCam(GLFWwindow* window, Mouse* m, double dt, Camera* camera) {
 	int width, height;

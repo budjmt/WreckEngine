@@ -4,7 +4,7 @@
 ColliderEntity::ColliderEntity(Drawable* s)
 	: Entity(s)
 {
-	ecollider = new Collider(transform.position,transform.scale);
+	ecollider = new Collider(&transform,transform.scale);
 	mass = 1;
 	invMass = 1;
 	estaticObj = 0;
@@ -13,7 +13,7 @@ ColliderEntity::ColliderEntity(Drawable* s)
 ColliderEntity::ColliderEntity(glm::vec3 p,glm::vec3 dims,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s) 
 	: Entity(p,sc,rA,r,s)
 {
-	ecollider = new Collider(transform.position,dims);
+	ecollider = new Collider(&transform,dims);
 	mass = 1;
 	invMass = 1;
 	estaticObj = 0;
@@ -23,12 +23,11 @@ ColliderEntity::ColliderEntity(const ColliderEntity& other)
 	: Entity(other)
 {
 	ecollider = other.collider();
-	staticObj(other.staticObj);
+	staticObj(other.staticObj());
 	mass = other.mass;
 	invMass = other.invMass;
-	staticObj(other.staticObj);
-	vel(other.vel);
-	angVel(other.angVel);
+	vel(other.vel());
+	angVel(other.angVel());
 }
 
 
@@ -97,9 +96,9 @@ void ColliderEntity::handleCollision(ColliderEntity* other, glm::vec3 norm, floa
 
 	glm::vec3 impulse = j * norm;
 	float massRatio = mass / (mass + other->mass);
-	evel -= massRatio * impulse;
+	//evel -= massRatio * impulse;
 	massRatio *= other->mass * invMass;
-	other->vel += massRatio * impulse;
+	//other->vel += massRatio * impulse;
 
 	//correct positions
 	glm::vec3 correction = norm * 0.2f / (invMass + other->invMass);

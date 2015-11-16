@@ -1,36 +1,38 @@
 #include "Mesh.h"
 #include <iostream>
 
-Mesh::Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> u, Face f)
+Mesh::Mesh(std::vector<glm::vec3> v, std::vector<glm::vec3> n, std::vector<glm::vec3> u, Face f)
 {
 	verts(v);
 	normals(n);
 	uvs(u);
 	faces(f);
 
-	int numVerts = verts().size() / FLOATS_PER_VERT;
-	int numUvs = uvs().size() / FLOATS_PER_UV;
+	int numVerts = verts().size();
+	int numUvs = uvs().size();
 	
 	for (unsigned int i = 0; i < mfaces.verts.size(); i++) {
 		//std::cout << i << std::endl;
 		bool inArr = false;
 		unsigned int index;
-		for (index = 0; !inArr && index < mfaces.combined.size();index++) {
-			if (mfaces.combined[index].x == mfaces.verts[i] && mfaces.combined[index].y == mfaces.uvs[i] && mfaces.combined[index].z == mfaces.normals[i]) {
+		for (index = 0; !inArr && index < mfaces.combinations.size();index++) {
+			if (mfaces.combinations[index].x == mfaces.verts[i] 
+				&& mfaces.combinations[index].y == mfaces.uvs[i] 
+				&& mfaces.combinations[index].z == mfaces.normals[i]) {
 				inArr = true;
 				index--;
 			}
 		}
 		if (!inArr) {
-			mfaces.combined.push_back(glm::vec3(mfaces.verts[i], mfaces.uvs[i], mfaces.normals[i]));
-			meshArray.push_back(mverts[mfaces.verts[i] * FLOATS_PER_VERT]);
-			meshArray.push_back(mverts[mfaces.verts[i] * FLOATS_PER_VERT + 1]);
-			meshArray.push_back(mverts[mfaces.verts[i] * FLOATS_PER_VERT + 2]);
-			meshArray.push_back(muvs[mfaces.uvs[i] * FLOATS_PER_UV]);
-			meshArray.push_back(muvs[mfaces.uvs[i] * FLOATS_PER_UV + 1]);
-			meshArray.push_back(mnormals[mfaces.normals[i] * FLOATS_PER_NORM]);
-			meshArray.push_back(mnormals[mfaces.normals[i] * FLOATS_PER_NORM + 1]);
-			meshArray.push_back(mnormals[mfaces.normals[i] * FLOATS_PER_NORM + 2]);
+			mfaces.combinations.push_back(glm::vec3(mfaces.verts[i], mfaces.uvs[i], mfaces.normals[i]));
+			meshArray.push_back(mverts[mfaces.verts[i]].x);
+			meshArray.push_back(mverts[mfaces.verts[i]].y);
+			meshArray.push_back(mverts[mfaces.verts[i]].z);
+			meshArray.push_back(muvs[mfaces.uvs[i]].x);
+			meshArray.push_back(muvs[mfaces.uvs[i]].y);
+			meshArray.push_back(mnormals[mfaces.normals[i]].x);
+			meshArray.push_back(mnormals[mfaces.normals[i]].y);
+			meshArray.push_back(mnormals[mfaces.normals[i]].z);
 		}
 		meshElementArray.push_back(index);
 	}
@@ -58,7 +60,7 @@ Mesh::~Mesh()
 	//delete[] meshElementArray;
 }
 
-std::vector<GLfloat> Mesh::verts() const { return mverts; } void Mesh::verts(std::vector<GLfloat>& v) { mverts = v; }
-std::vector<GLfloat> Mesh::uvs() const { return muvs; } void Mesh::uvs(std::vector<GLfloat>& u) { muvs = u; }
-std::vector<GLfloat> Mesh::normals() const { return mnormals; } void Mesh::normals(std::vector<GLfloat>& n) { mnormals = n; }
+const std::vector<glm::vec3>& Mesh::verts() const { return mverts; } void Mesh::verts(std::vector<glm::vec3>& v) { mverts = v; }
+const std::vector<glm::vec3>& Mesh::uvs() const { return muvs; } void Mesh::uvs(std::vector<glm::vec3>& u) { muvs = u; }
+const std::vector<glm::vec3>& Mesh::normals() const { return mnormals; } void Mesh::normals(std::vector<glm::vec3>& n) { mnormals = n; }
 Face Mesh::faces() const { return mfaces; } void Mesh::faces(Face& f) { mfaces = f; }

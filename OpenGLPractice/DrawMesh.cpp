@@ -5,7 +5,7 @@ DrawMesh::DrawMesh(Mesh* m, char* texFile, GLuint shader) {
 	setup(texFile, shader);
 }
 
-DrawMesh::DrawMesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> u, Face f, char* texFile, GLuint shader)
+DrawMesh::DrawMesh(std::vector<glm::vec3> v, std::vector<glm::vec3> n, std::vector<glm::vec3> u, Face f, char* texFile, GLuint shader)
 {
 	mesh = new Mesh(v, n, u, f);
 	setup(texFile, shader);

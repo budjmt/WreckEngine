@@ -23,7 +23,7 @@ Mesh* loadOBJ(const char* file) {
 	else
 		cout << "File " << file << " Loaded" << endl;
 
-	vector<GLfloat> verts,normals,uvs;
+	vector<glm::vec3> verts,normals,uvs;
 	Face faces = Face();
 
 	std::string line;
@@ -33,22 +33,17 @@ Mesh* loadOBJ(const char* file) {
 		
 		//vertices
 		if(line.find("v ", 0) == 0) {
-			verts.push_back(stof(tokens[1]));
-			verts.push_back(stof(tokens[2]));
-			verts.push_back(stof(tokens[3]));
+			verts.push_back(glm::vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
 			//verts.push_back(1); verts.push_back(1); verts.push_back(1);
 		}
 
 		//normals
 		else if (line.find("vn", 0) == 0) {
-			normals.push_back(stof(tokens[1]));
-			normals.push_back(stof(tokens[2]));
-			normals.push_back(stof(tokens[3]));
+			normals.push_back(glm::vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
 		}
 		//uvs
 		else if (line.find("vt", 0) == 0) {
-			uvs.push_back(stof(tokens[1]));
-			uvs.push_back(stof(tokens[2]));
+			uvs.push_back(glm::vec3(stof(tokens[1]), stof(tokens[2]), 0));
 			//uvs.push_back(stof(tokens[3]));//unnecessary
 		}
 		else if (line[0] == 'f') {

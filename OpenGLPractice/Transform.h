@@ -15,13 +15,12 @@ public:
 	glm::fquat& rotation;
 	glm::vec3& rotAxis;
 	float& rotAngle;
-	glm::vec3& forward, &up, &right;
 	Transform* parent;
 	Transform computeTransform();
 	void updateNormals();//this will replace the ones below
-	glm::vec3 getForward();
-	glm::vec3 getUp();
-	glm::vec3 getRight();
+	glm::vec3 forward();
+	glm::vec3 up();
+	glm::vec3 right();
 	void updateRot();
 	void rotate(float x, float y, float z);
 	void rotate(glm::vec3 v);

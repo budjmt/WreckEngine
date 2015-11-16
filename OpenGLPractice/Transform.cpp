@@ -3,7 +3,7 @@
 #include "glm/gtx/transform.hpp"
 
 Transform::Transform()
-	: position(tposition), scale(tscale), rotation(trotation), rotAngle(trotAngle), rotAxis(trotAxis), forward(tforward), up(tup), right(tright)
+	: position(tposition), scale(tscale), rotation(trotation), rotAngle(trotAngle), rotAxis(trotAxis)
 {
 	position = glm::vec3(0, 0, 0);
 	scale = glm::vec3(1, 1, 1);
@@ -12,16 +12,13 @@ Transform::Transform()
 }
 
 Transform::Transform(const Transform& other) 
-	: position(tposition), scale(tscale), rotation(trotation), rotAngle(trotAngle), rotAxis(trotAxis), forward(tforward), up(tup), right(tright)
+	: position(tposition), scale(tscale), rotation(trotation), rotAngle(trotAngle), rotAxis(trotAxis)
 {
 	position = other.position;
 	scale = other.scale;
 	rotation = other.rotation;
 	rotAxis = other.rotAxis;
 	rotAngle = other.rotAngle;
-	forward = other.forward;
-	up = other.up;
-	right = other.right;
 }
 
 
@@ -36,9 +33,6 @@ Transform& Transform::operator=(const Transform& other)
 	rotation = other.rotation;
 	rotAxis = other.rotAxis;
 	rotAngle = other.rotAngle;
-	forward = other.forward;
-	up = other.up;
-	right = other.right;
 	return *this;
 }
 
@@ -56,26 +50,20 @@ Transform Transform::computeTransform() {
 }
 
 void Transform::updateNormals() {
-
-}
-
-glm::vec3 Transform::getForward() {
 	glm::mat4 m = glm::rotate(rotAngle, rotAxis);
-	return (glm::vec3)(m * glm::vec4(0, 0, 1, 1));
+	tforward = (glm::vec3)(m * glm::vec4(0, 0, 1, 1));
+	tup = (glm::vec3)(m * glm::vec4(0, 1, 0, 1));
+	tright = glm::cross(tforward, tup);
 }
 
-glm::vec3 Transform::getUp() {
-	glm::mat4 m = glm::rotate(rotAngle, rotAxis);
-	return (glm::vec3)(m * glm::vec4(0, 1, 0, 1));
-}
-
-glm::vec3 Transform::getRight() {
-	return glm::cross(getForward(), getUp());
-}
+glm::vec3 Transform::forward() { return tforward; }
+glm::vec3 Transform::up() { return tup; }
+glm::vec3 Transform::right() { return tright; }
 
 void Transform::updateRot() {
 	rotAngle = glm::angle(rotation);
 	rotAxis = glm::axis(rotation);
+	updateNormals();
 }
 
 void Transform::rotate(float x, float y, float z) {

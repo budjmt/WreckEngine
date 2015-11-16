@@ -10,20 +10,20 @@
 struct Face {
 	//these all correspond to the indices in the vectors
 	std::vector<GLuint> verts, uvs, normals;
-	std::vector<glm::vec3> combined;
+	std::vector<glm::vec3> combinations;//all the unique v/u/n index combinations
 };
 
 class Mesh
 {
 public:
-	Mesh(std::vector<GLfloat> v, std::vector<GLfloat> n, std::vector<GLfloat> u, Face f);
+	Mesh(std::vector<glm::vec3> v, std::vector<glm::vec3> n, std::vector<glm::vec3> u, Face f);
 	~Mesh(void);
-	std::vector<GLfloat> verts() const; void verts(std::vector<GLfloat>& v);
-	std::vector<GLfloat> uvs() const; void uvs(std::vector<GLfloat>& u);
-	std::vector<GLfloat> normals() const; void normals(std::vector<GLfloat>& n);
+	const std::vector<glm::vec3>& verts() const; void verts(std::vector<glm::vec3>& v);
+	const std::vector<glm::vec3>& uvs() const; void uvs(std::vector<glm::vec3>& u);
+	const std::vector<glm::vec3>& normals() const; void normals(std::vector<glm::vec3>& n);
 	Face faces() const; void faces(Face& f);
 protected:
-	std::vector<GLfloat> mverts, mnormals, muvs;
+	std::vector<glm::vec3> mverts, mnormals, muvs;
 	Face mfaces;
 	std::vector<GLfloat> meshArray;
 	std::vector<GLuint> meshElementArray;
