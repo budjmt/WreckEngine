@@ -165,7 +165,7 @@ bool Collider::fuzzySameDir(glm::vec3 v1, glm::vec3 v2) {
 		return true;
 	float propx = v2.x / v1.x;
 	float eps = glm::epsilon<float>();
-	return fabs((v2.y / v1.y - propx) / propx) < eps && fabs(propx - v2.z / v1.z) < eps;
+	return fabs((v2.y / v1.y - propx) / propx) < eps && fabs((v2.z / v1.z - propx) / propx) < eps;
 }
 
 void Collider::addUniqueAxis(std::vector<glm::vec3>& axes, glm::vec3 axis) {
@@ -202,10 +202,16 @@ void Collider::updateNormals() {
 		break;*/
 	case ColliderType::BOX:
 		glm::mat4 rot = glm::rotate(ctrans->rotAngle,ctrans->rotAxis);
-		for (unsigned int i = 0; i < normals.size(); i++) {
-			currNormals[i] = (glm::vec3)(rot * glm::vec4(normals[i], 1));
+		int numNormals = normals.size();
+		for (int i = 0; i < numNormals; i++) {
+			currNormals[i] = (glm::vec3)(rot * glm::vec4(normals[i], 1));//this is probably slow
 		}
 	}
+}
+
+void Collider::update() {
+	cframePos = ctrans->computeTransform().position;
+	updateNormals();
 }
 
 const std::vector<glm::vec3>& Collider::getNormals() const {

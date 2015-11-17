@@ -45,6 +45,8 @@ public:
 	bool intersects2D(Collider other);
 	Manifold intersects(Collider other);
 
+	void update();
+
 	//void setCorners(std::vector<glm::vec3> c);
 	void genNormals();
 	void updateNormals();

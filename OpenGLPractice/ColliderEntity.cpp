@@ -46,15 +46,7 @@ void ColliderEntity::update(double dt) {
 	evel += netForce  * (float)dt;
 	transform.position += evel  * (float)dt;
 	transform.rotate(eangVel * (float)dt);
-	//lazy fix is lazy also wat why is it using open gl coordinates
-	if (transform.position.x > 1 || transform.position.x < -1) {
-		evel.x *= -1;
-		eangVel.x *= -1;
-	}
-	if (transform.position.y > 1 || transform.position.y < -1) {
-		evel.y *= -1;
-		eangVel.y *= -1;
-	}
+
 	if (evel.length() > MAX_VEL)
 		evel *= MAX_VEL / evel.length();
 	else if (evel.length() < 0.05f) {
