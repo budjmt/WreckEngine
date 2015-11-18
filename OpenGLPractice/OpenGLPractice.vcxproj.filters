@@ -60,9 +60,6 @@
     <ClCompile Include="DrawMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GLDebug.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="GLDebug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -114,6 +111,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DrawMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GLDebug.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
