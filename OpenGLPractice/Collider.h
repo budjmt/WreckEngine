@@ -51,24 +51,26 @@ public:
 	void genNormals();
 	void updateNormals();
 	const std::vector<glm::vec3>& getNormals() const;
+	const std::vector<glm::vec3>& getEdges() const;
 
 	void getMaxMin(glm::vec3 axis,float* maxmin);
 
 	bool fuzzySameDir(glm::vec3 v1, glm::vec3 v2);
 	SupportPoint getSupportPoint(glm::vec3 dir);
 	Manifold getAxisMinPen(Collider* other);
-
+	Manifold getAxisMinPen(Collider* other, std::vector<glm::vec3>& axes);
+	
 	std::vector<glm::vec3> getAxes(const Collider& other);
 
 	void addUniqueAxis(std::vector<glm::vec3>& axes, glm::vec3 axis);
 private:
-	Transform* ctrans;
-	glm::vec3 cframePos;
-	glm::vec3 cdims;
-	float cradius;
-	ColliderType etype;
+	Transform* _transform;
+	glm::vec3 _framePos;
+	glm::vec3 _dims;
+	float _radius;
+	ColliderType _type;
 
-	std::vector<glm::vec3> normals, edges, currNormals;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
+	std::vector<glm::vec3> normals, edges, currNormals, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
 	Mesh* mesh;
 };
 
