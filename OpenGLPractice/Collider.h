@@ -61,6 +61,8 @@ public:
 	Manifold getAxisMinPen(Collider* other, std::vector<glm::vec3>& axes);
 	
 	std::vector<glm::vec3> getAxes(const Collider& other);
+	void genGaussMap();
+	void overlayGaussMaps(Collider& other, std::vector<glm::vec3>& edges);
 
 	void addUniqueAxis(std::vector<glm::vec3>& axes, glm::vec3 axis);
 private:
@@ -71,6 +73,7 @@ private:
 	ColliderType _type;
 
 	std::vector<glm::vec3> normals, edges, currNormals, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
+	std::vector<int> adjacentFaces;
 	Mesh* mesh;
 };
 

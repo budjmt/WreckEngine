@@ -165,6 +165,43 @@ void Collider::genNormals() {
 	}
 }
 
+void Collider::genGaussMap() {
+	switch (_type) {
+	case ColliderType::SPHERE:
+		break;
+	case ColliderType::BOX:
+		adjacentFaces.push_back(0); adjacentFaces.push_back(1);
+		adjacentFaces.push_back(0); adjacentFaces.push_back(2);
+		adjacentFaces.push_back(1); adjacentFaces.push_back(2);
+		break;
+	case ColliderType::MESH:
+		//stating here and now that this is not robust enough for detailed collision meshes
+		//so they should be as low VERTEX count as possible
+		//since I haven't optimized edges yet
+		//...
+		//generate the face normals from the mesh's normals
+		int numNormals = mesh->normals().size();
+		std::vector<glm::vec3> meshNormals = mesh->normals();
+		for (int i = 0; i < numNormals; i++)
+			addUniqueAxis(normals, meshNormals[i]);
+		//also set up the unique edges
+		//thiiiis is super slow
+		int numFaces = mesh->faces().verts.size();
+		std::vector<glm::vec3> meshVerts = mesh->verts();
+		std::vector<GLuint> faceVerts = mesh->faces().verts;
+		for (int i = 0; i < numFaces; i += 3) {
+			glm::vec3 p1, p2, p3;
+			p1 = meshVerts[faceVerts[i]];
+			p2 = meshVerts[faceVerts[i + 1]];
+			p3 = meshVerts[faceVerts[i + 2]];
+			addUniqueAxis(edges, p1 - p2);
+			addUniqueAxis(edges, p2 - p3);
+			addUniqueAxis(edges, p3 - p1);
+		}
+		break;
+	}
+}
+
 bool Collider::fuzzySameDir(glm::vec3 v1, glm::vec3 v2) {
 	if (v1 == v2)
 		return true;
@@ -257,4 +294,15 @@ std::vector<glm::vec3> Collider::getAxes(const Collider& other) {
 
 	combNormals.insert(combNormals.end(), edgeNormals.begin(), edgeNormals.end());
 	return combNormals;
+}
+
+void Collider::overlayGaussMaps(Collider& other, std::vector<glm::vec3>& edges) {
+	int numNormals = currNormals.size();
+	auto otherNormals = other.getNormals();
+	int othernumNormals = otherNormals.size();
+	for (int i = 0; i < numNormals; i++) {
+		for (int j = 0; j < othernumNormals; j++) {
+
+		}
+	}
 }
