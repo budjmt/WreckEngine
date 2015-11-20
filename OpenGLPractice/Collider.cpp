@@ -130,15 +130,25 @@ void Collider::genNormals() {
 	case ColliderType::SPHERE:
 		break;
 	case ColliderType::BOX:
-		normals.push_back(0);//need to define some kind of vertex and normal array for box colliders
-		normals.push_back(1);
-		normals.push_back(2);
+		faceNormals.push_back(glm::vec3(1, 0, 0));//need to define some kind of vertex array for box colliders
+		faceNormals.push_back(glm::vec3(0, 1, 0));
+		faceNormals.push_back(glm::vec3(0, 0, 1));
 		break;
 	case ColliderType::MESH:
-		//generate the face normals from the mesh's normals
-		int numNormals = mesh->normals().size();
-		for (int i = 0; i < numNormals; i++)
-			addUniqueAxis(normals, i);
+		//generate the face normals from the mesh's vertices
+		std::vector<GLuint>& faceVerts = mesh->faces.verts();
+		std::vector<glm::vec3> meshVerts = mesh->verts();
+		int numFaces = faceVerts.size();
+		for (int i = 0; i < numFaces; i += 3) {
+			glm::vec3 normal, e1, e2, v;
+			v = meshVerts[faceVerts[i + 1]];
+			e1 = meshVerts[faceVerts[i]] - v;
+			e2 = v - meshVerts[faceVerts[i + 2]];
+			normal = glm::normalize(glm::cross(e1, e2));
+			faceNormals.push_back(normal);
+		}
+		for (int i = 0; i < numFaces; i++)
+			addUniqueAxis(uniqueNormals, i);
 		break;
 	}
 }
@@ -169,7 +179,7 @@ void Collider::genGaussMap() {
 								a.edge[0] = faceVerts[i + p1];
 							//otherwise, record it, set the normal, push it back, and end the loop
 							else {
-								a.edge[1] = faceVerts[i + p1]; a.normal = j % 3;//I just realized this and the way I normally do normals is now fucked
+								a.edge[1] = faceVerts[i + p1]; a.other = j / 3;//I just realized this and the way I normally do normals is now fucked
 								//essentially, I need an array of face normals now which the indexes correspond to this... hmm
 								//a map? probably. map face normals (edge cross product, different from point normals) to index values?
 								//I really just need a way to connect the adjacencies back to the face normals
@@ -180,7 +190,12 @@ void Collider::genGaussMap() {
 								//the way I'm deriving this is from the points on the faces
 								//from these I can derive a face normal, i.e. the key
 								//I can also derive a face normal from the other face
-								gauss.adjacencies[i % 3].push_back(a);
+								//what am I using these for
+								//the face normals are used for one test, so they should be stored individually
+								//the edges are done with the gauss map
+								//I go through each face normal and their arcs and compare them to the other
+								//and the intersections are the ones I need
+								gauss.adjacencies[i / 3].push_back(a);
 								added = true;
 							}
 							break;
@@ -238,9 +253,9 @@ void Collider::updateNormals() {
 		break;*/
 	case ColliderType::BOX:
 		glm::mat4 rot = glm::rotate(_transform->rotAngle, _transform->rotAxis);
-		int numNormals = normals.size();
+		int numNormals = faceNormals.size();
 		for (int i = 0; i < numNormals; i++) {
-			currNormals[i] = (glm::vec3)(rot * glm::vec4(normals[i], 1));//this is probably slow
+			currNormals[i] = (glm::vec3)(rot * glm::vec4(faceNormals[i], 1));//this is probably slow
 		}
 		int numEdges = edges.size();
 		for (int i = 0; i < numEdges; i++) {

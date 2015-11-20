@@ -30,7 +30,7 @@ struct Manifold {
 };
 
 struct Adj {
-	int normal;
+	int other;
 	int edge[2];
 };
 
@@ -84,8 +84,8 @@ private:
 	float _radius;
 	ColliderType _type;
 
-	std::vector<int> normals;//uses indices
-	std::vector<glm::vec3> currNormals, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
+	std::vector<glm::vec3> faceNormals, currNormals, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
+	std::vector<int> uniqueNormals;//indices of the faceNormals that are unique
 	GaussMap gauss;
 	Mesh* mesh;
 };
