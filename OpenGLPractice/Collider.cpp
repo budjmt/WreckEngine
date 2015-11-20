@@ -14,7 +14,25 @@ Collider::Collider(Transform* t, glm::vec3 d)
 	dims(d);
 	_transform = t;
 	_type = ColliderType::BOX;
+	//the order is important;
+	//edges depend on the gauss map, which depends on the normals
 	genNormals();
+	genGaussMap();
+	genEdges();
+}
+
+Collider::Collider(Mesh* m, Transform* t)
+	: type(_type)
+{
+	mesh = m;
+	dims(m->getDims());
+	_transform = t;
+	_type = ColliderType::BOX;
+	//the order is important;
+	//edges depend on the gauss map, which depends on the normals
+	genNormals();
+	genGaussMap();
+	genEdges();
 }
 
 Collider::Collider(const Collider& other)
@@ -115,6 +133,8 @@ Manifold Collider::intersects(Collider other) {
 	if (otherMinAxis.pen > 0)
 		return manifold;
 
+	//edges
+
 	manifold = (minAxis.pen > otherMinAxis.pen) ? minAxis : otherMinAxis;
 	//console.log(manifold.pen);
 	return manifold;
@@ -136,7 +156,7 @@ void Collider::genNormals() {
 		break;
 	case ColliderType::MESH:
 		//generate the face normals from the mesh's vertices
-		std::vector<GLuint>& faceVerts = mesh->faces.verts();
+		std::vector<GLuint>& faceVerts = mesh->faces().verts;
 		std::vector<glm::vec3> meshVerts = mesh->verts();
 		int numFaces = faceVerts.size();
 		for (int i = 0; i < numFaces; i += 3) {
@@ -151,6 +171,24 @@ void Collider::genNormals() {
 			addUniqueAxis(uniqueNormals, i);
 		break;
 	}
+	currNormals = std::vector<glm::vec3>(faceNormals.size());
+}
+
+void Collider::genEdges() {
+	switch (_type) {
+	case ColliderType::SPHERE:
+		break;
+	case ColliderType::BOX:
+	case ColliderType::MESH:
+		for (std::pair<glm::vec3, std::vector<Adj>> pair : gauss.adjacencies) {
+			for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
+				setEdge(pair.second[i].edge, edges.size());
+				edges.push_back(faceNormals[pair.second[i].f2] - pair.first);
+			}
+		}
+		break;
+	}
+	currEdges = std::vector<glm::vec3>(edges.size());
 }
 
 void Collider::genGaussMap() {
@@ -158,8 +196,9 @@ void Collider::genGaussMap() {
 	case ColliderType::SPHERE:
 		break;
 	case ColliderType::BOX:
-		gauss.adjacencies[0] = { Adj{ 1, {,} }, Adj{ 2, {,} } };
-		gauss.adjacencies[1] = { Adj{ 2, {,} } };
+		//need to set up proper handling for box colliders for vertices
+		//gauss.adjacencies[faceNormals[0]] = { Adj{ 1, {,} }, Adj{ 2, {,} } };
+		//gauss.adjacencies[faceNormals[1]] = { Adj{ 2, {,} } };
 		break;
 	case ColliderType::MESH:
 		//set up the edge associations
@@ -167,6 +206,8 @@ void Collider::genGaussMap() {
 		int numFaces = faceVerts.size();
 		for (int i = 0; i < numFaces; i += 3) {
 			for (int j = i + 3; j < numFaces; j++) {
+				if (fuzzySameDir(faceNormals[i / 3], faceNormals[j / 3]))
+					continue;
 				Adj a;
 				a.edge[0] = -1; a.edge[1] = -1;
 				bool added = false;
@@ -179,23 +220,8 @@ void Collider::genGaussMap() {
 								a.edge[0] = faceVerts[i + p1];
 							//otherwise, record it, set the normal, push it back, and end the loop
 							else {
-								a.edge[1] = faceVerts[i + p1]; a.other = j / 3;//I just realized this and the way I normally do normals is now fucked
-								//essentially, I need an array of face normals now which the indexes correspond to this... hmm
-								//a map? probably. map face normals (edge cross product, different from point normals) to index values?
-								//I really just need a way to connect the adjacencies back to the face normals
-								//for the gauss map, I'll be iterating over the face normals
-								//so the face normals are key
-								//and the info I need is the associations...
-								//which should also point to face normals
-								//the way I'm deriving this is from the points on the faces
-								//from these I can derive a face normal, i.e. the key
-								//I can also derive a face normal from the other face
-								//what am I using these for
-								//the face normals are used for one test, so they should be stored individually
-								//the edges are done with the gauss map
-								//I go through each face normal and their arcs and compare them to the other
-								//and the intersections are the ones I need
-								gauss.adjacencies[i / 3].push_back(a);
+								a.edge[1] = faceVerts[i + p1]; a.f1 = i / 3; a.f2 = j / 3;
+								gauss.adjacencies[faceNormals[a.f1]].push_back(a);
 								added = true;
 							}
 							break;
@@ -239,8 +265,7 @@ void Collider::addUniqueAxis(std::vector<int>& axes, int aIndex) {
 }
 
 void Collider::updateNormals() {
-	//normals.empty();
-	switch (type) {
+	switch (_type) {
 	case ColliderType::SPHERE:
 		break;
 	/*case RECT:
@@ -252,15 +277,28 @@ void Collider::updateNormals() {
 		}
 		break;*/
 	case ColliderType::BOX:
+	case ColliderType::MESH:
 		glm::mat4 rot = glm::rotate(_transform->rotAngle, _transform->rotAxis);
-		int numNormals = faceNormals.size();
+		int numNormals = uniqueNormals.size();
 		for (int i = 0; i < numNormals; i++) {
-			currNormals[i] = (glm::vec3)(rot * glm::vec4(faceNormals[i], 1));//this is probably slow
+			currNormals[i] = (glm::vec3)(rot * glm::vec4(faceNormals[uniqueNormals[i]], 1));//this is probably slow
 		}
+		break;
+	}
+}
+
+void Collider::updateEdges() {
+	switch (_type) {
+	case ColliderType::SPHERE:
+		break;
+	case ColliderType::BOX:
+	case ColliderType::MESH:
+		glm::mat4 rot = glm::rotate(_transform->rotAngle, _transform->rotAxis);
 		int numEdges = edges.size();
 		for (int i = 0; i < numEdges; i++) {
 			currEdges[i] = (glm::vec3)(rot * glm::vec4(edges[i], 1));//this is probably slow
 		}
+		break;
 	}
 }
 
@@ -269,8 +307,23 @@ void Collider::update() {
 	updateNormals();
 }
 
-const std::vector<glm::vec3>& Collider::getNormals() const { return currNormals; }
+const std::vector<int>& Collider::getNormals() const { return uniqueNormals; }
+const std::vector<glm::vec3>& Collider::getCurrNormals() const { return currNormals; }
 const std::vector<glm::vec3>& Collider::getEdges() const { return currEdges; }
+
+glm::vec3 Collider::getNormal(int index) const { return currNormals[index]; }
+glm::vec3 Collider::getEdge(int (&e)[2]) { 
+	if (e[1] < e[0]) { int temp = e[0]; e[0] = e[1]; e[1] = temp; }
+	std::string key = std::to_string(e[0]) + "," + std::to_string(e[1]);
+	return currEdges[edgeMap[key]];
+}
+void Collider::setEdge(int(&e)[2], int value) {
+	if (e[1] < e[0]) { int temp = e[0]; e[0] = e[1]; e[1] = temp; }
+	std::string key = std::to_string(e[0]) + "," + std::to_string(e[1]);
+	edgeMap[key] = value;
+}
+
+const GaussMap& Collider::getGaussMap() const { return gauss; }
 
 void Collider::getMaxMin(glm::vec3 axis, float* maxmin) {
 	maxmin[0] = glm::dot(mesh->verts()[0], axis);
@@ -286,31 +339,53 @@ void Collider::getMaxMin(glm::vec3 axis, float* maxmin) {
 }
 
 std::vector<glm::vec3> Collider::getAxes(const Collider& other) {
-	std::vector<glm::vec3> combNormals = currNormals
-						 , otherNormals = other.getNormals();
-	combNormals.insert(combNormals.end(), otherNormals.begin(), otherNormals.end());
-	
-	std::vector<glm::vec3> edgeNormals;
-	int numEdges = currEdges.size();
-	auto otherEdges = other.getEdges();
-	int othernumEdges = otherEdges.size();
-	for (int i = 0; i < numEdges; i++) {
-		for (int j = 0; j < othernumEdges; j++) {
-			addUniqueAxis(edgeNormals, glm::cross(currEdges[i], otherEdges[j]));
-		}
-	}
+	std::vector<glm::vec3> combNormals;
+	auto otherNormals = other.getCurrNormals();
+	auto otheruniqueNormals = other.getNormals();
+	for (int i = 0, numNormals = uniqueNormals.size(); i < numNormals; i++)
+		combNormals.push_back(currNormals[uniqueNormals[i]]);
+	for (int i = 0, numNormals = otheruniqueNormals.size(); i < numNormals; i++)
+		combNormals.push_back(otherNormals[otheruniqueNormals[i]]);
 
-	combNormals.insert(combNormals.end(), edgeNormals.begin(), edgeNormals.end());
 	return combNormals;
 }
 
-void Collider::overlayGaussMaps(Collider& other, std::vector<glm::vec3>& edges) {
-	int numNormals = currNormals.size();
-	auto otherNormals = other.getNormals();
-	int othernumNormals = otherNormals.size();
-	for (int i = 0; i < numNormals; i++) {
-		for (int j = 0; j < othernumNormals; j++) {
-
+Manifold Collider::overlayGaussMaps(const Collider& other) {
+	Manifold manifold;
+	GaussMap othergauss = other.getGaussMap();
+	auto otherNormals = other.getCurrNormals();
+	for (std::pair<glm::vec3, std::vector<Adj>> pair : gauss.adjacencies) {
+		for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
+			Adj curr = pair.second[i];
+			glm::vec3 a = currNormals[curr.f1], b = currNormals[curr.f2];
+			for (std::pair<glm::vec3, std::vector<Adj>> otherPair : gauss.adjacencies) {
+				for (int j = 0, othernumAdj = otherPair.second.size(); j < othernumAdj; j++) {
+					Adj otherCurr = otherPair.second[j];
+					glm::vec3 c = otherNormals[otherCurr.f1], d = otherNormals[otherCurr.f2];
+					//checks if the arcs between arc(a,b) and arc(c,d) intersect
+					glm::vec3 bxa = glm::cross(b, a);
+					float cba = glm::dot(c, bxa)
+						, dba = glm::dot(d, bxa);
+					if (cba * dba < 0) {
+						glm::vec3 dxc = glm::cross(d, c);
+						float adc = glm::dot(a, dxc)
+							, bdc = glm::dot(b, dxc);
+						if (adc * bdc < 0 && cba * bdc > 0) {
+							//
+						}
+					}
+				}
+			}
 		}
 	}
+}
+
+std::vector<Adj>& GaussMap::getAdjs(glm::vec3 v) {
+	std::string key = std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z);
+	return adjacencies[key];
+}
+
+void GaussMap::addAdj(glm::vec3 v, Adj a) {
+	std::string key = std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z);
+	adjacencies[key].push_back(a);
 }

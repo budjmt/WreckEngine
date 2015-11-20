@@ -22,10 +22,12 @@ public:
 	const std::vector<glm::vec3>& uvs() const; void uvs(std::vector<glm::vec3>& u);
 	const std::vector<glm::vec3>& normals() const; void normals(std::vector<glm::vec3>& n);
 	Face faces() const; void faces(Face& f);
+	glm::vec3 getDims();
 protected:
-	std::vector<glm::vec3> mverts, mnormals, muvs;
-	Face mfaces;
+	std::vector<glm::vec3> _verts, _normals, _uvs;
+	Face _faces;
 	std::vector<GLfloat> meshArray;
 	std::vector<GLuint> meshElementArray;
+	glm::vec3 h_dims;
 	friend class DrawMesh;
 };
