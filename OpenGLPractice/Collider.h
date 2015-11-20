@@ -29,6 +29,16 @@ struct Manifold {
 	float pen;
 };
 
+struct Adj {
+	int normal;
+	int edge[2];
+};
+
+struct GaussMap {
+	//std::vector<glm::vec3> normals;
+	std::map<int, std::vector<Adj>> adjacencies;//uses indices because of rotations
+};
+
 class Collider
 {
 public:
@@ -61,10 +71,12 @@ public:
 	Manifold getAxisMinPen(Collider* other, std::vector<glm::vec3>& axes);
 	
 	std::vector<glm::vec3> getAxes(const Collider& other);
+
 	void genGaussMap();
+	GaussMap& getGaussMap();
 	void overlayGaussMaps(Collider& other, std::vector<glm::vec3>& edges);
 
-	void addUniqueAxis(std::vector<glm::vec3>& axes, glm::vec3 axis);
+	void addUniqueAxis(std::vector<int>& axes, int aIndex);
 private:
 	Transform* _transform;
 	glm::vec3 _framePos;
@@ -72,8 +84,9 @@ private:
 	float _radius;
 	ColliderType _type;
 
-	std::vector<glm::vec3> normals, edges, currNormals, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
-	std::vector<int> adjacentFaces;
+	std::vector<int> normals;//uses indices
+	std::vector<glm::vec3> currNormals, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
+	GaussMap gauss;
 	Mesh* mesh;
 };
 

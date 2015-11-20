@@ -130,37 +130,15 @@ void Collider::genNormals() {
 	case ColliderType::SPHERE:
 		break;
 	case ColliderType::BOX:
-		normals.push_back(glm::vec3(1, 0, 0));
-		normals.push_back(glm::vec3(0, 1, 0));
-		normals.push_back(glm::vec3(0, 0, 1));
-		edges.push_back(glm::vec3(1, 0, 0));
-		edges.push_back(glm::vec3(0, 1, 0));
-		edges.push_back(glm::vec3(0, 0, 1));
+		normals.push_back(0);//need to define some kind of vertex and normal array for box colliders
+		normals.push_back(1);
+		normals.push_back(2);
 		break;
 	case ColliderType::MESH:
-		//stating here and now that this is not robust enough for detailed collision meshes
-		//so they should be as low VERTEX count as possible
-		//since I haven't optimized edges yet
-		//...
 		//generate the face normals from the mesh's normals
 		int numNormals = mesh->normals().size();
-		std::vector<glm::vec3> meshNormals = mesh->normals();
 		for (int i = 0; i < numNormals; i++)
-			addUniqueAxis(normals, meshNormals[i]);
-		//also set up the unique edges
-		//thiiiis is super slow
-		int numFaces = mesh->faces().verts.size();
-		std::vector<glm::vec3> meshVerts = mesh->verts();
-		std::vector<GLuint> faceVerts = mesh->faces().verts;
-		for (int i = 0; i < numFaces; i += 3) {
-			glm::vec3 p1, p2, p3;
-			p1 = meshVerts[faceVerts[i]];
-			p2 = meshVerts[faceVerts[i + 1]];
-			p3 = meshVerts[faceVerts[i + 2]];
-			addUniqueAxis(edges, p1 - p2);
-			addUniqueAxis(edges, p2 - p3);
-			addUniqueAxis(edges, p3 - p1);
-		}
+			addUniqueAxis(normals, i);
 		break;
 	}
 }
@@ -170,33 +148,46 @@ void Collider::genGaussMap() {
 	case ColliderType::SPHERE:
 		break;
 	case ColliderType::BOX:
-		adjacentFaces.push_back(0); adjacentFaces.push_back(1);
-		adjacentFaces.push_back(0); adjacentFaces.push_back(2);
-		adjacentFaces.push_back(1); adjacentFaces.push_back(2);
+		gauss.adjacencies[0] = { Adj{ 1, {,} }, Adj{ 2, {,} } };
+		gauss.adjacencies[1] = { Adj{ 2, {,} } };
 		break;
 	case ColliderType::MESH:
-		//stating here and now that this is not robust enough for detailed collision meshes
-		//so they should be as low VERTEX count as possible
-		//since I haven't optimized edges yet
-		//...
-		//generate the face normals from the mesh's normals
-		int numNormals = mesh->normals().size();
-		std::vector<glm::vec3> meshNormals = mesh->normals();
-		for (int i = 0; i < numNormals; i++)
-			addUniqueAxis(normals, meshNormals[i]);
-		//also set up the unique edges
-		//thiiiis is super slow
-		int numFaces = mesh->faces().verts.size();
-		std::vector<glm::vec3> meshVerts = mesh->verts();
-		std::vector<GLuint> faceVerts = mesh->faces().verts;
+		//set up the edge associations
+		std::vector<GLuint>& faceVerts = mesh->faces().verts;
+		int numFaces = faceVerts.size();
 		for (int i = 0; i < numFaces; i += 3) {
-			glm::vec3 p1, p2, p3;
-			p1 = meshVerts[faceVerts[i]];
-			p2 = meshVerts[faceVerts[i + 1]];
-			p3 = meshVerts[faceVerts[i + 2]];
-			addUniqueAxis(edges, p1 - p2);
-			addUniqueAxis(edges, p2 - p3);
-			addUniqueAxis(edges, p3 - p1);
+			for (int j = i + 3; j < numFaces; j++) {
+				Adj a;
+				a.edge[0] = -1; a.edge[1] = -1;
+				bool added = false;
+				for (int p1 = 0; !added && p1 < 3; p1++) {
+					for (int p2 = 0; p2 < 3; p2++) {
+						//checks if a pair of vertices match
+						if (faceVerts[i + p1] == faceVerts[j + p2]) {
+							//if a match hasn't been found yet, just record it
+							if (a.edge[0] < 0) 
+								a.edge[0] = faceVerts[i + p1];
+							//otherwise, record it, set the normal, push it back, and end the loop
+							else {
+								a.edge[1] = faceVerts[i + p1]; a.normal = j % 3;//I just realized this and the way I normally do normals is now fucked
+								//essentially, I need an array of face normals now which the indexes correspond to this... hmm
+								//a map? probably. map face normals (edge cross product, different from point normals) to index values?
+								//I really just need a way to connect the adjacencies back to the face normals
+								//for the gauss map, I'll be iterating over the face normals
+								//so the face normals are key
+								//and the info I need is the associations...
+								//which should also point to face normals
+								//the way I'm deriving this is from the points on the faces
+								//from these I can derive a face normal, i.e. the key
+								//I can also derive a face normal from the other face
+								gauss.adjacencies[i % 3].push_back(a);
+								added = true;
+							}
+							break;
+						}
+					}
+				}
+			}
 		}
 		break;
 	}
@@ -210,24 +201,26 @@ bool Collider::fuzzySameDir(glm::vec3 v1, glm::vec3 v2) {
 	return fabs((v2.y / v1.y - propx) / propx) < eps && fabs((v2.z / v1.z - propx) / propx) < eps;
 }
 
-void Collider::addUniqueAxis(std::vector<glm::vec3>& axes, glm::vec3 axis) {
+void Collider::addUniqueAxis(std::vector<int>& axes, int aIndex) {
 	//this really should be optimized, but I'll worry about that later
-	axis = glm::normalize(axis);//hmm
+	std::vector<glm::vec3> meshNormals = mesh->normals();
+	glm::vec3 axis = meshNormals[aIndex];
+	//axis = glm::normalize(axis);//hmm
 	int numAxes = axes.size();
 	for (int i = 0; i < numAxes - 1; i++) {
-		glm::vec3 v = axes[i];
+		glm::vec3 v = meshNormals[axes[i]];
 		if (fuzzySameDir(v,axis))
 			return;
 		//the vector is sorted in ascending order, by x, then y, then z, which is why this works
 		bool greater = v.x < axis.x && v.y < axis.y && v.z < axis.z;
 		if (greater) {
-			axes.insert(axes.begin() + i, axis);
+			axes.insert(axes.begin() + i, aIndex);
 			return;
 		}
 	}
 	//we know for certain it's not in there now, and also is "greater" than all the other vec3s
 	//our worst case right now
-	axes.push_back(axis);
+	axes.push_back(aIndex);
 }
 
 void Collider::updateNormals() {
