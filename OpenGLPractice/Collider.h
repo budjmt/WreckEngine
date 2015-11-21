@@ -10,7 +10,8 @@
 #include "Transform.h"
 #include "Mesh.h"
 
-//2D
+class Collider;
+
 enum class ColliderType {
 	//CIRCLE,
 	//RECT,
@@ -18,6 +19,18 @@ enum class ColliderType {
 	SPHERE,
 	BOX,
 	MESH
+};
+
+struct Adj {
+	int f1, f2;
+	int edge[2];
+};
+
+struct GaussMap {
+	//std::vector<glm::vec3> normals;
+	std::map<std::string, std::vector<Adj>> adjacencies;//uses indices because of rotations
+	void addAdj(glm::vec3 v, Adj a);
+	std::vector<Adj>& getAdjs(glm::vec3 v);
 };
 
 struct SupportPoint {
@@ -31,16 +44,10 @@ struct Manifold {
 	float pen;
 };
 
-struct Adj {
-	int f1, f2;
-	int edge[2];
-};
-
-struct GaussMap {
-	//std::vector<glm::vec3> normals;
-	std::map<std::string, std::vector<Adj>> adjacencies;//uses indices because of rotations
-	void addAdj(glm::vec3 v, Adj a);
-	std::vector<Adj>& getAdjs(glm::vec3 v);
+struct EdgeManifold {
+	Collider* originator;
+	Adj edgePair[2];
+	float pen;
 };
 
 class Collider
@@ -72,6 +79,7 @@ public:
 	const std::vector<glm::vec3>& getCurrNormals() const;
 	const std::vector<glm::vec3>& getEdges() const;
 	
+	glm::vec3 getVert(int index) const;
 	glm::vec3 getNormal(int index) const;
 	glm::vec3 getEdge(int (&e)[2]);
 	
@@ -79,15 +87,14 @@ public:
 	
 	void updateNormals();
 	void updateEdges();
-	
-	Manifold overlayGaussMaps(const Collider& other);
 
 	void getMaxMin(glm::vec3 axis,float* maxmin);
 
 	bool fuzzySameDir(glm::vec3 v1, glm::vec3 v2);
+
 	SupportPoint getSupportPoint(glm::vec3 dir);
 	Manifold getAxisMinPen(Collider* other);
-	Manifold getAxisMinPen(Collider* other, std::vector<glm::vec3>& axes);
+	EdgeManifold overlayGaussMaps(Collider& other);
 	
 	std::vector<glm::vec3> getAxes(const Collider& other);
 private:
@@ -105,4 +112,3 @@ private:
 
 	void setEdge(int(&e)[2], int value);
 };
-

@@ -83,34 +83,75 @@ SupportPoint Collider::getSupportPoint(glm::vec3 dir) {
 	return support;
 }
 
-Manifold Collider::getAxisMinPen(Collider* other) {
-	return getAxisMinPen(other, currNormals);
-}
-
 //returns the normal and vertex with the greatest penetration,
 //this can be the minimum axis of penetration (confusingly enough)
 //the reasoning is that if the value is negative, there is penetration,
 //so the greatest NEGATIVE value has the least penetration
 //if the value is positive, then there is no penetration i.e. there is a separating axis
-Manifold Collider::getAxisMinPen(Collider* other, std::vector<glm::vec3>& axes) {
+Manifold Collider::getAxisMinPen(Collider* other) {
 	Manifold axis;
 	axis.originator = this;
-	axis.pen = -1 / 0.f;
-	int numAxes = axes.size();
+	axis.pen = -INT_MAX;
+	int numAxes = uniqueNormals.size();
+	auto meshVerts = mesh->verts();
 	for (int i = 0; i < numAxes; i++) {
-		glm::vec3 norm = axes[i];
+		glm::vec3 norm = currNormals[uniqueNormals[i]];
 		SupportPoint support = other->getSupportPoint(-norm);
-		glm::vec3 vert = verts[i];//no, this needs to be a vertex that goes with this normal
+		glm::vec3 vert = meshVerts[i * 3];
 
 		float pen = glm::dot(norm, support.point - vert);
 		if (pen > axis.pen) {
 			axis.axis = norm;
-			axis.colPoint = vert;
+			axis.colPoint = vert;//need to add clipping the reference plane AND SHIT
 			axis.pen = pen;
 		}
 	}
 	return axis;
 }
+
+EdgeManifold Collider::overlayGaussMaps(Collider& other) {
+	EdgeManifold manifold;
+	manifold.originator = this;
+	manifold.pen = -INT_MAX;
+
+	GaussMap othergauss = other.getGaussMap();
+	auto otherNormals = other.getCurrNormals();
+	for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
+		for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
+			Adj curr = pair.second[i];
+			glm::vec3 a = currNormals[curr.f1], b = currNormals[curr.f2];
+			for (std::pair<std::string, std::vector<Adj>> otherPair : gauss.adjacencies) {
+				for (int j = 0, othernumAdj = otherPair.second.size(); j < othernumAdj; j++) {
+					Adj otherCurr = otherPair.second[j];
+					glm::vec3 c = otherNormals[otherCurr.f1], d = otherNormals[otherCurr.f2];
+					//checks if the arcs between arc(a,b) and arc(c,d) intersect
+					glm::vec3 bxa = glm::cross(b, a);
+					float cba = glm::dot(c, bxa)
+						, dba = glm::dot(d, bxa);
+					if (cba * dba < 0) {
+						glm::vec3 dxc = glm::cross(d, c);
+						float adc = glm::dot(a, dxc)
+							, bdc = glm::dot(b, dxc);
+						if (adc * bdc < 0 && cba * bdc > 0) {
+							//let's check it
+							glm::vec3 edgeNormal = glm::cross(getEdge(curr.edge), other.getEdge(otherCurr.edge));
+							glm::vec3 v = getVert(curr.edge[0] * 3);
+							float pen = glm::dot(glm::sign(glm::dot(edgeNormal, v)) * edgeNormal, other.getVert(otherCurr.edge[0] * 3) - v);
+							if (pen > manifold.pen) {
+								manifold.edgePair[0] = curr;
+								manifold.edgePair[1] = otherCurr;
+								manifold.pen = pen;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return manifold;
+}
+
+#include <iostream>
 
 Manifold Collider::intersects(Collider other) {
 	//quick circle collision optimization
@@ -134,9 +175,14 @@ Manifold Collider::intersects(Collider other) {
 		return manifold;
 
 	//edges
+	EdgeManifold minEdge = overlayGaussMaps(other);
+	if (minEdge.pen > 0)
+		return manifold;
 
 	manifold = (minAxis.pen > otherMinAxis.pen) ? minAxis : otherMinAxis;
-	//console.log(manifold.pen);
+	if (minEdge.pen > manifold.pen)
+		std::cout << "EDGE" << std::endl;
+	std::cout << manifold.pen << std::endl;
 	return manifold;
 }
 
@@ -180,10 +226,10 @@ void Collider::genEdges() {
 		break;
 	case ColliderType::BOX:
 	case ColliderType::MESH:
-		for (std::pair<glm::vec3, std::vector<Adj>> pair : gauss.adjacencies) {
+		for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
 			for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
 				setEdge(pair.second[i].edge, edges.size());
-				edges.push_back(faceNormals[pair.second[i].f2] - pair.first);
+				edges.push_back(faceNormals[pair.second[i].f2] - faceNormals[pair.second[i].f1]);
 			}
 		}
 		break;
@@ -221,7 +267,7 @@ void Collider::genGaussMap() {
 							//otherwise, record it, set the normal, push it back, and end the loop
 							else {
 								a.edge[1] = faceVerts[i + p1]; a.f1 = i / 3; a.f2 = j / 3;
-								gauss.adjacencies[faceNormals[a.f1]].push_back(a);
+								gauss.addAdj(faceNormals[a.f1], a);
 								added = true;
 							}
 							break;
@@ -311,6 +357,7 @@ const std::vector<int>& Collider::getNormals() const { return uniqueNormals; }
 const std::vector<glm::vec3>& Collider::getCurrNormals() const { return currNormals; }
 const std::vector<glm::vec3>& Collider::getEdges() const { return currEdges; }
 
+glm::vec3 Collider::getVert(int index) const { return mesh->verts()[index]; }
 glm::vec3 Collider::getNormal(int index) const { return currNormals[index]; }
 glm::vec3 Collider::getEdge(int (&e)[2]) { 
 	if (e[1] < e[0]) { int temp = e[0]; e[0] = e[1]; e[1] = temp; }
@@ -348,36 +395,6 @@ std::vector<glm::vec3> Collider::getAxes(const Collider& other) {
 		combNormals.push_back(otherNormals[otheruniqueNormals[i]]);
 
 	return combNormals;
-}
-
-Manifold Collider::overlayGaussMaps(const Collider& other) {
-	Manifold manifold;
-	GaussMap othergauss = other.getGaussMap();
-	auto otherNormals = other.getCurrNormals();
-	for (std::pair<glm::vec3, std::vector<Adj>> pair : gauss.adjacencies) {
-		for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
-			Adj curr = pair.second[i];
-			glm::vec3 a = currNormals[curr.f1], b = currNormals[curr.f2];
-			for (std::pair<glm::vec3, std::vector<Adj>> otherPair : gauss.adjacencies) {
-				for (int j = 0, othernumAdj = otherPair.second.size(); j < othernumAdj; j++) {
-					Adj otherCurr = otherPair.second[j];
-					glm::vec3 c = otherNormals[otherCurr.f1], d = otherNormals[otherCurr.f2];
-					//checks if the arcs between arc(a,b) and arc(c,d) intersect
-					glm::vec3 bxa = glm::cross(b, a);
-					float cba = glm::dot(c, bxa)
-						, dba = glm::dot(d, bxa);
-					if (cba * dba < 0) {
-						glm::vec3 dxc = glm::cross(d, c);
-						float adc = glm::dot(a, dxc)
-							, bdc = glm::dot(b, dxc);
-						if (adc * bdc < 0 && cba * bdc > 0) {
-							//
-						}
-					}
-				}
-			}
-		}
-	}
 }
 
 std::vector<Adj>& GaussMap::getAdjs(glm::vec3 v) {

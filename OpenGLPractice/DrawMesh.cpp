@@ -1,13 +1,13 @@
 #include "DrawMesh.h"
 
 DrawMesh::DrawMesh(Mesh* m, char* texFile, GLuint shader) {
-	mesh = m;
+	_mesh = m;
 	setup(texFile, shader);
 }
 
 DrawMesh::DrawMesh(std::vector<glm::vec3> v, std::vector<glm::vec3> n, std::vector<glm::vec3> u, Face f, char* texFile, GLuint shader)
 {
-	mesh = new Mesh(v, n, u, f);
+	_mesh = new Mesh(v, n, u, f);
 	setup(texFile, shader);
 }
 
@@ -24,12 +24,12 @@ void DrawMesh::setup(char* texFile, GLuint shader) {
 	glGenBuffers(1, &vertBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertBuffer);
 	//move the data in coords to the buffer and tell it how it'll be used
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * mesh->meshArray.size(), &(mesh->meshArray[0]), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * _mesh->meshArray.size(), &(_mesh->meshArray[0]), GL_STATIC_DRAW);
 
 	//generates the element array buffer for faces
 	glGenBuffers(1, &vBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GL_UNSIGNED_INT) * mesh->meshElementArray.size(), &(mesh->meshElementArray[0]), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GL_UNSIGNED_INT) * _mesh->meshElementArray.size(), &(_mesh->meshElementArray[0]), GL_STATIC_DRAW);
 
 	//set up an attribute for how the coordinates will be read
 	//verts
@@ -61,15 +61,17 @@ void DrawMesh::setup(char* texFile, GLuint shader) {
 DrawMesh::~DrawMesh()
 {
 	glDeleteBuffers(1, &vertBuffer);
-	delete mesh;
+	delete _mesh;
 }
+
+Mesh* DrawMesh::mesh() const { return _mesh; } void DrawMesh::mesh(Mesh* m) { _mesh = m; }
 
 void DrawMesh::draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale) {
 	Drawable::draw(x, y, xScale, yScale);
-	glDrawElements(GL_TRIANGLES, mesh->meshElementArray.size(), GL_UNSIGNED_INT, (void *)0);
+	glDrawElements(GL_TRIANGLES, _mesh->meshElementArray.size(), GL_UNSIGNED_INT, (void *)0);
 }
 
 void DrawMesh::draw(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotAxis, float rot) {
 	Drawable::draw(pos, scale, rotAxis, rot);
-	glDrawElements(GL_TRIANGLES, mesh->meshElementArray.size(), GL_UNSIGNED_INT, (void *)0);
+	glDrawElements(GL_TRIANGLES, _mesh->meshElementArray.size(), GL_UNSIGNED_INT, (void *)0);
 }

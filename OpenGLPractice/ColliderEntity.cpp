@@ -13,7 +13,9 @@ ColliderEntity::ColliderEntity(Drawable* s)
 ColliderEntity::ColliderEntity(glm::vec3 p,glm::vec3 dims,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s) 
 	: Entity(p,sc,rA,r,s)
 {
-	ecollider = new Collider(&transform,dims);
+	//ecollider = new Collider(&transform,dims);
+	DrawMesh* d = (DrawMesh*)s;
+	ecollider = new Collider(d->mesh(),&transform);
 	mass = 1;
 	invMass = 1;
 	estaticObj = 0;
@@ -57,7 +59,7 @@ void ColliderEntity::update(double dt) {
 }
 
 void ColliderEntity::calcForces() {
-	netForce += glm::vec3(0, mass * -9.8f * (1 - estaticObj), 0);//gravity
+	//netForce += glm::vec3(0, mass * -9.8f * (1 - estaticObj), 0);//gravity
 	//collision resolution stuff here
 	/*
 	updateCorners();

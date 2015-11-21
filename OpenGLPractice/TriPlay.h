@@ -24,6 +24,7 @@ public:
 	//void spawnTriangle(glm::vec3 pos, glm::vec3 vel);
 private:
 	//std::vector<ColliderEntity*> triangles;
+	Entity* me;
 	std::vector<Entity*> meshes;
 	Camera* camera;
 	GLFWwindow* window;

@@ -1,6 +1,7 @@
 #pragma once
 #include "entity.h"
 #include "Collider.h"
+#include "DrawMesh.h"
 
 const float MAX_VEL = 20.f;
 

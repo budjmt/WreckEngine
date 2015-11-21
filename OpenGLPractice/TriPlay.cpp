@@ -48,11 +48,12 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	Mesh* m = loadOBJ("Assets/basic.obj");
 	DrawMesh* dm = new DrawMesh(m, "Assets/texture.png", prog);
 	shapes.push_back(dm);
-	Entity* mesh = new Entity(dm);
+	Entity* mesh = new ColliderEntity(dm);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
 	mesh->transform.position.x = 0;
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
+	me = mesh;
 
 	std::vector<std::vector<glm::vec3>> k = {
 		{ glm::vec3( 1,-1,-1), glm::vec3( 1,-1, 1), glm::vec3( 1, 1, 1) },
@@ -68,7 +69,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	Mesh* bezier = loadOBJ("Assets/bezier.obj");
 	dm = new DrawMesh(bezier, "Assets/texture.png", prog);
 	shapes.push_back(dm);
-	mesh = new Entity(dm);
+	mesh = new ColliderEntity(dm);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
 	mesh->transform.position.x = 2.5f;
 	entities.push_back(mesh);
@@ -78,7 +79,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	Mesh* cylinder = loadOBJ("Assets/cylinder.obj");
 	dm = new DrawMesh(cylinder, "Assets/texture.png", prog);
 	shapes.push_back(dm);
-	mesh = new Entity(dm);
+	mesh = new ColliderEntity(dm);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
 	mesh->transform.position.x = -2.5f;
 	entities.push_back(mesh);
@@ -143,6 +144,29 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double dt) {
 		//quit the game
 		glfwTerminate();
 		exit('q');
+	}
+
+	bool shift = false;
+	if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		shift = true;
+
+	if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
+		if(!shift)
+			me->transform.position += glm::vec3(0, dt, 0);
+		else
+			me->transform.position += glm::vec3(0, 0, dt);
+	}
+	else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+		if(!shift)
+			me->transform.position += glm::vec3(0, -dt, 0);
+		else
+			me->transform.position += glm::vec3(0, 0, -dt);
+	}
+	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+		me->transform.position += glm::vec3(dt, 0, 0);
+	}
+	else if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+		me->transform.position += glm::vec3(-dt, 0, 0);
 	}
 
 	Camera::mayaCam(window, m, dt, camera);
