@@ -155,12 +155,12 @@ void genCube(const char* file) {
 	//cout << "Generating vert faces" << endl;
 	//generate faces and normals
 	vertFaces = {
-		3, 1, 2,		2, 4, 3,
-		4, 2, 6,		6, 8, 4,
-		8, 6, 5,		5, 7, 8,
-		5, 1, 3,		3, 7, 5,
-		7, 3, 4,		4, 8, 7,
-		6, 2, 1,		1, 5, 6
+		2, 1, 3,		2, 4, 3,
+		6, 2, 4,		6, 8, 4,
+		5, 6, 8,		5, 7, 8,
+		1, 5, 7,		1, 3, 7,
+		3, 7, 8,		3, 4, 8,
+		2, 6, 5,		2, 1, 5
 	};//that was tedious
 
 	//cout << "Generating normals" << endl;
@@ -215,7 +215,7 @@ void genCylinder(const char* file, int res) {
 		vertFaces.push_back(2 * i + 3 + 1); vertFaces.push_back(2); vertFaces.push_back(2 * i + 1 + 1);
 		//side faces
 		vertFaces.push_back(2 * i + 2 + 1); vertFaces.push_back(2 * i + 1); vertFaces.push_back(2 * i + 1 + 1);
-		vertFaces.push_back(2 * i + 1 + 1); vertFaces.push_back(2 * i + 3 + 1); vertFaces.push_back(2 * i + 2 + 1);
+		vertFaces.push_back(2 * i + 2 + 1); vertFaces.push_back(2 * i + 3 + 1); vertFaces.push_back(2 * i + 1 + 1);
 
 		tprev = tprev;
 		bprev = bprev;
@@ -225,7 +225,7 @@ void genCylinder(const char* file, int res) {
 	//final bottom face
 	vertFaces.push_back(4); vertFaces.push_back(2); vertFaces.push_back(2 * (res - 1) + 3 + 1);
 	//final side faces
-	vertFaces.push_back(2 * (res - 1) + 2 + 1); vertFaces.push_back(2 * (res - 1) + 3 + 1); vertFaces.push_back(3);
+	vertFaces.push_back(3); vertFaces.push_back(2 * (res - 1) + 2 + 1); vertFaces.push_back(2 * (res - 1) + 3 + 1);
 	vertFaces.push_back(3); vertFaces.push_back(4); vertFaces.push_back(2 * (res - 1) + 3 + 1);
 
 	//generate normals
@@ -461,7 +461,7 @@ void genNormals(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces
 
 glm::vec3 genNormal(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3) {
 	glm::vec3 e1 = v1 - v2;
-	glm::vec3 e2 = v2 - v3;
+	glm::vec3 e2 = v3 - v2;
 	/*
 	cout << v1 << endl;
 	cout << v2 << endl;

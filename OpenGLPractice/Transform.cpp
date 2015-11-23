@@ -100,5 +100,5 @@ glm::vec3 Transform::getTransformed(glm::vec3 v)
 	glm::mat4 translate = glm::translate(tposition);
 	glm::mat4 rot = glm::rotate(t.rotAngle, t.rotAxis);
 	glm::mat4 scale = glm::scale(tscale);
-	return glm::vec3(translate * scale * rot * glm::vec4(v, 1));
+	return (glm::vec3)(translate * scale * rot * glm::vec4(v, 1));
 }

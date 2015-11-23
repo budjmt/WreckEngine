@@ -70,6 +70,7 @@ public:
 	void update();
 
 	//void setCorners(std::vector<glm::vec3> c);
+	void genVerts();//only used for box colliders right now
 	void genNormals();
 	void genEdges();
 	void genGaussMap();

@@ -45,6 +45,8 @@ Collider::Collider(const Collider& other)
 
 Collider::~Collider(void)
 {
+	if (_type == ColliderType::BOX)
+		delete mesh;
 }
 
 Transform* Collider::transform() { return _transform; }
@@ -187,14 +189,14 @@ Manifold Collider::intersects(Collider* other) {
 
 	Manifold minAxis = getAxisMinPen(other);
 	if (minAxis.pen > 0) {
-		//std::cout << "Mine: " << minAxis.pen << std::endl;
+		//std::cout << "This: " << minAxis.pen << "; " << minAxis.axis.x << ", " << minAxis.axis.y << ", " << minAxis.axis.z << std::endl;
 		return manifold;
 	}
 
 	Manifold otherMinAxis = other->getAxisMinPen(this);
 	//this may be unnecessary
 	if (otherMinAxis.pen > 0) {
-		//std::cout << "Other: " << otherMinAxis.pen << std::endl;
+		//std::cout << "Other: " << otherMinAxis.pen << "; " << otherMinAxis.axis.x << ", " << otherMinAxis.axis.y << ", " << otherMinAxis.axis.z << std::endl;
 		return manifold;
 	}
 
@@ -207,7 +209,7 @@ Manifold Collider::intersects(Collider* other) {
 
 	manifold = (minAxis.pen > otherMinAxis.pen) ? minAxis : otherMinAxis;
 	if (minEdge.pen > manifold.pen)
-		std::cout << "EDGE" << std::endl;
+		std::cout << "EDGE ";
 	//std::cout << manifold.pen << std::endl;
 	return manifold;
 }
@@ -217,14 +219,52 @@ Manifold Collider::intersects(Collider* other) {
 	corners = c;
 }*/
 
+void Collider::genVerts() {
+	if (_type != ColliderType::BOX)
+		return;
+	std::vector<glm::vec3> verts, norms, uvs;//norms and uvs are empty
+	Face faces;
+	verts.push_back(glm::vec3( _dims.x,  _dims.y,  _dims.z));
+	verts.push_back(glm::vec3(-_dims.x,  _dims.y,  _dims.z));
+	verts.push_back(glm::vec3( _dims.x, -_dims.y,  _dims.z));
+	verts.push_back(glm::vec3(-_dims.x, -_dims.y,  _dims.z));
+	verts.push_back(glm::vec3( _dims.x,  _dims.y, -_dims.z));
+	verts.push_back(glm::vec3(-_dims.x,  _dims.y, -_dims.z));
+	verts.push_back(glm::vec3( _dims.x, -_dims.y, -_dims.z));
+	verts.push_back(glm::vec3(-_dims.x, -_dims.y,- _dims.z));
+
+	faces.verts.push_back(7); faces.verts.push_back(3); faces.verts.push_back(0);
+	faces.verts.push_back(7); faces.verts.push_back(4); faces.verts.push_back(0);
+
+	faces.verts.push_back(6); faces.verts.push_back(7); faces.verts.push_back(4);
+	faces.verts.push_back(6); faces.verts.push_back(5); faces.verts.push_back(4);
+
+	faces.verts.push_back(2); faces.verts.push_back(6); faces.verts.push_back(5);
+	faces.verts.push_back(2); faces.verts.push_back(1); faces.verts.push_back(5);
+
+	faces.verts.push_back(3); faces.verts.push_back(2); faces.verts.push_back(1);
+	faces.verts.push_back(3); faces.verts.push_back(0); faces.verts.push_back(1);
+
+	faces.verts.push_back(0); faces.verts.push_back(1); faces.verts.push_back(5);
+	faces.verts.push_back(0); faces.verts.push_back(4); faces.verts.push_back(5);
+
+	faces.verts.push_back(7); faces.verts.push_back(6); faces.verts.push_back(2);
+	faces.verts.push_back(7); faces.verts.push_back(3); faces.verts.push_back(2);
+
+	mesh = new Mesh(verts, norms, uvs, faces);
+}
+
 void Collider::genNormals() {
 	switch (_type) {
 	case ColliderType::SPHERE:
 		break;
 	case ColliderType::BOX:
 		faceNormals.push_back(glm::vec3(1, 0, 0));//need to define some kind of vertex array for box colliders
-		faceNormals.push_back(glm::vec3(0, 1, 0));
+		faceNormals.push_back(glm::vec3(0, 0, -1));
+		faceNormals.push_back(glm::vec3(-1, 0, 0));
 		faceNormals.push_back(glm::vec3(0, 0, 1));
+		faceNormals.push_back(glm::vec3(0, 1, 0));
+		faceNormals.push_back(glm::vec3(0, -1, 0));
 		break;
 	case ColliderType::MESH:
 		//generate the face normals from the mesh's vertices
@@ -236,7 +276,7 @@ void Collider::genNormals() {
 			glm::vec3 normal, e1, e2, v;
 			v = meshVerts[faceVerts[i + 1]];
 			e1 = meshVerts[faceVerts[i]] - v;
-			e2 = v - meshVerts[faceVerts[i + 2]];
+			e2 = meshVerts[faceVerts[i + 2]] - v;
 			normal = glm::normalize(glm::cross(e1, e2));
 			faceNormals.push_back(normal);
 		}
@@ -256,7 +296,7 @@ void Collider::genEdges() {
 		for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
 			for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
 				setEdge(pair.second[i].edge, edges.size());
-				edges.push_back(faceNormals[pair.second[i].f2] - faceNormals[pair.second[i].f1]);
+				edges.push_back(getVert(pair.second[i].edge[0]) - getVert(pair.second[i].edge[1]));
 			}
 		}
 		break;
@@ -270,7 +310,7 @@ void Collider::genGaussMap() {
 		break;
 	case ColliderType::BOX:
 		//need to set up proper handling for box colliders for vertices
-		//gauss.adjacencies[faceNormals[0]] = { Adj{ 1, {,} }, Adj{ 2, {,} } };
+		//gauss.addAdj(faceNormals[0], Adj{  });
 		//gauss.adjacencies[faceNormals[1]] = { Adj{ 2, {,} } };
 		break;
 	case ColliderType::MESH:

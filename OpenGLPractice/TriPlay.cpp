@@ -53,7 +53,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	mesh->transform.position.x = 0;
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
-	//me = mesh;
+	me = mesh;
 
 	std::vector<std::vector<glm::vec3>> k = {
 		{ glm::vec3( 1,-1,-1), glm::vec3( 1,-1, 1), glm::vec3( 1, 1, 1) },
@@ -104,7 +104,6 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	mesh->transform.position.y = -2.5f;
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
-	me = mesh;
 
 	camera = new Camera(prog, window);
 	camera->transform.position = glm::vec3(0, 0, 1);
@@ -164,10 +163,16 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double dt) {
 			me->transform.position += glm::vec3(0, 0, -dt);
 	}
 	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
-		me->transform.position += glm::vec3(dt, 0, 0);
+		if (!shift)
+			me->transform.position += glm::vec3(dt, 0, 0);
+		else
+			me->transform.rotate(0,2 * M_PI * dt,0);
 	}
 	else if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
-		me->transform.position += glm::vec3(-dt, 0, 0);
+		if (!shift)
+			me->transform.position += glm::vec3(-dt, 0, 0);
+		else
+			me->transform.rotate(0, -2 * M_PI * dt, 0);
 	}
 
 	Camera::mayaCam(window, m, dt, camera);
