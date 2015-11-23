@@ -64,8 +64,8 @@ public:
 	glm::vec3 dims(); void dims(glm::vec3 v);
 	float radius() const;
 
-	bool intersects2D(Collider other);
-	Manifold intersects(Collider other);
+	bool intersects2D(Collider* other);
+	Manifold intersects(Collider* other);
 
 	void update();
 
@@ -94,9 +94,9 @@ public:
 
 	SupportPoint getSupportPoint(glm::vec3 dir);
 	Manifold getAxisMinPen(Collider* other);
-	EdgeManifold overlayGaussMaps(Collider& other);
+	EdgeManifold overlayGaussMaps(Collider* other);
 	
-	std::vector<glm::vec3> getAxes(const Collider& other);
+	std::vector<glm::vec3> getAxes(const Collider* other);
 private:
 	Transform* _transform;
 	glm::vec3 _framePos;

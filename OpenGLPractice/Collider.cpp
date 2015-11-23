@@ -1,5 +1,5 @@
 #include "Collider.h"
-
+#include <iostream>
 
 Collider::Collider(void)
 	: type(_type)
@@ -19,6 +19,7 @@ Collider::Collider(Transform* t, glm::vec3 d)
 	genNormals();
 	genGaussMap();
 	genEdges();
+	update();
 }
 
 Collider::Collider(Mesh* m, Transform* t)
@@ -27,12 +28,13 @@ Collider::Collider(Mesh* m, Transform* t)
 	mesh = m;
 	dims(m->getDims());
 	_transform = t;
-	_type = ColliderType::BOX;
+	_type = ColliderType::MESH;
 	//the order is important;
 	//edges depend on the gauss map, which depends on the normals
 	genNormals();
 	genGaussMap();
 	genEdges();
+	update();
 }
 
 Collider::Collider(const Collider& other)
@@ -51,17 +53,18 @@ glm::vec3 Collider::framePos() { return _framePos; }
 glm::vec3 Collider::dims() { return _dims; } void Collider::dims(glm::vec3 v) { _dims = v; _radius = glm::max(glm::max(_dims.x, _dims.y), _dims.z); }
 float Collider::radius() const { return _radius; }
 
-bool Collider::intersects2D(Collider other) 
+bool Collider::intersects2D(Collider* other) 
 {
+	//this method needs to be updated
 	//circle collision optimization
-	if ((_transform->position - other.transform()->position).length() > _radius + other.radius())// || (type == CIRCLE && other.type == CIRCLE))
+	if ((_transform->position - other->transform()->position).length() > _radius + other->radius())// || (type == CIRCLE && other.type == CIRCLE))
 		return false;
 	//separating axis theorem
 	std::vector<glm::vec3> axes = getAxes(other);
 	float projs[2], otherProjs[2];
 	for (glm::vec3 axis : axes) {
 		getMaxMin(axis,projs);
-		other.getMaxMin(axis,otherProjs);
+		other->getMaxMin(axis,otherProjs);
 		if (projs[0] < otherProjs[1] || otherProjs[0] < projs[1]) {
 			return false;
 		}
@@ -70,13 +73,16 @@ bool Collider::intersects2D(Collider other)
 }
 
 SupportPoint Collider::getSupportPoint(glm::vec3 dir) {
+	//I'm deeming this function ok, it's simple enough to make that call I think
 	auto verts = mesh->verts();
-	SupportPoint support{ verts[0], glm::dot(verts[0], dir) };
+	SupportPoint support{ _transform->getTransformed(verts[0]), 0 };
+	support.proj = glm::dot(support.point, dir);
 	int numVerts = verts.size();
 	for (int i = 1; i < numVerts; i++) {
-		float proj = glm::dot(verts[i], dir);
+		glm::vec3 vert = _transform->getTransformed(verts[i]);
+		float proj = glm::dot(vert, dir);
 		if (proj > support.proj) {
-			support.point = verts[i];
+			support.point = vert;
 			support.proj = proj;
 		}
 	}
@@ -92,14 +98,20 @@ Manifold Collider::getAxisMinPen(Collider* other) {
 	Manifold axis;
 	axis.originator = this;
 	axis.pen = -INT_MAX;
-	int numAxes = uniqueNormals.size();
+	//int numAxes = uniqueNormals.size();
+	int numAxes = currNormals.size();
 	auto meshVerts = mesh->verts();
-	for (int i = 0; i < numAxes; i++) {
-		glm::vec3 norm = currNormals[uniqueNormals[i]];
+	auto faceVerts = mesh->faces().verts;
+	for (int i = 0; axis.pen < 0 && i < numAxes; i++) {
+		//glm::vec3 norm = currNormals[uniqueNormals[i]];
+		glm::vec3 norm = currNormals[i];
 		SupportPoint support = other->getSupportPoint(-norm);
-		glm::vec3 vert = meshVerts[i * 3];
+		//glm::vec3 vert = _transform->getTransformed(meshVerts[faceVerts[uniqueNormals[i] * 3]]);
+		glm::vec3 vert = _transform->getTransformed(meshVerts[faceVerts[i * 3]]);//this is the main reason unique normals can't be used right now
+		//if a unique normal is used, it doesn't know which face it's supposed to apply to
+		//I should be using a plane-centric approach
 
-		float pen = glm::dot(norm, support.point - vert);
+		float pen = glm::dot(norm, support.point - vert);//point-plane signed distance, negative if penetrating, positive if not
 		if (pen > axis.pen) {
 			axis.axis = norm;
 			axis.colPoint = vert;//need to add clipping the reference plane AND SHIT
@@ -109,34 +121,43 @@ Manifold Collider::getAxisMinPen(Collider* other) {
 	return axis;
 }
 
-EdgeManifold Collider::overlayGaussMaps(Collider& other) {
+EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	EdgeManifold manifold;
 	manifold.originator = this;
 	manifold.pen = -INT_MAX;
 
-	GaussMap othergauss = other.getGaussMap();
-	auto otherNormals = other.getCurrNormals();
+	GaussMap othergauss = other->getGaussMap();
+	auto otherNormals = other->getCurrNormals();
+	
 	for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
 		for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
+			
 			Adj curr = pair.second[i];
 			glm::vec3 a = currNormals[curr.f1], b = currNormals[curr.f2];
+			
 			for (std::pair<std::string, std::vector<Adj>> otherPair : gauss.adjacencies) {
 				for (int j = 0, othernumAdj = otherPair.second.size(); j < othernumAdj; j++) {
+					
 					Adj otherCurr = otherPair.second[j];
 					glm::vec3 c = otherNormals[otherCurr.f1], d = otherNormals[otherCurr.f2];
+					
 					//checks if the arcs between arc(a,b) and arc(c,d) intersect
 					glm::vec3 bxa = glm::cross(b, a);
 					float cba = glm::dot(c, bxa)
 						, dba = glm::dot(d, bxa);
+					
 					if (cba * dba < 0) {
+						
 						glm::vec3 dxc = glm::cross(d, c);
 						float adc = glm::dot(a, dxc)
 							, bdc = glm::dot(b, dxc);
+						
 						if (adc * bdc < 0 && cba * bdc > 0) {
 							//let's check it
-							glm::vec3 edgeNormal = glm::cross(getEdge(curr.edge), other.getEdge(otherCurr.edge));
+							glm::vec3 edgeNormal = glm::normalize(glm::cross(getEdge(curr.edge), other->getEdge(otherCurr.edge)));
 							glm::vec3 v = getVert(curr.edge[0] * 3);
-							float pen = glm::dot(glm::sign(glm::dot(edgeNormal, v)) * edgeNormal, other.getVert(otherCurr.edge[0] * 3) - v);
+							float pen = glm::dot(glm::sign(glm::dot(edgeNormal, v)) * edgeNormal, other->getVert(otherCurr.edge[0] * 3) - v);
+							
 							if (pen > manifold.pen) {
 								manifold.edgePair[0] = curr;
 								manifold.edgePair[1] = otherCurr;
@@ -151,38 +172,43 @@ EdgeManifold Collider::overlayGaussMaps(Collider& other) {
 	return manifold;
 }
 
-#include <iostream>
-
-Manifold Collider::intersects(Collider other) {
+Manifold Collider::intersects(Collider* other) {
 	//quick circle collision optimization
 	Manifold manifold;
-	glm::vec3 d = _framePos - other.framePos();//I'm going to ignore displaced colliders for now
+	manifold.originator = nullptr;
+	glm::vec3 d = _framePos - other->framePos();//I'm going to ignore displaced colliders for now
 	float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
-	float rad = _radius + other.radius();
+	float rad = _radius + other->radius();
 	if (distSq > rad * rad)
-		return manifold;//originator will be null, i.e. there's no collision
+		return manifold;//originator will be nullptr, i.e. there's no collision
 
 	//separating axis theorem 2: electric boogaloo
 	//this contains the collision data
 
-	Manifold minAxis = getAxisMinPen(&other);
-	if (minAxis.pen > 0)
+	Manifold minAxis = getAxisMinPen(other);
+	if (minAxis.pen > 0) {
+		//std::cout << "Mine: " << minAxis.pen << std::endl;
 		return manifold;
+	}
 
-	Manifold otherMinAxis = other.getAxisMinPen(this);
+	Manifold otherMinAxis = other->getAxisMinPen(this);
 	//this may be unnecessary
-	if (otherMinAxis.pen > 0)
+	if (otherMinAxis.pen > 0) {
+		//std::cout << "Other: " << otherMinAxis.pen << std::endl;
 		return manifold;
+	}
 
 	//edges
 	EdgeManifold minEdge = overlayGaussMaps(other);
-	if (minEdge.pen > 0)
+	if (minEdge.pen > 0) {
+		//std::cout << "Edge: " << minEdge.pen << std::endl;
 		return manifold;
+	}
 
 	manifold = (minAxis.pen > otherMinAxis.pen) ? minAxis : otherMinAxis;
 	if (minEdge.pen > manifold.pen)
 		std::cout << "EDGE" << std::endl;
-	std::cout << manifold.pen << std::endl;
+	//std::cout << manifold.pen << std::endl;
 	return manifold;
 }
 
@@ -206,6 +232,7 @@ void Collider::genNormals() {
 		std::vector<glm::vec3> meshVerts = mesh->verts();
 		int numFaces = faceVerts.size();
 		for (int i = 0; i < numFaces; i += 3) {
+			//this is the problem child
 			glm::vec3 normal, e1, e2, v;
 			v = meshVerts[faceVerts[i + 1]];
 			e1 = meshVerts[faceVerts[i]] - v;
@@ -213,8 +240,8 @@ void Collider::genNormals() {
 			normal = glm::normalize(glm::cross(e1, e2));
 			faceNormals.push_back(normal);
 		}
-		for (int i = 0; i < numFaces; i++)
-			addUniqueAxis(uniqueNormals, i);
+		for (int i = 0; i < numFaces; i += 3)
+			addUniqueAxis(uniqueNormals, i / 3);
 		break;
 	}
 	currNormals = std::vector<glm::vec3>(faceNormals.size());
@@ -290,12 +317,12 @@ bool Collider::fuzzySameDir(glm::vec3 v1, glm::vec3 v2) {
 
 void Collider::addUniqueAxis(std::vector<int>& axes, int aIndex) {
 	//this really should be optimized, but I'll worry about that later
-	std::vector<glm::vec3> meshNormals = mesh->normals();
-	glm::vec3 axis = meshNormals[aIndex];
+	//std::vector<glm::vec3> meshNormals = mesh->normals();
+	glm::vec3 axis = faceNormals[aIndex];
 	//axis = glm::normalize(axis);//hmm
 	int numAxes = axes.size();
 	for (int i = 0; i < numAxes - 1; i++) {
-		glm::vec3 v = meshNormals[axes[i]];
+		glm::vec3 v = faceNormals[axes[i]];
 		if (fuzzySameDir(v,axis))
 			return;
 		//the vector is sorted in ascending order, by x, then y, then z, which is why this works
@@ -324,10 +351,13 @@ void Collider::updateNormals() {
 		break;*/
 	case ColliderType::BOX:
 	case ColliderType::MESH:
-		glm::mat4 rot = glm::rotate(_transform->rotAngle, _transform->rotAxis);
-		int numNormals = uniqueNormals.size();
+		Transform t = _transform->computeTransform();
+		glm::mat4 rot = glm::rotate(t.rotAngle, t.rotAxis);
+		//int numNormals = uniqueNormals.size();
+		int numNormals = faceNormals.size();
 		for (int i = 0; i < numNormals; i++) {
-			currNormals[i] = (glm::vec3)(rot * glm::vec4(faceNormals[uniqueNormals[i]], 1));//this is probably slow
+			//currNormals[i] = (glm::vec3)(rot * glm::vec4(faceNormals[uniqueNormals[i]], 1));//this is probably slow
+			currNormals[i] = (glm::vec3)(rot * glm::vec4(faceNormals[i], 1));
 		}
 		break;
 	}
@@ -339,10 +369,12 @@ void Collider::updateEdges() {
 		break;
 	case ColliderType::BOX:
 	case ColliderType::MESH:
-		glm::mat4 rot = glm::rotate(_transform->rotAngle, _transform->rotAxis);
+		Transform t = _transform->computeTransform();
+		glm::mat4 rot = glm::rotate(t.rotAngle, t.rotAxis);
+		glm::mat4 scale = glm::scale(t.scale);
 		int numEdges = edges.size();
 		for (int i = 0; i < numEdges; i++) {
-			currEdges[i] = (glm::vec3)(rot * glm::vec4(edges[i], 1));//this is probably slow
+			currEdges[i] = (glm::vec3)(scale * rot * glm::vec4(edges[i], 1));//this is probably slow
 		}
 		break;
 	}
@@ -351,6 +383,7 @@ void Collider::updateEdges() {
 void Collider::update() {
 	_framePos = _transform->computeTransform().position;
 	updateNormals();
+	updateEdges();
 }
 
 const std::vector<int>& Collider::getNormals() const { return uniqueNormals; }
@@ -385,10 +418,10 @@ void Collider::getMaxMin(glm::vec3 axis, float* maxmin) {
 	}
 }
 
-std::vector<glm::vec3> Collider::getAxes(const Collider& other) {
+std::vector<glm::vec3> Collider::getAxes(const Collider* other) {
 	std::vector<glm::vec3> combNormals;
-	auto otherNormals = other.getCurrNormals();
-	auto otheruniqueNormals = other.getNormals();
+	auto otherNormals = other->getCurrNormals();
+	auto otheruniqueNormals = other->getNormals();
 	for (int i = 0, numNormals = uniqueNormals.size(); i < numNormals; i++)
 		combNormals.push_back(currNormals[uniqueNormals[i]]);
 	for (int i = 0, numNormals = otheruniqueNormals.size(); i < numNormals; i++)

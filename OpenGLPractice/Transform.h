@@ -25,6 +25,8 @@ public:
 	void rotate(float x, float y, float z);
 	void rotate(glm::vec3 v);
 	void rotate(float theta, glm::vec3 axis);
+
+	glm::vec3 getTransformed(glm::vec3 v);
 private:
 	glm::vec3 tposition;
 	glm::vec3 tscale;

@@ -22,10 +22,11 @@ public:
 	glm::vec3 calcTorque(glm::vec3 colPoint, glm::vec3 F);
 	void handleCollision(ColliderEntity* other, glm::vec3 norm, float depth);
 private:
-	Collider* ecollider;
-	int estaticObj;
+	Collider* _collider;
+	int _staticObj;
 	float mass, invMass;
 	float inertia, invIntertia;
-	glm::vec3 evel, eangVel, netForce, netTorque;
+	glm::vec3 _vel, _angVel, netForce, netTorque;
+	
+	static std::vector<ColliderEntity*> colliderEntities;
 };
-

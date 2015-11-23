@@ -1,86 +1,98 @@
 #include "ColliderEntity.h"
 
+std::vector<ColliderEntity*> ColliderEntity::colliderEntities;
 
 ColliderEntity::ColliderEntity(Drawable* s)
 	: Entity(s)
 {
-	ecollider = new Collider(&transform,transform.scale);
+	//_collider = new Collider(&transform,transform.scale);
+	_collider = new Collider(((DrawMesh*)s)->mesh(), &transform);
 	mass = 1;
 	invMass = 1;
-	estaticObj = 0;
+	_staticObj = 0;
+	colliderEntities.push_back(this);
 }
 
 ColliderEntity::ColliderEntity(glm::vec3 p,glm::vec3 dims,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s) 
 	: Entity(p,sc,rA,r,s)
 {
-	//ecollider = new Collider(&transform,dims);
-	DrawMesh* d = (DrawMesh*)s;
-	ecollider = new Collider(d->mesh(),&transform);
+	//_collider = new Collider(&transform,dims);
+	_collider = new Collider(((DrawMesh*)s)->mesh(),&transform);
 	mass = 1;
 	invMass = 1;
-	estaticObj = 0;
+	_staticObj = 0;
+	colliderEntities.push_back(this);
 }
 
 ColliderEntity::ColliderEntity(const ColliderEntity& other) 
 	: Entity(other)
 {
-	ecollider = other.collider();
+	_collider = other.collider();
 	staticObj(other.staticObj());
 	mass = other.mass;
 	invMass = other.invMass;
 	vel(other.vel());
 	angVel(other.angVel());
+	colliderEntities.push_back(this);
 }
 
 
 ColliderEntity::~ColliderEntity(void)
 {
-	delete ecollider;
+	delete _collider;
 }
 
-int ColliderEntity::staticObj() const { return estaticObj; } void ColliderEntity::staticObj(int s) { estaticObj = s; }
-glm::vec3 ColliderEntity::vel() const { return evel; } void ColliderEntity::vel(glm::vec3& v) { evel = v; }
-glm::vec3 ColliderEntity::angVel() const { return eangVel; } void ColliderEntity::angVel(glm::vec3& a) { eangVel = a; }
-Collider* ColliderEntity::collider() const { return ecollider; }
+int ColliderEntity::staticObj() const { return _staticObj; } void ColliderEntity::staticObj(int s) { _staticObj = s; }
+glm::vec3 ColliderEntity::vel() const { return _vel; } void ColliderEntity::vel(glm::vec3& v) { _vel = v; }
+glm::vec3 ColliderEntity::angVel() const { return _angVel; } void ColliderEntity::angVel(glm::vec3& a) { _angVel = a; }
+Collider* ColliderEntity::collider() const { return _collider; }
 
 void ColliderEntity::update(double dt) {
 	calcForces();
-	evel += netForce  * (float)dt;
-	transform.position += evel  * (float)dt;
-	transform.rotate(eangVel * (float)dt);
+	_vel += netForce  * (float)dt;
+	transform.position += _vel  * (float)dt;
+	transform.rotate(_angVel * (float)dt);
 
-	if (evel.length() > MAX_VEL)
-		evel *= MAX_VEL / evel.length();
-	else if (evel.length() < 0.05f) {
-		evel = glm::vec3(0, 0, 0);
-		eangVel = glm::vec3(0, 0, 0);
+	if (_vel.length() > MAX_VEL)
+		_vel *= MAX_VEL / _vel.length();
+	else if (_vel.length() < 0.05f) {
+		_vel = glm::vec3(0, 0, 0);
+		_angVel = glm::vec3(0, 0, 0);
 	}
 	netForce = glm::vec3(0, 0, 0);
 }
 
+#include <iostream>
+
 void ColliderEntity::calcForces() {
 	//netForce += glm::vec3(0, mass * -9.8f * (1 - estaticObj), 0);//gravity
 	//collision resolution stuff here
-	/*
-	updateCorners();
-	for(Entity* entity : entities) {
-		if(entity != entity && entity.type == COLLIDER) {
-			if(collider->intersects(entity->collider))
-				handleCollision(entity,);
-		}
-	*/
+	
+	//I need to fix this so that all the colliders are updated and THEN run collision checks
+	//updateCorners();
+	_collider->update();
+	for (ColliderEntity* entity : colliderEntities) {
+		Collider* other = entity->collider();
+		if (other == _collider || !entity->active)
+			continue;
+		Manifold m = _collider->intersects(other);
+		if (m.originator != nullptr)
+			//handleCollision(entity,);
+			std::cout << "collision! " << _collider << ", " << m.originator << "; " << m.pen << std::endl;
+	}
+	
 
-	netForce += -0.15f * evel * evel * mass;//quadratic drag
+	netForce += -0.15f * _vel * _vel * mass;//quadratic drag
 	netForce *= invMass;
 }
 
 glm::vec3 ColliderEntity::calcTorque(glm::vec3 colPoint, glm::vec3 F) {
-	glm::vec3 torque = glm::cross(colPoint, eangVel);
+	glm::vec3 torque = glm::cross(colPoint, _angVel);
 	return torque;
 }
 
 void ColliderEntity::handleCollision(ColliderEntity* other, glm::vec3 norm, float depth) {
-	float velAlongNorm = glm::dot(other->vel() - evel, norm);
+	float velAlongNorm = glm::dot(other->vel() - _vel, norm);
 	if (velAlongNorm > 0)
 		return;
 

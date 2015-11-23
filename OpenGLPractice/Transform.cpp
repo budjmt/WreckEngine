@@ -5,6 +5,7 @@
 Transform::Transform()
 	: position(tposition), scale(tscale), rotation(trotation), rotAngle(trotAngle), rotAxis(trotAxis)
 {
+	parent = nullptr;
 	position = glm::vec3(0, 0, 0);
 	scale = glm::vec3(1, 1, 1);
 	rotation = glm::fquat();
@@ -14,6 +15,7 @@ Transform::Transform()
 Transform::Transform(const Transform& other) 
 	: position(tposition), scale(tscale), rotation(trotation), rotAngle(trotAngle), rotAxis(trotAxis)
 {
+	parent = other.parent;
 	position = other.position;
 	scale = other.scale;
 	rotation = other.rotation;
@@ -37,7 +39,7 @@ Transform& Transform::operator=(const Transform& other)
 }
 
 Transform Transform::computeTransform() {
-	if (!parent) {
+	if (parent == nullptr) {
 		this->updateRot();
 		return *this;
 	}
@@ -90,4 +92,13 @@ void Transform::rotate(float theta, glm::vec3 axis) {
 	if (theta)
 		rotation = glm::rotate(rotation, theta, axis);
 	updateRot();
+}
+
+glm::vec3 Transform::getTransformed(glm::vec3 v)
+{
+	Transform t = computeTransform();
+	glm::mat4 translate = glm::translate(tposition);
+	glm::mat4 rot = glm::rotate(t.rotAngle, t.rotAxis);
+	glm::mat4 scale = glm::scale(tscale);
+	return glm::vec3(translate * scale * rot * glm::vec4(v, 1));
 }
