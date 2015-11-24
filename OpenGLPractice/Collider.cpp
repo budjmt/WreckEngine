@@ -157,8 +157,8 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 						if (adc * bdc < 0 && cba * bdc > 0) {
 							//let's check it
 							glm::vec3 edgeNormal = glm::normalize(glm::cross(getEdge(curr.edge), other->getEdge(otherCurr.edge)));
-							glm::vec3 v = getVert(curr.edge[0] * 3);
-							float pen = glm::dot(glm::sign(glm::dot(edgeNormal, v)) * edgeNormal, other->getVert(otherCurr.edge[0] * 3) - v);
+							glm::vec3 v = getFaceVert(curr.edge[0]);
+							float pen = glm::dot(glm::sign(glm::dot(edgeNormal, v)) * edgeNormal, other->getFaceVert(otherCurr.edge[0]) - v);
 							
 							if (pen > manifold.pen) {
 								manifold.edgePair[0] = curr;
@@ -201,15 +201,15 @@ Manifold Collider::intersects(Collider* other) {
 	}
 
 	//edges
-	EdgeManifold minEdge = overlayGaussMaps(other);
-	if (minEdge.pen > 0) {
-		//std::cout << "Edge: " << minEdge.pen << std::endl;
-		return manifold;
-	}
+	//EdgeManifold minEdge = overlayGaussMaps(other);
+	//if (minEdge.pen > 0) {
+	//	std::cout << "Edge: " << minEdge.pen << std::endl;
+	//	return manifold;
+	//}
 
 	manifold = (minAxis.pen > otherMinAxis.pen) ? minAxis : otherMinAxis;
-	if (minEdge.pen > manifold.pen)
-		std::cout << "EDGE ";
+	//if (minEdge.pen > manifold.pen)
+	//	std::cout << "EDGE ";
 	//std::cout << manifold.pen << std::endl;
 	return manifold;
 }
@@ -272,13 +272,14 @@ void Collider::genNormals() {
 		std::vector<glm::vec3> meshVerts = mesh->verts();
 		int numFaces = faceVerts.size();
 		for (int i = 0; i < numFaces; i += 3) {
-			//this is the problem child
 			glm::vec3 normal, e1, e2, v;
 			v = meshVerts[faceVerts[i]];
 			e1 = meshVerts[faceVerts[i + 1]] - v;
 			e2 = meshVerts[faceVerts[i + 2]] - v;
 			normal = glm::normalize(glm::cross(e1, e2));
-			faceNormals.push_back(normal);
+			faceNormals.push_back(normal);//so for each face (3 vertices), there is a normal in this vector. 
+			//To get the first vertex in the face, multiply the index in this vector by 3 when using it with meshVerts
+			//remember to first use it with faceVerts, then pass the result to meshVerts
 		}
 		for (int i = 0; i < numFaces; i += 3)
 			addUniqueAxis(uniqueNormals, i / 3);
@@ -296,7 +297,7 @@ void Collider::genEdges() {
 		for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
 			for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
 				setEdge(pair.second[i].edge, edges.size());
-				edges.push_back(getVert(pair.second[i].edge[0]) - getVert(pair.second[i].edge[1]));
+				edges.push_back(getFaceVert(pair.second[i].edge[0]) - getFaceVert(pair.second[i].edge[1]));
 			}
 		}
 		break;
@@ -430,7 +431,7 @@ const std::vector<int>& Collider::getNormals() const { return uniqueNormals; }
 const std::vector<glm::vec3>& Collider::getCurrNormals() const { return currNormals; }
 const std::vector<glm::vec3>& Collider::getEdges() const { return currEdges; }
 
-glm::vec3 Collider::getVert(int index) const { return mesh->verts()[index]; }
+glm::vec3 Collider::getFaceVert(int index) const { return mesh->verts()[mesh->faces().verts[index]]; }
 glm::vec3 Collider::getNormal(int index) const { return currNormals[index]; }
 glm::vec3 Collider::getEdge(int (&e)[2]) { 
 	if (e[1] < e[0]) { int temp = e[0]; e[0] = e[1]; e[1] = temp; }
