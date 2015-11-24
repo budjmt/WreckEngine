@@ -26,6 +26,8 @@ void genUVCylindrical(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFace
 		uvIndex /= FLOATS_PER_VERT;
 
 		uvFaces.push_back(uvIndex + 1);
+		//uvFaces.push_back(uvIndex + 1);
+		//uvFaces.push_back(uvIndex + 1);
 	}
 }
 
@@ -49,5 +51,7 @@ void genUVSpherical(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces,
 		uvIndex /= FLOATS_PER_NORM;
 
 		uvFaces.push_back(uvIndex + 1);
+		//uvFaces.push_back(uvIndex + 1);
+		//uvFaces.push_back(uvIndex + 1);
 	}
 }

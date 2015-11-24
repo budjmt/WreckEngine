@@ -155,12 +155,12 @@ void genCube(const char* file) {
 	//cout << "Generating vert faces" << endl;
 	//generate faces and normals
 	vertFaces = {
-		2, 1, 3,		2, 4, 3,
-		6, 2, 4,		6, 8, 4,
-		5, 6, 8,		5, 7, 8,
-		1, 5, 7,		1, 3, 7,
-		3, 7, 8,		3, 4, 8,
-		2, 6, 5,		2, 1, 5
+		2, 1, 3,		3, 4, 2,
+		6, 2, 4,		4, 8, 6,
+		5, 6, 8,		8, 7, 5,
+		1, 5, 7,		7, 3, 1,
+		3, 7, 8,		8, 4, 3,
+		2, 6, 5,		5, 1, 2
 	};//that was tedious
 
 	//cout << "Generating normals" << endl;
@@ -210,23 +210,23 @@ void genCylinder(const char* file, int res) {
 		2 * i + 1 --- 2 * i + 3
 		*/
 		//top face
-		vertFaces.push_back(2 * i + 2 + 1); vertFaces.push_back(1); vertFaces.push_back(2 * i + 1);
+		vertFaces.push_back(2 * i + 1); vertFaces.push_back(1); vertFaces.push_back(2 * i + 2 + 1);
 		//bottom face
 		vertFaces.push_back(2 * i + 3 + 1); vertFaces.push_back(2); vertFaces.push_back(2 * i + 1 + 1);
 		//side faces
 		vertFaces.push_back(2 * i + 2 + 1); vertFaces.push_back(2 * i + 1); vertFaces.push_back(2 * i + 1 + 1);
-		vertFaces.push_back(2 * i + 2 + 1); vertFaces.push_back(2 * i + 3 + 1); vertFaces.push_back(2 * i + 1 + 1);
+		vertFaces.push_back(2 * i + 1 + 1); vertFaces.push_back(2 * i + 3 + 1); vertFaces.push_back(2 * i + 2 + 1);
 
 		tprev = tprev;
 		bprev = bprev;
 	}
 	//final top face
-	vertFaces.push_back(3); vertFaces.push_back(1); vertFaces.push_back(2 * (res - 1) + 2 + 1);
+	vertFaces.push_back(2 * (res - 1) + 2 + 1); vertFaces.push_back(1); vertFaces.push_back(3);
 	//final bottom face
 	vertFaces.push_back(4); vertFaces.push_back(2); vertFaces.push_back(2 * (res - 1) + 3 + 1);
 	//final side faces
 	vertFaces.push_back(3); vertFaces.push_back(2 * (res - 1) + 2 + 1); vertFaces.push_back(2 * (res - 1) + 3 + 1);
-	vertFaces.push_back(3); vertFaces.push_back(4); vertFaces.push_back(2 * (res - 1) + 3 + 1);
+	vertFaces.push_back(2 * (res - 1) + 3 + 1); vertFaces.push_back(4); vertFaces.push_back(3);
 
 	//generate normals
 	genNormals(verts, vertFaces, norms, normFaces);
@@ -267,7 +267,7 @@ void genSphere(const char* file, int res) {
 		int indp1 = (i - 1) * (res - 1) + 1;//one notch down prev half circle
 		
 		verts.push_back(x1); verts.push_back(y1); verts.push_back(z1);
-		vertFaces.push_back(ind + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(indp1 + 1);
+		vertFaces.push_back(indp1 + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(ind + 1);
 
 		indp = indp1; ind = ind1;
 
@@ -299,7 +299,7 @@ void genSphere(const char* file, int res) {
 		}
 		ind1 = numVerts;
 		indp1 = numVerts;
-		vertFaces.push_back(ind + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(indp + 1);
+		vertFaces.push_back(indp + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(ind + 1);
 	}
 	//bottom of sphere; goes in last
 	verts.push_back(-0.5f); verts.push_back(0); verts.push_back(0);
@@ -316,7 +316,7 @@ void genSphere(const char* file, int res) {
 	ind1 %= numVerts;
 	indp1 %= numVerts;
 	
-	vertFaces.push_back(ind + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(indp1 + 1);
+	vertFaces.push_back(indp + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(ind + 1);
 	
 	indp = indp1; ind = ind1;
 
@@ -337,7 +337,7 @@ void genSphere(const char* file, int res) {
 	}
 	ind1 = numVerts;
 	indp1 = numVerts;
-	vertFaces.push_back(ind + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(indp + 1);
+	vertFaces.push_back(indp + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(ind + 1);
 
 	//generate normals
 	genNormals(verts, vertFaces, norms, normFaces);
@@ -454,14 +454,14 @@ void genNormals(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces
 		index /= FLOATS_PER_NORM;
 
 		normFaces.push_back(index + 1);
-		normFaces.push_back(index + 2);
-		normFaces.push_back(index + 3);
+		normFaces.push_back(index + 1);
+		normFaces.push_back(index + 1);
 	}
 }
 
 glm::vec3 genNormal(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3) {
-	glm::vec3 e1 = v1 - v2;
-	glm::vec3 e2 = v3 - v2;
+	glm::vec3 e1 = v2 - v1;
+	glm::vec3 e2 = v3 - v1;
 	/*
 	cout << v1 << endl;
 	cout << v2 << endl;

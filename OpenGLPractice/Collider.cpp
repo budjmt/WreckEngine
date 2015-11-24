@@ -274,8 +274,8 @@ void Collider::genNormals() {
 		for (int i = 0; i < numFaces; i += 3) {
 			//this is the problem child
 			glm::vec3 normal, e1, e2, v;
-			v = meshVerts[faceVerts[i + 1]];
-			e1 = meshVerts[faceVerts[i]] - v;
+			v = meshVerts[faceVerts[i]];
+			e1 = meshVerts[faceVerts[i + 1]] - v;
 			e2 = meshVerts[faceVerts[i + 2]] - v;
 			normal = glm::normalize(glm::cross(e1, e2));
 			faceNormals.push_back(normal);

@@ -16,4 +16,5 @@ void main() {
 	fragPos = gl_Position.xyz;
 	fragTexUV = vecTexUV;
 	fragNormal = normalize(worldMatrix * vec4(vecNormal, 1)).xyz;
+	//fragNormal = (vecNormal + vec3(1,1,1)) * 0.5;
 }
