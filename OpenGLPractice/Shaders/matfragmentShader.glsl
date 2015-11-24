@@ -18,7 +18,7 @@ void main() {
 
 	vec4 color = texture(uniformTex, fragTexUV);
 	color *= tint;
-	gl_FragColor = vec4(color.rgb * light,1);
-	//gl_FragColor = vec4(fragNormal,1);
+	//gl_FragColor = vec4(color.rgb * light,1);
+	gl_FragColor = vec4(fragNormal,1);
 	//gl_FragColor = vec4(fragTexUV,1,1);
 }
