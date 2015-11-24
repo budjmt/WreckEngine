@@ -80,7 +80,7 @@ public:
 	const std::vector<glm::vec3>& getCurrNormals() const;
 	const std::vector<glm::vec3>& getEdges() const;
 	
-	glm::vec3 getFaceVert(int index) const;
+	glm::vec3 getVert(int index) const;
 	glm::vec3 getNormal(int index) const;
 	glm::vec3 getEdge(int (&e)[2]);
 	
@@ -111,5 +111,5 @@ private:
 	GaussMap gauss;
 	Mesh* mesh;
 
-	void setEdge(int(&e)[2], int value);
+	void setEdge(int(&e)[2], int index);
 };

@@ -129,7 +129,7 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	manifold.pen = -INT_MAX;
 
 	GaussMap othergauss = other->getGaussMap();
-	auto otherNormals = other->getCurrNormals();
+	std::vector<glm::vec3> otherNormals = other->getCurrNormals();
 	
 	for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
 		for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
@@ -140,6 +140,10 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 			for (std::pair<std::string, std::vector<Adj>> otherPair : gauss.adjacencies) {
 				for (int j = 0, othernumAdj = otherPair.second.size(); j < othernumAdj; j++) {
 					
+					//we found a separating axis boys
+					if (manifold.pen > 0)
+						return manifold;
+
 					Adj otherCurr = otherPair.second[j];
 					glm::vec3 c = otherNormals[otherCurr.f1], d = otherNormals[otherCurr.f2];
 					
@@ -157,8 +161,8 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 						if (adc * bdc < 0 && cba * bdc > 0) {
 							//let's check it
 							glm::vec3 edgeNormal = glm::normalize(glm::cross(getEdge(curr.edge), other->getEdge(otherCurr.edge)));
-							glm::vec3 v = getFaceVert(curr.edge[0]);
-							float pen = glm::dot(glm::sign(glm::dot(edgeNormal, v)) * edgeNormal, other->getFaceVert(otherCurr.edge[0]) - v);
+							glm::vec3 v = getVert(curr.edge[0]);
+							float pen = glm::dot(glm::sign(glm::dot(edgeNormal, v)) * edgeNormal, other->getVert(otherCurr.edge[0]) - v);
 							
 							if (pen > manifold.pen) {
 								manifold.edgePair[0] = curr;
@@ -201,15 +205,15 @@ Manifold Collider::intersects(Collider* other) {
 	}
 
 	//edges
-	//EdgeManifold minEdge = overlayGaussMaps(other);
-	//if (minEdge.pen > 0) {
-	//	std::cout << "Edge: " << minEdge.pen << std::endl;
-	//	return manifold;
-	//}
+	EdgeManifold minEdge = overlayGaussMaps(other);
+	if (minEdge.pen > 0) {
+		std::cout << "Edge: " << minEdge.pen << std::endl;
+		return manifold;
+	}
 
 	manifold = (minAxis.pen > otherMinAxis.pen) ? minAxis : otherMinAxis;
-	//if (minEdge.pen > manifold.pen)
-	//	std::cout << "EDGE ";
+	if (minEdge.pen > manifold.pen)
+		std::cout << "EDGE ";
 	//std::cout << manifold.pen << std::endl;
 	return manifold;
 }
@@ -297,7 +301,7 @@ void Collider::genEdges() {
 		for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
 			for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
 				setEdge(pair.second[i].edge, edges.size());
-				edges.push_back(getFaceVert(pair.second[i].edge[0]) - getFaceVert(pair.second[i].edge[1]));
+				edges.push_back(getVert(pair.second[i].edge[0]) - getVert(pair.second[i].edge[1]));
 			}
 		}
 		break;
@@ -319,9 +323,9 @@ void Collider::genGaussMap() {
 		std::vector<GLuint>& faceVerts = mesh->faces().verts;
 		int numFaces = faceVerts.size();
 		for (int i = 0; i < numFaces; i += 3) {
-			for (int j = i + 3; j < numFaces; j++) {
-				if (fuzzySameDir(faceNormals[i / 3], faceNormals[j / 3]))
-					continue;
+			for (int j = i + 3; j < numFaces; j += 3) {
+				//if (fuzzySameDir(faceNormals[i / 3], faceNormals[j / 3]))
+				//	continue;
 				Adj a;
 				a.edge[0] = -1; a.edge[1] = -1;
 				bool added = false;
@@ -431,17 +435,17 @@ const std::vector<int>& Collider::getNormals() const { return uniqueNormals; }
 const std::vector<glm::vec3>& Collider::getCurrNormals() const { return currNormals; }
 const std::vector<glm::vec3>& Collider::getEdges() const { return currEdges; }
 
-glm::vec3 Collider::getFaceVert(int index) const { return mesh->verts()[mesh->faces().verts[index]]; }
+glm::vec3 Collider::getVert(int index) const { return mesh->verts()[index]; }
 glm::vec3 Collider::getNormal(int index) const { return currNormals[index]; }
 glm::vec3 Collider::getEdge(int (&e)[2]) { 
 	if (e[1] < e[0]) { int temp = e[0]; e[0] = e[1]; e[1] = temp; }
 	std::string key = std::to_string(e[0]) + "," + std::to_string(e[1]);
 	return currEdges[edgeMap[key]];
 }
-void Collider::setEdge(int(&e)[2], int value) {
+void Collider::setEdge(int(&e)[2], int index) {
 	if (e[1] < e[0]) { int temp = e[0]; e[0] = e[1]; e[1] = temp; }
 	std::string key = std::to_string(e[0]) + "," + std::to_string(e[1]);
-	edgeMap[key] = value;
+	edgeMap[key] = index;
 }
 
 const GaussMap& Collider::getGaussMap() const { return gauss; }
