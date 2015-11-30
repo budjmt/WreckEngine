@@ -123,6 +123,36 @@ Manifold Collider::getAxisMinPen(Collider* other) {
 	return axis;
 }
 
+/*
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+The principles of using Gauss Maps are as follows:
+	- A Gauss Map is defined as the conversion of all the face normals on a body to points on the unit sphere, 
+	  and representing adjacencies between the faces the normals refer to as arcs on the sphere.
+	
+	- By overlaying the gauss maps of two colliders, one can determine which edges on each collider will actually need to be compared for Separating Axis Theorem.
+	
+	- We determine this by checking for intersecting arcs; recall that arcs represent adjacencies between faces, or in other words edges.
+	  Any arcs that intersect indicate that those edges form a face on the Minkowski difference of the two colliders, and therefore their cross product is a normal that must be tested.
+	
+	- We determine whether two arcs A and B intersect by performing 3 separating axis tests:
+		- The vertices P and Q of arc B fall on opposite sides of the plane through arc A
+		- The vertices R and S of arc A fall on opposite sides of the plane through arc B
+		- Vertices P and S are on the same side of the plane formed by Q and R (this is a hemisphere test, as the tests will fail if they are not on the same side of the sphere)
+	  If all 3 tests are passed, then we know the edges form a face on the Minkowski difference
+
+	- I should probably explain the Minkowski difference. Essentially it's the body formed by subtracting all the vertices of one body from another.
+	  It is a useful tool for collision detection, as all the faces of both original bodies are present, with the addition of faces formed by edges that may potentially be separating axes.
+	  
+	- For practical purposes however, it is almost useless, as assembling it is extremely expensive, (you have to form a new one each frame, for each collision check)
+	  which is why Gauss maps are valuable; they only need to be assembled once, as all they represent are associations, and current data can be easily referenced.
+	  
+	- This means that we gain the benefit of not having to find a support point for every possible combination of axes on the two bodies that the Minkowski difference offers
+	  while not having to actually assemble one. 
+	  
+	- Face normals can be tested as they would normally, and should be tested before overlaying the gauss maps, as it requires fewer comparisons. 
+	  (though the necessity of the support points may offset this)
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+*/
 EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	EdgeManifold manifold;
 	manifold.originator = this;
@@ -130,6 +160,9 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 
 	GaussMap othergauss = other->getGaussMap();
 	std::vector<glm::vec3> otherNormals = other->getCurrNormals();
+
+	Transform trans = _transform->computeTransform();
+	Transform otherTrans = other->transform()->computeTransform();
 	
 	for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
 		for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
@@ -161,9 +194,17 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 						if (adc * bdc < 0 && cba * bdc > 0) {
 							//let's check it
 							glm::vec3 edgeNormal = glm::normalize(glm::cross(getEdge(curr.edge), other->getEdge(otherCurr.edge)));
-							glm::vec3 v = getVert(curr.edge[0]);
-							float pen = glm::dot(glm::sign(glm::dot(edgeNormal, v)) * edgeNormal, other->getVert(otherCurr.edge[0]) - v);
-							
+							/*glm::vec3 v1 = getVert(curr.edge[0]),
+									  v2 = other->getVert(otherCurr.edge[0]);
+							v1 = trans.getTransformed(v1);
+							v2 = trans.getTransformed(v2);
+							float pen = glm::dot(glm::sign(glm::dot(edgeNormal, v1 - trans.position)) * edgeNormal, v2 - v1);*/
+							//testing with support points
+							SupportPoint support = other->getSupportPoint(-edgeNormal);
+							glm::vec3 vert = _transform->getTransformed(getVert(curr.edge[0]));
+
+							float pen = glm::dot(edgeNormal, support.point - vert);//point-plane signed distance, negative if penetrating, positive if not
+
 							if (pen > manifold.pen) {
 								manifold.edgePair[0] = curr;
 								manifold.edgePair[1] = otherCurr;
