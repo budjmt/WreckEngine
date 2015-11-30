@@ -324,8 +324,8 @@ void Collider::genGaussMap() {
 		int numFaces = faceVerts.size();
 		for (int i = 0; i < numFaces; i += 3) {
 			for (int j = i + 3; j < numFaces; j += 3) {
-				//if (fuzzySameDir(faceNormals[i / 3], faceNormals[j / 3]))
-				//	continue;
+				if (fuzzySameDir(faceNormals[i / 3], faceNormals[j / 3]))
+					continue;
 				Adj a;
 				a.edge[0] = -1; a.edge[1] = -1;
 				bool added = false;
