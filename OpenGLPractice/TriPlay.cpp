@@ -65,7 +65,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 		{ glm::vec3( 1, 1, 0), glm::vec3(-1, 1, 0) },
 		{ glm::vec3(1,-1, 0), glm::vec3(-1,-1, 0) }
 	};*/
-	genBezierSurface("Assets/bezier.obj",16,16,k);
+	//genBezierSurface("Assets/bezier.obj",16,16,k);
 	Mesh* bezier = loadOBJ("Assets/bezier.obj");
 	dm = new DrawMesh(bezier, "Assets/texture.png", prog);
 	shapes.push_back(dm);
@@ -75,7 +75,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
-	genCylinder("Assets/cylinder.obj", 64);
+	//genCylinder("Assets/cylinder.obj", 64);
 	Mesh* cylinder = loadOBJ("Assets/cylinder.obj");
 	dm = new DrawMesh(cylinder, "Assets/texture.png", prog);
 	shapes.push_back(dm);
@@ -85,7 +85,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
-	genSphere("Assets/sphere.obj", 64);
+	//genSphere("Assets/sphere.obj", 16);
 	Mesh* sphere = loadOBJ("Assets/sphere.obj");
 	dm = new DrawMesh(sphere, "Assets/texture.png", prog);
 	shapes.push_back(dm);
@@ -95,7 +95,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
-	genCube("Assets/cube.obj");
+	//genCube("Assets/cube.obj");
 	Mesh* cube = loadOBJ("Assets/cube.obj");
 	dm = new DrawMesh(cube, "Assets/texture.png", prog);
 	shapes.push_back(dm);
@@ -188,12 +188,12 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double dt) {
 
 	Camera::mayaCam(window, m, dt, camera);
 
-	//edges and normals confirmed to be ok
-	Collider* c = ((ColliderEntity*)me)->collider();
+	//edges, gauss map, and normals confirmed to be ok
+	/*Collider* c = ((ColliderEntity*)me)->collider();
 	//int e[2] = { 1,2 };
 	//glm::vec3 edge = c->getEdge(e);
 	glm::vec3 norm = c->getCurrNormals()[0];
-	std::cout << norm.x << ", " << norm.y << ", " << norm.z << std::endl;
+	std::cout << norm.x << ", " << norm.y << ", " << norm.z << std::endl;*/
 }
 
 /*void TriPlay::spawnTriangle(glm::vec3 pos, glm::vec3 vel) {

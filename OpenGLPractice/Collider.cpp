@@ -377,8 +377,8 @@ void Collider::genGaussMap() {
 		for (int i = 0; i < numFaces; i += 3) {
 			for (int j = i + 3; j < numFaces; j += 3) {
 				
-				//if (fuzzyParallel(faceNormals[i / 3], faceNormals[j / 3]))
-				//	continue;
+				if (fuzzyParallel(faceNormals[i / 3], faceNormals[j / 3]))
+					continue;
 				Adj a;
 				a.edge[0] = -1; a.edge[1] = -1;
 				
@@ -412,9 +412,11 @@ void Collider::genGaussMap() {
 bool Collider::fuzzyParallel(glm::vec3 v1, glm::vec3 v2) {
 	if (v1 == v2)
 		return true;
-	float propx = v2.x / v1.x;
+	float propx = (v1.x != 0) ? v2.x / v1.x : 0;
+	float propy = (v1.y != 0) ? v2.y / v1.y : 0;
 	float eps = FLT_EPSILON;
-	return fabs((v2.y / v1.y - propx) / propx) < eps && fabs((v2.z / v1.z - propx) / propx) < eps;
+	bool para = fabs((propy - propx) / propx) < eps && fabs((((v1.z != 0) ? v2.z / v1.z : 0) - propx) / propx) < eps;
+	return para;
 }
 
 void Collider::addUniqueAxis(std::vector<int>& axes, int aIndex) {
