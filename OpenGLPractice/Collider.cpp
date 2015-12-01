@@ -99,7 +99,7 @@ SupportPoint Collider::getSupportPoint(glm::vec3 dir) {
 Manifold Collider::getAxisMinPen(Collider* other) {
 	Manifold axis;
 	axis.originator = this;
-	axis.pen = -INT_MAX;
+	axis.pen = -FLT_MAX;
 	//int numAxes = uniqueNormals.size();
 	int numAxes = currNormals.size();
 	auto meshVerts = mesh->verts();
@@ -140,7 +140,7 @@ The principles of using Gauss Maps are as follows:
 		- Vertices P and S are on the same side of the plane formed by Q and R (this is a hemisphere test, as the tests will fail if they are not on the same side of the sphere)
 	  If all 3 tests are passed, then we know the edges form a face on the Minkowski difference
 
-	- I should probably explain the Minkowski difference. Essentially it's the body formed by subtracting all the vertices of one body from another.
+	- I should probably explain the Minkowski difference. Essentially it's the body formed by subtracting all the vertices of one body from each of the vertices from another.
 	  It is a useful tool for collision detection, as all the faces of both original bodies are present, with the addition of faces formed by edges that may potentially be separating axes.
 	  
 	- For practical purposes however, it is almost useless, as assembling it is extremely expensive, (you have to form a new one each frame, for each collision check)
@@ -151,12 +151,14 @@ The principles of using Gauss Maps are as follows:
 	  
 	- Face normals can be tested as they would normally, and should be tested before overlaying the gauss maps, as it requires fewer comparisons. 
 	  (though the necessity of the support points may offset this)
+
+	- Incidentally, this test is also referred to as checking for Voronoi region overlap.
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
 EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	EdgeManifold manifold;
 	manifold.originator = this;
-	manifold.pen = -INT_MAX;
+	manifold.pen = -FLT_MAX;
 
 	GaussMap othergauss = other->getGaussMap();
 	std::vector<glm::vec3> otherNormals = other->getCurrNormals();
@@ -185,26 +187,33 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 					float cba = glm::dot(c, bxa)
 						, dba = glm::dot(d, bxa);
 					
+					//if c and d are on different sides of arc ba
 					if (cba * dba < 0) {
 						
 						glm::vec3 dxc = glm::cross(d, c);
 						float adc = glm::dot(a, dxc)
 							, bdc = glm::dot(b, dxc);
 						
+						//if a and b are on different sides of arc dc &&
+						//if a and d are on the same side of the plane formed by b and c
+						//(this works because a . (b x c) == c . (b x a) and d . (b x c) == b . (d x c))(scalar triple product identity)
 						if (adc * bdc < 0 && cba * bdc > 0) {
-							//let's check it
-							glm::vec3 edgeNormal = glm::normalize(glm::cross(getEdge(curr.edge), other->getEdge(otherCurr.edge)));
-							/*glm::vec3 v1 = getVert(curr.edge[0]),
+							
+							glm::vec3 edge = getEdge(curr.edge), otherEdge = other->getEdge(otherCurr.edge);
+							//if edges are parallel, we don't care since they don't have a normal
+							if (fuzzyParallel(edge, otherEdge))
+								continue;
+
+							//check distance from plane defined by edge normal and one vertex on this body's edge
+							glm::vec3 edgeNormal = glm::normalize(glm::cross(edge, otherEdge));
+
+							glm::vec3 v1 = getVert(curr.edge[0]),
 									  v2 = other->getVert(otherCurr.edge[0]);
 							v1 = trans.getTransformed(v1);
 							v2 = trans.getTransformed(v2);
-							float pen = glm::dot(glm::sign(glm::dot(edgeNormal, v1 - trans.position)) * edgeNormal, v2 - v1);*/
-							//testing with support points
-							SupportPoint support = other->getSupportPoint(-edgeNormal);
-							glm::vec3 vert = _transform->getTransformed(getVert(curr.edge[0]));
-
-							float pen = glm::dot(edgeNormal, support.point - vert);//point-plane signed distance, negative if penetrating, positive if not
-
+							
+							edgeNormal *= glm::sign(glm::dot(edgeNormal, v1 - trans.position));//make sure the edge normal is facing outwards from the body
+							float pen = glm::dot(edgeNormal, v2 - v1);
 							if (pen > manifold.pen) {
 								manifold.edgePair[0] = curr;
 								manifold.edgePair[1] = otherCurr;
@@ -365,7 +374,7 @@ void Collider::genGaussMap() {
 		int numFaces = faceVerts.size();
 		for (int i = 0; i < numFaces; i += 3) {
 			for (int j = i + 3; j < numFaces; j += 3) {
-				if (fuzzySameDir(faceNormals[i / 3], faceNormals[j / 3]))
+				if (fuzzyParallel(faceNormals[i / 3], faceNormals[j / 3]))
 					continue;
 				Adj a;
 				a.edge[0] = -1; a.edge[1] = -1;
@@ -393,7 +402,7 @@ void Collider::genGaussMap() {
 	}
 }
 
-bool Collider::fuzzySameDir(glm::vec3 v1, glm::vec3 v2) {
+bool Collider::fuzzyParallel(glm::vec3 v1, glm::vec3 v2) {
 	if (v1 == v2)
 		return true;
 	float propx = v2.x / v1.x;
@@ -409,7 +418,7 @@ void Collider::addUniqueAxis(std::vector<int>& axes, int aIndex) {
 	int numAxes = axes.size();
 	for (int i = 0; i < numAxes - 1; i++) {
 		glm::vec3 v = faceNormals[axes[i]];
-		if (fuzzySameDir(v,axis))
+		if (fuzzyParallel(v,axis))
 			return;
 		//the vector is sorted in ascending order, by x, then y, then z, which is why this works
 		bool greater = v.x < axis.x && v.y < axis.y && v.z < axis.z;

@@ -91,7 +91,7 @@ public:
 
 	void getMaxMin(glm::vec3 axis,float* maxmin);
 
-	bool fuzzySameDir(glm::vec3 v1, glm::vec3 v2);
+	bool fuzzyParallel(glm::vec3 v1, glm::vec3 v2);
 
 	SupportPoint getSupportPoint(glm::vec3 dir);
 	Manifold getAxisMinPen(Collider* other);
