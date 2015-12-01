@@ -99,7 +99,8 @@ SupportPoint Collider::getSupportPoint(glm::vec3 dir) {
 Manifold Collider::getAxisMinPen(Collider* other) {
 	Manifold axis;
 	axis.originator = this;
-	axis.pen = -FLT_MAX;
+	//axis.pen = -FLT_MAX;//keeping this to display initial value
+
 	//int numAxes = uniqueNormals.size();
 	int numAxes = currNormals.size();
 	auto meshVerts = mesh->verts();
@@ -158,7 +159,7 @@ The principles of using Gauss Maps are as follows:
 EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	EdgeManifold manifold;
 	manifold.originator = this;
-	manifold.pen = -FLT_MAX;
+	//manifold.pen = -FLT_MAX;//initial value
 
 	GaussMap othergauss = other->getGaussMap();
 	std::vector<glm::vec3> otherNormals = other->getCurrNormals();
@@ -200,7 +201,7 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 						if (adc * bdc < 0 && cba * bdc > 0) {
 							
 							glm::vec3 edge = getEdge(curr.edge), otherEdge = other->getEdge(otherCurr.edge);
-							//if edges are parallel, we don't care since they don't have a normal
+							//if edges are parallel, we don't care since they don't define a plane
 							if (fuzzyParallel(edge, otherEdge))
 								continue;
 
@@ -220,11 +221,13 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 								manifold.pen = pen;
 							}
 						}
-					}
+					}//end edge culling
+
 				}
-			}
+			}//end other gauss loop
+
 		}
-	}
+	}//end gauss loop
 	return manifold;
 }
 
@@ -248,7 +251,6 @@ Manifold Collider::intersects(Collider* other) {
 	}
 
 	Manifold otherMinAxis = other->getAxisMinPen(this);
-	//this may be unnecessary
 	if (otherMinAxis.pen > 0) {
 		//std::cout << "Other: " << otherMinAxis.pen << "; " << otherMinAxis.axis.x << ", " << otherMinAxis.axis.y << ", " << otherMinAxis.axis.z << std::endl;
 		return manifold;
@@ -374,13 +376,16 @@ void Collider::genGaussMap() {
 		int numFaces = faceVerts.size();
 		for (int i = 0; i < numFaces; i += 3) {
 			for (int j = i + 3; j < numFaces; j += 3) {
-				if (fuzzyParallel(faceNormals[i / 3], faceNormals[j / 3]))
-					continue;
+				
+				//if (fuzzyParallel(faceNormals[i / 3], faceNormals[j / 3]))
+				//	continue;
 				Adj a;
 				a.edge[0] = -1; a.edge[1] = -1;
+				
 				bool added = false;
 				for (int p1 = 0; !added && p1 < 3; p1++) {
 					for (int p2 = 0; p2 < 3; p2++) {
+						
 						//checks if a pair of vertices match
 						if (faceVerts[i + p1] == faceVerts[j + p2]) {
 							//if a match hasn't been found yet, just record it
@@ -392,12 +397,14 @@ void Collider::genGaussMap() {
 								gauss.addAdj(faceNormals[a.f1], a);
 								added = true;
 							}
-							break;
-						}
+							break;//none of the other verts can be equal to this one now, so move to the next one
+						}//end vert comparison
+
 					}
-				}
+				}//end edge loop
+
 			}
-		}
+		}//end face loop
 		break;
 	}
 }
@@ -406,7 +413,7 @@ bool Collider::fuzzyParallel(glm::vec3 v1, glm::vec3 v2) {
 	if (v1 == v2)
 		return true;
 	float propx = v2.x / v1.x;
-	float eps = glm::epsilon<float>();
+	float eps = FLT_EPSILON;
 	return fabs((v2.y / v1.y - propx) / propx) < eps && fabs((v2.z / v1.z - propx) / propx) < eps;
 }
 

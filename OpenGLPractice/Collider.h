@@ -42,12 +42,14 @@ struct Manifold {
 	Collider* originator;
 	glm::vec3 axis, colPoint;
 	float pen;
+	Manifold() : originator(nullptr), pen(-FLT_MAX) {}
 };
 
 struct EdgeManifold {
 	Collider* originator;
 	Adj edgePair[2];
 	float pen;
+	EdgeManifold() : originator(nullptr), pen(-FLT_MAX) {}
 };
 
 class Collider
