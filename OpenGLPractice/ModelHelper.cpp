@@ -21,7 +21,7 @@ Mesh* loadOBJ(const char* file) {
 		return 0;
 	}
 	else
-		cout << "File " << file << " Loaded" << endl;
+		cout << "File " << file << " Loading..." << endl;
 
 	vector<glm::vec3> verts,normals,uvs;
 	Face faces = Face();
@@ -64,7 +64,7 @@ Mesh* loadOBJ(const char* file) {
 		if((i + 1) % 3 == 0)
 			cout << endl;
 	}*/
-	//cout << "Complete!" << endl;
+	cout << "Complete!" << endl;
 	Mesh* mesh = new Mesh(verts, normals, uvs, faces);
 	return mesh;
 }

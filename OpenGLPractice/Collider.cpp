@@ -173,7 +173,7 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 			Adj curr = pair.second[i];
 			glm::vec3 a = currNormals[curr.f1], b = currNormals[curr.f2];
 			
-			for (std::pair<std::string, std::vector<Adj>> otherPair : gauss.adjacencies) {
+			for (std::pair<std::string, std::vector<Adj>> otherPair : othergauss.adjacencies) {
 				for (int j = 0, othernumAdj = otherPair.second.size(); j < othernumAdj; j++) {
 					
 					//we found a separating axis boys
@@ -196,8 +196,9 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 							, bdc = glm::dot(b, dxc);
 						
 						//if a and b are on different sides of arc dc &&
-						//if a and d are on the same side of the plane formed by b and c
+						//if a and d are on the same side of the plane formed by b and c (c . (b x a) * b . (d x c) > 0)
 						//(this works because a . (b x c) == c . (b x a) and d . (b x c) == b . (d x c))(scalar triple product identity)
+						//[scalar triple product of a,b,c == [abc] = a . (b x c)]
 						if (adc * bdc < 0 && cba * bdc > 0) {
 							
 							glm::vec3 edge = getEdge(curr.edge), otherEdge = other->getEdge(otherCurr.edge);
@@ -211,7 +212,7 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 							glm::vec3 v1 = getVert(curr.edge[0]),
 									  v2 = other->getVert(otherCurr.edge[0]);
 							v1 = trans.getTransformed(v1);
-							v2 = trans.getTransformed(v2);
+							v2 = otherTrans.getTransformed(v2);
 							
 							edgeNormal *= glm::sign(glm::dot(edgeNormal, v1 - trans.position));//make sure the edge normal is facing outwards from the body
 							float pen = glm::dot(edgeNormal, v2 - v1);
