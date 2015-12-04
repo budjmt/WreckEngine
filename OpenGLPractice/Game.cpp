@@ -3,6 +3,8 @@
 
 Game::Game() 
 {
+	if (DEBUG)
+		debug = new DrawDebug();
 }
 
 Game::Game(GLuint prog)
@@ -23,6 +25,8 @@ Game::~Game(void)
 		delete e;
 	for(Drawable* s : shapes)
 		delete s;
+	if (DEBUG)
+		delete debug;
 }
 
 Entity* Game::operator[](int index) {
@@ -41,4 +45,6 @@ void Game::draw() {
 		if (e->active)
 			e->draw();
 	}
+	if(DEBUG)
+		debug->draw();
 }

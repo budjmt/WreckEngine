@@ -5,9 +5,12 @@
 #include "GLFW/glfw3.h"
 #include "Entity.h"
 #include "Shape.h"
+#include "DrawDebug.h"
 
 #include <vector>
 #include <cmath>
+
+const bool DEBUG = true;
 
 class Game
 {
@@ -22,5 +25,6 @@ public:
 protected:
 	std::vector<Entity*> entities;
 	std::vector<Drawable*> shapes;
+	DrawDebug* debug;
 };
 

@@ -104,6 +104,15 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	mesh->transform.position.y = -2.5f;
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
+
+	dm = new DrawMesh(cube, "Assets/texture.png", prog);
+	shapes.push_back(dm);
+	mesh = new ColliderEntity(dm);
+	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
+	mesh->transform.position.y = -2.5f;
+	mesh->transform.position.x = -2.5f;
+	entities.push_back(mesh);
+	meshes.push_back(mesh);
 	me = mesh;
 
 	camera = new Camera(prog, window);

@@ -74,14 +74,16 @@ bool Collider::intersects2D(Collider* other)
 	return true;
 }
 
+//gets the vertex of the collider furthest in the direction of dir
 SupportPoint Collider::getSupportPoint(glm::vec3 dir) {
-	//I'm deeming this function ok, it's simple enough to make that call I think
 	auto verts = mesh->verts();
-	SupportPoint support{ _transform->getTransformed(verts[0]), 0 };
+	Transform trans = _transform->computeTransform();
+
+	SupportPoint support{ trans.getTransformed(verts[0]), 0 };
 	support.proj = glm::dot(support.point, dir);
-	int numVerts = verts.size();
-	for (int i = 1; i < numVerts; i++) {
-		glm::vec3 vert = _transform->getTransformed(verts[i]);
+	
+	for (int i = 1, numVerts = verts.size(); i < numVerts; i++) {
+		glm::vec3 vert = trans.getTransformed(verts[i]);
 		float proj = glm::dot(vert, dir);
 		if (proj > support.proj) {
 			support.point = vert;
@@ -91,11 +93,18 @@ SupportPoint Collider::getSupportPoint(glm::vec3 dir) {
 	return support;
 }
 
-//returns the normal and vertex with the greatest penetration,
-//this can be the minimum axis of penetration (confusingly enough)
-//the reasoning is that if the value is negative, there is penetration,
-//so the greatest NEGATIVE value has the least penetration
-//if the value is positive, then there is no penetration i.e. there is a separating axis
+/*
+----------------------------------------------------------------------
+	- Returns the normal and vertex on this collider with the greatest penetration into the other collider
+
+	- This is [possibly] the axis of least penetration for the collision (confusingly enough)
+
+	- The reasoning is that if the value is negative, there is penetration, 
+	  so the greatest NEGATIVE value has the least penetration 
+	  
+	- If the value is positive, then there is no penetration i.e. there is a separating axis
+----------------------------------------------------------------------
+*/
 Manifold Collider::getAxisMinPen(Collider* other) {
 	Manifold axis;
 	axis.originator = this;
@@ -105,14 +114,19 @@ Manifold Collider::getAxisMinPen(Collider* other) {
 	int numAxes = currNormals.size();
 	auto meshVerts = mesh->verts();
 	auto faceVerts = mesh->faces().verts;
+	Transform trans = _transform->computeTransform();
 	for (int i = 0; axis.pen < 0 && i < numAxes; i++) {
 		//glm::vec3 norm = currNormals[uniqueNormals[i]];
 		glm::vec3 norm = currNormals[i];
 		SupportPoint support = other->getSupportPoint(-norm);
-		//glm::vec3 vert = _transform->getTransformed(meshVerts[faceVerts[uniqueNormals[i] * 3]]);
-		glm::vec3 vert = _transform->getTransformed(meshVerts[faceVerts[i * 3]]);//this is the main reason unique normals can't be used right now
-		//if a unique normal is used, it doesn't know which face it's supposed to apply to
-		//I should be using a plane-centric approach
+		/*
+			this is the main reason unique normals can't be used right now
+			if a unique normal is used, it doesn't know which face it's supposed to apply to
+			I should be using a plane-centric approach
+		*/
+		//glm::vec3 vert = trans.getTransformed(meshVerts[faceVerts[uniqueNormals[i] * 3]]);
+		glm::vec3 vert = trans.getTransformed(meshVerts[faceVerts[i * 3]]);
+		
 
 		float pen = glm::dot(norm, support.point - vert);//point-plane signed distance, negative if penetrating, positive if not
 		if (pen > axis.pen) {
@@ -143,6 +157,7 @@ The principles of using Gauss Maps are as follows:
 
 	- I should probably explain the Minkowski difference. Essentially it's the body formed by subtracting all the vertices of one body from each of the vertices from another.
 	  It is a useful tool for collision detection, as all the faces of both original bodies are present, with the addition of faces formed by edges that may potentially be separating axes.
+	  Additionally, it can be said if the origin is contained within the Minkowski difference, there is overlap between the bodies, as it means at least two points in them are equal.
 	  
 	- For practical purposes however, it is almost useless, as assembling it is extremely expensive, (you have to form a new one each frame, for each collision check)
 	  which is why Gauss maps are valuable; they only need to be assembled once, as all they represent are associations, and current data can be easily referenced.
@@ -154,6 +169,9 @@ The principles of using Gauss Maps are as follows:
 	  (though the necessity of the support points may offset this)
 
 	- Incidentally, this test is also referred to as checking for Voronoi region overlap.
+
+	- I recommend http://twvideo01.ubm-us.net/o1/vault/gdc2013/slides/822403Gregorius_Dirk_TheSeparatingAxisTest.pdf if you're interested in reading more on this technique,
+	  as this is where most of my research originates.
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 */
 EdgeManifold Collider::overlayGaussMaps(Collider* other) {

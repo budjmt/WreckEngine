@@ -9,9 +9,9 @@
 #include "Mouse.h"
 #include "TriPlay.h"
 
-#define DEBUG true
-
 using namespace std;
+
+extern const bool DEBUG;//defined in Game.h
 
 GLFWwindow* window;
 GLuint shaderProg;
@@ -99,9 +99,8 @@ int main(int argc, char** argv) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-	#if DEBUG
+	if(DEBUG)
 		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-	#endif
 
 	window = glfwCreateWindow(800, 600, "OpenGL App", NULL, NULL);
 	if (!window) {
@@ -119,9 +118,8 @@ int main(int argc, char** argv) {
 	if (glewInit() != GLEW_OK)
 		return -1;
 
-	#if DEBUG
+	if(DEBUG)
 		initDebug();
-	#endif
 	init();
 	initGraphics(window);
 	while (!glfwWindowShouldClose(window)) {
