@@ -3,12 +3,11 @@
 
 Game::Game() 
 {
-	if (DEBUG)
-		debug = new DrawDebug();
 }
 
 Game::Game(GLuint prog)
 {
+	shader = prog;
 }
 
 Game::Game(const Game& other) 
@@ -25,8 +24,6 @@ Game::~Game(void)
 		delete e;
 	for(Drawable* s : shapes)
 		delete s;
-	if (DEBUG)
-		delete debug;
 }
 
 Entity* Game::operator[](int index) {
@@ -41,10 +38,11 @@ void Game::update(double dt) {
 }
 
 void Game::draw() {
+	glUseProgram(shader);
 	for (Entity* e : entities) {
 		if (e->active)
 			e->draw();
 	}
 	if(DEBUG)
-		debug->draw();
+		DrawDebug::getInstance().draw();
 }

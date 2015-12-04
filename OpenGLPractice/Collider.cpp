@@ -477,10 +477,15 @@ void Collider::updateNormals() {
 		Transform t = _transform->computeTransform();
 		glm::mat4 rot = glm::rotate(t.rotAngle, t.rotAxis);
 		//int numNormals = uniqueNormals.size();
+		auto faceVerts = mesh->faces().verts;
 		int numNormals = faceNormals.size();
 		for (int i = 0; i < numNormals; i++) {
 			//currNormals[i] = (glm::vec3)(rot * glm::vec4(faceNormals[uniqueNormals[i]], 1));//this is probably slow
 			currNormals[i] = (glm::vec3)(rot * glm::vec4(faceNormals[i], 1));
+			glm::vec3 a = t.getTransformed(getVert(faceVerts[i * 3])), b = t.getTransformed(getVert(faceVerts[i * 3 + 1])), c = t.getTransformed(getVert(faceVerts[i * 3 + 2]));
+			glm::vec3 center = a + b + c;
+			center /= 3;
+			DrawDebug::getInstance().drawDebugVector(center, center + currNormals[i]);
 		}
 		break;
 	}

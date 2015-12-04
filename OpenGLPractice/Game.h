@@ -10,8 +10,6 @@
 #include <vector>
 #include <cmath>
 
-const bool DEBUG = true;
-
 class Game
 {
 public:
@@ -23,8 +21,8 @@ public:
 	virtual void update(double dt);
 	void draw();
 protected:
+	GLuint shader;
 	std::vector<Entity*> entities;
 	std::vector<Drawable*> shapes;
-	DrawDebug* debug;
 };
 

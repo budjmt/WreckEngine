@@ -11,7 +11,7 @@
 
 using namespace std;
 
-extern const bool DEBUG;//defined in Game.h
+extern const bool DEBUG;//defined in DrawDebug.h
 
 GLFWwindow* window;
 GLuint shaderProg;
