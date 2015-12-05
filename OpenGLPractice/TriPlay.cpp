@@ -119,6 +119,9 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	camera->transform.position = glm::vec3(0, 0, 1);
 	camera->transform.rotate(0, M_PI, 0);
 	entities.push_back(camera);
+
+	if(DEBUG)
+		DrawDebug::getInstance().camera(camera);
 }
 
 TriPlay::TriPlay(const TriPlay& other)
@@ -164,17 +167,17 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double dt) {
 
 	if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
 		if(shift)
-			me->transform.position += glm::vec3(0, 0, dt);
+			me->transform.position += glm::vec3(0, 0, -dt);
 		else if(ctrl)
-			me->transform.rotate(2 * M_PI * dt, 0, 0);
+			me->transform.rotate(-2 * M_PI * dt, 0, 0);
 		else
 			me->transform.position += glm::vec3(0, dt, 0); 
 	}
 	else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
 		if(shift)
-			me->transform.position += glm::vec3(0, 0, -dt);
+			me->transform.position += glm::vec3(0, 0, dt);
 		else if (ctrl)
-			me->transform.rotate(-2 * M_PI * dt, 0, 0); 
+			me->transform.rotate(2 * M_PI * dt, 0, 0); 
 		else
 			me->transform.position += glm::vec3(0, -dt, 0); 
 	}

@@ -13,12 +13,16 @@ Camera::~Camera()
 {
 }
 
+void Camera::updateCamMat(GLuint camLoc) {
+	glm::mat4 tmp = projection * view;
+	glUniformMatrix4fv(camLoc, 1, GL_FALSE, &(tmp[0][0]));
+}
+
 void Camera::update(double dt) {
-	glm::mat4 view = glm::lookAt(transform.position,getLookAt(),getUp());
+	view = glm::lookAt(transform.position,getLookAt(),getUp());
 	//update projection
 	//updateProjection();
-	glm::mat4 tmp = projection * view;
-	glUniformMatrix4fv(cameraMatrix,1,GL_FALSE,&(tmp[0][0]));
+	updateCamMat(cameraMatrix);
 }
 
 void Camera::draw() {

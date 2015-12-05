@@ -10,16 +10,16 @@ DrawDebug::DrawDebug() {
 	
 	glBindBuffer(GL_ARRAY_BUFFER, vecBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * debugVectors.size() * FLOATS_PER_VERT, &debugVectors[0], GL_DYNAMIC_DRAW);
-	glVertexAttribPointer(9, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * FLOATS_PER_VERT, 0);
-	glEnableVertexAttribArray(9);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * FLOATS_PER_VERT, 0);
+	glEnableVertexAttribArray(0);
 
 	glGenVertexArrays(1, &arrowVAO);
 	glBindVertexArray(arrowVAO);
 	glGenBuffers(1, &arrowBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, arrowBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * debugVectors.size() / 2 * 3 * FLOATS_PER_VERT, &debugVectors[0], GL_DYNAMIC_DRAW);
-	glVertexAttribPointer(10, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * FLOATS_PER_VERT, 0);
-	glEnableVertexAttribArray(10);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * FLOATS_PER_VERT, 0);
+	glEnableVertexAttribArray(0);
 	debugVectors = std::vector<glm::vec3>();
 }
 
@@ -28,9 +28,14 @@ DrawDebug& DrawDebug::getInstance() {
 	return instance;
 }
 
+void DrawDebug::camera(Camera* c) {
+	cam = c;
+	camLoc = glGetUniformLocation(vecShader, "cameraMatrix");
+}
+
 void DrawDebug::draw() {	
-	debugVectors.push_back(glm::vec3(1, 0, -1));
-	debugVectors.push_back(glm::vec3(-1, 0, -1));
+	debugVectors.push_back(glm::vec3(0, 0, 0));
+	debugVectors.push_back(glm::vec3(0, 0, 0));
 	std::vector<glm::vec3> arrows;
 	arrows.push_back(glm::vec3(0, 0, 0));
 	arrows.push_back(glm::vec3(0, 0, 0));
@@ -38,20 +43,28 @@ void DrawDebug::draw() {
 	int numVecs = debugVectors.size();
 	for (int i = 0; i < numVecs; i += 2) {
 		glm::vec3 s = debugVectors[i], e = debugVectors[i + 1];
-		arrows.push_back(e + glm::vec3(-0.2f, 0.2f, -0.2f));
-		arrows.push_back(e + glm::vec3(0.2f, 0.2f, 0.2f));
-		arrows.push_back(e + glm::vec3(0, -0.2f, 0));
+		arrows.push_back(e + glm::vec3(-1, 2, -1) * 0.008f);
+		arrows.push_back(e + glm::vec3(1, 2, 1)   * 0.008f);
+		arrows.push_back(e);
 	}
 	glUseProgram(vecShader);
+	if (cam != nullptr)
+		cam->updateCamMat(camLoc);
+
+	glPointSize(10);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	
 	glBindVertexArray(vecVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, vecBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * numVecs * FLOATS_PER_VERT, &debugVectors[0], GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_LINES, 0, numVecs * FLOATS_PER_VERT);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * numVecs * FLOATS_PER_VERT, &(debugVectors[0]), GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_LINES, 0, numVecs);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glBindVertexArray(arrowVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, arrowBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * numVecs / 2 * 3 * FLOATS_PER_VERT, &arrows[0], GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_TRIANGLES, 0, numVecs / 2 * 3 * 3);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * numVecs / 2 * 3 * FLOATS_PER_VERT, &(arrows[0]), GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_TRIANGLES, 0, numVecs / 2 * 3);
 
 	debugVectors = std::vector<glm::vec3>();
 }

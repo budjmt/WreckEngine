@@ -278,7 +278,8 @@ Manifold Collider::intersects(Collider* other) {
 	//edges
 	EdgeManifold minEdge = overlayGaussMaps(other);
 	if (minEdge.pen > 0) {
-		std::cout << "Edge: " << minEdge.pen << std::endl;
+		glm::vec3 edge1 = getEdge(minEdge.edgePair[0].edge), edge2 = other->getEdge(minEdge.edgePair[1].edge);
+		std::cout << "Edge: " << minEdge.pen << "; This: " << edge1.x << ", " << edge1.y << ", " << edge1.z << "; Other: " << edge2.x << ", " << edge2.y << ", " << edge2.z << std::endl;
 		return manifold;
 	}
 
@@ -372,7 +373,7 @@ void Collider::genEdges() {
 		for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
 			for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
 				setEdge(pair.second[i].edge, edges.size());
-				edges.push_back(getVert(pair.second[i].edge[0]) - getVert(pair.second[i].edge[1]));
+				edges.push_back(getVert(pair.second[i].edge[1]) - getVert(pair.second[i].edge[0]));
 			}
 		}
 		break;
@@ -413,6 +414,7 @@ void Collider::genGaussMap() {
 							//otherwise, record it, set the normal, push it back, and end the loop
 							else {
 								a.edge[1] = faceVerts[i + p1]; a.f1 = i / 3; a.f2 = j / 3;
+								if (a.edge[0] > a.edge[1]) { a.edge[1] = a.edge[0]; a.edge[0] = faceVerts[i + p1]; }
 								gauss.addAdj(faceNormals[a.f1], a);
 								added = true;
 							}
@@ -477,15 +479,15 @@ void Collider::updateNormals() {
 		Transform t = _transform->computeTransform();
 		glm::mat4 rot = glm::rotate(t.rotAngle, t.rotAxis);
 		//int numNormals = uniqueNormals.size();
-		auto faceVerts = mesh->faces().verts;
-		int numNormals = faceNormals.size();
-		for (int i = 0; i < numNormals; i++) {
+		//auto faceVerts = mesh->faces().verts;
+		for (int i = 0, numNormals = faceNormals.size(); i < numNormals; i++) {
 			//currNormals[i] = (glm::vec3)(rot * glm::vec4(faceNormals[uniqueNormals[i]], 1));//this is probably slow
 			currNormals[i] = (glm::vec3)(rot * glm::vec4(faceNormals[i], 1));
-			glm::vec3 a = t.getTransformed(getVert(faceVerts[i * 3])), b = t.getTransformed(getVert(faceVerts[i * 3 + 1])), c = t.getTransformed(getVert(faceVerts[i * 3 + 2]));
+			
+			/*glm::vec3 a = t.getTransformed(getVert(faceVerts[i * 3])), b = t.getTransformed(getVert(faceVerts[i * 3 + 1])), c = t.getTransformed(getVert(faceVerts[i * 3 + 2]));
 			glm::vec3 center = a + b + c;
 			center /= 3;
-			DrawDebug::getInstance().drawDebugVector(center, center + currNormals[i]);
+			DrawDebug::getInstance().drawDebugVector(center, center + currNormals[i]);*/
 		}
 		break;
 	}
@@ -503,6 +505,14 @@ void Collider::updateEdges() {
 		int numEdges = edges.size();
 		for (int i = 0; i < numEdges; i++) {
 			currEdges[i] = (glm::vec3)(scale * rot * glm::vec4(edges[i], 1));//this is probably slow
+		}
+		for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
+			for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
+				Adj a = pair.second[i];
+				glm::vec3 s = t.getTransformed(getVert(a.edge[0]));
+				glm::vec3 edge = getEdge(a.edge);
+				DrawDebug::getInstance().drawDebugVector(s,s + edge);
+			}
 		}
 		break;
 	}

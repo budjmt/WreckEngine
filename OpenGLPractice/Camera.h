@@ -16,8 +16,11 @@ public:
 	Camera(GLuint shaderProg, GLFWwindow* w);
 	~Camera();
 	GLFWwindow* window;
+	
+	void updateCamMat(GLuint camLoc);
 	void update(double dt);
 	void draw();
+
 	float zoom;
 	glm::vec3 getForward();
 	glm::vec3 getUp();
@@ -29,7 +32,7 @@ public:
 	static void mayaCam(GLFWwindow* window, Mouse* m, double dt, Camera* camera);
 
 private:
-	glm::mat4 projection;
+	glm::mat4 projection, view;
 	GLuint cameraMatrix;
 };
 

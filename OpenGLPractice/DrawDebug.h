@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "Drawable.h"
+#include "Camera.h"
 #include "ShaderHelper.h"
 
 const bool DEBUG = true;
@@ -14,6 +15,7 @@ class DrawDebug
 {
 public:
 	static DrawDebug& getInstance();
+	void camera(Camera* c);
 
 	//this is the actual draw call
 	void draw();
@@ -24,6 +26,9 @@ private:
 	DrawDebug();
 	DrawDebug(const DrawDebug&) = delete;
 	void operator=(const DrawDebug&) = delete;
+
+	Camera* cam = nullptr;
+	GLuint camLoc;
 
 	GLuint vecShader;
 

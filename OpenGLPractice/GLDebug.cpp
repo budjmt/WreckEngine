@@ -136,6 +136,10 @@ Prior to this, there was only the ARB support on specific graphics cards
 This code allows for the various possible permutations, including AMD cards, which don't support synchronous debug message callbacks
 */
 void initDebug() {
+	printf("NOTICE: This application is in DEBUG mode. This allows for OpenGL debug message callbacks, as well as the ability to draw debug primitives through the DrawDebug singleton. ");
+	printf("This may impact the speed and performance of this application, so if this is a final build, it is recommended this mode be turned off. ");
+	printf("To do so, go to the DrawDebug.h file and change the value of the DEBUG constant to false. ");
+	printf("Calls to draw primitives will still go through, however, and slow down the application, so be sure to comment them out or remove them.\n\n");
 	if (glfwExtensionSupported("KHR_debug") == GL_TRUE) {
 		if (glfwExtensionSupported("glDebugMessageCallback") == GL_TRUE) {
 			//works in OpenGL 4.3 and higher
@@ -152,10 +156,10 @@ void initDebug() {
 			glDebugMessageCallbackAMD(GLDebugMessageCallbackAMD, NULL);
 		}
 		else {
-			printf("What the heck is going on with your graphics card...\n");
+			printf("What the heck is going on with your graphics card...\n\n");
 		}
 	}
 	else {
-		printf("WARNING: debug message callbacks unsupported in this version of OpenGL or on this graphics card; recommend turning off DEBUG flag\n");
+		printf("WARNING: debug message callbacks unsupported in this version of OpenGL (below 4.3) or on this graphics card (may support 4.0 and after); recommend turning off DEBUG flag\n\n");
 	}
 }
