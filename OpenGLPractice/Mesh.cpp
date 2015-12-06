@@ -66,17 +66,40 @@ const std::vector<glm::vec3>& Mesh::uvs() const { return _uvs; } void Mesh::uvs(
 const std::vector<glm::vec3>& Mesh::normals() const { return _normals; } void Mesh::normals(std::vector<glm::vec3>& n) { _normals = n; }
 Face Mesh::faces() const { return _faces; } void Mesh::faces(Face& f) { _faces = f; }
 
+float getDistSq(glm::vec3 v1, glm::vec3 v2) {
+	float xDist = v1.x - v2.x;
+	float yDist = v1.y - v2.y;
+	float zDist = v1.z - v2.z;
+	return xDist * xDist + yDist * yDist + zDist * zDist;
+}
+
 glm::vec3 Mesh::getDims() {
 	//right now this assumes the model is centered at 0,0,0
 	if (h_dims.x > 0)
 		return h_dims;
+	glm::vec3 center = glm::vec3(0, 0, 0);
+	//find the most distant point from the center
 	glm::vec3 max = _verts[0];
+	float maxDistSq = getDistSq(max, center);
 	for (int i = 1, numVerts = _verts.size(); i < numVerts; i++) {
 		glm::vec3 v = _verts[i];
-		if (v.x > max.x) max.x = v.x;
-		if (v.y > max.y) max.y = v.y;
-		if (v.z > max.z) max.z = v.z;
+		float distSq = getDistSq(v, center);
+		if (distSq > maxDistSq) { max = v; maxDistSq = distSq; }
 	}
-	h_dims = max;
+	//this finds the most distant point from THAT most distant point
+	glm::vec3 min = _verts[0];
+	maxDistSq = getDistSq(min, max);
+	for (int i = 1, numVerts = _verts.size(); i < numVerts; i++) {
+		glm::vec3 v = _verts[i];
+		float distSq = getDistSq(v, max);
+		if (distSq > maxDistSq) {
+			min = v;
+			maxDistSq = distSq;
+		}
+	}
+
+	float radius = glm::length(max - min) * 0.5f;
+	glm::vec3 d = glm::vec3(radius, radius, radius);
+	h_dims = d;
 	return h_dims;
 }

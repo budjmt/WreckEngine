@@ -61,7 +61,7 @@ GLuint loadShaderProgram(const char* vertexFile, const char* fragmentFile) {
 		cout << "Error: Fragment shader from " << fragmentFile << " could not be used." << endl;
 		return 0;
 	}
-	cout << "Files read successfully." << endl;
+	//cout << "Files read successfully." << endl;
 	GLuint shaderProg = glCreateProgram();
 	glAttachShader(shaderProg,vShader);
 	glAttachShader(shaderProg,fShader);
@@ -70,7 +70,7 @@ GLuint loadShaderProgram(const char* vertexFile, const char* fragmentFile) {
 	GLint linkStatus;
 	glGetProgramiv(shaderProg,GL_LINK_STATUS,&linkStatus);
 	if(linkStatus == GL_TRUE) {
-		cout << "Success!" << endl;
+		cout << "Successfully loaded " << vertexFile << " and " << fragmentFile << endl;
 		return shaderProg;
 	}
 

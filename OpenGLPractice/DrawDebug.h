@@ -8,8 +8,15 @@
 #include "Drawable.h"
 #include "Camera.h"
 #include "ShaderHelper.h"
+#include "ModelHelper.h"
+#include "Mesh.h"
 
 const bool DEBUG = true;
+
+struct Sphere {
+	glm::vec3 center;
+	float rad;
+};
 
 class DrawDebug
 {
@@ -21,19 +28,31 @@ public:
 	void draw();
 
 	//these are called externally for drawing stuff
-	void drawDebugVector(glm::vec3 start, glm::vec3 end);
+	void drawDebugVector(glm::vec3 start, glm::vec3 end, glm::vec3 color = glm::vec3(0.7f, 1, 0));
+	void drawDebugSphere(glm::vec3 pos, float rad);
 private:
 	DrawDebug();
+	~DrawDebug();
 	DrawDebug(const DrawDebug&) = delete;
 	void operator=(const DrawDebug&) = delete;
 
+	//these are to separate the individual processes
+	void drawVectors();
+	void drawSpheres();
+
 	Camera* cam = nullptr;
-	GLuint camLoc;
+	GLuint vecCamLoc, meshCamLoc;
 
-	GLuint vecShader;
+	Mesh* sphere;
+	int sphereVerts;
+	GLuint worldLoc;
 
-	GLuint vecVAO, arrowVAO;
+	GLuint vecShader, meshShader;
+
+	GLuint vecVAO, arrowVAO, meshVAO;
 	GLuint vecBuffer, arrowBuffer;
+	GLuint sphereBuffer, sphereElBuffer;
+	
 	std::vector<glm::vec3> debugVectors;
+	std::vector<Sphere> debugSpheres;
 };
-

@@ -18,7 +18,7 @@ Mesh* loadOBJ(const char* file) {
 	infile.open(file, ios::in);
 	if (!infile.is_open()) {
 		cout << "Error! File " << file << " could not be read." << endl;
-		return 0;
+		return nullptr;
 	}
 	else
 		cout << "File " << file << " Loading..." << endl;

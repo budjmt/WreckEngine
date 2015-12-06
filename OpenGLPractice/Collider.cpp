@@ -142,11 +142,11 @@ Manifold Collider::getAxisMinPen(Collider* other) {
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------
 The principles of using Gauss Maps are as follows:
 	- A Gauss Map is defined as the conversion of all the face normals on a body to points on the unit sphere, 
-	  and representing adjacencies between the faces the normals refer to as arcs on the sphere.
+	  and representing adjacencies (i.e. edges) between the faces the normals refer to as [greater] arcs on the sphere.
 	
-	- By overlaying the gauss maps of two colliders, one can determine which edges on each collider will actually need to be compared for Separating Axis Theorem.
+	- By overlaying the gauss maps of two colliders, one can ascertain which edges on each collider will actually need to be compared for Separating Axis Theorem.
 	
-	- We determine this by checking for intersecting arcs; recall that arcs represent adjacencies between faces, or in other words edges.
+	- We determine this by checking for intersecting arcs; recall that arcs represent adjacencies between faces, or in other words common edges.
 	  Any arcs that intersect indicate that those edges form a face on the Minkowski difference of the two colliders, and therefore their cross product is a normal that must be tested.
 	
 	- We determine whether two arcs A and B intersect by performing 3 separating axis tests:
@@ -155,20 +155,24 @@ The principles of using Gauss Maps are as follows:
 		- Vertices P and S are on the same side of the plane formed by Q and R (this is a hemisphere test, as the tests will fail if they are not on the same side of the sphere)
 	  If all 3 tests are passed, then we know the edges form a face on the Minkowski difference
 
-	- I should probably explain the Minkowski difference. Essentially it's the body formed by subtracting all the vertices of one body from each of the vertices from another.
-	  It is a useful tool for collision detection, as all the faces of both original bodies are present, with the addition of faces formed by edges that may potentially be separating axes.
-	  Additionally, it can be said if the origin is contained within the Minkowski difference, there is overlap between the bodies, as it means at least two points in them are equal.
+	- I should probably explain the Minkowski difference. Essentially, it's the "point cloud" formed by subtracting all the vertices of one body from each of the vertices from another.
 	  
-	- For practical purposes however, it is almost useless, as assembling it is extremely expensive, (you have to form a new one each frame, for each collision check)
-	  which is why Gauss maps are valuable; they only need to be assembled once, as all they represent are associations, and current data can be easily referenced.
+	- It is a useful tool for collision detection, as all the faces of both original bodies are present in its convex hull, 
+	  in addition to faces formed by edges that may potentially be separating axes.
+	  
+	- It also has its own form of collision detection; it can be said if the origin is contained within the Minkowski difference, there is overlap between the bodies that form it, 
+	  as it means at least two points in them are located at the same position in space
+	  
+	- For practical purposes, however, it is almost useless as assembling it is extremely expensive, (you have to form a new one each frame, for each collision check)
+	  which is why Gauss maps are valuable; they only need to be assembled once, as all they represent are associations and current data can be easily referenced.
 	  
 	- This means that we gain the benefit of not having to find a support point for every possible combination of axes on the two bodies that the Minkowski difference offers
-	  while not having to actually assemble one. 
+	  while not having to actually assemble one.
 	  
 	- Face normals can be tested as they would normally, and should be tested before overlaying the gauss maps, as it requires fewer comparisons. 
 	  (though the necessity of the support points may offset this)
 
-	- Incidentally, this test is also referred to as checking for Voronoi region overlap.
+	- Incidentally, overlaying Gauss maps is also referred to as checking for Voronoi region overlap.
 
 	- I recommend http://twvideo01.ubm-us.net/o1/vault/gdc2013/slides/822403Gregorius_Dirk_TheSeparatingAxisTest.pdf if you're interested in reading more on this technique,
 	  as this is where most of my research originates.
@@ -199,7 +203,7 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 						return manifold;
 
 					Adj otherCurr = otherPair.second[j];
-					glm::vec3 c = otherNormals[otherCurr.f1], d = otherNormals[otherCurr.f2];
+					glm::vec3 c = -otherNormals[otherCurr.f1], d = -otherNormals[otherCurr.f2];//these must be negative to account for the minkowski DIFFERENCE
 					
 					//checks if the arcs between arc(a,b) and arc(c,d) intersect
 					glm::vec3 bxa = glm::cross(b, a);
@@ -250,13 +254,15 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	return manifold;
 }
 
+//I should mention that the assumption that models are centered at the origin is what's breaking the algorithm at all right now
+//it works perfectly for meshes centered at the origin
 Manifold Collider::intersects(Collider* other) {
 	//quick circle collision optimization
 	Manifold manifold;
 	manifold.originator = nullptr;
-	glm::vec3 d = _framePos - other->framePos();//I'm going to ignore displaced colliders for now
+	glm::vec3 d = _framePos - other->framePos();//I'm going to ignore displaced colliders for now (it's the one thing still breaking the algorithm)
 	float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
-	float rad = _radius + other->radius();
+	float rad = _radius + other->radius();//need to add scale handling code to this optimization
 	if (distSq > rad * rad)
 		return manifold;//originator will be nullptr, i.e. there's no collision
 
@@ -278,8 +284,12 @@ Manifold Collider::intersects(Collider* other) {
 	//edges
 	EdgeManifold minEdge = overlayGaussMaps(other);
 	if (minEdge.pen > 0) {
-		glm::vec3 edge1 = getEdge(minEdge.edgePair[0].edge), edge2 = other->getEdge(minEdge.edgePair[1].edge);
-		std::cout << "Edge: " << minEdge.pen << "; This: " << edge1.x << ", " << edge1.y << ", " << edge1.z << "; Other: " << edge2.x << ", " << edge2.y << ", " << edge2.z << std::endl;
+		Transform t = _transform->computeTransform(), ot = other->transform()->computeTransform();
+		glm::vec3 v1 = t.getTransformed(getVert(minEdge.edgePair[0].edge[0])), v2 = t.getTransformed(getVert(minEdge.edgePair[0].edge[1]))
+				, ov1 = ot.getTransformed(other->getVert(minEdge.edgePair[1].edge[0])), ov2 = ot.getTransformed(other->getVert(minEdge.edgePair[1].edge[1]));
+		DrawDebug::getInstance().drawDebugVector(v1, v2, glm::vec3(1, 0, 0));
+		DrawDebug::getInstance().drawDebugVector(ov1, ov2, glm::vec3(1, 1, 0));
+		//std::cout << "Edge: " << minEdge.pen << std::endl;
 		return manifold;
 	}
 
@@ -506,6 +516,7 @@ void Collider::updateEdges() {
 		for (int i = 0; i < numEdges; i++) {
 			currEdges[i] = (glm::vec3)(scale * rot * glm::vec4(edges[i], 1));//this is probably slow
 		}
+		/*
 		for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
 			for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
 				Adj a = pair.second[i];
@@ -513,7 +524,7 @@ void Collider::updateEdges() {
 				glm::vec3 edge = getEdge(a.edge);
 				DrawDebug::getInstance().drawDebugVector(s,s + edge);
 			}
-		}
+		}*/
 		break;
 	}
 }
@@ -522,6 +533,7 @@ void Collider::update() {
 	_framePos = _transform->computeTransform().position;
 	updateNormals();
 	updateEdges();
+	DrawDebug::getInstance().drawDebugSphere(_framePos, _radius);
 }
 
 const std::vector<int>& Collider::getNormals() const { return uniqueNormals; }

@@ -13,6 +13,8 @@ using namespace std;
 
 extern const bool DEBUG;//defined in DrawDebug.h
 
+double FPS = 60;
+
 GLFWwindow* window;
 GLuint shaderProg;
 
@@ -57,6 +59,13 @@ void initGraphics(GLFWwindow* window) {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
+	/*
+	//back-face culling
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);
+	*/
+
 	//cornflower blue
 	glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
 	//glClearColor(0.f, 0.f, 0.f, 1.f);
@@ -65,14 +74,33 @@ void initGraphics(GLFWwindow* window) {
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
+#include <iostream>
+
 void update() {
 	double currFrame = glfwGetTime();
 	double dt = currFrame - prevFrame;
 	prevFrame = currFrame;
+	//need to separate drawing and update pipelines
+	/*float spf = 1.f / FPS;
+	while (dt < spf) {
+		currFrame = glfwGetTime();
+		dt += currFrame - prevFrame;
+		prevFrame = currFrame;
+	}*/
 
 	mouse->prevx = glm::mix(mouse->prevx, mouse->x, 0.15f);
 	mouse->prevy = glm::mix(mouse->prevy, mouse->y, 0.15f);
 	
+	bool alt = glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
+	if (alt) {
+		if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
+			FPS += (FPS < 5) ? 1 : ((FPS < 20) ? 5 : ((FPS < 60) ? 10 : 0));
+		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
+			FPS -= (FPS > 20) ? 10 : ((FPS > 5) ? 5 : ((FPS > 1) ? 1 : 0));
+		std::cout << "FPS is now " << FPS << std::endl;
+	}
+
+
 	game->update(window, mouse, dt);
 }
 
