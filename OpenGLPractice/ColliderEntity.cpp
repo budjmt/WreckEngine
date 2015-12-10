@@ -63,6 +63,7 @@ void ColliderEntity::update(double dt) {
 }
 
 #include <iostream>
+#include "DebugBenchmark.h"
 
 void ColliderEntity::calcForces() {
 	//netForce += glm::vec3(0, mass * -9.8f * (1 - estaticObj), 0);//gravity
@@ -71,6 +72,7 @@ void ColliderEntity::calcForces() {
 	//I need to fix this so that all the colliders are updated and THEN run collision checks
 	//updateCorners();
 	_collider->update();
+	//DebugBenchmark::getInstance().start();
 	for (ColliderEntity* entity : colliderEntities) {
 		Collider* other = entity->collider();
 		if (other == _collider || !entity->active)
@@ -80,7 +82,7 @@ void ColliderEntity::calcForces() {
 			//handleCollision(entity,);
 			std::cout << "collision! " << _collider << ", " << m.originator << "; " << m.pen << std::endl;
 	}
-	
+	//std::cout << "Collision Check Time: " << DebugBenchmark::getInstance().end() << std::endl;
 
 	netForce += -0.15f * _vel * _vel * mass;//quadratic drag
 	netForce *= invMass;
