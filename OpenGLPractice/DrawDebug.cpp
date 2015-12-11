@@ -4,12 +4,12 @@ DrawDebug::DrawDebug() {
 	for (int i = 0; i < 4; i++)
 		debugVectors.push_back(glm::vec3(0, 0, 0));
 
-	vecShader = loadShaderProgram("Shaders/debug/vecvertexShader.glsl", "Shaders/debug/vecfragmentShader.glsl");
-	meshShader = loadShaderProgram("Shaders/debug/meshvertexShader.glsl", "Shaders/debug/meshfragmentShader.glsl");
-	sphere = loadOBJ("Assets/debug/sphere.obj");
+	vecShader = loadShaderProgram("Shaders/_debug/vecvertexShader.glsl", "Shaders/_debug/vecfragmentShader.glsl");
+	meshShader = loadShaderProgram("Shaders/_debug/meshvertexShader.glsl", "Shaders/_debug/meshfragmentShader.glsl");
+	sphere = loadOBJ("Assets/_debug/sphere.obj");
 	if (sphere == nullptr) {
-		genSphere("Assets/debug/sphere.obj", 8);
-		sphere = loadOBJ("Assets/debug/sphere.obj");
+		genSphere("Assets/_debug/sphere.obj", 8);
+		sphere = loadOBJ("Assets/_debug/sphere.obj");
 	}
 
 	glGenVertexArrays(1, &vecVAO);
