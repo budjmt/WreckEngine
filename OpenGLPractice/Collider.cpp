@@ -105,9 +105,10 @@ SupportPoint Collider::getSupportPoint(glm::vec3 dir) {
 	- If the value is positive, then there is no penetration i.e. there is a separating axis
 ----------------------------------------------------------------------
 */
-Manifold Collider::getAxisMinPen(Collider* other) {
-	Manifold axis;
+FaceManifold Collider::getAxisMinPen(Collider* other) {
+	FaceManifold axis;
 	axis.originator = this;
+	axis.other = other;
 	//axis.pen = -FLT_MAX;//keeping this to display initial value
 
 	//int numAxes = uniqueNormals.size();
@@ -130,8 +131,7 @@ Manifold Collider::getAxisMinPen(Collider* other) {
 
 		float pen = glm::dot(norm, support.point - vert);//point-plane signed distance, negative if penetrating, positive if not
 		if (pen > axis.pen) {
-			axis.axis = norm;
-			axis.colPoint = vert;//need to add clipping the reference plane AND SHIT
+			axis.axis = i;
 			axis.pen = pen;
 		}
 	}
@@ -181,6 +181,7 @@ The principles of using Gauss Maps are as follows:
 EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	EdgeManifold manifold;
 	manifold.originator = this;
+	manifold.other = other;
 	//manifold.pen = -FLT_MAX;//initial value
 
 	GaussMap othergauss = other->getGaussMap();
@@ -260,6 +261,7 @@ Manifold Collider::intersects(Collider* other) {
 	//quick circle collision optimization
 	Manifold manifold;
 	manifold.originator = nullptr;
+	manifold.other = nullptr;
 	glm::vec3 d = _framePos - other->framePos();//I'm going to ignore displaced colliders for now (it's the one thing still breaking the algorithm)
 	float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
 	float rad = _radius + other->radius();//need to add scale handling code to this optimization
@@ -269,15 +271,15 @@ Manifold Collider::intersects(Collider* other) {
 	//separating axis theorem 2: electric boogaloo
 	//this contains the collision data
 
-	Manifold minAxis = getAxisMinPen(other);
+	FaceManifold minAxis = getAxisMinPen(other);
 	if (minAxis.pen > 0) {
-		//std::cout << "This: " << minAxis.pen << "; " << minAxis.axis.x << ", " << minAxis.axis.y << ", " << minAxis.axis.z << std::endl;
+		//std::cout << "This: " << minAxis.pen << "; " << minAxis.axis << std::endl;
 		return manifold;
 	}
 
-	Manifold otherMinAxis = other->getAxisMinPen(this);
+	FaceManifold otherMinAxis = other->getAxisMinPen(this);
 	if (otherMinAxis.pen > 0) {
-		//std::cout << "Other: " << otherMinAxis.pen << "; " << otherMinAxis.axis.x << ", " << otherMinAxis.axis.y << ", " << otherMinAxis.axis.z << std::endl;
+		//std::cout << "Other: " << otherMinAxis.pen << "; " << otherMinAxis.axis << std::endl;
 		return manifold;
 	}
 
@@ -293,11 +295,189 @@ Manifold Collider::intersects(Collider* other) {
 		return manifold;
 	}
 
-	manifold = (minAxis.pen > otherMinAxis.pen) ? minAxis : otherMinAxis;
-	if (minEdge.pen > manifold.pen)
+	FaceManifold minFace = (minAxis.pen > otherMinAxis.pen) ? minAxis : otherMinAxis;
+	if (minEdge.pen > minFace.pen) {
 		std::cout << "EDGE ";
-	//std::cout << manifold.pen << std::endl;
-	return manifold;
+		/*Adj e1 = minEdge.edgePair[0], e2 = minEdge.edgePair[1];
+		Transform t = _transform->computeTransform(), ot = other->transform()->computeTransform();
+		glm::vec3 a = t.getTransformed(getVert(e1.edge[0]))
+				, b = t.getTransformed(getVert(e1.edge[1]))
+				, c = ot.getTransformed(other->getVert(e2.edge[0]))
+				, d = ot.getTransformed(other->getVert(e2.edge[1]));
+		minEdge.colPoints.push_back(closestPointBtwnEdges(a,b,c,d));
+		std::cout << minEdge.colPoints[0].x << "," << minEdge.colPoints[0].y << "," << minEdge.colPoints[0].z << std::endl;
+		DrawDebug::getInstance().drawDebugSphere(minEdge.colPoints[0], 0.2f);*/
+		return minEdge;
+	}
+	else {
+		glm::vec3 refNormal = minFace.originator->getCurrNormals()[minFace.axis];
+		auto incidents = minFace.other->getIncidentFaces(refNormal);
+		for (auto incident : incidents)
+			DrawDebug::getInstance().drawDebugVector(glm::vec3(1,0,0), glm::vec3(1,0,0) + minFace.other->getCurrNormals()[incident] * 0.5f, glm::vec3(0.5f,0.5f,0.5f) * (((int)this % 300) / 100.f));
+		minFace.originator->clipPolygons(minFace, incidents);
+		for (int i = 0, numCols = minFace.colPoints.size(); i < numCols; i++)
+			DrawDebug::getInstance().drawDebugSphere(minFace.colPoints[i], 0.1f);
+		return minFace;
+	}
+}
+
+//Gets the indexes of the faces on this body that are most antiparallel to the reference normal
+std::vector<int> Collider::getIncidentFaces(glm::vec3 refNormal) {
+	std::vector<int> faces;
+	float antiProj = glm::dot(currNormals[0], refNormal);
+	for (int i = 1, numFaces = currNormals.size(); i < numFaces; i++) {
+		float proj = glm::dot(currNormals[i], refNormal);
+		float diff = antiProj - proj;
+		//if the face is close to the last anti-normal
+		if (diff > -FLT_EPSILON && diff < FLT_EPSILON)
+			faces.push_back(i);
+		//if the face is more antiparallel than the last
+		else if (diff > 0) {
+			faces = std::vector<int>();
+			faces.push_back(i);
+			antiProj = proj;
+		}
+	}
+	return faces;
+}
+
+void Collider::clipPolygons(FaceManifold& reference, std::vector<int>& incidents) {
+	Transform trans = _transform->computeTransform()
+			, otherTrans = reference.other->transform()->computeTransform();
+	
+	//get the transformed center point of the reference face
+	glm::vec3 refCenter, refNorm = currNormals[reference.axis];
+	for (int i = reference.axis * FLOATS_PER_VERT; i < FLOATS_PER_VERT; i++)
+		refCenter += getVert(i);
+	refCenter /= FLOATS_PER_VERT;
+	refCenter = trans.getTransformed(refCenter);
+
+	//get the side planes of the reference face
+	std::vector<glm::vec3> sidePlanes, sideVerts;
+	for (int i = 0; i < 3; i++) {
+		int e[] = { reference.axis * 3 + i, reference.axis * 3 + (i + 1) % 3 };
+		glm::vec3 edge = getEdge(e)
+				, vert = trans.getTransformed(getVert(e[0]));
+		glm::vec3 norm = glm::cross(refNorm, edge);
+		norm *= glm::sign(glm::dot(norm, vert - refCenter));
+		sidePlanes.push_back(norm);
+		sideVerts.push_back(vert);
+	}
+
+	auto otherFaces = reference.other->getCurrNormals();
+	
+	for (int i = 0, numIncidents = incidents.size(); i < numIncidents; i++) {
+		
+		glm::vec3 incidentVerts[] = {
+			otherTrans.getTransformed(reference.other->getVert(incidents[i] * 3)),
+			otherTrans.getTransformed(reference.other->getVert(incidents[i] * 3 + 1)),
+			otherTrans.getTransformed(reference.other->getVert(incidents[i] * 3 + 2))
+		};
+		for (int s = 0; s < 3; s++) {
+			std::vector<glm::vec3> clipped;
+			
+			for (int j = 0; j < 3; j++) {
+				glm::vec3 a = incidentVerts[j], b = incidentVerts[(j + 1) % 3];
+				float clipA = glm::dot(sidePlanes[s], a - sideVerts[s]);
+				float clipB = glm::dot(sidePlanes[s], b - sideVerts[s]);
+				
+				//the edge is "on the plane" (thick planes); keep b if below reference face
+				if (abs(clipA) < FLT_EPSILON || abs(clipB) < FLT_EPSILON) {
+					if(glm::dot(refNorm, b - refCenter) < 0)
+						clipped.push_back(b);
+					continue;
+				}
+
+				bool ainside = clipA > 0, binside = clipB > 0;
+				if (ainside) {
+					//both are inside clip; keep b if b falls below reference face
+					if (binside && glm::dot(refNorm, b - refCenter) < 0)
+						clipped.push_back(b);
+					//a is inside, b is outside; keep intersection
+					else {
+						//find intersection
+						float t = -clipA / glm::dot(sidePlanes[s], a - b);
+						glm::vec3 intersect = glm::mix(a, b, t);
+						//if the intersection is below the reference face
+						if(glm::dot(refNorm, intersect - refCenter) < 0)
+							clipped.push_back(intersect);
+					}
+				}
+				//a is outside, b is inside; keep intersection and b
+				else if (binside) {
+					//find intersection
+					float t = -clipA / glm::dot(sidePlanes[s], a - b);
+					glm::vec3 intersect = glm::mix(a, b, t);
+
+					if (glm::dot(refNorm, intersect - refCenter) < 0)
+						clipped.push_back(intersect);
+					if (glm::dot(refNorm, b - refCenter) < 0)
+						clipped.push_back(b);
+				}
+				//nothing is kept otherwise
+			}
+
+			reference.colPoints.reserve(reference.colPoints.size() + clipped.size());
+			reference.colPoints.insert(reference.colPoints.end(), clipped.begin(), clipped.end());
+		}
+	}
+}
+
+glm::vec3 Collider::closestPointBtwnEdges(glm::vec3 s1_0, glm::vec3 s1_1, glm::vec3 s2_0, glm::vec3 s2_1) {
+	glm::vec3 u = s1_1 - s1_0
+			, v = s2_1 - s2_0
+			, w = s1_0 - s2_0;
+	float a = glm::dot(u, u)
+		, b = glm::dot(u, v)
+		, c = glm::dot(v, v)
+		, d = glm::dot(u, w)
+		, e = glm::dot(v, w)
+		, D = a * c - b * b;
+	float sc, sNumer, sDenom = D;
+	float tc, tNumer, tDenom = D;
+	if (D < FLT_EPSILON) {
+		sNumer = 0;	sDenom = 1;
+		tNumer = e;	tDenom = c;//v.w / v.v
+	}
+	else {
+		sNumer = b * e - c * d;//u.v * v.w - v.v * u.w
+		sDenom = a * e - b * d;//u.u * v.w - u.v * u.w
+		if (sNumer < 0) {
+			sNumer = 0;
+			tNumer = e; tDenom = c;
+		}
+		else if (sNumer > sDenom) {
+			sNumer = sDenom;
+			tNumer = e + b; tDenom = c;
+		}
+	}
+
+	if (tNumer < 0) {
+		tNumer = 0;
+		if (-d < 0)
+			sNumer = 0;
+		else if (-d > a)
+			sNumer = sDenom;
+		else {
+			sNumer = -d; sDenom = a;
+		}
+	}
+	else if (tNumer > tDenom) {
+		tNumer = tDenom;
+		if ((b - d) < 0)
+			sNumer = 0;
+		else if ((b - d) > a)
+			sNumer = sDenom;
+		else {
+			sNumer = b - d; sDenom = a;
+		}
+	}
+
+	sc = (abs(sNumer) < FLT_EPSILON) ? 0 : sNumer / sDenom;
+	tc = (abs(tNumer) < FLT_EPSILON) ? 0 : tNumer / tDenom;
+	
+	glm::vec3 btwn = w + (sc * u) - (tc * v);
+	return s2_0 + tc * v + btwn * 0.5f;
 }
 
 //the code below will need updating when the system is updated for 3D

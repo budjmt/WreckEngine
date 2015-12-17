@@ -30,7 +30,7 @@ struct Adj {
 
 struct GaussMap {
 	//std::vector<glm::vec3> normals;
-	std::map<std::string, std::vector<Adj>> adjacencies;//uses indices because of rotations
+	std::map<std::string, std::vector<Adj>> adjacencies;//keys are untransformed normals, adjs use indices because of rotations
 	void addAdj(glm::vec3 v, Adj a);
 	std::vector<Adj>& getAdjs(glm::vec3 v);
 };
@@ -41,17 +41,17 @@ struct SupportPoint {
 };
 
 struct Manifold {
-	Collider* originator;
-	glm::vec3 axis, colPoint;
-	float pen;
-	Manifold() : originator(nullptr), pen(-FLT_MAX) {}
+	Collider* originator, * other;
+	std::vector<glm::vec3> colPoints;
+	float pen = -FLT_MAX;
 };
 
-struct EdgeManifold {
-	Collider* originator;
+struct FaceManifold : Manifold {
+	int axis;
+};
+
+struct EdgeManifold : Manifold {
 	Adj edgePair[2];
-	float pen;
-	EdgeManifold() : originator(nullptr), pen(-FLT_MAX) {}
 };
 
 class Collider
@@ -70,6 +70,10 @@ public:
 
 	bool intersects2D(Collider* other);
 	Manifold intersects(Collider* other);
+
+	std::vector<int> getIncidentFaces(glm::vec3 refNormal);
+	void clipPolygons(FaceManifold& reference, std::vector<int>& incidents);
+	glm::vec3 closestPointBtwnEdges(glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d);
 
 	void update();
 
@@ -98,7 +102,7 @@ public:
 	bool fuzzyParallel(glm::vec3 v1, glm::vec3 v2);
 
 	SupportPoint getSupportPoint(glm::vec3 dir);
-	Manifold getAxisMinPen(Collider* other);
+	FaceManifold getAxisMinPen(Collider* other);
 	EdgeManifold overlayGaussMaps(Collider* other);
 	
 	std::vector<glm::vec3> getAxes(const Collider* other);
