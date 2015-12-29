@@ -11,7 +11,7 @@
 
 using namespace std;
 
-extern const bool DEBUG;//defined in DrawDebug.h
+//DEBUG is defined in DrawDebug.h
 
 double FPS = 60;
 

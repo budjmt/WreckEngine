@@ -1,6 +1,7 @@
 #include "DrawDebug.h"
 #include <iostream>
 DrawDebug::DrawDebug() {
+#if DEBUG
 	for (int i = 0; i < 4; i++)
 		debugVectors.push_back(glm::vec3(0, 0, 0));
 
@@ -53,12 +54,15 @@ DrawDebug::DrawDebug() {
 	worldLoc = glGetUniformLocation(meshShader, "worldMatrix");
 
 	debugVectors = std::vector<glm::vec3>();
+#endif
 }
 
 DrawDebug::~DrawDebug() {
+#if DEBUG
 	glDeleteBuffers(1, &vecBuffer);
 	glDeleteBuffers(1, &arrowBuffer);
 	glDeleteBuffers(1, &sphereBuffer);
+#endif
 }
 
 DrawDebug& DrawDebug::getInstance() {
@@ -68,21 +72,26 @@ DrawDebug& DrawDebug::getInstance() {
 
 void DrawDebug::camera(Camera* c) { cam = c; }
 
-void DrawDebug::draw() {	
+void DrawDebug::draw() {
+#if DEBUG
 	drawVectors();
 	drawSpheres();
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
 }
 
 void DrawDebug::drawVectors() {
 	for (int i = 0; i < 4; i++)
 		debugVectors.push_back(glm::vec3(0, 0, 0));
+	
 	std::vector<glm::vec3> arrows;
 	for (int i = 0; i < 6; i++)
 		arrows.push_back(glm::vec3(0, 0, 0));
+	
 	int numVecs = debugVectors.size();
-	for (int i = 0; i < numVecs; i++) {
-		glm::vec3 s = debugVectors[i], c1 = debugVectors[i + 1], e = debugVectors[i + 2], c2 = debugVectors[i + 3];
+	for (int i = 0; i < numVecs; i += 4) {
+		glm::vec3 s = debugVectors[i],	   c1 = debugVectors[i + 1]
+				, e = debugVectors[i + 2], c2 = debugVectors[i + 3];
 		glm::vec3 v = e - s;
 		v *= 0.05;
 		v = e - v;
@@ -142,14 +151,18 @@ void DrawDebug::drawSpheres() {
 }
 
 void DrawDebug::drawDebugVector(glm::vec3 start, glm::vec3 end, glm::vec3 color) {
+#if DEBUG
 	debugVectors.push_back(start);
 	debugVectors.push_back(color);
 	debugVectors.push_back(end);
 	debugVectors.push_back(color);
+#endif
 }
 
 void DrawDebug::drawDebugSphere(glm::vec3 pos, float rad) {
+#if DEBUG
 	Sphere s = { pos, rad };
 	debugSpheres.push_back(s);
 	//drawDebugVector(pos, pos + glm::vec3(rad, 0, 0));
+#endif
 }

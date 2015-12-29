@@ -43,8 +43,8 @@ void Game::draw() {
 		if (e->active)
 			e->draw();
 	}
-	if (DEBUG) {
+#if DEBUG
 		DrawDebug::getInstance().draw();
 		glUseProgram(shader);
-	}
+#endif
 }

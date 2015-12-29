@@ -73,6 +73,7 @@ public:
 
 	std::vector<int> getIncidentFaces(glm::vec3 refNormal);
 	void clipPolygons(FaceManifold& reference, std::vector<int>& incidents);
+	void clipPolygon(std::vector<glm::vec3>& clipped, std::vector<glm::vec3>& sidePlanes, std::vector<glm::vec3>& sideVerts, glm::vec3 refNorm, glm::vec3 refCenter);
 	glm::vec3 closestPointBtwnEdges(glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d);
 
 	void update();
@@ -88,6 +89,7 @@ public:
 	const std::vector<glm::vec3>& getCurrNormals() const;
 	const std::vector<glm::vec3>& getEdges() const;
 	
+	int getFaceVert(int index) const;
 	glm::vec3 getVert(int index) const;
 	glm::vec3 getNormal(int index) const;
 	glm::vec3 getEdge(int (&e)[2]);
@@ -117,6 +119,7 @@ private:
 	std::vector<int> uniqueNormals;//indices of the faceNormals that are unique
 	std::map<std::string, int> edgeMap;//maps the edge pairs to the indices in edges
 	GaussMap gauss;
+	//std::vector<std::vector<Adj>> adjacencies;
 	Mesh* mesh;
 
 	void setEdge(int(&e)[2], int index);

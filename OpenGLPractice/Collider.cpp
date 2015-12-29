@@ -121,12 +121,11 @@ FaceManifold Collider::getAxisMinPen(Collider* other) {
 		glm::vec3 norm = currNormals[i];
 		SupportPoint support = other->getSupportPoint(-norm);
 		/*
-			this is the main reason unique normals can't be used right now
+			this is the main reason unique normals can't be used
 			if a unique normal is used, it doesn't know which face it's supposed to apply to
-			I should be using a plane-centric approach
+			but it's ok because in this case there's no real benefit, as if it's already culled then we know we don't care
 		*/
-		//glm::vec3 vert = trans.getTransformed(meshVerts[faceVerts[uniqueNormals[i] * 3]]);
-		glm::vec3 vert = trans.getTransformed(meshVerts[faceVerts[i * 3]]);
+		glm::vec3 vert = trans.getTransformed(meshVerts[faceVerts[i * FLOATS_PER_VERT]]);
 		
 
 		float pen = glm::dot(norm, support.point - vert);//point-plane signed distance, negative if penetrating, positive if not
@@ -312,8 +311,6 @@ Manifold Collider::intersects(Collider* other) {
 	else {
 		glm::vec3 refNormal = minFace.originator->getCurrNormals()[minFace.axis];
 		auto incidents = minFace.other->getIncidentFaces(refNormal);
-		for (auto incident : incidents)
-			DrawDebug::getInstance().drawDebugVector(glm::vec3(1,0,0), glm::vec3(1,0,0) + minFace.other->getCurrNormals()[incident] * 0.5f, glm::vec3(0.5f,0.5f,0.5f) * (((int)this % 300) / 100.f));
 		minFace.originator->clipPolygons(minFace, incidents);
 		for (int i = 0, numCols = minFace.colPoints.size(); i < numCols; i++)
 			DrawDebug::getInstance().drawDebugSphere(minFace.colPoints[i], 0.1f);
@@ -327,11 +324,11 @@ std::vector<int> Collider::getIncidentFaces(glm::vec3 refNormal) {
 	float antiProj = glm::dot(currNormals[0], refNormal);
 	for (int i = 1, numFaces = currNormals.size(); i < numFaces; i++) {
 		float proj = glm::dot(currNormals[i], refNormal);
-		float diff = antiProj - proj;
-		//if the face is close to the last anti-normal
+		float diff = antiProj - proj;//if + -, diff > 0; if - +, diff < 0; if + + or - -, magnitude of projection determines sign
+		//if the face has close to 0 difference with the last anti-normal projection, then it's another incident face
 		if (diff > -FLT_EPSILON && diff < FLT_EPSILON)
 			faces.push_back(i);
-		//if the face is more antiparallel than the last
+		//if the face is more antiparallel than the previous, we replace our previous incident faces with this one
 		else if (diff > 0) {
 			faces = std::vector<int>();
 			faces.push_back(i);
@@ -341,84 +338,121 @@ std::vector<int> Collider::getIncidentFaces(glm::vec3 refNormal) {
 	return faces;
 }
 
+/*
+------------------------------------------------------------------------------------------------------------------------------------
+	- Finds collision points based on Sutherland-Hodgman Clipping
+	- http://gamedevelopment.tutsplus.com/tutorials/understanding-sutherland-hodgman-clipping-for-physics-engines--gamedev-11917
+------------------------------------------------------------------------------------------------------------------------------------
+*/
 void Collider::clipPolygons(FaceManifold& reference, std::vector<int>& incidents) {
 	Transform trans = _transform->computeTransform()
 			, otherTrans = reference.other->transform()->computeTransform();
 	
 	//get the transformed center point of the reference face
 	glm::vec3 refCenter, refNorm = currNormals[reference.axis];
-	for (int i = reference.axis * FLOATS_PER_VERT; i < FLOATS_PER_VERT; i++)
-		refCenter += getVert(i);
-	refCenter /= FLOATS_PER_VERT;
-	refCenter = trans.getTransformed(refCenter);
+	auto vertFaces = mesh->faces().verts;
+	
+	for (int i = 0; i < 3; i++)
+		refCenter += trans.getTransformed(getVert(vertFaces[reference.axis * 3 + i]));
+	refCenter /= 3;
+	
+	//DrawDebug::getInstance().drawDebugVector(refCenter, refCenter + refNorm);
 
 	//get the side planes of the reference face
+	//These are supposed to be the normals of the faces adjacent to the reference face, at least according to Bullet
+	//I use the actual side planes of the face, 
+	//i.e. normals from the edges perpendicular to the edge and face normal facing outward from the face's center
 	std::vector<glm::vec3> sidePlanes, sideVerts;
 	for (int i = 0; i < 3; i++) {
-		int e[] = { reference.axis * 3 + i, reference.axis * 3 + (i + 1) % 3 };
-		glm::vec3 edge = getEdge(e)
-				, vert = trans.getTransformed(getVert(e[0]));
+		int e[] = {
+			(int)vertFaces[reference.axis * 3 + i]
+		  , (int)vertFaces[reference.axis * 3 + (i + 1) % 3]
+		};
+		
+		glm::vec3 vert = trans.getTransformed(getVert(e[0]))
+				, edge = getEdge(e);
+		
 		glm::vec3 norm = glm::cross(refNorm, edge);
 		norm *= glm::sign(glm::dot(norm, vert - refCenter));
+		
 		sidePlanes.push_back(norm);
 		sideVerts.push_back(vert);
+		
+		//DrawDebug::getInstance().drawDebugVector(vert, vert + edge, glm::vec3(1, 1, 0));
+		//DrawDebug::getInstance().drawDebugVector(vert, vert + norm, glm::vec3(1, 0, 1));
 	}
 
 	auto otherFaces = reference.other->getCurrNormals();
 	
 	for (int i = 0, numIncidents = incidents.size(); i < numIncidents; i++) {
 		
-		glm::vec3 incidentVerts[] = {
-			otherTrans.getTransformed(reference.other->getVert(incidents[i] * 3)),
-			otherTrans.getTransformed(reference.other->getVert(incidents[i] * 3 + 1)),
-			otherTrans.getTransformed(reference.other->getVert(incidents[i] * 3 + 2))
+		std::vector<glm::vec3> incidentVerts = {
+			otherTrans.getTransformed(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3))),
+			otherTrans.getTransformed(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3 + 1))),
+			otherTrans.getTransformed(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3 + 2)))
 		};
-		for (int s = 0; s < 3; s++) {
-			std::vector<glm::vec3> clipped;
-			
-			for (int j = 0; j < 3; j++) {
-				glm::vec3 a = incidentVerts[j], b = incidentVerts[(j + 1) % 3];
-				float clipA = glm::dot(sidePlanes[s], a - sideVerts[s]);
-				float clipB = glm::dot(sidePlanes[s], b - sideVerts[s]);
-				
-				//the edge is "on the plane" (thick planes); keep b if below reference face
-				if (abs(clipA) < FLT_EPSILON || abs(clipB) < FLT_EPSILON) {
-					if(glm::dot(refNorm, b - refCenter) < 0)
-						clipped.push_back(b);
-					continue;
-				}
 
-				bool ainside = clipA > 0, binside = clipB > 0;
-				if (ainside) {
-					//both are inside clip; keep b if b falls below reference face
-					if (binside && glm::dot(refNorm, b - refCenter) < 0)
-						clipped.push_back(b);
-					//a is inside, b is outside; keep intersection
-					else {
-						//find intersection
-						float t = -clipA / glm::dot(sidePlanes[s], a - b);
-						glm::vec3 intersect = glm::mix(a, b, t);
-						//if the intersection is below the reference face
-						if(glm::dot(refNorm, intersect - refCenter) < 0)
-							clipped.push_back(intersect);
-					}
-				}
-				//a is outside, b is inside; keep intersection and b
-				else if (binside) {
-					//find intersection
-					float t = -clipA / glm::dot(sidePlanes[s], a - b);
-					glm::vec3 intersect = glm::mix(a, b, t);
+		std::vector<glm::vec3> clipped = incidentVerts;
+		clipPolygon(clipped, sidePlanes, sideVerts, refNorm, refCenter);
+		
+		reference.colPoints.reserve(reference.colPoints.size() + clipped.size());
+		reference.colPoints.insert(reference.colPoints.end(), clipped.begin(), clipped.end());
+	}
+}
 
-					if (glm::dot(refNorm, intersect - refCenter) < 0)
-						clipped.push_back(intersect);
-					if (glm::dot(refNorm, b - refCenter) < 0)
-						clipped.push_back(b);
-				}
-				//nothing is kept otherwise
+void Collider::clipPolygon(std::vector<glm::vec3>& clipped, std::vector<glm::vec3>& sidePlanes, std::vector<glm::vec3>& sideVerts, glm::vec3 refNorm, glm::vec3 refCenter) {
+	for (int s = 0; clipped.size() > 0 && s < 3; s++) {
+		std::vector<glm::vec3> input = clipped;
+		clipped = std::vector<glm::vec3>();
+
+		glm::vec3 startpt = input[input.size() - 1];
+		glm::vec3 endpt = input[0];
+		for (int i = 0, numInputs = input.size(); i < numInputs; i++, startpt = endpt, endpt = input[i]) {
+
+			float clipStart = glm::dot(sidePlanes[s], startpt - sideVerts[s]);
+			float clipEnd = glm::dot(sidePlanes[s], endpt - sideVerts[s]);
+
+			//the edge is "on the plane" (thick planes); keep end if below reference face
+			if (fabs(clipStart) < FLT_EPSILON || fabs(clipEnd) < FLT_EPSILON) {
+				if (glm::dot(refNorm, endpt - refCenter) < 0)
+					clipped.push_back(endpt);
+				continue;
 			}
 
-			reference.colPoints.reserve(reference.colPoints.size() + clipped.size());
-			reference.colPoints.insert(reference.colPoints.end(), clipped.begin(), clipped.end());
+			bool startInside = clipStart < 0, endInside = clipEnd < 0;//if they fall behind the side plane, they're inside the clip
+			if (startInside) {
+				//both are inside clip; keep end if end falls below reference face
+				if (endInside) {
+					if (glm::dot(refNorm, endpt - refCenter) < 0)
+						clipped.push_back(endpt);
+				}
+				//start is inside, end is outside; keep intersection
+				else {
+					//find intersection
+					float e = glm::dot(sidePlanes[s], startpt - endpt);
+					float t = (e != 0) ? clipStart / e : 0;
+					//float t = clipStart * 1.f / (clipStart - clipEnd);
+					glm::vec3 intersect = glm::mix(startpt, endpt, t);
+
+					//if the intersection is below the reference face
+					if (glm::dot(refNorm, intersect - refCenter) < 0)
+						clipped.push_back(intersect);
+				}
+			}
+			//start is outside, end is inside; keep intersection and end
+			else if (endInside) {
+				//find intersection
+				float e = glm::dot(sidePlanes[s], startpt - endpt);
+				float t = (e != 0) ? clipStart / e : 0;
+				//float t = clipStart * 1.f / (clipStart - clipEnd);
+				glm::vec3 intersect = glm::mix(startpt, endpt, t);
+
+				if (glm::dot(refNorm, intersect - refCenter) < 0)
+					clipped.push_back(intersect);
+				if (glm::dot(refNorm, endpt - refCenter) < 0)
+					clipped.push_back(endpt);
+			}
+			//nothing is kept otherwise
 		}
 	}
 }
@@ -584,11 +618,12 @@ void Collider::genGaussMap() {
 		//set up the edge associations
 		std::vector<GLuint>& faceVerts = mesh->faces().verts;
 		int numFaces = faceVerts.size();
+		//adjacencies = std::vector<std::vector<Adj>>(numFaces / 3, std::vector<Adj>());
 		for (int i = 0; i < numFaces; i += 3) {
 			for (int j = i + 3; j < numFaces; j += 3) {
 				
-				if (fuzzyParallel(faceNormals[i / 3], faceNormals[j / 3]))
-					continue;
+				//if (fuzzyParallel(faceNormals[i / 3], faceNormals[j / 3]))
+					//continue;
 				Adj a;
 				a.edge[0] = -1; a.edge[1] = -1;
 				
@@ -606,6 +641,10 @@ void Collider::genGaussMap() {
 								a.edge[1] = faceVerts[i + p1]; a.f1 = i / 3; a.f2 = j / 3;
 								if (a.edge[0] > a.edge[1]) { a.edge[1] = a.edge[0]; a.edge[0] = faceVerts[i + p1]; }
 								gauss.addAdj(faceNormals[a.f1], a);
+								
+								//adjacencies[a.f1].push_back(a);
+								//adjacencies[a.f2].push_back(a);
+								
 								added = true;
 							}
 							break;//none of the other verts can be equal to this one now, so move to the next one
@@ -713,13 +752,14 @@ void Collider::update() {
 	_framePos = _transform->computeTransform().position;
 	updateNormals();
 	updateEdges();
-	DrawDebug::getInstance().drawDebugSphere(_framePos, _radius);
+	//DrawDebug::getInstance().drawDebugSphere(_framePos, _radius);
 }
 
 const std::vector<int>& Collider::getNormals() const { return uniqueNormals; }
 const std::vector<glm::vec3>& Collider::getCurrNormals() const { return currNormals; }
 const std::vector<glm::vec3>& Collider::getEdges() const { return currEdges; }
 
+int Collider::getFaceVert(int index) const { return mesh->faces().verts[index]; }
 glm::vec3 Collider::getVert(int index) const { return mesh->verts()[index]; }
 glm::vec3 Collider::getNormal(int index) const { return currNormals[index]; }
 glm::vec3 Collider::getEdge(int (&e)[2]) { 
