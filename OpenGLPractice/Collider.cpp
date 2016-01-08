@@ -257,63 +257,81 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 //I should mention that the assumption that models are centered at the origin is what's breaking the algorithm at all right now
 //it works perfectly for meshes centered at the origin
 Manifold Collider::intersects(Collider* other) {
-	//quick circle collision optimization
+	//this contains the collision data
+	//this will be replaced by the valid collision manifold if there is a collision
+	//otherwise, the originator will be nullptr, and we know there was no collision
 	Manifold manifold;
 	manifold.originator = nullptr;
 	manifold.other = nullptr;
-	glm::vec3 d = _framePos - other->framePos();//I'm going to ignore displaced colliders for now (it's the one thing still breaking the algorithm)
+	
+	//quick sphere collision optimization
+	glm::vec3 d = _framePos - other->framePos();//ignores displaced colliders for now (it's the one thing still breaking the algorithm)
 	float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
 	float rad = _radius + other->radius();//need to add scale handling code to this optimization
 	if (distSq > rad * rad)
-		return manifold;//originator will be nullptr, i.e. there's no collision
+		return manifold;
 
 	//separating axis theorem 2: electric boogaloo
-	//this contains the collision data
-
+	//axis of min pen on this collider
 	FaceManifold minAxis = getAxisMinPen(other);
 	if (minAxis.pen > 0) {
 		//std::cout << "This: " << minAxis.pen << "; " << minAxis.axis << std::endl;
 		return manifold;
 	}
 
+	//axis of min pen on other collider
 	FaceManifold otherMinAxis = other->getAxisMinPen(this);
 	if (otherMinAxis.pen > 0) {
 		//std::cout << "Other: " << otherMinAxis.pen << "; " << otherMinAxis.axis << std::endl;
 		return manifold;
 	}
 
-	//edges
+	//closest penetrating edges on both colliders
 	EdgeManifold minEdge = overlayGaussMaps(other);
 	if (minEdge.pen > 0) {
+		//debug code
 		Transform t = _transform->computeTransform(), ot = other->transform()->computeTransform();
 		glm::vec3 v1 = t.getTransformed(getVert(minEdge.edgePair[0].edge[0])), v2 = t.getTransformed(getVert(minEdge.edgePair[0].edge[1]))
 				, ov1 = ot.getTransformed(other->getVert(minEdge.edgePair[1].edge[0])), ov2 = ot.getTransformed(other->getVert(minEdge.edgePair[1].edge[1]));
 		DrawDebug::getInstance().drawDebugVector(v1, v2, glm::vec3(1, 0, 0));
 		DrawDebug::getInstance().drawDebugVector(ov1, ov2, glm::vec3(1, 1, 0));
 		//std::cout << "Edge: " << minEdge.pen << std::endl;
+		
 		return manifold;
 	}
 
 	FaceManifold minFace = (minAxis.pen > otherMinAxis.pen) ? minAxis : otherMinAxis;
+	
+	//edge-edge collision
 	if (minEdge.pen > minFace.pen) {
 		std::cout << "EDGE ";
-		/*Adj e1 = minEdge.edgePair[0], e2 = minEdge.edgePair[1];
-		Transform t = _transform->computeTransform(), ot = other->transform()->computeTransform();
-		glm::vec3 a = t.getTransformed(getVert(e1.edge[0]))
-				, b = t.getTransformed(getVert(e1.edge[1]))
-				, c = ot.getTransformed(other->getVert(e2.edge[0]))
-				, d = ot.getTransformed(other->getVert(e2.edge[1]));
-		minEdge.colPoints.push_back(closestPointBtwnEdges(a,b,c,d));
-		std::cout << minEdge.colPoints[0].x << "," << minEdge.colPoints[0].y << "," << minEdge.colPoints[0].z << std::endl;
-		DrawDebug::getInstance().drawDebugSphere(minEdge.colPoints[0], 0.2f);*/
+		Adj e1 = minEdge.edgePair[0], e2 = minEdge.edgePair[1];
+		Transform t = _transform->computeTransform()
+				, ot = other->transform()->computeTransform();
+		//get the points defining both edges in the collision in world space
+		glm::vec3 p0 = t.getTransformed(getVert(e1.edge[0]))
+				, p1 = t.getTransformed(getVert(e1.edge[1]))
+				, q0 = ot.getTransformed(other->getVert(e2.edge[0]))
+				, q1 = ot.getTransformed(other->getVert(e2.edge[1]));
+		
+		//find the closest point between the two edges
+		minEdge.colPoints.push_back(closestPointBtwnSegments(p0, p1, q0, q1));
+		
+		DrawDebug::getInstance().drawDebugSphere(minEdge.colPoints[0], 0.2f);
+		
 		return minEdge;
 	}
+	//face-* collision
 	else {
 		glm::vec3 refNormal = minFace.originator->getCurrNormals()[minFace.axis];
+		//find the possible incident faces
 		auto incidents = minFace.other->getIncidentFaces(refNormal);
+		//clip the incident face(s) against the reference face
 		minFace.originator->clipPolygons(minFace, incidents);
+		
 		for (int i = 0, numCols = minFace.colPoints.size(); i < numCols; i++)
 			DrawDebug::getInstance().drawDebugSphere(minFace.colPoints[i], 0.1f);
+
 		return minFace;
 	}
 }
@@ -324,10 +342,14 @@ std::vector<int> Collider::getIncidentFaces(glm::vec3 refNormal) {
 	float antiProj = glm::dot(currNormals[0], refNormal);
 	for (int i = 1, numFaces = currNormals.size(); i < numFaces; i++) {
 		float proj = glm::dot(currNormals[i], refNormal);
-		float diff = antiProj - proj;//if + -, diff > 0; if - +, diff < 0; if + + or - -, magnitude of projection determines sign
+		
+		//if + -, diff > 0; if - +, diff < 0; if same sign, magnitude of projection determines sign
+		float diff = antiProj - proj;
+		
 		//if the face has close to 0 difference with the last anti-normal projection, then it's another incident face
 		if (diff > -FLT_EPSILON && diff < FLT_EPSILON)
 			faces.push_back(i);
+		
 		//if the face is more antiparallel than the previous, we replace our previous incident faces with this one
 		else if (diff > 0) {
 			faces = std::vector<int>();
@@ -341,6 +363,12 @@ std::vector<int> Collider::getIncidentFaces(glm::vec3 refNormal) {
 /*
 ------------------------------------------------------------------------------------------------------------------------------------
 	- Finds collision points based on Sutherland-Hodgman Clipping
+
+	- For each possible incident face on the other collider
+		- Clip the vertices against the side planes of the reference face on this collider
+		- Reject results that fall outside, include intersections and points inside
+		- Add final results to the set of collision points
+	
 	- http://gamedevelopment.tutsplus.com/tutorials/understanding-sutherland-hodgman-clipping-for-physics-engines--gamedev-11917
 ------------------------------------------------------------------------------------------------------------------------------------
 */
@@ -348,13 +376,14 @@ void Collider::clipPolygons(FaceManifold& reference, std::vector<int>& incidents
 	Transform trans = _transform->computeTransform()
 			, otherTrans = reference.other->transform()->computeTransform();
 	
-	//get the transformed center point of the reference face
 	glm::vec3 refCenter, refNorm = currNormals[reference.axis];
+
+	//get the transformed center point of the reference face
 	auto vertFaces = mesh->faces().verts;
-	
 	for (int i = 0; i < 3; i++)
-		refCenter += trans.getTransformed(getVert(vertFaces[reference.axis * 3 + i]));
+		refCenter += getVert(vertFaces[reference.axis * 3 + i]);
 	refCenter /= 3;
+	refCenter = trans.getTransformed(refCenter);
 	
 	//DrawDebug::getInstance().drawDebugVector(refCenter, refCenter + refNorm);
 
@@ -381,8 +410,6 @@ void Collider::clipPolygons(FaceManifold& reference, std::vector<int>& incidents
 		//DrawDebug::getInstance().drawDebugVector(vert, vert + edge, glm::vec3(1, 1, 0));
 		//DrawDebug::getInstance().drawDebugVector(vert, vert + norm, glm::vec3(1, 0, 1));
 	}
-
-	auto otherFaces = reference.other->getCurrNormals();
 	
 	for (int i = 0, numIncidents = incidents.size(); i < numIncidents; i++) {
 		
@@ -393,125 +420,199 @@ void Collider::clipPolygons(FaceManifold& reference, std::vector<int>& incidents
 		};
 
 		std::vector<glm::vec3> clipped = incidentVerts;
-		clipPolygon(clipped, sidePlanes, sideVerts, refNorm, refCenter);
+		for (int s = 0; clipped.size() > 0 && s < 3; s++) {
+			std::vector<glm::vec3> input = clipped;
+			clipped = clipPolyAgainstEdge(input, sidePlanes[s], sideVerts[s], refNorm, refCenter);
+		}
 		
 		reference.colPoints.reserve(reference.colPoints.size() + clipped.size());
 		reference.colPoints.insert(reference.colPoints.end(), clipped.begin(), clipped.end());
 	}
 }
 
-void Collider::clipPolygon(std::vector<glm::vec3>& clipped, std::vector<glm::vec3>& sidePlanes, std::vector<glm::vec3>& sideVerts, glm::vec3 refNorm, glm::vec3 refCenter) {
-	for (int s = 0; clipped.size() > 0 && s < 3; s++) {
-		std::vector<glm::vec3> input = clipped;
-		clipped = std::vector<glm::vec3>();
+/*
+------------------------------------------------------------------------------------------------------------------------------------
+	- Takes an input of a set of vertices, clips them against a single edge of the reference face (a side plane) defined by sidePlane (the normal) and sideVert (point on plane)
+	
+	- Culls those that don't fall below the reference face, defined by refNorm and refCenter (normal and point on plane respectively)
 
-		glm::vec3 startpt = input[input.size() - 1];
-		glm::vec3 endpt = input[0];
-		for (int i = 0, numInputs = input.size(); i < numInputs; i++, startpt = endpt, endpt = input[i]) {
+	- Clipping has 4 cases to determine which vertices are kept, going through sets of start and end pts:
+		- Start and End both inside the reference face (here defined as behind it, since these are side planes facing outward): we keep only the end pt
+			- The reason we keep the end point and not the start point is because this algorithm ensures that all start pts will be end pts at one point, and vice versa
+			- This means enclosed start pts will be added at some point no matter what, so we only worry about end pts
+			- This case is more important for telling us there will be no intersection between the plane and the edge between start and end, so we don't need to add it
+		
+		- Start and End both outside: we keep nothing, as nothing falls within the clip polygon
+		
+		- Start inside and End outside: we keep the intersection between the edge and the side plane
+			- Because the points are on different side of the plane, there must be an intersection with the plane
+		
+		- Start outside and End inside: we keep both the intersection and the end pt
+			- Because of how the first case actually works (telling us there is no intersection), this case and the first can be condensed together
+			- All we're saying is that since the start pt is NOT inside and the end pt IS, there must be an intersection, so we have to add that on top of the end pt
 
-			float clipStart = glm::dot(sidePlanes[s], startpt - sideVerts[s]);
-			float clipEnd = glm::dot(sidePlanes[s], endpt - sideVerts[s]);
+	- Another way of describing these cases is to base it on the positioning of the end pt
+		- If the end pt is inside, we'll be keeping the end pt, otherwise we won't since it falls outside
+		- If the start pt is on the opposite side of the plane of the end pt, we also keep the intersection between the plane and the edge between the two pts
+		
+		- These 2 simpler cases with possible overlap lead to the more complex explanation and the original 4 cases
+		
+		- This is the version I use; it's less for optimization and more for reducing obfuscation, as the meaning here is easier to remember than the original 4 cases
+			- I should mention that it isn't really any less efficient than the original version; it adds a bitwise xor between startInside and endInside, but that's extremely negligible
+			- It's also less code, as the intersection code doesn't need to be duplicated
+	
+	- There is one additional case that occurs for our purposes to account for floating point error
+		- Either the Start or End falls ON the side plane: we keep the end pt
+		- We define this as the dot product of the side plane normal and the vector from the plane to either vert being within -FLT_EPSILON and FLT_EPSILON
+		- We call this using thick planes, rather than planes of indeterminably small thickness which is what we normally use
+------------------------------------------------------------------------------------------------------------------------------------
+*/
+std::vector<glm::vec3> Collider::clipPolyAgainstEdge(std::vector<glm::vec3>& input, glm::vec3 sidePlane, glm::vec3 sideVert, glm::vec3 refNorm, glm::vec3 refCenter) {
+		
+	std::vector<glm::vec3> output;
 
-			//the edge is "on the plane" (thick planes); keep end if below reference face
-			if (fabs(clipStart) < FLT_EPSILON || fabs(clipEnd) < FLT_EPSILON) {
-				if (glm::dot(refNorm, endpt - refCenter) < 0)
-					clipped.push_back(endpt);
-				continue;
-			}
+	//regular conditions protect against this, but just to be safe
+	if (input.size() < 1)
+		return output;
 
-			bool startInside = clipStart < 0, endInside = clipEnd < 0;//if they fall behind the side plane, they're inside the clip
-			if (startInside) {
-				//both are inside clip; keep end if end falls below reference face
-				if (endInside) {
-					if (glm::dot(refNorm, endpt - refCenter) < 0)
-						clipped.push_back(endpt);
-				}
-				//start is inside, end is outside; keep intersection
-				else {
-					//find intersection
-					float e = glm::dot(sidePlanes[s], startpt - endpt);
-					float t = (e != 0) ? clipStart / e : 0;
-					//float t = clipStart * 1.f / (clipStart - clipEnd);
-					glm::vec3 intersect = glm::mix(startpt, endpt, t);
+	glm::vec3 startpt = input[input.size() - 1];
+	glm::vec3 endpt = input[0];
+		
+	for (int i = 0, numInputs = input.size(); i < numInputs; i++, startpt = endpt, endpt = input[i]) {
 
-					//if the intersection is below the reference face
-					if (glm::dot(refNorm, intersect - refCenter) < 0)
-						clipped.push_back(intersect);
-				}
-			}
-			//start is outside, end is inside; keep intersection and end
-			else if (endInside) {
-				//find intersection
-				float e = glm::dot(sidePlanes[s], startpt - endpt);
-				float t = (e != 0) ? clipStart / e : 0;
-				//float t = clipStart * 1.f / (clipStart - clipEnd);
-				glm::vec3 intersect = glm::mix(startpt, endpt, t);
+		float clipStart = glm::dot(sidePlane, startpt - sideVert);
+		float clipEnd = glm::dot(sidePlane, endpt - sideVert);
 
-				if (glm::dot(refNorm, intersect - refCenter) < 0)
-					clipped.push_back(intersect);
-				if (glm::dot(refNorm, endpt - refCenter) < 0)
-					clipped.push_back(endpt);
-			}
-			//nothing is kept otherwise
+		//the edge is "on the plane" (thick planes); keep end pt if it falls below reference face
+		if (fabs(clipStart) < FLT_EPSILON || fabs(clipEnd) < FLT_EPSILON) {
+			if (glm::dot(refNorm, endpt - refCenter) < 0)
+				output.push_back(endpt);
+			continue;
+		}
+
+		bool startInside = clipStart < 0, endInside = clipEnd < 0;//if they fall behind the side plane, they're inside the clip polygon
+		
+		//end pt is inside, keep it if it falls below the reference face
+		if (endInside) {
+			if (glm::dot(refNorm, endpt - refCenter) < 0)
+				output.push_back(endpt);
+		}
+
+		//start pt and end pt fall on different sides of the plane, keep intersection if it falls below the reference face
+		if (startInside ^ endInside) {
+			//find intersection
+			float e = glm::dot(sidePlane, startpt - endpt);
+			float t = (e != 0) ? clipStart / e : 0;
+			//float t = clipStart * 1.f / (clipStart - clipEnd);
+			glm::vec3 intersect = glm::mix(startpt, endpt, t);
+
+			if (glm::dot(refNorm, intersect - refCenter) < 0)
+				output.push_back(intersect);
 		}
 	}
+
+	return output;
 }
 
-glm::vec3 Collider::closestPointBtwnEdges(glm::vec3 s1_0, glm::vec3 s1_1, glm::vec3 s2_0, glm::vec3 s2_1) {
-	glm::vec3 u = s1_1 - s1_0
-			, v = s2_1 - s2_0
-			, w = s1_0 - s2_0;
+/*
+------------------------------------------------------------------------------------------------------------------------------------
+	- Finds the closest point between two line segments
+
+	- For such a seemingly simple task, the solution is quite complex, and requires a bit of explanation
+		- Too much for here, I wrote a long post on the topic on my blog: *insert link*
+		- You can also find a pdf copy in the proofs folder in the root of the repository
+		- As an alternative, my main source was http://geomalgorithms.com/a07-_distance.html
+
+	- The general thought process is that you start with the problem of finding an intersection between two lines
+		- The lines are defined by p = { p0, u = p1 - p0 } and q = { q0, v = q1 - q0 }
+		- This uses the parametric equations for the lines and the vector between them, w.
+		- The smallest w is defined as w(sc, tc) or wc
+			- sc = (be - cd) / (ac - b^2)
+			- tc = (ae - bd) / (ac - b^2)
+			- You can find the values for a,b,c,d,e in the code below
+		- If ac - b^2 = 0, then the lines are parallel and sc = 0, tc = e / c
+		- The closest point to q on p is p0 + sc * u
+		- The closest point to p on q is q0 + tc * v
+		- To get the closest point in space we just compute p0 - wc / 2 or q0 + wc / 2
+
+	- The line problem isn't complex enough to account for the fact that these are segments
+		- The closest point between the two lines may not occur within the 0 to 1 range dictated by their segments
+		- We account for this ourselves by doing some range checks
+			- When s or t goes outside the 0 to 1 range, we have to change how we're solving for the other value
+				- if s < 0, t =  e / c. if s > 1, t = ( e + b) / c
+				- if t < 0, s = -d / a. if t > 1, s = (-d + b) / a
+				- After accounting for these, just do a basic clamp on these values to the 0 to 1 range
+				- We can save computations by just storing the numerators and denominators and doing the range checks with them
+					- That way there's only one division each at the end
+------------------------------------------------------------------------------------------------------------------------------------
+*/
+glm::vec3 Collider::closestPointBtwnSegments(glm::vec3 p0, glm::vec3 p1, glm::vec3 q0, glm::vec3 q1) {
+	glm::vec3 u = p1 - p0, v = q1 - q0, w0 = p0 - q0;
+	
 	float a = glm::dot(u, u)
 		, b = glm::dot(u, v)
 		, c = glm::dot(v, v)
-		, d = glm::dot(u, w)
-		, e = glm::dot(v, w)
+		, d = glm::dot(u, w0)
+		, e = glm::dot(v, w0)
 		, D = a * c - b * b;
+	
 	float sc, sNumer, sDenom = D;
 	float tc, tNumer, tDenom = D;
+	
+	//if D ~ 0, i.e. segments are parallel
 	if (D < FLT_EPSILON) {
 		sNumer = 0;	sDenom = 1;
-		tNumer = e;	tDenom = c;//v.w / v.v
+		tNumer = e;	tDenom = c;
 	}
 	else {
-		sNumer = b * e - c * d;//u.v * v.w - v.v * u.w
-		sDenom = a * e - b * d;//u.u * v.w - u.v * u.w
+		sNumer = b * e - c * d;
+		tNumer = a * e - b * d;
+		
+		//if sc < 0, sc = 0 and tc = e / c
 		if (sNumer < 0) {
 			sNumer = 0;
 			tNumer = e; tDenom = c;
 		}
+		//if sc > 1, sc = 1 and tc = (e + b) / c
 		else if (sNumer > sDenom) {
 			sNumer = sDenom;
 			tNumer = e + b; tDenom = c;
 		}
 	}
-
+	
+	//if tc < 0, tc = 0 and sc = -d / a
 	if (tNumer < 0) {
 		tNumer = 0;
-		if (-d < 0)
+		//if sc < 0, sc = 0; tc = 0
+		if	(-d < 0) 
 			sNumer = 0;
-		else if (-d > a)
+		//if sc > 1, sc = 1; tc = 0
+		else if (-d > a) 
 			sNumer = sDenom;
-		else {
-			sNumer = -d; sDenom = a;
+		else { 
+			sNumer = -d; sDenom = a;	
 		}
 	}
+	//if tc > 1, tc = 1 and sc = (-d + b) / a
 	else if (tNumer > tDenom) {
 		tNumer = tDenom;
-		if ((b - d) < 0)
+		//if sc < 0, sc = 0; tc = 1
+		if	(-d + b < 0) 
 			sNumer = 0;
-		else if ((b - d) > a)
+		//if sc > 1, sc = 1; tc = 1
+		else if (-d + b > a) 
 			sNumer = sDenom;
-		else {
-			sNumer = b - d; sDenom = a;
+		else { 
+			sNumer = -d + b; sDenom = a;	
 		}
 	}
 
-	sc = (abs(sNumer) < FLT_EPSILON) ? 0 : sNumer / sDenom;
-	tc = (abs(tNumer) < FLT_EPSILON) ? 0 : tNumer / tDenom;
+	//prevents possible divide by zero
+	sc = (fabs(sNumer) < FLT_EPSILON) ? 0 : sNumer / sDenom;
+	tc = (fabs(tNumer) < FLT_EPSILON) ? 0 : tNumer / tDenom;
 	
-	glm::vec3 btwn = w + (sc * u) - (tc * v);
-	return s2_0 + tc * v + btwn * 0.5f;
+	glm::vec3 wc = w0 + (sc * u) - (tc * v);//the vec between the 2 closest pts on the 2 segments
+	return q0 + tc * v + wc * 0.5f;//the closest point between the 2 segments in the world
 }
 
 //the code below will need updating when the system is updated for 3D

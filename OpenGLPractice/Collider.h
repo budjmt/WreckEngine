@@ -73,8 +73,8 @@ public:
 
 	std::vector<int> getIncidentFaces(glm::vec3 refNormal);
 	void clipPolygons(FaceManifold& reference, std::vector<int>& incidents);
-	void clipPolygon(std::vector<glm::vec3>& clipped, std::vector<glm::vec3>& sidePlanes, std::vector<glm::vec3>& sideVerts, glm::vec3 refNorm, glm::vec3 refCenter);
-	glm::vec3 closestPointBtwnEdges(glm::vec3 a, glm::vec3 b, glm::vec3 c, glm::vec3 d);
+	std::vector<glm::vec3> clipPolyAgainstEdge(std::vector<glm::vec3>& input, glm::vec3 sidePlane, glm::vec3 sideVert, glm::vec3 refNorm, glm::vec3 refCenter);
+	glm::vec3 closestPointBtwnSegments(glm::vec3 p0, glm::vec3 p1, glm::vec3 q0, glm::vec3 q1);
 
 	void update();
 
