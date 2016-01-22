@@ -7,9 +7,6 @@ ColliderEntity::ColliderEntity(Drawable* s)
 {
 	//_collider = new Collider(&transform,transform.scale);
 	_collider = new Collider(((DrawMesh*)s)->mesh(), &transform);
-	mass = 1;
-	invMass = 1;
-	_staticObj = 0;
 	colliderEntities.push_back(this);
 }
 
@@ -18,55 +15,42 @@ ColliderEntity::ColliderEntity(glm::vec3 p,glm::vec3 dims,glm::vec3 sc,glm::vec3
 {
 	//_collider = new Collider(&transform,dims);
 	_collider = new Collider(((DrawMesh*)s)->mesh(),&transform);
-	mass = 1;
-	invMass = 1;
-	_staticObj = 0;
 	colliderEntities.push_back(this);
 }
 
-ColliderEntity::ColliderEntity(const ColliderEntity& other) 
-	: Entity(other)
-{
-	_collider = other.collider();
-	staticObj(other.staticObj());
-	mass = other.mass;
-	invMass = other.invMass;
-	vel(other.vel());
-	angVel(other.angVel());
-	colliderEntities.push_back(this);
-}
-
-
-ColliderEntity::~ColliderEntity(void)
-{
+ColliderEntity::~ColliderEntity() {
 	delete _collider;
 }
 
-int ColliderEntity::staticObj() const { return _staticObj; } void ColliderEntity::staticObj(int s) { _staticObj = s; }
-glm::vec3 ColliderEntity::vel() const { return _vel; } void ColliderEntity::vel(glm::vec3& v) { _vel = v; }
-glm::vec3 ColliderEntity::angVel() const { return _angVel; } void ColliderEntity::angVel(glm::vec3& a) { _angVel = a; }
-Collider* ColliderEntity::collider() const { return _collider; }
+ColliderEntity::ColliderEntity(const ColliderEntity& other) {
+	collider(new Collider(*other.collider()));
+	body = other.body;
+}
+
+ColliderEntity& ColliderEntity::operator=(ColliderEntity& other) {
+	collider(other.collider());
+	other._collider = nullptr;
+	body = other.body;
+	return *this;
+}
+
+RigidBody& ColliderEntity::rigidBody() { return body; }
+Collider* ColliderEntity::collider() const { return _collider; } void ColliderEntity::collider(Collider* c) { _collider = c; }
 
 void ColliderEntity::update(double dt) {
-	calcForces();
-	_vel += netForce  * (float)dt;
-	transform.position += _vel  * (float)dt;
-	transform.rotate(_angVel * (float)dt);
 
-	if (_vel.length() > MAX_VEL)
-		_vel *= MAX_VEL / _vel.length();
-	else if (_vel.length() < 0.05f) {
-		_vel = glm::vec3(0, 0, 0);
-		_angVel = glm::vec3(0, 0, 0);
-	}
-	netForce = glm::vec3(0, 0, 0);
+	transform.position += body.vel()  * (float)dt;
+	transform.rotate(body.angVel() * (float)dt);
+
+	calcForces(dt);
+	body.update(dt);
 }
 
 #include <iostream>
 #include "DebugBenchmark.h"
 
-void ColliderEntity::calcForces() {
-	//netForce += glm::vec3(0, mass * -9.8f * (1 - estaticObj), 0);//gravity
+void ColliderEntity::calcForces(double dt) {
+	body.netForce += glm::vec3(0, body.mass() * -9.8f * (1 - body.floatingObj()), 0);//gravity
 	//collision resolution stuff here
 	
 	//I need to fix this so that all the colliders are updated and THEN run collision checks
@@ -78,39 +62,92 @@ void ColliderEntity::calcForces() {
 		if (other == _collider || !entity->active)
 			continue;
 		Manifold m = _collider->intersects(other);
-		if (m.originator != nullptr)
-			//handleCollision(entity,);
+		if (m.originator != nullptr) {
+			if(m.originator == _collider)
+				handleCollision(entity,m,dt);
+			else
+				entity->handleCollision(this,m,dt);
+			_collider->update();
+			entity->collider()->update();
 			std::cout << "collision! " << _collider << ", " << m.originator << "; " << m.pen << std::endl;
+		}
 	}
 	//std::cout << "Collision Check Time: " << DebugBenchmark::getInstance().end() << std::endl;
 
-	netForce += -0.15f * _vel * _vel * mass;//quadratic drag
-	netForce *= invMass;
+	//the coefficient here is equivalent to 0.5 * density of fluid (here just air) * C_d (drag coeff)
+	//C_d is dependent on the object's shape and the Reynolds Number, R_e = internal forces / viscous forces = mag(v) * D / visc, 
+	//where D is some characteristic diameter or linear dimension and visc is the kinematic viscosity = viscosity / density
+	body.netForce += body.quadDrag(-0.15f, body.vel(), body.heading());//quadratic drag, no mass involved, it's all velocity dependent
+	body.netAngAccel += body.quadDrag(-0.15f, body.angVel(), body.angHeading());//for ang accel too
+	
+	//body.netForce *= body.invMass();
 }
 
-glm::vec3 ColliderEntity::calcTorque(glm::vec3 colPoint, glm::vec3 F) {
-	glm::vec3 torque = glm::cross(colPoint, _angVel);
-	return torque;
-}
-
-void ColliderEntity::handleCollision(ColliderEntity* other, glm::vec3 norm, float depth) {
-	float velAlongNorm = glm::dot(other->vel() - _vel, norm);
-	if (velAlongNorm > 0)
+void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double dt) {
+	RigidBody oRB = other->rigidBody();
+	float velAlongAxis = glm::dot(oRB.vel() - body.vel(), m.axis);
+	//if the two bodies are travelling in the same direction along the axis
+	if (velAlongAxis > 0)
 		return;
 
+	//coefficient of restitution. we'd take the min of the two coeffs
+	//when e = 0, it is a perfect inelastic/plastic collision, and the objects stick together
+	//when 0 < e < 1, it is a regular inelastic collision, with some energy dissipated
+	//when e = 1, it is an elastic collision, where all energy is put into the response
 	float e = 1;
-	float j = -(1 + e) * velAlongNorm;
-	j /= invMass + other->invMass;
 
-	glm::vec3 impulse = j * norm;
-	float massRatio = mass / (mass + other->mass);
-	//evel -= massRatio * impulse;
-	massRatio *= other->mass * invMass;
-	//other->vel += massRatio * impulse;
+	//j = magnitude of impulse
+	float j = velAlongAxis;
+	j *= -(1 + e);
+	j /= body.invMass() + oRB.invMass();
+
+	//glm::vec3 impulse = j * m.axis;
+	//float massRatio = mass / (mass + other->mass);
+	//_vel -= massRatio * impulse;
+	//massRatio *= other->mass * invMass;
+	//other->vel(massRatio * impulse);
+
+	//F is the force applied by the collision; we use the definition F = dp / dt, where p = momentum and dp = impulse
+	j /= (float)dt;
+	glm::vec3 F = j * m.axis;
+	body.netForce += F;
+	oRB.netForce += -F;
+	
+	//they have the same collision points by definition, but vecs to those points change, meaning torque and covariance also change
+	body.netAngAccel += calcAngularAccel(m, F);
+	oRB.netAngAccel += other->calcAngularAccel(m, -F);
 
 	//correct positions
-	glm::vec3 correction = norm * 0.2f / (invMass + other->invMass);
-	correction *= glm::max(depth - 0.05f, 0.0f);
-	transform.position -= correction * invMass;
-	other->transform.position += correction * other->invMass;
+	float percent = 0.2f, slop = 0.05f;
+	glm::vec3 correction = glm::max(-m.pen - slop, 0.0f) * percent / (body.invMass() + oRB.invMass()) * m.axis;
+	transform.position -= body.invMass() * (1 - body.staticObj()) * correction;
+	other->transform.position += oRB.invMass() * (1 - oRB.staticObj()) * correction;
+}
+
+//Given a collision force F, calculates the change in angular acceleration it causes
+glm::vec3 ColliderEntity::calcAngularAccel(Manifold& m, glm::vec3 F) {
+	glm::vec3 torque = glm::vec3();
+	if (!m.colPoints.size() || body.staticObj())
+		return torque;
+
+	glm::mat3 C = glm::mat3(0);//mass-weighted covariance
+
+	//assumes uniform mass distribution; we can account for non-uniform distributions with constraints
+	float m_n = body.mass() / m.colPoints.size();
+	for (auto colPoint : m.colPoints) {
+		glm::vec3 r = colPoint - _collider->framePos();//vector from the center of mass to the collision point
+		torque += glm::cross(r, F);//torque = r x F = |r||F|sin(theta)
+		C += m_n * glm::mat3(r.x * r, r.y * r, r.z * r);//m_n * r * r_transpose
+	}
+	float trace_C = C[0][0] + C[1][1] + C[2][2];
+
+	glm::mat3 iT = glm::mat3() * trace_C - C;//inertia tensor = Identity_3x3 * trace(C) - C
+	
+	glm::vec3 at_iT = glm::vec3(m.axis.x * (iT[0][0] + iT[0][1] + iT[0][2])
+		, m.axis.y * (iT[1][0] + iT[1][1] + iT[1][2])
+		, m.axis.z * (iT[2][0] + iT[2][1] + iT[2][2]));//axis_transpose * inertia tensor (matrices are column major)
+	
+	float inertia = glm::dot(at_iT, m.axis);//axis_transpose * iT * axis = (axis_transpose * inertia tensor) . axis
+	
+	return (inertia) ? torque / inertia : glm::vec3();
 }

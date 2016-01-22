@@ -48,7 +48,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	Mesh* m = loadOBJ("Assets/basic.obj");
 	DrawMesh* dm = new DrawMesh(m, "Assets/texture.png", prog);
 	shapes.push_back(dm);
-	Entity* mesh = new ColliderEntity(dm);
+	ColliderEntity* mesh = new ColliderEntity(dm);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
 	mesh->transform.position.x = 0;
 	entities.push_back(mesh);
@@ -101,7 +101,10 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	shapes.push_back(dm);
 	mesh = new ColliderEntity(dm);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
-	mesh->transform.position.y = -2.5f;
+	mesh->transform.position.y = -5.f;
+	mesh->transform.scale = glm::vec3(8, 0.25f, 8);
+	mesh->rigidBody().staticObj(1);
+	mesh->rigidBody().mass(1000);
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
@@ -111,6 +114,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
 	mesh->transform.position.y = -2.5f;
 	mesh->transform.position.x = -2.5f;
+	mesh->rigidBody().floatingObj(1);
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 	me = mesh;

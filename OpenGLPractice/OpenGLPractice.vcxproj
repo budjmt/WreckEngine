@@ -174,6 +174,7 @@
     <ClInclude Include="GLDebug.h" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ModelHelper.cpp" />
+    <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="ShaderHelper.cpp" />
     <ClCompile Include="Shape.cpp" />
     <ClCompile Include="Source.cpp" />
@@ -193,6 +194,7 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ModelHelper.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ShaderHelper.h" />
     <ClInclude Include="Shape.h" />
     <ClInclude Include="Transform.h" />

@@ -18,9 +18,9 @@ public:
 	Transform* parent;
 	Transform computeTransform();
 	void updateNormals();//this will replace the ones below
-	glm::vec3 forward();
-	glm::vec3 up();
-	glm::vec3 right();
+	glm::vec3 forward() const;
+	glm::vec3 up() const;
+	glm::vec3 right() const;
 	void updateRot();
 	void rotate(float x, float y, float z);
 	void rotate(glm::vec3 v);
@@ -28,11 +28,11 @@ public:
 
 	glm::vec3 getTransformed(glm::vec3 v);
 private:
-	glm::vec3 tposition;
-	glm::vec3 tscale;
-	glm::fquat trotation;
-	glm::vec3 trotAxis;
-	float trotAngle;
-	glm::vec3 tforward, tup, tright;
+	glm::vec3 _position;
+	glm::vec3 _scale;
+	glm::fquat _rotation;
+	glm::vec3 _rotAxis;
+	float _rotAngle;
+	glm::vec3 _forward, _up, _right;
 };
 

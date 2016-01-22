@@ -27,9 +27,9 @@ public:
 	virtual void draw();
 protected:
 	Drawable* shape;
-	glm::vec4 ecolor;
-	Transform etransform;
-	bool eactive = true;
-	EntityType etype;
+	glm::vec4 _color;
+	Transform _transform;
+	bool _active = true;
+	EntityType _type;
 };
 

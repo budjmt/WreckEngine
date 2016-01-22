@@ -41,13 +41,14 @@ struct SupportPoint {
 };
 
 struct Manifold {
-	Collider* originator, * other;
+	Collider* originator = nullptr, * other = nullptr;
 	std::vector<glm::vec3> colPoints;
 	float pen = -FLT_MAX;
+	glm::vec3 axis;
 };
 
 struct FaceManifold : Manifold {
-	int axis;
+	int norm;
 };
 
 struct EdgeManifold : Manifold {
@@ -63,12 +64,12 @@ public:
 	Collider(const Collider& other);
 	~Collider(void);
 	ColliderType& type;
-	Transform* transform();
-	glm::vec3 framePos();
-	glm::vec3 dims(); void dims(glm::vec3 v);
+	Transform* transform() const;
+	glm::vec3 framePos() const;
+	glm::vec3 dims() const; void dims(glm::vec3 v);
+	void updateDims(Transform* t);
 	float radius() const;
 
-	bool intersects2D(Collider* other);
 	Manifold intersects(Collider* other);
 
 	std::vector<int> getIncidentFaces(glm::vec3 refNormal);
@@ -83,9 +84,7 @@ public:
 	void genNormals();
 	void genEdges();
 	void genGaussMap();
-	void addUniqueAxis(std::vector<int>& axes, int aIndex);
 	
-	const std::vector<int>& getNormals() const;
 	const std::vector<glm::vec3>& getCurrNormals() const;
 	const std::vector<glm::vec3>& getEdges() const;
 	
@@ -99,15 +98,12 @@ public:
 	void updateNormals();
 	void updateEdges();
 
-	void getMaxMin(glm::vec3 axis,float* maxmin);
-
 	bool fuzzyParallel(glm::vec3 v1, glm::vec3 v2);
 
 	SupportPoint getSupportPoint(glm::vec3 dir);
 	FaceManifold getAxisMinPen(Collider* other);
 	EdgeManifold overlayGaussMaps(Collider* other);
-	
-	std::vector<glm::vec3> getAxes(const Collider* other);
+
 private:
 	Transform* _transform;
 	glm::vec3 _framePos;
@@ -116,7 +112,6 @@ private:
 	ColliderType _type;
 
 	std::vector<glm::vec3> faceNormals, currNormals, edges, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
-	std::vector<int> uniqueNormals;//indices of the faceNormals that are unique
 	std::map<std::string, int> edgeMap;//maps the edge pairs to the indices in edges
 	GaussMap gauss;
 	//std::vector<std::vector<Adj>> adjacencies;
