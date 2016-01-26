@@ -81,12 +81,12 @@ void update() {
 	double dt = currFrame - prevFrame;
 	prevFrame = currFrame;
 	//need to separate drawing and update pipelines
-	/*float spf = 1.f / FPS;
+	float spf = 1.f / FPS;
 	while (dt < spf) {
 		currFrame = glfwGetTime();
 		dt += currFrame - prevFrame;
 		prevFrame = currFrame;
-	}*/
+	}
 
 	mouse->prevx = glm::mix(mouse->prevx, mouse->x, 0.15f);
 	mouse->prevy = glm::mix(mouse->prevy, mouse->y, 0.15f);

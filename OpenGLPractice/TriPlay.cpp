@@ -102,7 +102,7 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	mesh = new ColliderEntity(dm);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
 	mesh->transform.position.y = -5.f;
-	mesh->transform.scale = glm::vec3(8, 0.25f, 8);
+	mesh->transform.scale = glm::vec3(64, 0.5f, 64);
 	mesh->rigidBody().staticObj(1);
 	mesh->rigidBody().mass(1000);
 	entities.push_back(mesh);
@@ -163,6 +163,8 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double dt) {
 		exit('q');
 	}
 
+	float speed = 5;
+
 	bool shift = false, ctrl = false;
 	if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		shift = true;
@@ -171,19 +173,19 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double dt) {
 
 	if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
 		if(shift)
-			me->transform.position += glm::vec3(0, 0, -dt);
+			me->transform.position += glm::vec3(0, 0, -speed * dt);
 		else if(ctrl)
 			me->transform.rotate(-2 * M_PI * dt, 0, 0);
 		else
-			me->transform.position += glm::vec3(0, dt, 0); 
+			me->transform.position += glm::vec3(0, speed * dt, 0); 
 	}
 	else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
 		if(shift)
-			me->transform.position += glm::vec3(0, 0, dt);
+			me->transform.position += glm::vec3(0, 0, speed * dt);
 		else if (ctrl)
 			me->transform.rotate(2 * M_PI * dt, 0, 0); 
 		else
-			me->transform.position += glm::vec3(0, -dt, 0); 
+			me->transform.position += glm::vec3(0, -speed * dt, 0); 
 	}
 	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
 		if (shift)
@@ -191,7 +193,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double dt) {
 		else if (ctrl)
 			me->transform.rotate(0, 0, 2 * M_PI * dt);
 		else
-			me->transform.position += glm::vec3(dt, 0, 0); 
+			me->transform.position += glm::vec3(speed * dt, 0, 0); 
 	}
 	else if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
 		if (shift)
@@ -199,7 +201,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double dt) {
 		else if (ctrl)
 			me->transform.rotate(0, 0, -2 * M_PI * dt);
 		else
-			me->transform.position += glm::vec3(-dt, 0, 0); 
+			me->transform.position += glm::vec3(-speed * dt, 0, 0); 
 	}
 
 	Camera::mayaCam(window, m, dt, camera);

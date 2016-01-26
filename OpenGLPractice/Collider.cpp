@@ -227,7 +227,7 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 							v2 = otherTrans.getTransformed(v2);
 							
 							edgeNormal *= glm::sign(glm::dot(edgeNormal, v1 - trans.position));//make sure the edge normal is facing outwards from the body
-							float pen = glm::dot(edgeNormal, v2 - v1);
+							float pen = glm::dot(edgeNormal, v2 - v1);//does this work regardless of the edges' points used?
 							if (pen > manifold.pen) {
 								manifold.edgePair[0] = curr;
 								manifold.edgePair[1] = otherCurr;

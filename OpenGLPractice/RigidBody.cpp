@@ -1,5 +1,24 @@
 #include "RigidBody.h"
 
+short RigidBody::floatingObj() const { return _floatingObj; }; 
+void RigidBody::floatingObj(short f) { _floatingObj = f; };
+short RigidBody::staticObj() const { return _staticObj; }; 
+void RigidBody::staticObj(short s) { _staticObj = s; _floatingObj = s; };
+
+float RigidBody::mass() const { return _mass; }; 
+void RigidBody::mass(float m) { _mass = m; _invMass = 1 / m; };
+float RigidBody::invMass() const { return _invMass; };
+float RigidBody::restitution() const { return _restitution; }
+void RigidBody::restitution(float e) { _restitution = e; }
+
+glm::vec3 RigidBody::vel() const { return _vel; }; 
+void RigidBody::vel(glm::vec3 v) { _vel = v; _speed = glm::length(v); };
+glm::vec3 RigidBody::heading() const { return _heading; };
+
+glm::vec3 RigidBody::angVel() const { return _angVel; }; 
+void RigidBody::angVel(glm::vec3 a) { _angVel = a; _angSpeed = glm::length(a); };
+glm::vec3 RigidBody::angHeading() const { return _angHeading; };
+
 void RigidBody::update(double dt) {
 	updateVel(dt);
 	updateAngVel(dt);

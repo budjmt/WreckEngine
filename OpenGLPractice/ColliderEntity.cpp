@@ -38,19 +38,17 @@ RigidBody& ColliderEntity::rigidBody() { return body; }
 Collider* ColliderEntity::collider() const { return _collider; } void ColliderEntity::collider(Collider* c) { _collider = c; }
 
 void ColliderEntity::update(double dt) {
-
-	transform.position += body.vel()  * (float)dt;
-	transform.rotate(body.angVel() * (float)dt);
-
 	calcForces(dt);
 	body.update(dt);
+	transform.position += body.vel()  * (float)dt;
+	transform.rotate(body.angVel() * (float)dt);
 }
 
 #include <iostream>
 #include "DebugBenchmark.h"
 
 void ColliderEntity::calcForces(double dt) {
-	body.netForce += glm::vec3(0, body.mass() * -9.8f * (1 - body.floatingObj()), 0);//gravity
+	body.netForce += glm::vec3(0, body.mass() * -9.8f * 0.5f * (1 - body.floatingObj()), 0);//gravity
 	//collision resolution stuff here
 	
 	//I need to fix this so that all the colliders are updated and THEN run collision checks
@@ -90,11 +88,11 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 	if (velAlongAxis > 0)
 		return;
 
-	//coefficient of restitution. we'd take the min of the two coeffs
+	//coefficient of restitution. we take the min of the two coeffs
 	//when e = 0, it is a perfect inelastic/plastic collision, and the objects stick together
 	//when 0 < e < 1, it is a regular inelastic collision, with some energy dissipated
 	//when e = 1, it is an elastic collision, where all energy is put into the response
-	float e = 1;
+	float e = glm::min(body.restitution(), oRB.restitution());
 
 	//j = magnitude of impulse
 	float j = velAlongAxis;
@@ -118,10 +116,10 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 	oRB.netAngAccel += other->calcAngularAccel(m, -F);
 
 	//correct positions
-	float percent = 0.2f, slop = 0.05f;
-	glm::vec3 correction = glm::max(-m.pen - slop, 0.0f) * percent / (body.invMass() + oRB.invMass()) * m.axis;
-	transform.position -= body.invMass() * (1 - body.staticObj()) * correction;
-	other->transform.position += oRB.invMass() * (1 - oRB.staticObj()) * correction;
+	float percent = 1.2f, slop = 0.05f;
+	glm::vec3 correction = glm::max(-m.pen - slop, 0.0f) * percent * (1 + body.staticObj() + oRB.staticObj()) / (body.invMass() + oRB.invMass()) * m.axis;
+	transform.position -= (body.invMass() + oRB.staticObj() * oRB.invMass()) * (1 - body.staticObj()) * correction;
+	other->transform.position += (oRB.invMass() + body.staticObj() * body.invMass()) * (1 - oRB.staticObj()) * correction;
 }
 
 //Given a collision force F, calculates the change in angular acceleration it causes
