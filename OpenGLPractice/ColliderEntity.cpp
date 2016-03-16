@@ -110,6 +110,8 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 	glm::vec3 F = j * m.axis;
 	body.netForce += F;
 	oRB.netForce += -F;
+	DrawDebug::getInstance().drawDebugVector(_transform.position, _transform.position + F);
+	DrawDebug::getInstance().drawDebugVector(other->transform.position, other->transform.position - F);
 	
 	//they have the same collision points by definition, but vecs to those points change, meaning torque and covariance also change
 	body.netAngAccel += calcAngularAccel(m, F);
@@ -142,8 +144,8 @@ glm::vec3 ColliderEntity::calcAngularAccel(Manifold& m, glm::vec3 F) {
 	glm::mat3 iT = glm::mat3() * trace_C - C;//inertia tensor = Identity_3x3 * trace(C) - C
 	
 	glm::vec3 at_iT = glm::vec3(m.axis.x * (iT[0][0] + iT[0][1] + iT[0][2])
-		, m.axis.y * (iT[1][0] + iT[1][1] + iT[1][2])
-		, m.axis.z * (iT[2][0] + iT[2][1] + iT[2][2]));//axis_transpose * inertia tensor (matrices are column major)
+							  , m.axis.y * (iT[1][0] + iT[1][1] + iT[1][2])
+							  , m.axis.z * (iT[2][0] + iT[2][1] + iT[2][2]));//axis_transpose * inertia tensor (matrices are column major)
 	
 	float inertia = glm::dot(at_iT, m.axis);//axis_transpose * iT * axis = (axis_transpose * inertia tensor) . axis
 	

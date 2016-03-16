@@ -11,7 +11,7 @@
 #include "ModelHelper.h"
 #include "Mesh.h"
 
-#define DEBUG true
+#define DEBUG false
 
 struct Sphere {
 	glm::vec3 center;

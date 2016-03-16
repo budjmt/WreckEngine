@@ -8,13 +8,16 @@ out vec2 fragTexUV;
 out vec3 fragNormal;
 
 uniform mat4 worldMatrix;
+uniform mat4 iTworldMatrix;
 uniform mat4 cameraMatrix;
 
 void main() {
-	gl_Position = cameraMatrix * worldMatrix * vec4(vecPos, 1);
+	vec4 worldPos = worldMatrix * vec4(vecPos, 1);
+	gl_Position = cameraMatrix * worldPos;
 	//vec3 color = vec3(0,1,0);
-	fragPos = gl_Position.xyz;
+	fragPos = worldPos.xyz;
 	fragTexUV = vecTexUV;
-	fragNormal = normalize(worldMatrix * vec4(vecNormal, 1)).xyz;
-	//fragNormal = (vecNormal + vec3(1,1,1)) * 0.5;
+	//use inverse transpose of world mat to avoid uneven scale
+	//use fourth component as 0 to avoid translation
+	fragNormal = normalize(iTworldMatrix * vec4(vecNormal, 0)).xyz;
 }

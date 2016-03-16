@@ -29,6 +29,6 @@ protected:
 	GLuint vBuffer;
 	GLuint vArray;
 	GLuint dshaderProg;
-	GLint offset, scale, worldMatrix, dcolorLoc;
+	GLint offset, scale, worldMatrix, iTworldMatrix, dcolorLoc;
 	static std::map<const char*, GLuint> loadedTextures;//all currently loaded textures
 };
