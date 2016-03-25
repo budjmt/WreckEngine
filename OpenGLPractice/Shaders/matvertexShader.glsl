@@ -7,6 +7,7 @@ out vec3 fragPos;
 out vec2 fragTexUV;
 out vec3 fragNormal;
 
+uniform float time;
 uniform mat4 worldMatrix;
 uniform mat4 cameraMatrix;
 

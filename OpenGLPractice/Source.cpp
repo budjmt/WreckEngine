@@ -17,6 +17,7 @@ double FPS = 60;
 
 GLFWwindow* window;
 GLuint shaderProg;
+GLint uniTime;
 
 double prevFrame;
 Mouse* mouse;
@@ -31,6 +32,7 @@ void init() {
 	if(shaderProg != 0) {
 		glUseProgram(shaderProg);
 		setShaderColor(shaderProg,"tint",1,1,1);
+		uniTime = glGetUniformLocation(shaderProg, "time");
 	}
 
 	mouse = new Mouse();
@@ -100,7 +102,7 @@ void update() {
 		std::cout << "FPS is now " << FPS << std::endl;
 	}
 
-
+	glUniform1f(uniTime, currFrame);
 	game->update(window, mouse, dt);
 }
 
