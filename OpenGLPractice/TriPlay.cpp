@@ -102,9 +102,9 @@ TriPlay::TriPlay(GLuint prog, GLFWwindow* w)
 	mesh = new ColliderEntity(dm);
 	mesh->transform.rotAxis = glm::vec3(0, 1, 0);
 	mesh->transform.position.y = -5.f;
-	mesh->transform.scale = glm::vec3(64, 0.5f, 64);
+	mesh->transform.scale = glm::vec3(64, 1.5f, 64);
 	mesh->rigidBody().staticObj(1);
-	mesh->rigidBody().mass(1000);
+	mesh->rigidBody().mass(10000);
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 

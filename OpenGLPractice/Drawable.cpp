@@ -51,7 +51,9 @@ void Drawable::setWorldMatrix(glm::vec3 pos, glm::vec3 scaleV, glm::vec3 rotAxis
 	glm::mat4 translate = glm::translate(pos);
 	glm::mat4 scale = glm::scale(scaleV);
 	glm::mat4 rotate = glm::rotate(rot, rotAxis);
-	glUniformMatrix4fv(worldMatrix, 1, GL_FALSE, &(translate * scale * rotate)[0][0]);
+	glm::mat4 world = translate * scale * rotate;
+	glUniformMatrix4fv(worldMatrix, 1, GL_FALSE, &world[0][0]);
+	glUniformMatrix4fv(iTworldMatrix, 1, GL_FALSE, &glm::inverse(glm::transpose(world))[0][0]);
 }
 
 std::map<const char*, GLuint> Drawable::loadedTextures;

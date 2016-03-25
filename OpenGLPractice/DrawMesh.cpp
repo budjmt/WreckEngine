@@ -55,6 +55,7 @@ void DrawMesh::setup(char* texFile, GLuint shader) {
 	//std::cout << vArray << "," << vertBuffer << "," << vBuffer << std::endl;
 
 	worldMatrix = glGetUniformLocation(shaderProg, "worldMatrix");
+	iTworldMatrix = glGetUniformLocation(shaderProg, "iTworldMatrix");
 	colorLoc = glGetUniformLocation(shaderProg, "tint");
 
 	glBindVertexArray(0);
