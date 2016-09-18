@@ -12,21 +12,16 @@
 
 //class constants go here
 
-class TriPlay :
-	public Game
+class TriPlay : public Game
 {
 public:
 	TriPlay();
-	TriPlay(GLuint prog, GLFWwindow* w);
-	TriPlay(const TriPlay& other);
-	~TriPlay();
+	TriPlay(GLprogram prog, GLFWwindow* w);
 	void update(GLFWwindow* window, Mouse* m, double dt);
-	//void spawnTriangle(glm::vec3 pos, glm::vec3 vel);
 private:
-	//std::vector<ColliderEntity*> triangles;
-	Entity* me;
-	std::vector<Entity*> meshes;
-	Camera* camera;
+	shared<Entity> me;
+	std::vector<shared<Entity>> meshes;
+	shared<Camera> camera;
 	GLFWwindow* window;
 };
 

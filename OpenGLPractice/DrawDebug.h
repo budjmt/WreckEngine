@@ -5,18 +5,21 @@
 
 #include <vector>
 
+#include "gl_structs.h"
+
 #include "Drawable.h"
 #include "Camera.h"
 #include "ShaderHelper.h"
 #include "ModelHelper.h"
 #include "Mesh.h"
 
-#define DEBUG false
+#define DEBUG true
 
-struct Sphere {
-	glm::vec3 center;
-	float rad;
-};
+const size_t MAX_VECTORS = 2500;
+const size_t MAX_SPHERES = 1000;
+const size_t MAX_BOXES = 1000;
+
+struct Sphere { vec4 color; vec3 center; float rad; };
 
 class DrawDebug
 {
@@ -28,11 +31,12 @@ public:
 	void draw();
 
 	//these are called externally for drawing stuff
-	void drawDebugVector(glm::vec3 start, glm::vec3 end, glm::vec3 color = glm::vec3(0.7f, 1, 0));
-	void drawDebugSphere(glm::vec3 pos, float rad);
+	void drawDebugVector(vec3 start, vec3 end, vec3 color = vec3(0.7f, 1, 0));
+	void drawDebugSphere(vec3 pos, float rad, vec3 color = vec3(0.8f, 0.7f, 1.f), float opacity = 0.3f);
+	//void drawDebugCube(vec3 pos, float l) { drawDebugCube(pos, l, l, l); };
+	//void drawDebugCube(vec3 pos, float w, float h, float d);
 private:
 	DrawDebug();
-	~DrawDebug();
 	DrawDebug(const DrawDebug&) = delete;
 	void operator=(const DrawDebug&) = delete;
 
@@ -41,18 +45,20 @@ private:
 	void drawSpheres();
 
 	Camera* cam = nullptr;
-	GLuint vecCamLoc, meshCamLoc;
+	GLuniform<mat4> vecCamLoc, meshCamLoc;
 
-	Mesh* sphere;
-	int sphereVerts;
-	GLuint worldLoc;
+	shared<Mesh> sphere;
+	size_t numSphereVerts;
 
-	GLuint vecShader, meshShader;
+	GLprogram vecShader, meshShader;
 
-	GLuint vecVAO, arrowVAO, meshVAO;
-	GLuint vecBuffer, arrowBuffer;
-	GLuint sphereBuffer, sphereElBuffer;
+	GLVAO vecVAO, arrowVAO, sphereVAO;
+	GLbuffer vecBuffer, arrowBuffer;
+	GLbuffer sphereBuffer, sphereInstBuffer, sphereElBuffer;
 	
-	std::vector<glm::vec3> debugVectors;
+	struct m_MeshData { vec4 color; mat4 transform; };
+
+	std::vector<vec3> debugVectors, debugBoxes, arrows;
 	std::vector<Sphere> debugSpheres;
+	std::vector<m_MeshData> sphereInsts;
 };

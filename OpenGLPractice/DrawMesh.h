@@ -6,17 +6,16 @@
 class DrawMesh : public Drawable
 {
 public:
-	DrawMesh(Mesh* m, char* texFile, GLuint shader);
-	DrawMesh(std::vector<glm::vec3> v, std::vector<glm::vec3> n, std::vector<glm::vec3> u, Face f, char* texFile, GLuint shader);
-	~DrawMesh();
+	DrawMesh(shared<Mesh> m, const char* texFile, GLprogram shader);
+	DrawMesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u, Face f, const char* texFile, GLprogram shader);
 	Mesh* mesh() const; void mesh(Mesh* m);
-	void setup(char* texFile, GLuint shader);
+	void setup(const char* texFile, GLprogram shader);
 	void draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale);
-	void draw(glm::vec3 pos, glm::vec3 scale, glm::vec3 rotAxis, float rot);
+	void draw(vec3 pos, vec3 scale, vec3 rotAxis, float rot);
 private:
-	GLuint vertBuffer;
-	GLuint textureLoc;
+	GLbuffer vertBuffer, elBuffer;
+	GLuniform<GLsampler> textureLoc;
 	std::vector<GLuint> textures;
-	Mesh* _mesh;
+	shared<Mesh> _mesh;
 };
 

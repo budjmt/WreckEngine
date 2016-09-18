@@ -2,66 +2,67 @@
 #include <iostream>
 DrawDebug::DrawDebug() {
 #if DEBUG
-	for (int i = 0; i < 4; i++)
-		debugVectors.push_back(glm::vec3(0, 0, 0));
-
-	vecShader = loadShaderProgram("Shaders/_debug/vecvertexShader.glsl", "Shaders/_debug/vecfragmentShader.glsl");
-	meshShader = loadShaderProgram("Shaders/_debug/meshvertexShader.glsl", "Shaders/_debug/meshfragmentShader.glsl");
+	vecShader  = loadGLProgram("Shaders/_debug/vecvertexShader.glsl", "Shaders/_debug/vecfragmentShader.glsl");
+	meshShader = loadGLProgram("Shaders/_debug/meshvertexShader.glsl", "Shaders/_debug/meshfragmentShader.glsl");
 	sphere = loadOBJ("Assets/_debug/sphere.obj");
-	if (sphere == nullptr) {
+	if (!sphere) {
 		genSphere("Assets/_debug/sphere.obj", 8);
 		sphere = loadOBJ("Assets/_debug/sphere.obj");
 	}
 
-	glGenVertexArrays(1, &vecVAO);
-	glBindVertexArray(vecVAO);
-	glGenBuffers(1, &vecBuffer);
-	
-	glBindBuffer(GL_ARRAY_BUFFER, vecBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * debugVectors.size() * FLOATS_PER_VERT, &debugVectors[0], GL_DYNAMIC_DRAW);
-	glVertexAttribPointer(0, FLOATS_PER_VERT, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * FLOATS_PER_VERT * 2, 0);
-	glVertexAttribPointer(1, FLOATS_PER_VERT, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * FLOATS_PER_VERT * 2, (void *)(sizeof(GL_FLOAT) * FLOATS_PER_VERT));
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
+	GLattrarr attrSetup;
+	auto vecSize = sizeof(GLfloat) * FLOATS_PER_VERT;
 
-	glGenVertexArrays(1, &arrowVAO);
-	glBindVertexArray(arrowVAO);
-	glGenBuffers(1, &arrowBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, arrowBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * debugVectors.size() / 2 * 3 * FLOATS_PER_VERT, &debugVectors[0], GL_DYNAMIC_DRAW);
-	glVertexAttribPointer(0, FLOATS_PER_VERT, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * FLOATS_PER_VERT * 2, 0);
-	glVertexAttribPointer(1, FLOATS_PER_VERT, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * FLOATS_PER_VERT * 2, (void *)(sizeof(GL_FLOAT) * FLOATS_PER_VERT));
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
+	vecVAO.create();
+	vecVAO.bind();
+	vecBuffer.create(GL_ARRAY_BUFFER, GL_STREAM_DRAW);
 
-	glGenVertexArrays(1, &meshVAO);
-	glBindVertexArray(meshVAO);
-	glGenBuffers(1, &sphereBuffer);
-	glGenBuffers(1, &sphereElBuffer);
+	vecBuffer.bind();
+	vecBuffer.data(vecSize * MAX_VECTORS * 4, nullptr);
 
-	glBindBuffer(GL_ARRAY_BUFFER, sphereBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * sphere->verts().size() * FLOATS_PER_VERT, &(sphere->verts()[0]), GL_STATIC_DRAW);
+	attrSetup.add<vec3>(2);
+	attrSetup.apply();
 
-	sphereVerts = sphere->faces().verts.size();
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphereElBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(GL_UNSIGNED_INT) * sphereVerts, &(sphere->faces().verts[0]), GL_STATIC_DRAW);
+	arrowVAO.create();
+	arrowVAO.bind();
+	arrowBuffer.create(GL_ARRAY_BUFFER, GL_STREAM_DRAW);
+	arrowBuffer.bind();
+	arrowBuffer.data(vecSize * MAX_VECTORS * 6, nullptr);
 
-	glVertexAttribPointer(0, FLOATS_PER_VERT, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT) * FLOATS_PER_VERT, 0);
-	glEnableVertexAttribArray(0);
+	attrSetup.add<vec3>(2);
+	attrSetup.apply();
 
-	vecCamLoc = glGetUniformLocation(vecShader, "cameraMatrix");
-	meshCamLoc = glGetUniformLocation(meshShader, "cameraMatrix");
-	worldLoc = glGetUniformLocation(meshShader, "worldMatrix");
+	sphereVAO.create();
+	sphereVAO.bind();
+	sphereBuffer.create(GL_ARRAY_BUFFER);
+	sphereInstBuffer.create(GL_ARRAY_BUFFER, GL_STREAM_DRAW);
+	sphereElBuffer.create(GL_ELEMENT_ARRAY_BUFFER);
 
-	debugVectors = std::vector<glm::vec3>();
-#endif
-}
+	sphereElBuffer.bind();
+	numSphereVerts = sphere->faces().verts.size();
+	sphereElBuffer.data(sizeof(GLuint) * numSphereVerts, &sphere->faces().verts[0]);
 
-DrawDebug::~DrawDebug() {
-#if DEBUG
-	glDeleteBuffers(1, &vecBuffer);
-	glDeleteBuffers(1, &arrowBuffer);
-	glDeleteBuffers(1, &sphereBuffer);
+	sphereBuffer.bind();
+	sphereBuffer.data(vecSize * sphere->verts().size(), &sphere->verts()[0]);
+
+	attrSetup.add<vec3>(1);
+	attrSetup.apply();
+
+	sphereInstBuffer.bind();
+	sphereInstBuffer.data(sizeof(m_MeshData) * MAX_SPHERES, nullptr);
+
+	attrSetup.add<vec4>(1, 1);
+	attrSetup.add<mat4>(1, 1);
+	attrSetup.apply(1);
+
+	glBindVertexArray(0);
+
+	vecCamLoc  = vecShader.getUniform<mat4>("cameraMatrix");
+	meshCamLoc = meshShader.getUniform<mat4>("cameraMatrix");
+
+	debugVectors.reserve(MAX_VECTORS * 4);
+	arrows.reserve(MAX_VECTORS * 6);
+	sphereInsts.reserve(MAX_SPHERES);
 #endif
 }
 
@@ -75,83 +76,83 @@ void DrawDebug::camera(Camera* c) { cam = c; }
 void DrawDebug::draw() {
 #if DEBUG
 	drawVectors();
+
+	glEnable(GL_CULL_FACE);
 	drawSpheres();
+	glDisable(GL_CULL_FACE);
+	
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
 }
 
 void DrawDebug::drawVectors() {
-	for (int i = 0; i < 4; i++)
-		debugVectors.push_back(glm::vec3(0, 0, 0));
-	
-	std::vector<glm::vec3> arrows;
-	for (int i = 0; i < 6; i++)
-		arrows.push_back(glm::vec3(0, 0, 0));
-	
-	int numVecs = debugVectors.size();
-	for (int i = 0; i < numVecs; i += 4) {
-		glm::vec3 s = debugVectors[i],	   c1 = debugVectors[i + 1]
-				, e = debugVectors[i + 2], c2 = debugVectors[i + 3];
-		glm::vec3 v = e - s;
-		v *= 0.05;
-		v = e - v;
-		arrows.push_back(v + glm::vec3(-1, 0, -1) * 0.008f);
+	if (!debugVectors.size()) {
+		for (auto i = 0; i < 4; ++i) debugVectors.push_back(vec3());
+	}
+
+	auto numVecs = debugVectors.size();
+	for (size_t i = 0; i < numVecs; i += 4) {
+		vec3 s = debugVectors[i]    , c1 = debugVectors[i + 1]
+		   , e = debugVectors[i + 2], c2 = debugVectors[i + 3];
+		
+		auto v = e - (e - s) * 0.05f;
+		arrows.push_back(v + vec3(-1, 0, -1) * 0.008f);
 		arrows.push_back(c1);
 
-		arrows.push_back(v + glm::vec3(1, 0, 1)   * 0.008f);
+		arrows.push_back(v + vec3(1, 0, 1) * 0.008f);
 		arrows.push_back(c1);
 
 		arrows.push_back(e);
 		arrows.push_back(c2);
 	}
 
-	glUseProgram(vecShader);
-	if (cam != nullptr)
-		cam->updateCamMat(vecCamLoc);
+	vecShader.use();
+	if (cam) cam->updateCamMat(vecCamLoc);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	glBindVertexArray(vecVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, vecBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * numVecs * FLOATS_PER_VERT, &(debugVectors[0]), GL_DYNAMIC_DRAW);
+	vecVAO.bind();
+	vecBuffer.bind();
+	vecBuffer.data(&debugVectors[0]);
 	glDrawArrays(GL_LINES, 0, numVecs / 2);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	glBindVertexArray(arrowVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, arrowBuffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * numVecs / 2 * 3 * FLOATS_PER_VERT, &(arrows[0]), GL_DYNAMIC_DRAW);
-	glDrawArrays(GL_TRIANGLES, 0, numVecs / 4 * 3);
+	arrowVAO.bind();
+	arrowBuffer.bind();
+	arrowBuffer.data(&arrows[0]);
+	glDrawArrays(GL_TRIANGLES, 0, numVecs / 2 * 3);
 
-	debugVectors = std::vector<glm::vec3>();
+	debugVectors.clear();
+	arrows.clear();
 }
 
-void DrawDebug::drawSpheres() {
-	glUseProgram(meshShader);
-	if (cam != nullptr)
-		cam->updateCamMat(meshCamLoc);
+void DrawDebug::drawSpheres() {	
+	if (!debugSpheres.size()) debugSpheres.push_back(Sphere());
+	
+	for (auto& s : debugSpheres) {
+		auto translate = glm::translate(s.center);
+		auto scale = glm::scale(vec3(1) * (s.rad * 2));
+		sphereInsts.push_back({ s.color, translate * scale });
+	}
+
+	meshShader.use();
+	if (cam) cam->updateCamMat(meshCamLoc);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	glBindVertexArray(meshVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, sphereBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphereElBuffer);
-
-	int numSpheres = debugSpheres.size();
-	for (int i = 0; i < numSpheres; i++) {
-		Sphere s = debugSpheres[i];
-		glm::mat4 translate, scale;
-		translate = glm::translate(s.center);
-		scale = glm::scale(glm::vec3(1, 1, 1) * (s.rad * 2));
-		glUniformMatrix4fv(worldLoc, 1, GL_FALSE, &(translate * scale)[0][0]);
-		glDrawElements(GL_TRIANGLES, sphereVerts, GL_UNSIGNED_INT, (void *)0);
-	}
+	sphereVAO.bind();
+	sphereInstBuffer.bind();
+	sphereInstBuffer.data(&sphereInsts[0]);
+	glDrawElementsInstanced(GL_TRIANGLES, numSphereVerts, GL_UNSIGNED_INT, nullptr, debugSpheres.size());
 
 	debugSpheres = std::vector<Sphere>();
+	sphereInsts.clear();
 }
 
-void DrawDebug::drawDebugVector(glm::vec3 start, glm::vec3 end, glm::vec3 color) {
+void DrawDebug::drawDebugVector(vec3 start, vec3 end, vec3 color) {
 #if DEBUG
+	if (debugVectors.size() / 4 > MAX_VECTORS) return;
 	debugVectors.push_back(start);
 	debugVectors.push_back(color);
 	debugVectors.push_back(end);
@@ -159,10 +160,10 @@ void DrawDebug::drawDebugVector(glm::vec3 start, glm::vec3 end, glm::vec3 color)
 #endif
 }
 
-void DrawDebug::drawDebugSphere(glm::vec3 pos, float rad) {
+void DrawDebug::drawDebugSphere(vec3 pos, float rad, vec3 color, float opacity) {
 #if DEBUG
-	Sphere s = { pos, rad };
-	debugSpheres.push_back(s);
-	//drawDebugVector(pos, pos + glm::vec3(rad, 0, 0));
+	if (debugSpheres.size() > MAX_SPHERES) return;
+	debugSpheres.push_back({ vec4(color, opacity), pos, rad });
+	//drawDebugVector(pos, pos + vec3(rad, 0, 0));
 #endif
 }

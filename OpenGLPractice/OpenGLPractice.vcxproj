@@ -71,27 +71,27 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/FreeImage/lib/x32;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)lib/GLEW/include;$(ProjectDir)lib/glm/include;$(ProjectDir)lib/GLFW/include;$(ProjectDir)lib/FreeImage/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib/GLEW/lib;$(ProjectDir)lib/GLFW/lib;$(ProjectDir)lib/FreeImage/lib/;$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/FreeImage/lib/x32;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;C:\Program Files (x86)\Visual Leak Detector\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/FreeImage/lib/x32;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)lib/GLEW/include;$(ProjectDir)lib/glm/include;$(ProjectDir)lib/GLFW/include;$(ProjectDir)lib/FreeImage/include;$(IncludePath)</IncludePath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/FreeImage/lib/x32;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(ProjectDir)lib/GLEW/lib;$(ProjectDir)lib/GLFW/lib;$(ProjectDir)lib/FreeImage/lib/;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/FreeImage/lib/x32;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;C:\Program Files (x86)\Visual Leak Detector\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/FreeImage/lib/x32;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -162,6 +162,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="ColliderEntity.cpp" />
+    <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="DebugBenchmark.cpp" />
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="DrawDebug.cpp" />
@@ -169,14 +170,15 @@
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GLDebug.cpp" />
+    <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="DebugBenchmark.h" />
     <ClInclude Include="DrawDebug.h" />
     <ClInclude Include="GLDebug.h" />
+    <ClCompile Include="MarchMath.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ModelHelper.cpp" />
     <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="ShaderHelper.cpp" />
-    <ClCompile Include="Shape.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="TriPlay.cpp" />
@@ -191,12 +193,14 @@
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GLError.h" />
+    <ClInclude Include="gl_structs.h" />
+    <ClInclude Include="MarchMath.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ModelHelper.h" />
     <ClInclude Include="Mouse.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ShaderHelper.h" />
-    <ClInclude Include="Shape.h" />
+    <ClInclude Include="smart_ptr.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TriPlay.h" />
     <ClInclude Include="UV.h" />

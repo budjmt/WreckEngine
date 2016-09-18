@@ -1,38 +1,55 @@
 #pragma once
 
-#include "glm/glm.hpp"
-#include "glm/gtc/quaternion.hpp"
+#include <unordered_set>
+
+#include "MarchMath.h"
+#include "smart_ptr.h"
 
 class Transform
 {
 public:
 	Transform();
-	Transform(const Transform& other);
-	~Transform();
-	Transform& operator=(const Transform& other);
-	glm::vec3& position;
-	glm::vec3& scale;
-	glm::fquat& rotation;
-	glm::vec3& rotAxis;
-	float& rotAngle;
-	Transform* parent;
-	Transform computeTransform();
-	void updateNormals();//this will replace the ones below
-	glm::vec3 forward() const;
-	glm::vec3 up() const;
-	glm::vec3 right() const;
+	//Transform(const Transform& other);
+	//Transform(Transform&& other) = default;
+	//Transform& operator=(const Transform& other);
+	//Transform& operator=(Transform&& other) = default;
+
+	Transform* clone();
+
+	bool dirty;
+	void makeDirty();
+	vec3& position(); void position(vec3 v);
+	vec3& scale(); void scale(vec3 v);
+	quat& rotation(); void rotation(quat q);
+	vec3 rotAxis() const; float rotAngle() const;
+
+	Transform* parent(); void parent(Transform* p);
+	std::unordered_set<Transform*> children;
+	Transform* getComputed();
+
+	void setBaseDirections(vec3 t_forward, vec3 t_up);
+	void updateDirections();
+	vec3 forward() const;
+	vec3 up() const;
+	vec3 right() const;
 	void updateRot();
 	void rotate(float x, float y, float z);
-	void rotate(glm::vec3 v);
-	void rotate(float theta, glm::vec3 axis);
+	void rotate(vec3 v);
+	void rotate(float theta, vec3 axis);
 
-	glm::vec3 getTransformed(glm::vec3 v);
+	vec3 getTransformed(vec3 v);
 private:
-	glm::vec3 _position;
-	glm::vec3 _scale;
-	glm::fquat _rotation;
-	glm::vec3 _rotAxis;
-	float _rotAngle;
-	glm::vec3 _forward, _up, _right;
-};
+	vec3 _position, _scale = vec3(1);
+	quat _rotation; vec3 _rotAxis; float _rotAngle;
+	vec3 base_forward = vec3(0, 0, 1), _forward, base_up = vec3(0, 1, 0), _up, _right;
 
+	alloc<Transform> computed = alloc<Transform>(nullptr);
+	Transform* _parent = nullptr;
+	Transform* computeTransform();
+
+	//typedef Transform*(Transform::*ComputeTransformFunc)();
+	Transform* noCompute();
+	Transform* firstCompute();
+	Transform* allocatedCompute();
+	//ComputeTransformFunc compute = &Transform::noCompute;
+};

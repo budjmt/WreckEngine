@@ -1,3 +1,6 @@
+
+#include <vld.h>
+
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
@@ -11,34 +14,41 @@
 
 using namespace std;
 
+struct GLFWmanager { 
+	bool initialized = false; 
+	~GLFWmanager() { if(initialized) glfwTerminate(); };
+	int init() { auto val = glfwInit(); initialized = val != 0; return val; };
+};
+
 //DEBUG is defined in DrawDebug.h
 
 double FPS = 60;
+double runningAvgDelta = 1.0 / FPS;
+int samples = 10;
 
 GLFWwindow* window;
-GLuint shaderProg;
-GLint uniTime;
+GLprogram shaderProg;
+GLuniform<float> uniTime;
 
 double prevFrame;
-Mouse* mouse;
+Mouse mouse;
 
-TriPlay* game;
+unique<TriPlay> game;
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void mouse_move_callback(GLFWwindow* window, double x, double y);
 
 void init() {
-	shaderProg = loadShaderProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
-	if(shaderProg != 0) {
-		glUseProgram(shaderProg);
-		setShaderColor(shaderProg,"tint",1,1,1);
-		uniTime = glGetUniformLocation(shaderProg, "time");
+	shaderProg = loadGLProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
+	if(shaderProg()) {
+		shaderProg.use();
+		setShaderColor(shaderProg(), "tint", 1, 1, 1);
+		uniTime = shaderProg.getUniform<float>("time");
 	}
 
-	mouse = new Mouse();
 	mouse_move_callback(window, 0, 0);//this is cheating but it works
 
-	game = new TriPlay(shaderProg, window);
+	game = make_unique<TriPlay>(shaderProg, window);
 }
 
 void initGraphics(GLFWwindow* window) {
@@ -61,16 +71,14 @@ void initGraphics(GLFWwindow* window) {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	/*
 	//back-face culling
-	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
-	*/
+	if (!DEBUG) { glEnable(GL_CULL_FACE); }
 
 	//cornflower blue
-	glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
-	//glClearColor(0.f, 0.f, 0.f, 1.f);
+	//glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
+	glClearColor(0.f, 0.f, 0.f, 1.f);
 
 	//render as wireframe
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -83,15 +91,22 @@ void update() {
 	double dt = currFrame - prevFrame;
 	prevFrame = currFrame;
 	//need to separate drawing and update pipelines
-	float spf = 1.f / FPS;
+	double spf = 1.0 / FPS;
 	while (dt < spf) {
 		currFrame = glfwGetTime();
 		dt += currFrame - prevFrame;
 		prevFrame = currFrame;
 	}
 
-	mouse->prevx = glm::mix(mouse->prevx, mouse->x, 0.15f);
-	mouse->prevy = glm::mix(mouse->prevy, mouse->y, 0.15f);
+	runningAvgDelta -= runningAvgDelta / samples;
+	runningAvgDelta += dt / samples;
+	auto title = std::to_string(1.0 / runningAvgDelta);
+	auto decimal = title.find('.', 2);
+	if (title.length() - decimal > 3) title = title.erase(decimal + 3);
+	glfwSetWindowTitle(window, title.c_str());
+
+	mouse.prevx = glm::mix(mouse.prevx, mouse.x, 0.15f);
+	mouse.prevy = glm::mix(mouse.prevy, mouse.y, 0.15f);
 	
 	bool alt = glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
 	if (alt) {
@@ -99,23 +114,21 @@ void update() {
 			FPS += (FPS < 5) ? 1 : ((FPS < 20) ? 5 : ((FPS < 60) ? 10 : 0));
 		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
 			FPS -= (FPS > 20) ? 10 : ((FPS > 5) ? 5 : ((FPS > 1) ? 1 : 0));
-		std::cout << "FPS is now " << FPS << std::endl;
 	}
 
-	glUniform1f(uniTime, currFrame);
-	game->update(window, mouse, dt);
+	uniTime.update((float)currFrame);
+	game->update(window, &mouse, dt);
 }
 
 void draw() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	game->draw();
-
 	glFlush();
 }
 
 int main(int argc, char** argv) {
-	if (!glfwInit())
+	GLFWmanager glfw;
+	if (!glfw.init())
 		return -1;
 
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
@@ -134,7 +147,6 @@ int main(int argc, char** argv) {
 
 	window = glfwCreateWindow(800, 600, "OpenGL App", NULL, NULL);
 	if (!window) {
-		glfwTerminate();
 		return -1;
 	}
 
@@ -155,37 +167,32 @@ int main(int argc, char** argv) {
 	while (!glfwWindowShouldClose(window)) {
 		update();
 		draw();
-
 		glfwSwapBuffers(window);
-
 		glfwPollEvents();
 	}
 
-	delete mouse;
-	glfwTerminate();
 	return 0;
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-	mouse->button = button;
+	mouse.button = button;
 	if (action == GLFW_PRESS) {
 		//cout << "Mouse: " << mousex << "," << mousey << endl;
-		//entities[0].setPos(glm::vec3(mousex,mousey,0));
-		mouse->down = true;
-		mouse->lastClick = glfwGetTime();
+		//entities[0].setPos(vec3(mousex,mousey,0));
+		mouse.down = true;
+		mouse.lastClick = glfwGetTime();
 	}
 	else if (action == GLFW_RELEASE) {
-		mouse->down = false;
+		mouse.down = false;
 	}
 }
 
 void mouse_move_callback(GLFWwindow* window, double x, double y) {
 	double cursorx, cursory;
-	int windowWidth, windowHeight;
+	// retrieves the mouse coordinates in screen-space, relative to top-left corner
 	glfwGetCursorPos(window, &cursorx, &cursory);
-	glfwGetWindowSize(window, &windowWidth, &windowHeight);
-	mouse->prevx = mouse->x;
-	mouse->prevy = mouse->y;
-	mouse->x = 2 * cursorx / windowWidth - 1;
-	mouse->y = (2 * cursory / windowHeight - 1) * -1;
+	mouse.prevx = mouse.x;
+	mouse.prevy = mouse.y;
+	mouse.x =   2 * cursorx - 1;
+	mouse.y = -(2 * cursory - 1);
 }

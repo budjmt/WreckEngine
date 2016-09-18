@@ -7,51 +7,48 @@
 
 using namespace std;
 
-ostream& operator<<(ostream& os, glm::vec3 v) {
-	os << "(" << v.x << "," << v.y << "," << v.z << ")";
+ostream& operator<<(ostream& os, vec3 v) {
+	os << "(" << to_string(v) << ")";
 	return os;
 }
 
-Mesh* loadOBJ(const char* file) {
+shared<Mesh> loadOBJ(const char* file) {
 	//cout << "Loading " << file << endl;
 	ifstream infile;
 	infile.open(file, ios::in);
 	if (!infile.is_open()) {
 		cout << "Error! File " << file << " could not be read." << endl;
-		return nullptr;
+		return shared<Mesh>(nullptr);
 	}
 	else
 		cout << "File " << file << " Loading..." << endl;
 
-	vector<glm::vec3> verts,normals,uvs;
-	Face faces = Face();
+	vector<vec3> verts, normals, uvs;
+	Face faces;
 
 	std::string line;
 	while (getline(infile, line)) {
-		
-		std::vector<std::string> tokens = tokenize(line, " ");
-		
-		//vertices
-		if(line.find("v ", 0) == 0) {
-			verts.push_back(glm::vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
-			//verts.push_back(1); verts.push_back(1); verts.push_back(1);
-		}
-
-		//normals
-		else if (line.find("vn", 0) == 0) {
-			normals.push_back(glm::vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
-		}
-		//uvs
-		else if (line.find("vt", 0) == 0) {
-			uvs.push_back(glm::vec3(stof(tokens[1]), stof(tokens[2]), 0));
-			//uvs.push_back(stof(tokens[3]));//unnecessary
+		auto tokens = tokenize(line, " ");
+		if (line[0] == 'v') {
+			//vertices
+			if (line[1] == ' ') {
+				verts.push_back(vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
+			}
+			//normals
+			else if (line[1] == 'n') {
+				normals.push_back(vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
+			}
+			//uvs
+			else if (line[1] == 't') {
+				uvs.push_back(vec3(stof(tokens[1]), stof(tokens[2]), 0));
+			}
 		}
 		else if (line[0] == 'f') {
-			for (unsigned int i = 1; i < tokens.size(); i++) {
-				std::vector<std::string> faceTokens = tokenize(tokens[i], "/");
-				GLuint v = (unsigned int)stoi(faceTokens[0]) - 1
-					, u = (unsigned int)stoi(faceTokens[1]) - 1
-					, n = (unsigned int)stoi(faceTokens[2]) - 1;
+			for (size_t i = 1, numTokens = tokens.size(); i < numTokens; i++) {
+				auto faceTokens = tokenize(tokens[i], "/");
+				GLuint v = (GLuint)stoi(faceTokens[0]) - 1
+					 , u = (GLuint)stoi(faceTokens[1]) - 1
+					 , n = (GLuint)stoi(faceTokens[2]) - 1;
 				faces.verts.push_back(v);
 				faces.uvs.push_back(u);
 				faces.normals.push_back(n);
@@ -59,14 +56,13 @@ Mesh* loadOBJ(const char* file) {
 		}
 	}
 	
-	/*for (unsigned int i = 0;i < faces.verts->size();i++) {
+	/*for (size_t i = 0, numVerts = faces.verts->size();i < numVerts;i++) {
 		cout << faces.vertInfo[0][i] << ",";
 		if((i + 1) % 3 == 0)
 			cout << endl;
 	}*/
 	cout << "Complete!" << endl;
-	Mesh* mesh = new Mesh(verts, normals, uvs, faces);
-	return mesh;
+	return make_shared<Mesh>(verts, normals, uvs, faces);
 }
 
 void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>& uvs, std::vector<GLfloat>& norms
@@ -75,9 +71,9 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 	//cout << "Generating " << file << endl;
 
 	string fileContents = "";
-	for (unsigned int i = 0; i < verts.size(); i += FLOATS_PER_VERT) {
+	for (size_t i = 0, numVerts = verts.size(); i < numVerts; i += FLOATS_PER_VERT) {
 		fileContents += "v";
-		for (int j = 0; j < FLOATS_PER_VERT; j++) {
+		for (size_t j = 0; j < FLOATS_PER_VERT; j++) {
 			fileContents += " ";
 			fileContents += to_string(verts[i + j]);
 		}
@@ -87,9 +83,9 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 	fileContents += to_string(verts.size() / FLOATS_PER_VERT);
 	fileContents += " vertices\n\n";
 
-	for (unsigned int i = 0; i < uvs.size(); i += FLOATS_PER_VERT) {
+	for (size_t i = 0, numUvs = uvs.size(); i < numUvs; i += FLOATS_PER_VERT) {
 		fileContents += "vt";
-		for (int j = 0; j < FLOATS_PER_VERT; j++) {
+		for (size_t j = 0; j < FLOATS_PER_VERT; j++) {
 			fileContents += " ";
 			fileContents += to_string(uvs[i + j]);//it's only floats per vert because otherwise I'd need special case for UV
 		}
@@ -99,9 +95,9 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 	fileContents += to_string(uvs.size() / FLOATS_PER_VERT);
 	fileContents += " UVs\n\n";
 
-	for (unsigned int i = 0; i < norms.size(); i += FLOATS_PER_VERT) {
+	for (size_t i = 0, numNorms = norms.size(); i < numNorms; i += FLOATS_PER_VERT) {
 		fileContents += "vn";
-		for (int j = 0; j < FLOATS_PER_VERT; j++) {
+		for (size_t j = 0; j < FLOATS_PER_VERT; j++) {
 			fileContents += " ";
 			fileContents += to_string(norms[i + j]);
 		}
@@ -111,9 +107,9 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 	fileContents += to_string(norms.size() / FLOATS_PER_VERT);
 	fileContents += " normals\n\n";
 
-	for (unsigned int i = 0; i < vertFaces.size(); i += FLOATS_PER_VERT) {
+	for (size_t i = 0, numFaces = vertFaces.size(); i < numFaces; i += FLOATS_PER_VERT) {
 		fileContents += "f";
-		for (int j = 0; j < FLOATS_PER_VERT; j++) {
+		for (size_t j = 0; j < FLOATS_PER_VERT; j++) {
 			fileContents += " ";
 			fileContents += to_string(vertFaces[i + j]);
 			fileContents += "/";
@@ -173,30 +169,30 @@ void genCube(const char* file) {
 	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
 }
 
-void genCylinder(const char* file, int res) {
+void genCylinder(const char* file, size_t res) {
 	std::vector<GLfloat> verts, uvs, norms;
 	std::vector<GLuint> vertFaces, uvFaces, normFaces;
 	
 	//generate verts and vert faces
-	glm::vec3 top = glm::vec3(0, 0.5, 0);
-	glm::vec3 bottom = glm::vec3(0, -0.5, 0);
+	auto top    = vec3(0,  0.5, 0);
+	auto bottom = vec3(0, -0.5, 0);
 	verts.push_back(top.x); verts.push_back(top.y); verts.push_back(top.z);//0 = top middle
 	verts.push_back(bottom.x); verts.push_back(bottom.y); verts.push_back(bottom.z);//1 = bottom middle
 	
 	//these are the tops and bottoms for each pair of verts, 0 is the very first (and would be last) ones added
-	glm::vec3 t0, b0, tprev, tcurr, bprev, bcurr;
+	vec3 t0, b0, tprev, tcurr, bprev, bcurr;
 	
-	t0 = glm::vec3(0.5f, 0.5f, 0);
-	b0 = glm::vec3(0.5f, -0.5f, 0);
+	t0 = vec3(0.5f,  0.5f, 0);
+	b0 = vec3(0.5f, -0.5f, 0);
 	verts.push_back(t0.x); verts.push_back(t0.y); verts.push_back(t0.z);
 	verts.push_back(b0.x); verts.push_back(b0.y); verts.push_back(b0.z);
 
 	tprev = t0;
 	bcurr = b0;
-	for (int i = 1; i < res; i++) {
-		float a = (float)(i * M_PI * 2 / res);
-		tcurr = glm::vec3(cosf(a), 1.0f, sinf(a)) * 0.5f;
-		bcurr = glm::vec3(cosf(a), -1.0f, sinf(a)) * 0.5f;
+	for (size_t i = 1; i < res; i++) {
+		auto a = (float)(i * PI * 2 / res);
+		tcurr = vec3(cosf(a),  1.0f, sinf(a)) * 0.5f;
+		bcurr = vec3(cosf(a), -1.0f, sinf(a)) * 0.5f;
 		
 		verts.push_back(tcurr.x); verts.push_back(tcurr.y); verts.push_back(tcurr.z);
 		verts.push_back(bcurr.x); verts.push_back(bcurr.y); verts.push_back(bcurr.z);
@@ -237,7 +233,7 @@ void genCylinder(const char* file, int res) {
 	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
 }
 
-void genSphere(const char* file, int res) {
+void genSphere(const char* file, size_t res) {
 	std::vector<GLfloat> verts, uvs, norms;
 	std::vector<GLuint> vertFaces, uvFaces, normFaces;
 
@@ -246,32 +242,32 @@ void genSphere(const char* file, int res) {
 	//once this is done, there are res vertices in verts, with the first and last ones not being repeated in subsequent ones, so res - 2 unique ones
 	//top vert index is 0, bottom index is res
 	//cout << "Row 1" << endl;
-	for (int j = 0; j < res; j++) {
-		float x = cosf((float)(M_PI / res * j)) * 0.5f;
-		float y = sinf((float)(M_PI / res * j)) * 0.5f;
-		float z = 0;
+	for (size_t j = 0; j < res; j++) {
+		auto x = cosf(PI / res * j) * 0.5f;
+		auto y = sinf(PI / res * j) * 0.5f;
+		auto z = 0.f;
 		verts.push_back(x); verts.push_back(y); verts.push_back(z);
 	}
 
-	int numVerts = (res - 1) * res + 1;
-	for (int i = 1; i < res; i++) {
+	auto numVerts = (res - 1) * res + 1;
+	for (size_t i = 1; i < res; i++) {
 		//cout << "Row " << i << endl;
 		//one notch down on the current half circle
-		float x1 = cosf((float)(M_PI / res)) * 0.5f;
-		float y1 = sinf((float)(M_PI / res)) * cosf((float)(2 * M_PI / res * i)) * 0.5f;
-		float z1 = sinf((float)(M_PI / res)) * sinf((float)(2 * M_PI / res * i)) * 0.5f;
+		auto x1 = cosf(PI / res) * 0.5f;
+		auto y1 = sinf(PI / res) * cosf((float)(2 * M_PI / res * i)) * 0.5f;
+		auto z1 = sinf(PI / res) * sinf((float)(2 * M_PI / res * i)) * 0.5f;
 		
-		int ind = 0;//1,0,0 is always the first vertex added to verts; ind begins at the top and moves down
-		int ind1 = i * (res - 1) + 1;//the offset accounts for the top and bottom
-		int indp = 0;//prev half circle, begins at top and moves down
-		int indp1 = (i - 1) * (res - 1) + 1;//one notch down prev half circle
+		size_t ind = 0;//1,0,0 is always the first vertex added to verts; ind begins at the top and moves down
+		size_t ind1 = i * (res - 1) + 1;//the offset accounts for the top and bottom
+		size_t indp = 0;//prev half circle, begins at top and moves down
+		size_t indp1 = (i - 1) * (res - 1) + 1;//one notch down prev half circle
 		
 		verts.push_back(x1); verts.push_back(y1); verts.push_back(z1);
 		vertFaces.push_back(indp1 + 1); vertFaces.push_back(ind1 + 1); vertFaces.push_back(ind + 1);
 
 		indp = indp1; ind = ind1;
 
-		for (int j = 1; j < res - 1; j++) {
+		for (size_t j = 1; j < res - 1; j++) {
 			int nextCircle = j + 1;
 			//one notch down on the current half circle
 			x1 = cosf((float)(M_PI / res * nextCircle)) * 0.5f;
@@ -306,10 +302,10 @@ void genSphere(const char* file, int res) {
 
 	//add the last few vertFaces
 	//i is assumed to be res
-	int ind = 0;
-	int ind1 = res * (res - 1) + 1;//the offset accounts for the top and bottom
-	int indp = 0;//prev half circle, begins at top and moves down
-	int indp1 = (res - 1) * (res - 1) + 1;//one notch down prev half circle
+	size_t ind = 0;
+	size_t ind1 = res * (res - 1) + 1;//the offset accounts for the top and bottom
+	size_t indp = 0;//prev half circle, begins at top and moves down
+	size_t indp1 = (res - 1) * (res - 1) + 1;//one notch down prev half circle
 	
 	//to account for the loop back
 	ind1++;//this part I don't really get, but it works
@@ -321,7 +317,7 @@ void genSphere(const char* file, int res) {
 	indp = indp1; ind = ind1;
 
 	//cout << "Row " << res << endl;
-	for (int j = 1; j < res - 1; j++) {
+	for (size_t j = 1; j < res - 1; j++) {
 		ind1 = res * (res - 1) + 1 + j;//x1, y1, z1 is always new and always the last one added
 		indp1 = (res - 1) * (res - 1) + 1 + j;//one notch down on previous half circle
 		//account for the loop back
@@ -349,38 +345,38 @@ void genSphere(const char* file, int res) {
 	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
 }
 
-void genBezierSurface(const char* file, int ures, int vres, std::vector<std::vector<glm::vec3>>& k) {
+void genBezierSurface(const char* file, size_t ures, size_t vres, std::vector<std::vector<vec3>>& k) {
 	std::vector<GLfloat> verts, uvs, norms;
 	std::vector<GLuint> vertFaces, uvFaces, normFaces;
 	
 	//first u0, i.e. 0
-	for (int vi = 0; vi < vres + 1; vi++) {
-		float v0 = (float)vi / vres;
-		glm::vec3 a = bezierSurface(0, v0, k);//c is no longer a thing, as this handles it
+	for (size_t vi = 0; vi < vres + 1; vi++) {
+		auto v0 = (float)vi / vres;
+		auto a = bezierSurface(0, v0, k);//c is no longer a thing, as this handles it
 		verts.push_back(a.x); verts.push_back(a.y); verts.push_back(a.z);
 		uvs.push_back(0); uvs.push_back(v0); uvs.push_back(0);
 	}
-	for (int ui = 0; ui < ures; ui++) {
+	for (size_t ui = 0; ui < ures; ui++) {
 		//float u0 = (float)ui / ures;
-		float u1 = (float)(ui + 1) / ures;
+		auto u1 = (float)(ui + 1) / ures;
 
-		glm::vec3 b = bezierSurface(u1, 0, k);
+		vec3 b = bezierSurface(u1, 0, k);
 		verts.push_back(b.x); verts.push_back(b.y); verts.push_back(b.z);
 
 		uvs.push_back(u1); uvs.push_back(0); uvs.push_back(0);
 
-		for (int vi = 0; vi < vres; vi++) {
+		for (size_t vi = 0; vi < vres; vi++) {
 			//float v0 = (float)vi / vres;
-			float v1 = (float)(vi + 1) / vres;
+			auto v1 = (float)(vi + 1) / vres;
 
-			//glm::vec3 c = bezierSurface(u0, v1, k);
-			glm::vec3 d = bezierSurface(u1, v1, k);
+			//vec3 c = bezierSurface(u0, v1, k);
+			vec3 d = bezierSurface(u1, v1, k);
 
 			//verts.push_back(c.x); verts.push_back(c.y); verts.push_back(c.z);
 			verts.push_back(d.x); verts.push_back(d.y); verts.push_back(d.z);
 			
-			int prev = ui * (vres + 1) + vi;//prev would be a, prev + 1 would be c
-			int curr = prev + vres + 1;//curr would be b, curr + 1 would be d
+			auto prev = ui * (vres + 1) + vi;//prev would be a, prev + 1 would be c
+			auto curr = prev + vres + 1;//curr would be b, curr + 1 would be d
 			vertFaces.push_back(curr + 1); vertFaces.push_back(prev + 1); vertFaces.push_back(prev + 1 + 1);
 			vertFaces.push_back(prev + 1 + 1); vertFaces.push_back(curr + 1 + 1); vertFaces.push_back(curr + 1);
 
@@ -397,10 +393,9 @@ void genBezierSurface(const char* file, int ures, int vres, std::vector<std::vec
 	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
 }
 
-glm::vec3 bezierSurface(float u, float v, std::vector<std::vector<glm::vec3>>& k) {
-	glm::vec3 p;
-	int n = k.size();
-	int m = k[0].size();
+vec3 bezierSurface(float u, float v, std::vector<std::vector<vec3>>& k) {
+	vec3 p;
+	int n = k.size(), m = k[0].size();
 	for (int i = 0; i < n; i++) {
 		for (int j = 0; j < m; j++) {
 			p += k[i][j] * bernsteinPolynomial(i, n - 1, u) * bernsteinPolynomial(j, m - 1, v);
@@ -433,24 +428,21 @@ int factorial(int n) {
 
 void genNormals(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces
 								, std::vector<GLfloat>& norms, std::vector<GLuint>& normFaces) {
-	for (unsigned int i = 0; i < vertFaces.size(); i += 3) {
-		int vert1 = (vertFaces[i] - 1) * FLOATS_PER_VERT;
-		int vert2 = (vertFaces[i + 1] - 1) * FLOATS_PER_VERT;
-		int vert3 = (vertFaces[i + 2] - 1) * FLOATS_PER_VERT;
-		glm::vec3 v1 = glm::vec3(verts[vert1], verts[vert1 + 1], verts[vert1 + 2]);
-		glm::vec3 v2 = glm::vec3(verts[vert2], verts[vert2 + 1], verts[vert2 + 2]);
-		glm::vec3 v3 = glm::vec3(verts[vert3], verts[vert3 + 1], verts[vert3 + 2]);
+	for (size_t i = 0, numFaces = vertFaces.size(); i < numFaces; i += 3) {
+		auto vert1 = (vertFaces[i]     - 1) * FLOATS_PER_VERT;
+		auto vert2 = (vertFaces[i + 1] - 1) * FLOATS_PER_VERT;
+		auto vert3 = (vertFaces[i + 2] - 1) * FLOATS_PER_VERT;
+		auto v1 = vec3(verts[vert1], verts[vert1 + 1], verts[vert1 + 2]);
+		auto v2 = vec3(verts[vert2], verts[vert2 + 1], verts[vert2 + 2]);
+		auto v3 = vec3(verts[vert3], verts[vert3 + 1], verts[vert3 + 2]);
 		//cout << vertFaces[i] << ", " << vertFaces[i + 1] << ", " << vertFaces[i + 2] << endl;
-		glm::vec3 n = genNormal(v1, v2, v3);
+		auto n = genNormal(v1, v2, v3);
 
 		//check to make sure this normal isn't redundant
-		int index = findIndexIn(norms, FLOATS_PER_VERT, n);
+		auto index = findIndexIn(norms, FLOATS_PER_VERT, n);
 
-		if (index == norms.size()) { //if it's a new normal
-			norms.push_back(n[0]);
-			norms.push_back(n[1]);
-			norms.push_back(n[2]);
-		}
+		//if it's a new normal
+		if (index == norms.size()) { norms.push_back(n.x); norms.push_back(n.y); norms.push_back(n.z); }
 		index /= FLOATS_PER_NORM;
 
 		normFaces.push_back(index + 1);
@@ -459,9 +451,9 @@ void genNormals(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces
 	}
 }
 
-glm::vec3 genNormal(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3) {
-	glm::vec3 e1 = v2 - v1;
-	glm::vec3 e2 = v3 - v1;
+vec3 genNormal(vec3 v1, vec3 v2, vec3 v3) {
+	auto e1 = v2 - v1;
+	auto e2 = v3 - v1;
 	/*
 	cout << v1 << endl;
 	cout << v2 << endl;
@@ -473,9 +465,9 @@ glm::vec3 genNormal(glm::vec3 v1, glm::vec3 v2, glm::vec3 v3) {
 	return glm::normalize(glm::cross(e1, e2));
 }
 
-int findIndexIn(std::vector<GLfloat>& vecs, int stride, glm::vec3 vec) {
-	unsigned int index;
-	for (index = 0; index < vecs.size(); index += stride) {
+size_t findIndexIn(std::vector<GLfloat>& vecs, size_t stride, vec3 vec) {
+	size_t index = 0;
+	for (auto numVecs = vecs.size(); index < numVecs; index += stride) {
 		if (vec.x == vecs[index] && vec.y == vecs[index + 1] && vec.z == vecs[index + 2])
 			return index;
 	}

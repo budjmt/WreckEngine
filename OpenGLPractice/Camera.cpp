@@ -1,25 +1,17 @@
 #include "Camera.h"
 
-Camera::Camera(GLuint shaderProg, GLFWwindow* w)
+Camera::Camera(GLprogram shaderProg, GLFWwindow* w) : window(w)
 {
-	window = w;
-
 	updateProjection();
-
-	cameraMatrix = glGetUniformLocation(shaderProg, "cameraMatrix");
+	cameraMatrix = shaderProg.getUniform<mat4>("cameraMatrix");
 }
 
-Camera::~Camera()
-{
-}
-
-void Camera::updateCamMat(GLuint camLoc) {
-	glm::mat4 tmp = projection * view;
-	glUniformMatrix4fv(camLoc, 1, GL_FALSE, &(tmp[0][0]));
+void Camera::updateCamMat(GLuniform<mat4> camLoc) {
+	camLoc.update(projection * view);
 }
 
 void Camera::update(double dt) {
-	view = glm::lookAt(transform.position,getLookAt(),getUp());
+	view = glm::lookAt(transform.position(), getLookAt(), getUp());
 	//update projection
 	//updateProjection();
 	updateCamMat(cameraMatrix);
@@ -35,75 +27,64 @@ void Camera::turn(float dx, float dy) {
 	transform.rotate(dy, dx, 0);
 }
 
-glm::vec3 Camera::getLookAt() {
-	return transform.position + getForward();
+vec3 Camera::getLookAt(float units) {
+	return transform.position() + getForward() * units;
 }
 
 void Camera::updateProjection() {
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
 
-	float znear = 0.01f;
-	float zfar = 1000.f;
-	projection = glm::perspective(CAM_FOV, width * 1.f / height, znear, zfar);
+	const auto znear = 0.01f;
+	const auto zfar = 1000.f;
+	projection = glm::perspective(CAM_FOV, (float) width / (float) height, znear, zfar);
 }
 
-glm::vec3 Camera::getForward() { return transform.forward(); }
-glm::vec3 Camera::getUp() {	return transform.up(); }
-glm::vec3 Camera::getRight() { return transform.right(); }
+vec3 Camera::getForward() { return transform.forward(); }
+vec3 Camera::getUp() {	return transform.up(); }
+vec3 Camera::getRight() { return transform.right(); }
 
-void Camera::mayaCam(GLFWwindow* window, Mouse* m, double dt, Camera* camera) {
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
+void Camera::mayaCam(GLFWwindow* window, Mouse* m, double delta, Camera* camera) {
+
+	auto dt = (float)delta;
+	auto p = camera->transform.position();
+
 	if (m->down) {
+		// mouse coords are represented in screen coords
+		auto dx = (float)(m->x - m->prevx) * dt;
+		auto dy = (float)(m->y - m->prevy) * dt;
+
 		if (m->button == GLFW_MOUSE_BUTTON_LEFT) {
-			float rot = (float)(glm::pi<float>() / 2 / dt);
-			float xDiff = (float)(m->x - m->prevx);
-			float dx = glm::sign(xDiff) * xDiff * xDiff / width * rot;
-			dx = glm::min(glm::pi<float>() / 2, dx);
-			float yDiff = (float)(m->y - m->prevy);
-			float dy = glm::sign(yDiff) * yDiff * yDiff / height * rot;
-			dy = glm::min(glm::pi<float>() / 2, dy);
-			glm::vec3 look = camera->getLookAt();
+			auto rot = PI * dt;
+			
+			dx = signf(dx) * dx * dx * rot;
+			dy = signf(dy) * dy * dy * rot;
+			
+			dx = minf(dx, PI * 0.5f);			
+			dy = minf(dy, PI * 0.5f);
+
+			auto look = camera->getLookAt();
 			camera->turn(dx, dy);
-			camera->transform.position = look - camera->getForward();
+			p = look - camera->getForward();
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_RIGHT) {
-			float avg = (float)((m->y - m->prevy) + (m->x - m->prevx)) / 2;
-			camera->transform.position += avg * camera->getForward();
+			p += (dx + dy) * 0.5f * camera->getForward();
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_MIDDLE) {
-			camera->transform.position += camera->getRight() * (float)(m->x - m->prevx);
-			camera->transform.position += camera->getUp() * (float)(m->y - m->prevy);
+			p += camera->getRight() * -dx + camera->getUp() * dy;
 		}
-		//I have this commented out on purpose. I don't want it
-		//glfwSetCursorPos(window, width / 2, height / 2);
-		//std::cout << "Position: " << camera->transform.position.x << "," << camera->transform.position.y << "," << camera->transform.position.z << std::endl << "Pitch: " << camera->pitch << std::endl << "Yaw: " << camera->yaw << std::endl;
 	}
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		camera->transform.position += camera->getForward() * 5.f * (float)dt;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		camera->transform.position += camera->getForward() * -5.f * (float)dt;
-	}
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		camera->transform.position += camera->getRight() * 5.f * (float)dt;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		camera->transform.position += camera->getRight() * -5.f * (float)dt;
-	}
+	const auto u = 5.f;
+	if      (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) p += camera->getForward() *  (u * dt);
+	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) p += camera->getForward() * -(u * dt);
+	if      (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) p += camera->getRight()   * -(u * dt);
+	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) p += camera->getRight()   *  (u * dt);
 
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-		camera->transform.position += glm::vec3(0, 1, 0) * 5.f * (float)dt;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-		camera->transform.position += glm::vec3(0, 1, 0) * -5.f * (float)dt;
-	}
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-		camera->transform.position += glm::vec3(1, 0, 0) * 5.f * (float)dt;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-		camera->transform.position += glm::vec3(1, 0, 0) * -5.f * (float)dt;
-	}
+	if      (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) p += vec3(0, 1, 0) *  (u * dt);
+	else if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) p += vec3(0, 1, 0) * -(u * dt);
+	if      (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) p += vec3(1, 0, 0) *  (u * dt);
+	else if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) p += vec3(1, 0, 0) * -(u * dt);
+
+	camera->transform.position(p);
 }

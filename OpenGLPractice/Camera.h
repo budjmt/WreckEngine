@@ -7,32 +7,30 @@
 #include "Entity.h"
 #include "Mouse.h"
 
-const float CAM_FOV = 2 * glm::pi<GLfloat>() / 5;
+const float CAM_FOV = 2 * PI / 5;
 
-class Camera :
-	public Entity
+class Camera : public Entity
 {
 public:
-	Camera(GLuint shaderProg, GLFWwindow* w);
-	~Camera();
+	Camera(GLprogram shaderProg, GLFWwindow* w);
 	GLFWwindow* window;
 	
-	void updateCamMat(GLuint camLoc);
+	void updateCamMat(GLuniform<mat4> camLoc);
 	void update(double dt);
 	void draw();
 
 	float zoom;
-	glm::vec3 getForward();
-	glm::vec3 getUp();
-	glm::vec3 getRight();
+	vec3 getForward();
+	vec3 getUp();
+	vec3 getRight();
 	void turn(float dx,float dy);
-	glm::vec3 getLookAt();
+	vec3 getLookAt(float units = 1.f);
 	void updateProjection();
 
 	static void mayaCam(GLFWwindow* window, Mouse* m, double dt, Camera* camera);
 
 private:
-	glm::mat4 projection, view;
-	GLuint cameraMatrix;
+	mat4 projection, view;
+	GLuniform<mat4> cameraMatrix;
 };
 

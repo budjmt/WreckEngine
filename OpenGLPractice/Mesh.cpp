@@ -1,30 +1,23 @@
 #include "Mesh.h"
 #include <iostream>
 
-Mesh::Mesh(std::vector<glm::vec3> v, std::vector<glm::vec3> n, std::vector<glm::vec3> u, Face f)
-{
-	verts(v);
-	normals(n);
-	uvs(u);
-	faces(f);
-
-	int nu_verts = verts().size();
-	int nu_uvs = uvs().size();
-	
-	for (unsigned int i = 0; i < _faces.verts.size(); i++) {
+Mesh::Mesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u, Face f) : _verts(v), _normals(n), _uvs(u), _faces(f)
+{	
+	for (size_t i = 0, numVerts = _faces.verts.size(); i < numVerts; ++i) {
 		//std::cout << i << std::endl;
 		bool inArr = false;
-		unsigned int index;
-		for (index = 0; !inArr && index < _faces.combinations.size();index++) {
+		size_t index = 0;
+		//TODO: fix this bottleneck! It's super duper slow!
+		for (auto numCombs = _faces.combinations.size(); !inArr && index < numCombs; ++index) {
 			if (_faces.combinations[index].x == _faces.verts[i] 
 				&& _faces.combinations[index].y == _faces.uvs[i] 
 				&& _faces.combinations[index].z == _faces.normals[i]) {
 				inArr = true;
-				index--;
+				--index;
 			}
 		}
 		if (!inArr) {
-			_faces.combinations.push_back(glm::vec3(_faces.verts[i], _faces.uvs[i], _faces.normals[i]));
+			_faces.combinations.push_back(vec3(_faces.verts[i], _faces.uvs[i], _faces.normals[i]));
 			meshArray.push_back(_verts[_faces.verts[i]].x);
 			meshArray.push_back(_verts[_faces.verts[i]].y);
 			meshArray.push_back(_verts[_faces.verts[i]].z);
@@ -37,7 +30,6 @@ Mesh::Mesh(std::vector<glm::vec3> v, std::vector<glm::vec3> n, std::vector<glm::
 		meshElementArray.push_back(index);
 	}
 
-	h_dims = glm::vec3(-1, -1, -1);
 	/*for (int i = 0; i < meshArray.size(); i += FLOATS_PER_VERT + FLOATS_PER_UV) {
 		std::cout << i / (FLOATS_PER_VERT + FLOATS_PER_UV) << ": " << meshArray[i] << "," << meshArray[i + 1] << meshArray[i + 2] << " \\ "
 			<< meshArray[i + FLOATS_PER_VERT] << "," << meshArray[i + 1 + FLOATS_PER_VERT] << std::endl;
@@ -55,51 +47,42 @@ Mesh::Mesh(std::vector<glm::vec3> v, std::vector<glm::vec3> n, std::vector<glm::
 	}*/
 }
 
-Mesh::~Mesh()
-{
-	//delete[] meshArray;
-	//delete[] meshElementArray;
-}
-
-const std::vector<glm::vec3>& Mesh::verts() const { return _verts; } void Mesh::verts(std::vector<glm::vec3>& v) { _verts = v; }
-const std::vector<glm::vec3>& Mesh::uvs() const { return _uvs; } void Mesh::uvs(std::vector<glm::vec3>& u) { _uvs = u; }
-const std::vector<glm::vec3>& Mesh::normals() const { return _normals; } void Mesh::normals(std::vector<glm::vec3>& n) { _normals = n; }
+const std::vector<vec3>& Mesh::verts() const { return _verts; } void Mesh::verts(std::vector<vec3>& v) { _verts = v; }
+const std::vector<vec3>& Mesh::uvs() const { return _uvs; } void Mesh::uvs(std::vector<vec3>& u) { _uvs = u; }
+const std::vector<vec3>& Mesh::normals() const { return _normals; } void Mesh::normals(std::vector<vec3>& n) { _normals = n; }
 Face Mesh::faces() const { return _faces; } void Mesh::faces(Face& f) { _faces = f; }
 
-float getDistSq(glm::vec3 v1, glm::vec3 v2) {
+float getDistSq(vec3 v1, vec3 v2) {
 	float xDist = v1.x - v2.x;
 	float yDist = v1.y - v2.y;
 	float zDist = v1.z - v2.z;
 	return xDist * xDist + yDist * yDist + zDist * zDist;
 }
 
-glm::vec3 Mesh::getDims() {
-	//right now this assumes the model is centered at 0,0,0
-	if (h_dims.x > 0)
-		return h_dims;
-	glm::vec3 center = glm::vec3(0, 0, 0);
-	//find the most distant point from the center
-	glm::vec3 max = _verts[0];
-	float maxDistSq = getDistSq(max, center);
-	for (int i = 1, numVerts = _verts.size(); i < numVerts; i++) {
-		glm::vec3 v = _verts[i];
-		float distSq = getDistSq(v, center);
+vec3 Mesh::getDims() {
+	if (h_dims.x > 0) return h_dims;
+
+	// assumes the model is centered at 0,0,0
+	auto center = vec3(0);
+
+	// find the most distant point from the center
+	auto max = _verts[0];
+	auto maxDistSq = getDistSq(max, center);
+	for (size_t i = 1, numVerts = _verts.size(); i < numVerts; ++i) {
+		auto& v = _verts[i];
+		auto distSq = getDistSq(v, center);
 		if (distSq > maxDistSq) { max = v; maxDistSq = distSq; }
 	}
-	//this finds the most distant point from THAT most distant point
-	glm::vec3 min = _verts[0];
+	
+	// find the most distant point from THAT point
+	auto min = _verts[0];
 	maxDistSq = getDistSq(min, max);
-	for (int i = 1, numVerts = _verts.size(); i < numVerts; i++) {
-		glm::vec3 v = _verts[i];
-		float distSq = getDistSq(v, max);
-		if (distSq > maxDistSq) {
-			min = v;
-			maxDistSq = distSq;
-		}
+	for (size_t i = 1, numVerts = _verts.size(); i < numVerts; ++i) {
+		auto& v = _verts[i];
+		auto distSq = getDistSq(v, max);
+		if (distSq > maxDistSq) { min = v; maxDistSq = distSq; }
 	}
 
-	float radius = glm::length(max - min) * 0.5f;
-	glm::vec3 d = glm::vec3(radius, radius, radius);
-	h_dims = d;
+	h_dims = vec3(length(max - min) * 0.5f);
 	return h_dims;
 }

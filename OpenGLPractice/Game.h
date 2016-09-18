@@ -3,8 +3,10 @@
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
+
+#include "smart_ptr.h"
+
 #include "Entity.h"
-#include "Shape.h"
 #include "DrawDebug.h"
 
 #include <vector>
@@ -14,15 +16,13 @@ class Game
 {
 public:
 	Game();
-	Game(GLuint prog);
-	Game(const Game& other);
-	~Game(void);
-	Entity* operator[](int index);
+	Game(GLprogram prog);
+	Entity* operator[](size_t index);
 	virtual void update(double dt);
 	void draw();
 protected:
-	GLuint shader;
-	std::vector<Entity*> entities;
-	std::vector<Drawable*> shapes;
+	GLprogram shader;
+	std::vector<shared<Entity>> entities;
+	std::vector<shared<Drawable>> shapes;
 };
 

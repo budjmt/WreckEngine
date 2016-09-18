@@ -1,5 +1,7 @@
 #pragma once
 
+#include "smart_ptr.h"
+
 #include "Drawable.h"
 #include "Transform.h"
 
@@ -13,21 +15,21 @@ class Entity
 {
 public:
 	Entity();
-	Entity(Drawable* s);
-	Entity(glm::vec3 p,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s);
-	Entity(const Entity& other);
-	~Entity(void);
+	Entity(shared<Drawable> s);
+	Entity(vec3 p, vec3 sc, vec3 rA, float r, shared<Drawable> s);
 
-	Transform& transform;
-	bool& active;
-	glm::vec4 color() const; void color(glm::vec4& c);
+	Transform& transform = _transform;
+	bool& active = _active;
+	vec4 color() const; void color(vec4& c);
 	EntityType type();
+
+	void* id = (void*)rand();//meant to identify the object for debugging purposes
 
 	virtual void update(double dt);
 	virtual void draw();
 protected:
-	Drawable* shape;
-	glm::vec4 _color;
+	shared<Drawable> shape;
+	vec4 _color = vec4(1);
 	Transform _transform;
 	bool _active = true;
 	EntityType _type;

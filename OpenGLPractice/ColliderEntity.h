@@ -1,30 +1,29 @@
 #pragma once
 #include <memory>
 
-#include "entity.h"
+#include "smart_ptr.h"
+
+#include "Entity.h"
+
 #include "RigidBody.h"
 #include "Collider.h"
+
 #include "DrawMesh.h"
 
-class ColliderEntity :
-	public Entity
+class ColliderEntity : public Entity
 {
 public:
-	ColliderEntity(Drawable* s);
-	ColliderEntity(glm::vec3 p,glm::vec3 dims,glm::vec3 sc,glm::vec3 rA,float r,Drawable* s);
-	~ColliderEntity();
-	ColliderEntity(const ColliderEntity& other);
-	ColliderEntity& operator=(ColliderEntity& other);
-	
+	//ColliderEntity(Mesh* mesh, Material* material);
+	ColliderEntity(shared<Drawable> s);
+	ColliderEntity(vec3 p, vec3 dims, vec3 sc, vec3 rA, float r, shared<Drawable> s);
+
 	RigidBody& rigidBody();
-	Collider* collider() const; void collider(Collider* c);
+	Collider* collider() const;
 	virtual void update(double dt);
 	virtual void calcForces(double dt);
-	void handleCollision(ColliderEntity* other, Manifold& m, double dt);
-	glm::vec3 calcAngularAccel(Manifold& m, glm::vec3 F);
-private:
-	Collider* _collider;
+	virtual void handleCollision(ColliderEntity* other, Manifold& m, double dt, size_t& numCollisions);
+	vec3 calcAngularAccel(Manifold& m, vec3 F);
+protected:
+	unique<Collider> _collider;
 	RigidBody body;
-	
-	static std::vector<ColliderEntity*> colliderEntities;
 };

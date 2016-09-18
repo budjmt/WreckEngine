@@ -1,111 +1,185 @@
 #include "Transform.h"
 
-#include "glm/gtx/transform.hpp"
+Transform::Transform() { updateRot(); }
 
-Transform::Transform()
-	: position(_position), scale(_scale), rotation(_rotation), rotAngle(_rotAngle), rotAxis(_rotAxis)
-{
-	parent = nullptr;
-	_position = glm::vec3(0, 0, 0);
-	_scale = glm::vec3(1, 1, 1);
-	_rotation = glm::fquat();
-	updateRot();
+//Transform::Transform(const Transform& other)
+//{
+//	//compute = &Transform::noCompute;
+//	parent(other._parent);
+//	
+//	_position = other._position;
+//	_scale    = other._scale;
+//	_rotation = other._rotation;
+//	_rotAxis  = other._rotAxis;
+//	_rotAngle = other._rotAngle;
+//
+//	base_forward = other.base_forward;
+//	base_up      = other.base_up;
+//
+//	_forward = other._forward;
+//	_up      = other._up;
+//	_right   = other._right;
+//
+//	if (other.computed) {
+//		computed = other.computed;
+//		//compute = &Transform::allocatedCompute;
+//	}
+//}
+
+//Transform& Transform::operator=(const Transform& other)
+//{
+//	//compute = &Transform::noCompute;
+//	parent(other._parent);
+//	_position = other._position;
+//	_scale = other._scale;
+//	_rotation = other._rotation;
+//	_rotAxis = other._rotAxis;
+//	_rotAngle = other._rotAngle;
+//
+//	base_forward = other.base_forward;
+//	base_up = other.base_up;
+//
+//	_forward = other._forward;
+//	_up = other._up;
+//	_right = other._right;
+//
+//	if (other.computed) {
+//		computed = other.computed;
+//		//compute = &Transform::allocatedCompute;
+//	}
+//	return *this;
+//}
+
+Transform* Transform::clone() { return new Transform(*this); }
+
+void Transform::makeDirty() {
+	dirty = true;
+	for (auto& child : children)
+		child->dirty = true;
 }
+vec3& Transform::position() { return _position; } void Transform::position(vec3 v) { makeDirty(); _position = v; }
+vec3& Transform::scale()    { return _scale;    } void Transform::scale(vec3 v)    { makeDirty(); _scale = v;    }
+quat& Transform::rotation() { return _rotation; } void Transform::rotation(quat q) { makeDirty(); _rotation = q; }
+vec3  Transform::rotAxis()  const { return _rotAxis;  } 
+float Transform::rotAngle() const { return _rotAngle; }
 
-Transform::Transform(const Transform& other) 
-	: position(_position), scale(_scale), rotation(_rotation), rotAngle(_rotAngle), rotAxis(_rotAxis)
-{
-	parent = other.parent;
-	_position = other.position;
-	_scale = other.scale;
-	_rotation = other.rotation;
-	_rotAxis = other.rotAxis;
-	_rotAngle = other.rotAngle;
-	_forward = other.forward();
-	_up = other.up();
-	_right = other.right();
-}
-
-
-Transform::~Transform()
-{
-}
-
-Transform& Transform::operator=(const Transform& other) 
-{
-	_position = other.position;
-	_scale = other.scale;
-	_rotation = other.rotation;
-	_rotAxis = other.rotAxis;
-	_rotAngle = other.rotAngle;
-	_forward = other.forward();
-	_up = other.up();
-	_right = other.right();
-	return *this;
-}
-
-Transform Transform::computeTransform() {
-	if (parent == nullptr) {
-		this->updateRot();
-		return *this;
+Transform* Transform::parent() { return _parent; }
+void Transform::parent(Transform* p) {
+	if (p == _parent)
+		return;
+	if (p) {
+		p->children.insert(this);
+		//if (!_parent)
+		//compute = &Transform::firstCompute;
 	}
-	Transform t = Transform();
-	t.position = parent->position + _position;
-	t.scale = parent->scale * _scale;
-	t.rotation = _rotation * parent->rotation;
-	t.parent = parent->parent;
-	return t.computeTransform();
+	if (_parent) {
+		_parent->children.erase(this);
+		if (!p) {
+			computed.release();
+			//compute = &Transform::noCompute;
+		}
+	}
+	makeDirty();
+	_parent = p;
 }
 
-void Transform::updateNormals() {
-	glm::mat4 m = glm::rotate(_rotAngle, _rotAxis);
-	_forward = (glm::vec3)(m * glm::vec4(0, 0, 1, 1));
-	_up = (glm::vec3)(m * glm::vec4(0, 1, 0, 1));
-	_right = glm::cross(_forward, _up);
+Transform* Transform::getComputed() {
+	//if there's no parent, this is already an accurate transform
+	if (!_parent)
+		return this;
+	//if there is no previously computed transform, allocate one so we can compute it
+	else if (!computed)
+		computed.reset(new Transform);
+	//if there is a previously computed transform and we haven't made any "dirtying" changes since computing it
+	else if (!dirty)
+		return computed.get();
+	//[re]compute the transform
+	dirty = false;
+	return computeTransform();
+	//this doessssn't worrkk righggght now wwwhaaaat the fuck
+	//return (this->*compute)();
 }
 
-glm::vec3 Transform::forward() const { return _forward; }
-glm::vec3 Transform::up() const { return _up; }
-glm::vec3 Transform::right() const { return _right; }
+Transform* Transform::computeTransform() {
+	if (!_parent) {
+		this->updateRot();
+		return this;
+	}
+	Transform t;
+	t._position += _parent->_position;
+	t._scale *= _parent->_scale;
+	t._rotation = t._rotation * _parent->_rotation;
+	t._parent = _parent->_parent;
+	
+	*computed = *t.computeTransform();
+	return computed.get();
+}
+
+Transform* Transform::noCompute() {
+	//if there's no parent, this is already an accurate transform
+	return this;
+}
+
+Transform* Transform::firstCompute() {
+	//if there is no previously computed transform, allocate one so we can compute it
+	computed.reset(new Transform);
+	//compute = &Transform::allocatedCompute;
+	dirty = false;
+	return computeTransform();
+}
+
+Transform* Transform::allocatedCompute() {
+	//if there is a previously computed transform and we haven't made any "dirtying" changes since computing it
+	if (!dirty)
+		return computed.get();
+	//[re]compute the transform
+	dirty = false;
+	*computed = *computeTransform();
+	return computed.get();
+}
+
+void Transform::setBaseDirections(vec3 t_forward, vec3 t_up) {
+	base_forward = t_forward;
+	base_up = t_up;
+	updateDirections();
+}
+
+void Transform::updateDirections() {
+	auto m = glm::rotate(_rotAngle, _rotAxis);
+	_forward = (vec3)(m * vec4(base_forward, 1));
+	_up      = (vec3)(m * vec4(base_up, 1));
+	_right   = glm::cross(_up, _forward);
+}
+
+vec3 Transform::forward() const { return _forward; }
+vec3 Transform::up() const { return _up; }
+vec3 Transform::right() const { return _right; }
 
 void Transform::updateRot() {
-	_rotAngle = glm::angle(_rotation);
-	_rotAxis = glm::axis(_rotation);
-	updateNormals();
+	_rotAngle = _rotation.theta();
+	_rotAxis  = _rotation.axis();
+	updateDirections();
 }
 
-//remember for quats, glm applies rotations through the glm::rotate(quat,rad,axis) function, and the return value is the rotated quat
+//quats are rotated through the rotate function here
+void Transform::rotate(vec3 v) { rotate(v.x, v.y, v.z); }
 void Transform::rotate(float x, float y, float z) {
-	if(x)
-		_rotation = glm::rotate(_rotation, x, glm::vec3(1, 0, 0));
-	if(y)
-		_rotation = glm::rotate(_rotation, y, glm::vec3(0, 1, 0));
-	if(z)
-		_rotation = glm::rotate(_rotation, z, glm::vec3(0, 0, 1));
+	if (x) _rotation = quat::rotate(_rotation, x, vec3(1, 0, 0));
+	if (y) _rotation = quat::rotate(_rotation, y, vec3(0, 1, 0));
+	if (z) _rotation = quat::rotate(_rotation, z, vec3(0, 0, 1));
 	updateRot();
 }
 
-void Transform::rotate(glm::vec3 v) {
-	if (v.x)
-		_rotation = glm::rotate(_rotation, v.x, glm::vec3(1, 0, 0));
-	if (v.y)
-		_rotation = glm::rotate(_rotation, v.y, glm::vec3(0, 1, 0));
-	if (v.z)
-		_rotation = glm::rotate(_rotation, v.z, glm::vec3(0, 0, 1));
+void Transform::rotate(float theta, vec3 axis) {
+	if (theta) _rotation = quat::rotate(_rotation, theta, axis);
 	updateRot();
 }
 
-void Transform::rotate(float theta, glm::vec3 axis) {
-	if (theta)
-		_rotation = glm::rotate(_rotation, theta, axis);
-	updateRot();
-}
-
-glm::vec3 Transform::getTransformed(glm::vec3 v)
+vec3 Transform::getTransformed(vec3 v)
 {
-	Transform t = computeTransform();
-	glm::mat4 translate = glm::translate(t.position);
-	glm::mat4 rot = glm::rotate(t.rotAngle, t.rotAxis);
-	glm::mat4 scale = glm::scale(t.scale);
-	return (glm::vec3)(translate * scale * rot * glm::vec4(v, 1));
+	auto t = getComputed();
+	auto translate = glm::translate(t->_position);
+	auto rotate    = glm::rotate(t->_rotAngle, t->_rotAxis);
+	auto scale     = glm::scale(t->_scale);
+	return (vec3)(translate * (rotate * (scale * vec4(v, 1))));
 }

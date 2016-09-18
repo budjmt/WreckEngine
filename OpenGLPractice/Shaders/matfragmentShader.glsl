@@ -37,5 +37,6 @@ void main() {
 	vec4 ambient  = ambPower * vec4(0.5,0.1,1.,1.);
 	vec4 diffuse  = lamb * lambPower * vec4(1.,1.,0.,1.);
 	vec4 specular = spec * specPower * vec4(1.,1.,1.,1.);
+	
 	gl_FragColor  = color + ambient + diffuse + specular;
 }

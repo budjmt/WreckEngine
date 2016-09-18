@@ -1,11 +1,8 @@
 #pragma once
 
-#include "glm/glm.hpp"
-#include "glm/gtx/transform.hpp"
-#include "glm/gtc/constants.hpp"
-
-#include<string>
+#include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "Transform.h"
 #include "Mesh.h"
@@ -14,108 +11,99 @@
 
 class Collider;
 
-enum class ColliderType {
-	//CIRCLE,
-	//RECT,
-	//TRIANGLE
-	SPHERE,
-	BOX,
-	MESH
+enum class ColliderType { SPHERE, BOX, MESH };
+
+struct AABB {
+	vec3 center, halfDims;
+	bool intersects(const AABB& other);
 };
 
-struct Adj {
-	int f1, f2;
-	int edge[2];
-};
+struct Adj { std::pair<GLuint, GLuint> faces, edge; };
 
 struct GaussMap {
-	//std::vector<glm::vec3> normals;
+	//std::vector<vec3> normals;
 	std::map<std::string, std::vector<Adj>> adjacencies;//keys are untransformed normals, adjs use indices because of rotations
-	void addAdj(glm::vec3 v, Adj a);
-	std::vector<Adj>& getAdjs(glm::vec3 v);
+	void addAdj(vec3 v, Adj a);
+	std::vector<Adj>& getAdjs(vec3 v);
 };
 
-struct SupportPoint {
-	glm::vec3 point;
-	float proj;
-};
+struct SupportPoint { vec3 point; float proj; };
 
 struct Manifold {
-	Collider* originator = nullptr, * other = nullptr;
-	std::vector<glm::vec3> colPoints;
+	Collider* originator = nullptr, *other = nullptr;
+	std::vector<vec3> colPoints;
 	float pen = -FLT_MAX;
-	glm::vec3 axis;
+	vec3 axis;
 };
 
-struct FaceManifold : Manifold {
-	int norm;
-};
-
-struct EdgeManifold : Manifold {
-	Adj edgePair[2];
-};
+struct FaceManifold : Manifold { size_t norm; };
+struct EdgeManifold : Manifold { std::pair<Adj, Adj> edgePair; };
 
 class Collider
 {
 public:
 	Collider(void);
-	Collider(Transform* t, glm::vec3 b);
+	Collider(Transform* t, vec3 d, bool fudge = true);
 	Collider(Mesh* m, Transform* t);
-	Collider(const Collider& other);
-	~Collider(void);
-	ColliderType& type;
+	
+	ColliderType& type = _type;
 	Transform* transform() const;
-	glm::vec3 framePos() const;
-	glm::vec3 dims() const; void dims(glm::vec3 v);
-	void updateDims(Transform* t);
+	vec3 framePos() const;
+	vec3 dims() const; void dims(vec3 v);
+	AABB& aabb();
+	void updateDims();
 	float radius() const;
 
 	Manifold intersects(Collider* other);
 
-	std::vector<int> getIncidentFaces(glm::vec3 refNormal);
-	void clipPolygons(FaceManifold& reference, std::vector<int>& incidents);
-	std::vector<glm::vec3> clipPolyAgainstEdge(std::vector<glm::vec3>& input, glm::vec3 sidePlane, glm::vec3 sideVert, glm::vec3 refNorm, glm::vec3 refCenter);
-	glm::vec3 closestPointBtwnSegments(glm::vec3 p0, glm::vec3 p1, glm::vec3 q0, glm::vec3 q1);
+	std::vector<GLuint> getIncidentFaces(vec3 refNormal);
+	void clipPolygons(FaceManifold& reference, std::vector<GLuint>& incidents);
+	std::vector<vec3> clipPolyAgainstEdge(std::vector<vec3>& input, vec3 sidePlane, vec3 sideVert, vec3 refNorm, vec3 refCenter);
+	vec3 closestPointBtwnSegments(vec3 p0, vec3 p1, vec3 q0, vec3 q1);
 
 	void update();
 
-	//void setCorners(std::vector<glm::vec3> c);
+	//void setCorners(std::vector<vec3> c);
 	void genVerts();//only used for box colliders right now
 	void genNormals();
 	void genEdges();
 	void genGaussMap();
-	
-	const std::vector<glm::vec3>& getCurrNormals() const;
-	const std::vector<glm::vec3>& getEdges() const;
-	
-	int getFaceVert(int index) const;
-	glm::vec3 getVert(int index) const;
-	glm::vec3 getNormal(int index) const;
-	glm::vec3 getEdge(int (&e)[2]);
-	
+
+	const std::vector<vec3>& getCurrNormals() const;
+	const std::vector<vec3>& getEdges() const;
+
+	int getFaceVert(size_t index) const;
+	vec3 getVert(size_t index) const;
+	vec3 getNormal(size_t index) const;
+	vec3 getEdge(std::pair<GLuint, GLuint> e);
+
 	const GaussMap& getGaussMap() const;
-	
+
 	void updateNormals();
 	void updateEdges();
 
-	bool fuzzyParallel(glm::vec3 v1, glm::vec3 v2);
+	bool fuzzyParallel(vec3 v1, vec3 v2);
 
-	SupportPoint getSupportPoint(glm::vec3 dir);
+	SupportPoint getSupportPoint(vec3 dir);
 	FaceManifold getAxisMinPen(Collider* other);
 	EdgeManifold overlayGaussMaps(Collider* other);
 
 private:
+	Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge = true);
+
 	Transform* _transform;
-	glm::vec3 _framePos;
-	glm::vec3 _dims;
-	float _radius;
+	vec3 _framePos;
+	vec3 _dims;
+	bool fudgeAABB = true;//if this is true, the transformed aabb will be scaled by a factor of 1.5
+	AABB base_aabb, transformed_aabb;
+	float _radius = 0;
 	ColliderType _type;
 
-	std::vector<glm::vec3> faceNormals, currNormals, edges, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
-	std::map<std::string, int> edgeMap;//maps the edge pairs to the indices in edges
+	std::vector<vec3> faceNormals, currNormals, edges, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
+	std::unordered_map<std::string, int> edgeMap;//maps the edge pairs to the indices in edges
 	GaussMap gauss;
 	//std::vector<std::vector<Adj>> adjacencies;
 	Mesh* mesh;
 
-	void setEdge(int(&e)[2], int index);
+	void setEdge(std::pair<GLuint, GLuint> e, size_t index);
 };
