@@ -46,15 +46,15 @@ collisionPairList CollisionManager::broadPhase() {
 }
 
 //returns the number of collisions found and handled
-uint32_t CollisionManager::narrowPhase(float dt) {
-	uint32_t numCollisions = 0;
-	for (auto pair : collisionPairs) {
+size_t CollisionManager::narrowPhase(float dt) {
+	size_t numCollisions = 0;
+	for (auto& pair : collisionPairs) {
 		//DebugBenchmark::start();
 		auto *a = pair.first, *b = pair.second;
 		if (!(a->active && b->active) || !(a->rigidBody().solid() && b->rigidBody().solid()))
 			continue;
 
-		Manifold m = a->collider()->intersects(b->collider());
+		auto m = a->collider()->intersects(b->collider());
 		if (m.originator) {
 			if (m.originator == a->collider())
 				a->handleCollision(b, m, dt, numCollisions);

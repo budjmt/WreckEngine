@@ -163,7 +163,6 @@
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="ColliderEntity.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
-    <ClCompile Include="DebugBenchmark.cpp" />
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="DrawDebug.cpp" />
     <ClCompile Include="DrawMesh.cpp" />

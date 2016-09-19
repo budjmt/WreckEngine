@@ -25,8 +25,8 @@ void RigidBody::update(double dt) {
 	updateVel(dt);
 	updateAngVel(dt);
 
-	netForce = vec3(0, 0, 0);
-	netAngAccel = vec3(0, 0, 0);
+	netForce = vec3();
+	netAngAccel = vec3();
 }
 
 #include <assert.h>
@@ -35,7 +35,7 @@ void RigidBody::updateVel(double dt) {
 	_speed = glm::length(_vel);
 
 	if (_speed < MIN_VEL) {
-		_vel = vec3(0, 0, 0);
+		_vel = vec3();
 		_speed = 0;
 	}
 	else {
@@ -54,7 +54,7 @@ void RigidBody::updateAngVel(double dt) {
 	_angSpeed = glm::length(_angVel);
 
 	if (_angSpeed < MIN_VEL) {
-		_angVel = vec3(0, 0, 0);
+		_angVel = vec3();
 		_angSpeed = 0;
 	}
 	else {
@@ -64,6 +64,11 @@ void RigidBody::updateAngVel(double dt) {
 		}
 		_angHeading = _angVel / _angSpeed;
 	}
+}
+
+void RigidBody::applyGravity() {
+	const float g = 9.8f;
+	netForce += vec3(0, _mass * -g * 0.5f * (1 - _floating), 0);
 }
 
 //the coefficient here is equivalent to 0.5 * density of fluid (here just air) * C_d (drag coeff), which we boil down to C_d

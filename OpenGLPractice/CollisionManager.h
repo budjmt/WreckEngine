@@ -16,7 +16,7 @@ public:
 	void clear();
 
 	collisionPairList broadPhase();
-	uint32_t narrowPhase(float dt);
+	size_t narrowPhase(float dt);
 
 private:
 	CollisionManager();

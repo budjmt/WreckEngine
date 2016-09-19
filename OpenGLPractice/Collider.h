@@ -15,7 +15,7 @@ enum class ColliderType { SPHERE, BOX, MESH };
 
 struct AABB {
 	vec3 center, halfDims;
-	bool intersects(const AABB& other);
+	bool intersects(const AABB& other) const;
 };
 
 struct Adj { std::pair<GLuint, GLuint> faces, edge; };

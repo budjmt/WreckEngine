@@ -5,16 +5,16 @@
 class DebugBenchmark
 {
 public:
-	static DebugBenchmark& getInstance();
+	static void start() { 
+		timer = glfwGetTime(); 
+	}
 
-	void start(); 
-	double end();
+	static double end() { 
+		auto time = glfwGetTime() - timer;
+		return time * 1000;
+	}
 private:
-	DebugBenchmark() { timer = glfwGetTime(); };
-	//~DebugBenchmark();
-	DebugBenchmark(const DebugBenchmark&) = delete;
-	void operator=(const DebugBenchmark&) = delete;
-
-	double timer;
+	static double timer;
 };
 
+double DebugBenchmark::timer = glfwGetTime();

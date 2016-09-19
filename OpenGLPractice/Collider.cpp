@@ -772,12 +772,16 @@ int Collider::getFaceVert(size_t index) const { return mesh->faces().verts[index
 vec3 Collider::getVert(size_t index) const { return mesh->verts()[index]; }
 vec3 Collider::getNormal(size_t index) const { return currNormals[index]; }
 vec3 Collider::getEdge(std::pair<GLuint, GLuint> e) {
-	if (e.second < e.first) { auto temp = e.first; e.first = e.second; e.second = temp; }
-	return currEdges[edgeMap[std::to_string(e.first) + "," + std::to_string(e.second)]];
+	std::string key;
+	if (e.first < e.second) { key = std::to_string(e.first) + "," + std::to_string(e.second); }
+	else                    { key = std::to_string(e.second) + "," + std::to_string(e.first); }
+	return currEdges[edgeMap[key]];
 }
 void Collider::setEdge(std::pair<GLuint, GLuint> e, size_t index) {
-	if (e.second < e.first) { auto temp = e.first; e.first = e.second; e.second = temp; }
-	edgeMap[std::to_string(e.first) + "," + std::to_string(e.second)] = index;
+	std::string key;
+	if (e.first < e.second) { key = std::to_string(e.first) + "," + std::to_string(e.second); }
+	else                    { key = std::to_string(e.second) + "," + std::to_string(e.first); }
+	edgeMap[key] = index;
 }
 
 const GaussMap& Collider::getGaussMap() const { return gauss; }
@@ -785,7 +789,7 @@ const GaussMap& Collider::getGaussMap() const { return gauss; }
 std::vector<Adj>& GaussMap::getAdjs(vec3 v) { return adjacencies[to_string(v)]; }
 void GaussMap::addAdj(vec3 v, Adj a) { adjacencies[to_string(v)].push_back(a); }
 
-bool AABB::intersects(const AABB& other) {
+bool AABB::intersects(const AABB& other) const {
 	auto xSeparate = (center.x - halfDims.x > other.center.x + other.halfDims.x) || (center.x + halfDims.x < other.center.x - other.halfDims.x);
 	auto ySeparate = (center.y - halfDims.y > other.center.y + other.halfDims.y) || (center.y + halfDims.y < other.center.y - other.halfDims.y);
 	auto zSeparate = (center.z - halfDims.z > other.center.z + other.halfDims.z) || (center.z + halfDims.z < other.center.z - other.halfDims.z);

@@ -9,7 +9,7 @@ class RigidBody {
 public:
 	RigidBody() { }
 
-	vec3 netForce = vec3(), netAngAccel = vec3();
+	vec3 netForce, netAngAccel;
 
 	float floating() const; void floating(float f);
 	float fixed() const; void fixed(float s);
@@ -29,15 +29,17 @@ public:
 	void updateVel(double dt);
 	void updateAngVel(double dt);
 
+	void applyGravity();
 	vec3 quadDrag(float c_d, vec3 v, vec3 h);
 
 private:
-	float _floating = 0
-		, _fixed = 0;
+	float _floating = 0, _fixed = 0; 
 	short _solid = 1;
+
 	float _mass = 1, _invMass = 1;
-	float _speed = 0, _angSpeed = 0;
 	float _restitution = 1;
-	vec3 _vel = vec3(0, 0, 0), _heading = vec3(1, 0, 0)
-		, _angVel = vec3(0, 0, 0), _angHeading = vec3(1, 0, 0);
+	
+	vec3 _vel,    _heading    = vec3(1, 0, 0)
+	   , _angVel, _angHeading = vec3(1, 0, 0);
+	float _speed = 0, _angSpeed = 0;
 };

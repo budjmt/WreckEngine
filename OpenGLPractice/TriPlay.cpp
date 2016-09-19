@@ -46,6 +46,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	mesh->transform.position(vec3(-2.5f, 0, 0));
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
+	mesh->rigidBody().floating(1);
 
 	//genSphere("Assets/sphere.obj", 16);
 	auto sphere = loadOBJ("Assets/sphere.obj");
@@ -56,6 +57,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	mesh->transform.position(vec3(0, 2.5f, 0));
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
+	mesh->rigidBody().floating(1);
 
 	//genCube("Assets/cube.obj");
 	auto cube = loadOBJ("Assets/cube.obj");
@@ -92,7 +94,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 
 #include "CollisionManager.h"
 void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
-	float dt = (float)delta;
+	auto dt = (float)delta;
 
 	Game::update(delta);
 	CollisionManager::getInstance().update(dt);
@@ -103,7 +105,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
 		exit('q');
 	}
 
-	float speed = 5;
+	const auto speed = 5.f;
 
 	bool shift = false, ctrl = false;
 	if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
