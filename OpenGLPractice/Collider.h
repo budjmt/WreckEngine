@@ -87,10 +87,10 @@ public:
 private:
 	Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge = true);
 
-	ACCS_G    (Transform*, transform);
-	ACCS_G    (vec3,  framePos);
-	ACCS_GS_C (vec3,  dims, { return _dims; }, { _dims = base_aabb.halfDims = value; updateDims(); });
-	ACCS_G    (float, radius) = 0;
+	ACCS_G    (private, Transform*, transform);
+	ACCS_G    (private, vec3,  framePos);
+	ACCS_GS_C (private, vec3,  dims, { return _dims; }, { _dims = base_aabb.halfDims = value; updateDims(); });
+	ACCS_G    (private, float, radius) = 0;
 
 	bool fudgeAABB = true;//if this is true, the transformed aabb will be scaled by a factor of 1.5
 	AABB base_aabb, transformed_aabb;

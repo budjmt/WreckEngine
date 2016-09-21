@@ -16,6 +16,6 @@ private:
 	GLbuffer vertBuffer, elBuffer;
 	GLuniform<GLsampler> textureLoc;
 	std::vector<GLuint> textures;
-	ACCS_GS_T_C (shared<Mesh>, Mesh*, Mesh*, mesh, { return _mesh.get(); }, { _mesh.reset(value); });
+	ACCS_GS_T_C (private, shared<Mesh>, Mesh*, Mesh*, mesh, { return _mesh.get(); }, { _mesh.reset(value); });
 };
 

@@ -24,6 +24,6 @@ public:
 	virtual void handleCollision(ColliderEntity* other, Manifold& m, double dt, size_t& numCollisions);
 	vec3 calcAngularAccel(Manifold& m, vec3 F);
 protected:
-	ACCS_G_T_C (unique<Collider>, Collider*, collider, { return _collider.get(); });
+	ACCS_G_T_C (protected, unique<Collider>, Collider*, collider, { return _collider.get(); });
 	RigidBody body;
 };

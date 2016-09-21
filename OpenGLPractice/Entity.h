@@ -31,6 +31,6 @@ protected:
 	vec4 _color = vec4(1);
 	Transform _transform;
 	bool _active = true;
-	ACCS_G (EntityType, type);
+	ACCS_G (protected, EntityType, type);
 };
 

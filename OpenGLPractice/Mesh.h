@@ -20,10 +20,10 @@ public:
 	Mesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u, Face f);
 	vec3 getDims();
 protected:
-	ACCS_GS_T (std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, verts);
-	ACCS_GS_T (std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, normals);
-	ACCS_GS_T (std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, uvs);
-	ACCS_GS_T (Face, const Face&, const Face&, faces);
+	ACCS_GS_T (protected, std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, verts);
+	ACCS_GS_T (protected, std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, normals);
+	ACCS_GS_T (protected, std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, uvs);
+	ACCS_GS_T (protected, Face, const Face&, const Face&, faces);
 
 	std::vector<GLfloat> meshArray;
 	std::vector<GLuint> meshElementArray;
