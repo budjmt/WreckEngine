@@ -36,7 +36,7 @@ void Camera::updateProjection() {
 	glfwGetWindowSize(window, &width, &height);
 
 	const auto znear = 0.01f;
-	const auto zfar = 1000.f;
+	const auto zfar  = 1000.f;
 	projection = glm::perspective(CAM_FOV, (float) width / (float) height, znear, zfar);
 }
 
@@ -47,7 +47,6 @@ vec3 Camera::getRight() { return transform.right(); }
 void Camera::mayaCam(GLFWwindow* window, Mouse* m, double delta, Camera* camera) {
 
 	auto dt = (float)delta;
-	auto p = camera->transform.position();
 
 	if (m->down) {
 		// mouse coords are represented in screen coords
@@ -65,26 +64,24 @@ void Camera::mayaCam(GLFWwindow* window, Mouse* m, double delta, Camera* camera)
 
 			auto look = camera->getLookAt();
 			camera->turn(dx, dy);
-			p = look - camera->getForward();
+			camera->transform.position = look - camera->getForward();
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_RIGHT) {
-			p += (dx + dy) * 0.5f * camera->getForward();
+			camera->transform.position += (dx + dy) * 0.5f * camera->getForward();
 		}
 		else if (m->button == GLFW_MOUSE_BUTTON_MIDDLE) {
-			p += camera->getRight() * -dx + camera->getUp() * dy;
+			camera->transform.position += camera->getRight() * -dx + camera->getUp() * dy;
 		}
 	}
 
 	const auto u = 5.f;
-	if      (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) p += camera->getForward() *  (u * dt);
-	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) p += camera->getForward() * -(u * dt);
-	if      (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) p += camera->getRight()   * -(u * dt);
-	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) p += camera->getRight()   *  (u * dt);
+	if      (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera->transform.position += camera->getForward() *  (u * dt);
+	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera->transform.position += camera->getForward() * -(u * dt);
+	if      (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) camera->transform.position += camera->getRight()   * -(u * dt);
+	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) camera->transform.position += camera->getRight()   *  (u * dt);
 
-	if      (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) p += vec3(0, 1, 0) *  (u * dt);
-	else if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) p += vec3(0, 1, 0) * -(u * dt);
-	if      (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) p += vec3(1, 0, 0) *  (u * dt);
-	else if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) p += vec3(1, 0, 0) * -(u * dt);
-
-	camera->transform.position(p);
+	if      (glfwGetKey(window, GLFW_KEY_UP)    == GLFW_PRESS) camera->transform.position += vec3(0, 1, 0) *  (u * dt);
+	else if (glfwGetKey(window, GLFW_KEY_DOWN)  == GLFW_PRESS) camera->transform.position += vec3(0, 1, 0) * -(u * dt);
+	if      (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) camera->transform.position += vec3(1, 0, 0) *  (u * dt);
+	else if (glfwGetKey(window, GLFW_KEY_LEFT)  == GLFW_PRESS) camera->transform.position += vec3(1, 0, 0) * -(u * dt);
 }

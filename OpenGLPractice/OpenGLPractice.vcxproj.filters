@@ -143,5 +143,8 @@
     <ClInclude Include="gl_structs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="property.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

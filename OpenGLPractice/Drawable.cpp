@@ -2,7 +2,7 @@
 
 #include "glm/gtx/transform.hpp"
 
-void Drawable::draw(Transform* t) { draw(t->position(), t->scale(), t->rotAxis(), t->rotAngle()); }
+void Drawable::draw(Transform* t) { draw(t->position, t->scale, t->rotAxis(), t->rotAngle()); }
 void Drawable::draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale) { draw(vec3(x, y, 0), vec3(xScale, yScale, 1), vec3(0, 0, 1), 0); }
 void Drawable::draw(vec3 pos, vec3 scale, vec3 rotAxis, float rot) {
 	setWorldMatrix(pos, scale, rotAxis, rot);

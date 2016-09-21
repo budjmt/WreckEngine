@@ -1,25 +1,5 @@
 #include "RigidBody.h"
-
-float RigidBody::floating() const { return _floating; };
-void RigidBody::floating(float f) { _floating = f; };
-float RigidBody::fixed() const { return _fixed; };
-void RigidBody::fixed(float s) { _fixed = s; _floating = s; };
-short RigidBody::solid() const { return _solid; };
-void RigidBody::solid(short s) { _solid = s; };
-
-float RigidBody::mass() const { return _mass; };
-void RigidBody::mass(float m) { _mass = m; _invMass = 1 / m; };
-float RigidBody::invMass() const { return _invMass; };
-float RigidBody::restitution() const { return _restitution; }
-void RigidBody::restitution(float e) { _restitution = e; }
-
-vec3 RigidBody::vel() const { return _vel; };
-void RigidBody::vel(vec3 v) { _vel = v; _speed = glm::length(v); };
-vec3 RigidBody::heading() const { return _heading; };
-
-vec3 RigidBody::angVel() const { return _angVel; };
-void RigidBody::angVel(vec3 a) { _angVel = a; _angSpeed = glm::length(a); };
-vec3 RigidBody::angHeading() const { return _angHeading; };
+#include <assert.h>
 
 void RigidBody::update(double dt) {
 	updateVel(dt);
@@ -29,7 +9,6 @@ void RigidBody::update(double dt) {
 	netAngAccel = vec3();
 }
 
-#include <assert.h>
 void RigidBody::updateVel(double dt) {
 	_vel += (1 - _fixed) * _invMass * (float)dt * netForce;
 	_speed = glm::length(_vel);

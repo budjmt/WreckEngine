@@ -46,13 +46,10 @@ public:
 	Collider(Transform* t, vec3 d, bool fudge = true);
 	Collider(Mesh* m, Transform* t);
 	
+	vec3 dims() const; void dims(vec3);
+	AABB& aabb = transformed_aabb;
 	ColliderType& type = _type;
-	Transform* transform() const;
-	vec3 framePos() const;
-	vec3 dims() const; void dims(vec3 v);
-	AABB& aabb();
 	void updateDims();
-	float radius() const;
 
 	Manifold intersects(Collider* other);
 
@@ -91,12 +88,13 @@ public:
 private:
 	Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge = true);
 
-	Transform* _transform;
-	vec3 _framePos;
+	PROP_G_S   (Transform*, transform);
+	PROP_G_S   (vec3, framePos);
+	PROP_G_D_S (float, radius, 0);
 	vec3 _dims;
+
 	bool fudgeAABB = true;//if this is true, the transformed aabb will be scaled by a factor of 1.5
 	AABB base_aabb, transformed_aabb;
-	float _radius = 0;
 	ColliderType _type;
 
 	std::vector<vec3> faceNormals, currNormals, edges, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors

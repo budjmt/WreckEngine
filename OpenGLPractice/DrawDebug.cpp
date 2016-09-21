@@ -2,8 +2,8 @@
 #include <iostream>
 DrawDebug::DrawDebug() {
 #if DEBUG
-	vecShader  = loadGLProgram("Shaders/_debug/vecvertexShader.glsl", "Shaders/_debug/vecfragmentShader.glsl");
-	meshShader = loadGLProgram("Shaders/_debug/meshvertexShader.glsl", "Shaders/_debug/meshfragmentShader.glsl");
+	vecShader  = loadProgram("Shaders/_debug/vecvertexShader.glsl", "Shaders/_debug/vecfragmentShader.glsl");
+	meshShader = loadProgram("Shaders/_debug/meshvertexShader.glsl", "Shaders/_debug/meshfragmentShader.glsl");
 	sphere = loadOBJ("Assets/_debug/sphere.obj");
 	if (!sphere) {
 		genSphere("Assets/_debug/sphere.obj", 8);

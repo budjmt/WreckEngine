@@ -20,7 +20,7 @@ public:
 
 	Transform& transform = _transform;
 	bool& active = _active;
-	vec4 color() const; void color(vec4& c);
+	vec4& color = _color;
 	EntityType type();
 
 	void* id = (void*)rand();//meant to identify the object for debugging purposes

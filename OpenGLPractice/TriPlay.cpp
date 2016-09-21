@@ -32,7 +32,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	dm = make_shared<DrawMesh>(bezier, "Assets/texture.png", prog);
 	shapes.push_back(dm);
 	mesh = make_shared<ColliderEntity>(dm);
-	mesh->transform.position(vec3(2.5f, 0, 0));
+	mesh->transform.position = vec3(2.5f, 0, 0);
 	mesh->id = (void*)0xb;
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
@@ -43,10 +43,10 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	shapes.push_back(dm);
 	mesh = make_shared<ColliderEntity>(dm);
 	mesh->id = (void*)0xc;
-	mesh->transform.position(vec3(-2.5f, 0, 0));
+	mesh->transform.position = vec3(-2.5f, 0, 0);
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
-	mesh->rigidBody().floating(1);
+	mesh->rigidBody.floating(1);
 
 	//genSphere("Assets/sphere.obj", 16);
 	auto sphere = loadOBJ("Assets/sphere.obj");
@@ -54,10 +54,10 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	shapes.push_back(dm);
 	mesh = make_shared<ColliderEntity>(dm);
 	mesh->id = (void*)0xcc;
-	mesh->transform.position(vec3(0, 2.5f, 0));
+	mesh->transform.position = vec3(0, 2.5f, 0);
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
-	mesh->rigidBody().floating(1);
+	mesh->rigidBody.floating(1);
 
 	//genCube("Assets/cube.obj");
 	auto cube = loadOBJ("Assets/cube.obj");
@@ -65,10 +65,10 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	shapes.push_back(dm);
 	mesh = make_shared<ColliderEntity>(dm);
 	mesh->id = (void*)0xc2fb;
-	mesh->transform.position(vec3(0, -5.f, 0));
-	mesh->transform.scale(vec3(64, 1.5f, 64));
-	mesh->rigidBody().fixed(1);
-	mesh->rigidBody().mass(10000);
+	mesh->transform.position = vec3(0, -5.f, 0);
+	mesh->transform.scale = vec3(64, 1.5f, 64);
+	mesh->rigidBody.fixed(1);
+	mesh->rigidBody.mass(10000);
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 
@@ -76,15 +76,15 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	shapes.push_back(dm);
 	mesh = make_shared<ColliderEntity>(dm);
 	mesh->id = (void*)0xc2;
-	mesh->transform.position(vec3(-2.5f, -2.5f, 0));
-	mesh->rigidBody().floating(1);
+	mesh->transform.position = vec3(-2.5f, -2.5f, 0);
+	mesh->rigidBody.floating(1);
 	entities.push_back(mesh);
 	meshes.push_back(mesh);
 	me = mesh;
 
 	camera = make_shared<Camera>(prog, window);
 	camera->id = (void*)0xcab;
-	camera->transform.position(vec3(0, 0, 1));
+	camera->transform.position = vec3(0, 0, 1);
 	camera->transform.rotate(0, PI, 0);
 	entities.push_back(camera);
 
@@ -115,19 +115,19 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
 
 	if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
 		if (shift)
-			me->transform.position(me->transform.position() + vec3(0, 0, -speed * dt));
+			me->transform.position += vec3(0, 0, -speed * dt);
 		else if (ctrl)
 			me->transform.rotate(-2 * PI * dt, 0, 0);
 		else
-			me->transform.position(me->transform.position() + vec3(0, speed * dt, 0));
+			me->transform.position += vec3(0, speed * dt, 0);
 	}
 	else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
 		if(shift)
-			me->transform.position(me->transform.position() + vec3(0, 0, speed * dt));
+			me->transform.position += vec3(0, 0, speed * dt);
 		else if (ctrl)
 			me->transform.rotate(2 * PI * dt, 0, 0); 
 		else
-			me->transform.position(me->transform.position() + vec3(0, -speed * dt, 0)); 
+			me->transform.position += vec3(0, -speed * dt, 0); 
 	}
 	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
 		if (shift)
@@ -135,7 +135,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
 		else if (ctrl)
 			me->transform.rotate(0, 0, 2 * PI * dt);
 		else
-			me->transform.position(me->transform.position() + vec3(speed * dt, 0, 0));
+			me->transform.position += vec3(speed * dt, 0, 0);
 	}
 	else if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
 		if (shift)
@@ -143,7 +143,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
 		else if (ctrl)
 			me->transform.rotate(0, 0, -2 * PI * dt);
 		else
-			me->transform.position(me->transform.position() + vec3(-speed * dt, 0, 0));
+			me->transform.position += vec3(-speed * dt, 0, 0);
 	}
 
 	Camera::mayaCam(window, m, dt, camera.get());

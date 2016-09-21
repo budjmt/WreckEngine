@@ -25,21 +25,26 @@ typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;
 typedef glm::mat3 mat3;
 typedef glm::mat4 mat4;
+class quat;
 
 std::string to_string(const vec2&);
 std::string to_string(const vec3&);
 std::string to_string(const vec4&);
+std::string to_string(const quat&);
 
 class quat {
 public:
-	quat();
+	quat() {};
 	quat(float _x, float _y, float _z, float _w);
 	quat(float v0, vec3 _v); quat(vec3 a, float t);
-	~quat(); quat(const quat& other); quat& operator=(const quat& other);
-	quat(quat&& other); quat& operator=(quat&& other);
-	//float& x, &y, &z, &w;
-	float& w;
-	vec3& v;
+	
+	~quat() = default;
+	quat(const quat& other) = default;
+	quat(quat&& other) = default;
+	quat& operator=(quat other) { _v = other._v; v0 = other.v0; _theta = other._theta; _axis = other._axis; return *this; }
+	
+	vec3& v = _v;
+	float &x = _v.x, &y = _v.y, &z = _v.z, &w = v0;
 	float theta() const; void theta(float t);
 	vec3 axis() const; void axis(vec3 a);
 
@@ -58,7 +63,10 @@ public:
 	static quat point(float x, float y, float z);
 
 private:
-	float v0;
+	float v0 = 1;
 	vec3 _v;
-	float _theta, sin_t_half; vec3 _axis;
+	float _theta = 0, sin_t_half = 0; vec3 _axis = vec3(0, 0, 1);
+
+	inline void updateAngles();
+	inline void updateValues(vec3& a, float t);
 };

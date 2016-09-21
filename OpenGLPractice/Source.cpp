@@ -39,10 +39,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 void mouse_move_callback(GLFWwindow* window, double x, double y);
 
 void init() {
-	shaderProg = loadGLProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
+	shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
 	if(shaderProg()) {
 		shaderProg.use();
-		setShaderColor(shaderProg(), "tint", 1, 1, 1);
+		shaderProg.getUniform<vec3>("tint").update(vec3(1, 1, 1));
 		uniTime = shaderProg.getUniform<float>("time");
 	}
 

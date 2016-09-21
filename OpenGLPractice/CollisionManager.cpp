@@ -51,7 +51,7 @@ size_t CollisionManager::narrowPhase(float dt) {
 	for (auto& pair : collisionPairs) {
 		//DebugBenchmark::start();
 		auto *a = pair.first, *b = pair.second;
-		if (!(a->active && b->active) || !(a->rigidBody().solid() && b->rigidBody().solid()))
+		if (!(a->active && b->active) || !(a->rigidBody.solid() && b->rigidBody.solid()))
 			continue;
 
 		auto m = a->collider()->intersects(b->collider());

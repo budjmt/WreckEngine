@@ -197,6 +197,7 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ModelHelper.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="property.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ShaderHelper.h" />
     <ClInclude Include="smart_ptr.h" />

@@ -20,17 +20,16 @@ ColliderEntity::ColliderEntity(vec3 p, vec3 dims, vec3 sc, vec3 rA, float r, sha
 	CollisionManager::getInstance().addEntity(this);
 }
 
-RigidBody& ColliderEntity::rigidBody() { return body; }
 Collider* ColliderEntity::collider() const { return _collider.get(); }
 
 void ColliderEntity::update(double delta) {
 	auto dt = (float)delta;
 	calcForces(delta);
 	body.update(delta);
-	transform.position(transform.position() + body.vel() * dt);
+	transform.position += body.vel() * dt;
 	transform.rotate(body.angVel() * dt);
 	_collider->update();
-	assert(!NaN_CHECK(transform.position().x));
+	assert(!NaN_CHECK(transform.position.x));
 }
 
 void ColliderEntity::calcForces(double dt) {
@@ -46,7 +45,7 @@ void ColliderEntity::calcForces(double dt) {
 //override this (and preferably call it) to change on-collision behavior
 //decrement the numCollisions counter if this collision is considered "resolved" without actually resolving the collision
 void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double dt, size_t& numCollisions) {
-	auto& oRB = other->rigidBody();
+	auto& oRB = other->rigidBody;
 
 	//if the two bodies are travelling in the same direction along the axis
 	auto velAlongAxis = glm::dot(oRB.vel() - body.vel(), m.axis);
@@ -73,8 +72,8 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 	auto F = j * m.axis;
 	body.netForce +=  F;
 	oRB.netForce  += -F;
-	DrawDebug::getInstance().drawDebugVector(_transform.position(), _transform.position() + F);
-	DrawDebug::getInstance().drawDebugVector(other->transform.position(), other->transform.position() - F);
+	DrawDebug::getInstance().drawDebugVector(_transform.position, _transform.position() + F);
+	DrawDebug::getInstance().drawDebugVector(other->transform.position, other->transform.position() - F);
 
 	//they have the same collision points by definition, but vecs to those points change, meaning torque and covariance also change
 	body.netAngAccel += calcAngularAccel(m, F);
@@ -84,8 +83,8 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 	const auto percent = 1.2f, slop = 0.05f;
 	auto correction = maxf(-m.pen - slop, 0.0f) * percent * (1 + body.fixed() + oRB.fixed()) / (body.invMass() + oRB.invMass()) * m.axis;
 
-	transform.position(transform.position() - (body.invMass() + oRB.fixed() * oRB.invMass()) * (1 - body.fixed()) * correction);
-	other->transform.position(other->transform.position() + (oRB.invMass() + body.fixed() * body.invMass()) * (1 - oRB.fixed()) * correction);
+	transform.position        -= (body.invMass() + oRB.fixed()  * oRB.invMass())  * (1 - body.fixed()) * correction;
+	other->transform.position += (oRB.invMass()  + body.fixed() * body.invMass()) * (1 - oRB.fixed())  * correction;
 
 	assert(!NaN_CHECK(transform.position().x));
 	assert(!NaN_CHECK(other->transform.position().x));

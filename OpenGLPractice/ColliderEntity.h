@@ -17,8 +17,9 @@ public:
 	ColliderEntity(shared<DrawMesh> s);
 	ColliderEntity(vec3 p, vec3 dims, vec3 sc, vec3 rA, float r, shared<DrawMesh> s);
 
-	RigidBody& rigidBody();
+	RigidBody& rigidBody = body;
 	Collider* collider() const;
+
 	virtual void update(double dt);
 	virtual void calcForces(double dt);
 	virtual void handleCollision(ColliderEntity* other, Manifold& m, double dt, size_t& numCollisions);

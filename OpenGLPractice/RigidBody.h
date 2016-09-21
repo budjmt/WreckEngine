@@ -1,29 +1,14 @@
 #pragma once
 
 #include "MarchMath.h"
+#include "property.h"
 
 const float MIN_VEL = .1f;//it's strangely high
 const float MAX_VEL = 40.f;
 
 class RigidBody {
 public:
-	RigidBody() { }
-
 	vec3 netForce, netAngAccel;
-
-	float floating() const; void floating(float f);
-	float fixed() const; void fixed(float s);
-	short solid() const; void solid(short s);
-
-	float mass() const; void mass(float m);
-	float invMass() const;
-	float restitution() const; void restitution(float e);
-
-	vec3 vel() const; void vel(vec3 v);
-	vec3 heading() const;
-
-	vec3 angVel() const; void angVel(vec3 a);
-	vec3 angHeading() const;
 
 	void update(double dt);
 	void updateVel(double dt);
@@ -33,13 +18,17 @@ public:
 	vec3 quadDrag(float c_d, vec3 v, vec3 h);
 
 private:
-	float _floating = 0, _fixed = 0; 
-	short _solid = 1;
+	PROP_GS_D_S   (float, floating, 0);
+	PROP_GS_D_S   (short, solid, 1);
+	PROP_GS_D_S_C (float, fixed, { return _fixed; }, { _fixed = value; _floating = value; }, 0);
 
-	float _mass = 1, _invMass = 1;
-	float _restitution = 1;
+	PROP_GS_D_S_C (float, mass, { return _mass; }, { _mass = value; _invMass = 1.f / value; }, 1);
+	PROP_G_D_S    (float, invMass, 1);
+	PROP_GS_D_S   (float, restitution, 1);
 	
-	vec3 _vel,    _heading    = vec3(1, 0, 0)
-	   , _angVel, _angHeading = vec3(1, 0, 0);
 	float _speed = 0, _angSpeed = 0;
+	PROP_GS_S_C(vec3, vel,    { return _vel;    }, { _vel = value;    _speed = glm::length(value); });
+	PROP_GS_S_C(vec3, angVel, { return _angVel; }, { _angVel = value; _angSpeed = glm::length(value); });
+	PROP_G_D_S(vec3, heading, vec3(1, 0, 0));
+	PROP_G_D_S(vec3, angHeading, vec3(1, 0, 0));
 };

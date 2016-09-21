@@ -3,13 +3,12 @@
 #include <iostream>
 
 Collider::Collider() { }
-
 Collider::Collider(Transform* t, vec3 d, bool fudge) : Collider(ColliderType::BOX, nullptr, t, d, fudge) { }
 Collider::Collider(Mesh* m, Transform* t) : Collider(ColliderType::MESH, m, t, m->getDims()) { }
 Collider::Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge) : _type(type), mesh(m), _transform(t), fudgeAABB(fudge) 
 {
 	dims(d);
-	base_aabb.center = _transform->getComputed()->position();
+	base_aabb.center = _transform->getComputed()->position;
 	transformed_aabb = base_aabb;
 	updateDims();
 	//the order is important;
@@ -20,17 +19,12 @@ Collider::Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge)
 	update();
 }
 
-Transform* Collider::transform() const { return _transform; }
-vec3 Collider::framePos() const { return _framePos; }
-
 vec3 Collider::dims() const { return _dims; }
 void Collider::dims(vec3 v) {
 	_dims = v;
 	_radius = maxf(maxf(_dims.x, _dims.y), _dims.z);
 	base_aabb.halfDims = v;
 }
-AABB& Collider::aabb() { return transformed_aabb; }
-float Collider::radius() const { return _radius; }
 
 //makes sure the radius is up to date
 void Collider::updateDims() {
@@ -42,7 +36,7 @@ void Collider::updateDims() {
 }
 
 void Collider::update() {
-	_framePos = _transform->getComputed()->position();
+	_framePos = _transform->getComputed()->position;
 	base_aabb.center = _framePos;
 	transformed_aabb.center = base_aabb.center;
 	
