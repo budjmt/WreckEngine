@@ -1,46 +1,37 @@
 #pragma once
 
-#define DECL_PROP_D(type, name, def) type _ ## name = def;
-#define DECL_PROP(type, name)        type _ ## name;
+#define DECL_FLD(type, name) type _ ## name
 
 #define DEF_PROP_G(clss, type, access, name)  property<clss, type, access> name = property<clss, type, access>(this, &clss ## ::get_ ## name);
 #define DEF_PROP_S(clss, type, access, name)  property<clss, type, access> name = property<clss, type, access>(this, &clss ## ::set_ ## name);
 #define DEF_PROP_GS(clss, type, access, name) property<clss, type, access> name = property<clss, type, access>(this, &clss ## ::get_ ## name, &clss ## ::set_ ## name);
 
 #define DEF_GET(type, name, body) type get_ ## name() body;
-#define DEF_GET_S(type, name) DEF_GET_S_C(type, name, { return _ ## name; });
-#define DEF_GET_S_C(type, name, body) type name() const body;
+#define DEF_GET_S(t_get, name) DEF_GET_S_C(t_get, name, { return _ ## name; });
+#define DEF_GET_S_C(t_get, name, body) t_get name() const body;
 
 #define DEF_SET(type, name, body) const type& set_ ## name(type value) body;
-#define DEF_SET_S(type, name) DEF_SET_S_C(type, name, { _ ## name = value; });
-#define DEF_SET_S_C(type, name, body) void name(type value) body;
+#define DEF_SET_S(t_set, name) DEF_SET_S_C(t_set, name, { _ ## name = value; });
+#define DEF_SET_S_C(t_set, name, body) void name(t_set value) body;
 
-#define PROP_G_D(clss, type, name, get_body, def) public: DEF_PROP_G(clss, type, GET, name) private: DECL_PROP_D(type, name, def) DEF_GET(type, name, get_body)
-#define PROP_G(clss, type, name, get_body)        public: DEF_PROP_G(clss, type, GET, name) private: DECL_PROP(type, name)        DEF_GET(type, name, get_body)
+#define PROP_G(clss, type, name, get_body) public: DEF_PROP_G(clss, type, GET, name) private: DEF_GET(type, name, get_body) DECL_FLD(type, name)
+#define PROP_S(clss, type, name, set_body) public: DEF_PROP_S(clss, type, SET, name) private: DEF_SET(type, name, set_body) DECL_FLD(type, name)
+#define PROP_GS(clss, type, name, get_body, set_body) public: DEF_PROP_GS(clss, type, GET_SET, name) private: DEF_GET(type, name, get_body) DEF_SET(type, name, set_body) DECL_FLD(type, name)
 
-#define PROP_S_D(clss, type, name, set_body, def) public: DEF_PROP_S(clss, type, SET, name) private: DECL_PROP_D(type, name, def) DEF_SET(type, name, set_body)
-#define PROP_S(clss, type, name, set_body)        public: DEF_PROP_S(clss, type, SET, name) private: DECL_PROP(type, name)        DEF_SET(type, name, set_body)
+#define ACCS_G(type, name)         public: DEF_GET_S(type, name)         private: DECL_FLD(type, name)
+#define ACCS_G_C(type, name, body) public: DEF_GET_S_C(type, name, body) private: DECL_FLD(type, name)
+#define ACCS_G_T(type, t_get, name)         public: DEF_GET_S(t_get, name)         private: DECL_FLD(type, name)
+#define ACCS_G_T_C(type, t_get, name, body) public: DEF_GET_S_C(t_get, name, body) private: DECL_FLD(type, name)
 
-#define PROP_GS_D(clss, type, name, get_body, set_body, def) public: DEF_PROP_GS(clss, type, GET_SET, name) private: DECL_PROP_D(type, name, def) DEF_GET(type, name, get_body) DEF_SET(type, name, set_body)
-#define PROP_GS(clss, type, name, get_body, set_body)        public: DEF_PROP_GS(clss, type, GET_SET, name) private: DECL_PROP(type, name)        DEF_GET(type, name, get_body) DEF_SET(type, name, set_body)
+#define ACCS_S(type, name)         public: DEF_SET_S(type, name)         private: DECL_FLD(type, name)
+#define ACCS_S_C(type, name, body) public: DEF_SET_S_C(type, name, body) private: DECL_FLD(type, name)
+#define ACCS_S_T(type, t_set, name)         public: DEF_SET_S(t_set, name)         private: DECL_FLD(type, name)
+#define ACCS_S_T_C(type, t_set, name, body) public: DEF_SET_S_C(t_set, name, body) private: DECL_FLD(type, name)
 
-#define PROP_G_D_S(type, name, def) public: DEF_GET_S(type, name) private: DECL_PROP_D(type, name, def) 
-#define PROP_G_S(type, name)        public: DEF_GET_S(type, name) private: DECL_PROP(type, name) 
-
-#define PROP_G_D_S_C(type, name, body, def) public: DEF_GET_S_C(type, name, body) private: DECL_PROP_D(type, name, def) 
-#define PROP_G_S_C(type, name, body)        public: DEF_GET_S_C(type, name, body) private: DECL_PROP(type, name) 
-
-#define PROP_S_D_S(type, name, def) public: DEF_SET_S(type, name) private: DECL_PROP_D(type, name, def) 
-#define PROP_S_S(type, name)        public: DEF_SET_S(type, name) private: DECL_PROP(type, name) 
-
-#define PROP_S_D_S_C(type, name, body, def) public: DEF_SET_S_C(type, name, body) private: DECL_PROP_D(type, name, def) 
-#define PROP_S_S_C(type, name, body)        public: DEF_SET_S_C(type, name, body) private: DECL_PROP(type, name) 
-
-#define PROP_GS_D_S(type, name, def) public: DEF_GET_S(type, name) DEF_SET_S(type, name) private: DECL_PROP_D(type, name, def) 
-#define PROP_GS_S(type, name)        public: DEF_GET_S(type, name) DEF_SET_S(type, name) private: DECL_PROP(type, name) 
-
-#define PROP_GS_D_S_C(type, name, get_body, set_body, def) public: DEF_GET_S_C(type, name, get_body) DEF_SET_S_C(type, name, set_body) private: DECL_PROP_D(type, name, def) 
-#define PROP_GS_S_C(type, name, get_body, set_body)        public: DEF_GET_S_C(type, name, get_body) DEF_SET_S_C(type, name, set_body) private: DECL_PROP(type, name) 
+#define ACCS_GS(type, name)                       public: DEF_GET_S(type, name)             DEF_SET_S(type, name)             private: DECL_FLD(type, name)
+#define ACCS_GS_C(type, name, get_body, set_body) public: DEF_GET_S_C(type, name, get_body) DEF_SET_S_C(type, name, set_body) private: DECL_FLD(type, name)
+#define ACCS_GS_T(type, t_get, t_set, name)                       public: DEF_GET_S(t_get, name)             DEF_SET_S(t_set, name)             private: DECL_FLD(type, name)
+#define ACCS_GS_T_C(type, t_get, t_set, name, get_body, set_body) public: DEF_GET_S_C(t_get, name, get_body) DEF_SET_S_C(t_set, name, set_body) private: DECL_FLD(type, name)
 
 enum property_type { GET = 1, SET = 2, GET_SET = 3 };
 template <typename P, typename T, property_type pt> class property { };

@@ -28,16 +28,16 @@ public:
 
 	vec3 getTransformed(vec3 v);
 private: 
-	PROP_GS   (Transform, vec3, position, { return _position; }, { makeDirty(); return _position = value; });
-	PROP_GS_D (Transform, vec3, scale,    { return _scale;    }, { makeDirty(); return _scale = value; }, vec3(1));
-	PROP_GS   (Transform, quat, rotation, { return _rotation; }, { makeDirty(); return _rotation = value; });
-	PROP_G_S  (vec3, rotAxis);
-	PROP_G_S  (float, rotAngle);
+	PROP_GS (Transform, vec3, position, { return _position; }, { makeDirty(); return _position = value; });
+	PROP_GS (Transform, vec3, scale,    { return _scale;    }, { makeDirty(); return _scale = value; }) = vec3(1);
+	PROP_GS (Transform, quat, rotation, { return _rotation; }, { makeDirty(); return _rotation = value; });
+	ACCS_G  (vec3, rotAxis);
+	ACCS_G  (float, rotAngle);
 
 	vec3 base_forward = vec3(0, 0, 1), base_up = vec3(0, 1, 0);
-	PROP_G_S (vec3, forward);
-	PROP_G_S (vec3, up);
-	PROP_G_S (vec3, right);
+	ACCS_G (vec3, forward);
+	ACCS_G (vec3, up);
+	ACCS_G (vec3, right);
 
 	alloc<Transform> computed = alloc<Transform>(nullptr);
 	Transform* _parent = nullptr;

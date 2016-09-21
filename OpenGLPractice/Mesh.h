@@ -18,14 +18,12 @@ class Mesh
 {
 public:
 	Mesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u, Face f);
-	const std::vector<vec3>& verts()   const; void verts(std::vector<vec3>& v);
-	const std::vector<vec3>& uvs()     const; void uvs(std::vector<vec3>& u);
-	const std::vector<vec3>& normals() const; void normals(std::vector<vec3>& n);
-	Face faces() const; void faces(Face& f);
 	vec3 getDims();
 protected:
-	std::vector<vec3> _verts, _normals, _uvs;
-	Face _faces;
+	ACCS_GS_T (std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, verts);
+	ACCS_GS_T (std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, normals);
+	ACCS_GS_T (std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, uvs);
+	ACCS_GS_T (Face, const Face&, const Face&, faces);
 
 	std::vector<GLfloat> meshArray;
 	std::vector<GLuint> meshElementArray;

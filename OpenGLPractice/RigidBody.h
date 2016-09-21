@@ -18,17 +18,17 @@ public:
 	vec3 quadDrag(float c_d, vec3 v, vec3 h);
 
 private:
-	PROP_GS_D_S   (float, floating, 0);
-	PROP_GS_D_S   (short, solid, 1);
-	PROP_GS_D_S_C (float, fixed, { return _fixed; }, { _fixed = value; _floating = value; }, 0);
+	ACCS_GS   (float, floating) = 0;
+	ACCS_GS   (short, solid)    = 1;
+	ACCS_GS_C (float, fixed, { return _fixed; }, { _fixed = value; _floating = value; }) = 0;
 
-	PROP_GS_D_S_C (float, mass, { return _mass; }, { _mass = value; _invMass = 1.f / value; }, 1);
-	PROP_G_D_S    (float, invMass, 1);
-	PROP_GS_D_S   (float, restitution, 1);
+	ACCS_GS_C (float, mass, { return _mass; }, { _mass = value; _invMass = 1.f / value; }) = 1;
+	ACCS_G    (float, invMass) = 1;
+	ACCS_GS   (float, restitution) = 1;
 	
 	float _speed = 0, _angSpeed = 0;
-	PROP_GS_S_C(vec3, vel,    { return _vel;    }, { _vel = value;    _speed = glm::length(value); });
-	PROP_GS_S_C(vec3, angVel, { return _angVel; }, { _angVel = value; _angSpeed = glm::length(value); });
-	PROP_G_D_S(vec3, heading, vec3(1, 0, 0));
-	PROP_G_D_S(vec3, angHeading, vec3(1, 0, 0));
+	ACCS_GS_C(vec3, vel,    { return _vel;    }, { _vel = value;    _speed = glm::length(value); });
+	ACCS_GS_C(vec3, angVel, { return _angVel; }, { _angVel = value; _angSpeed = glm::length(value); });
+	ACCS_G(vec3, heading)    = vec3(1, 0, 0);
+	ACCS_G(vec3, angHeading) = vec3(1, 0, 0);
 };

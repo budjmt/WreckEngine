@@ -47,11 +47,6 @@ Mesh::Mesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u, Face f
 	}*/
 }
 
-const std::vector<vec3>& Mesh::verts() const { return _verts; } void Mesh::verts(std::vector<vec3>& v) { _verts = v; }
-const std::vector<vec3>& Mesh::uvs() const { return _uvs; } void Mesh::uvs(std::vector<vec3>& u) { _uvs = u; }
-const std::vector<vec3>& Mesh::normals() const { return _normals; } void Mesh::normals(std::vector<vec3>& n) { _normals = n; }
-Face Mesh::faces() const { return _faces; } void Mesh::faces(Face& f) { _faces = f; }
-
 float getDistSq(vec3 v1, vec3 v2) {
 	float xDist = v1.x - v2.x;
 	float yDist = v1.y - v2.y;

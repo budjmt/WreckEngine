@@ -19,13 +19,6 @@ Collider::Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge)
 	update();
 }
 
-vec3 Collider::dims() const { return _dims; }
-void Collider::dims(vec3 v) {
-	_dims = v;
-	_radius = maxf(maxf(_dims.x, _dims.y), _dims.z);
-	base_aabb.halfDims = v;
-}
-
 //makes sure the radius is up to date
 void Collider::updateDims() {
 	auto& scale = _transform->getComputed()->scale();

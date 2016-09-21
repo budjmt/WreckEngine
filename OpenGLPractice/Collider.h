@@ -21,8 +21,8 @@ struct AABB {
 struct Adj { std::pair<GLuint, GLuint> faces, edge; };
 
 struct GaussMap {
-	//std::vector<vec3> normals;
-	std::map<std::string, std::vector<Adj>> adjacencies;//keys are untransformed normals, adjs use indices because of rotations
+	//keys are untransformed normals, adjs use indices because of rotations
+	std::unordered_map<std::string, std::vector<Adj>> adjacencies;
 	void addAdj(vec3 v, Adj a);
 	std::vector<Adj>& getAdjs(vec3 v);
 };
@@ -36,17 +36,16 @@ struct Manifold {
 	vec3 axis;
 };
 
-struct FaceManifold : Manifold { size_t norm; };
+struct FaceManifold : Manifold { GLuint norm; };
 struct EdgeManifold : Manifold { std::pair<Adj, Adj> edgePair; };
 
 class Collider
 {
 public:
-	Collider(void);
+	Collider();
 	Collider(Transform* t, vec3 d, bool fudge = true);
 	Collider(Mesh* m, Transform* t);
 	
-	vec3 dims() const; void dims(vec3);
 	AABB& aabb = transformed_aabb;
 	ColliderType& type = _type;
 	void updateDims();
@@ -88,10 +87,10 @@ public:
 private:
 	Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge = true);
 
-	PROP_G_S   (Transform*, transform);
-	PROP_G_S   (vec3, framePos);
-	PROP_G_D_S (float, radius, 0);
-	vec3 _dims;
+	ACCS_G    (Transform*, transform);
+	ACCS_G    (vec3,  framePos);
+	ACCS_GS_C (vec3,  dims, { return _dims; }, { _dims = base_aabb.halfDims = value; updateDims(); });
+	ACCS_G    (float, radius) = 0;
 
 	bool fudgeAABB = true;//if this is true, the transformed aabb will be scaled by a factor of 1.5
 	AABB base_aabb, transformed_aabb;

@@ -8,19 +8,13 @@ DrawMesh::DrawMesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u
 void DrawMesh::setup(const char* texFile, GLprogram shader) {
 	shaderProg = shader;
 
-	//generate 1 vertex array at the address of the var
-	//then make it active by binding it
 	vArray.create();
 	vArray.bind();
 
-	//generate 1 buffer at the address of the var
-	//then make it active by binding it to the main buffer
 	vertBuffer.create(GL_ARRAY_BUFFER);
 	vertBuffer.bind();
-	//move the data in coords to the buffer and tell it how it'll be used
 	vertBuffer.data(sizeof(GLfloat) * _mesh->meshArray.size(), &_mesh->meshArray[0]);
 
-	//generates the element array buffer for faces
 	elBuffer.create(GL_ELEMENT_ARRAY_BUFFER);
 	elBuffer.bind();
 	elBuffer.data(sizeof(GLuint) * _mesh->meshElementArray.size(), &_mesh->meshElementArray[0]);
@@ -39,16 +33,12 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 	textureLoc = _shaderProg.getUniform<GLsampler>("uniformTex");
 	textureLoc.update(0);
 
-	//std::cout << vArray << "," << vertBuffer << "," << vBuffer << std::endl;
-
 	worldMatrix   = _shaderProg.getUniform<mat4>("worldMatrix");
 	iTworldMatrix = _shaderProg.getUniform<mat4>("iTworldMatrix");
 	colorLoc = _shaderProg.getUniform<vec4>("tint");
 
 	glBindVertexArray(0);
 }
-
-Mesh* DrawMesh::mesh() const { return _mesh.get(); } void DrawMesh::mesh(Mesh* m) { _mesh.reset(m); }
 
 void DrawMesh::draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale) {
 	Drawable::draw(x, y, xScale, yScale);

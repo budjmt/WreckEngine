@@ -20,8 +20,6 @@ ColliderEntity::ColliderEntity(vec3 p, vec3 dims, vec3 sc, vec3 rA, float r, sha
 	CollisionManager::getInstance().addEntity(this);
 }
 
-Collider* ColliderEntity::collider() const { return _collider.get(); }
-
 void ColliderEntity::update(double delta) {
 	auto dt = (float)delta;
 	calcForces(delta);
