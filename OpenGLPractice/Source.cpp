@@ -25,6 +25,7 @@ struct GLFWmanager {
 double FPS = 60;
 double runningAvgDelta = 1.0 / FPS;
 int samples = 10;
+bool fpsMode = true;
 
 GLFWwindow* window;
 GLprogram shaderProg;
@@ -91,18 +92,19 @@ void update() {
 	double dt = currFrame - prevFrame;
 	prevFrame = currFrame;
 	//need to separate drawing and update pipelines
-	double spf = 1.0 / FPS;
-	while (dt < spf) {
-		currFrame = glfwGetTime();
-		dt += currFrame - prevFrame;
-		prevFrame = currFrame;
-	}
+	//double spf = 1.0 / FPS;
+	//while (dt < spf) {
+	//	currFrame = glfwGetTime();
+	//	dt += currFrame - prevFrame;
+	//	prevFrame = currFrame;
+	//}
 
 	runningAvgDelta -= runningAvgDelta / samples;
 	runningAvgDelta += dt / samples;
-	auto title = std::to_string(1.0 / runningAvgDelta);
+	auto title = std::to_string(fpsMode ? 1.0 / runningAvgDelta : runningAvgDelta * 1000.0);
 	auto decimal = title.find('.', 2);
 	if (title.length() - decimal > 3) title = title.erase(decimal + 3);
+	title += fpsMode ? " FpS" : " MSpF";
 	glfwSetWindowTitle(window, title.c_str());
 
 	mouse.prevx = glm::mix(mouse.prevx, mouse.x, 0.15f);
@@ -110,6 +112,8 @@ void update() {
 	
 	bool alt = glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
 	if (alt) {
+		if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
+			fpsMode = !fpsMode;
 		if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
 			FPS += (FPS < 5) ? 1 : ((FPS < 20) ? 5 : ((FPS < 60) ? 10 : 0));
 		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
@@ -145,7 +149,7 @@ int main(int argc, char** argv) {
 	if(DEBUG)
 		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
-	window = glfwCreateWindow(800, 600, "OpenGL App", NULL, NULL);
+	window = glfwCreateWindow(800, 600, "Wreck Engine", NULL, NULL);
 	if (!window) {
 		return -1;
 	}

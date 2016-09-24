@@ -7,6 +7,8 @@ in vec3 fragPos;
 in vec2 fragTexUV;
 in vec3 fragNormal;
 
+in float ftime;
+
 void main() {
 	vec3 lightPos = vec3(3,2,0);
 	vec3 lightDir = fragPos - lightPos;
@@ -39,4 +41,8 @@ void main() {
 	vec4 specular = spec * specPower * vec4(1.,1.,1.,1.);
 	
 	gl_FragColor  = color + ambient + diffuse + specular;
+	
+	//float unique = (gl_FragCoord.x + 1) * 2 + (gl_FragCoord.y + 1) * 4;
+	//if(int(ftime * unique) % 2 == 0)
+	//	gl_FragColor = vec4(gl_FragColor.rgb, 0);
 }

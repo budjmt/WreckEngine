@@ -98,6 +98,7 @@ Future developments:
 enum property_type { GET = 1, SET = 2, GET_SET = 3 };
 template <typename P, typename T, property_type pt> class property { };
 
+// it might be worth considering a specialization for objects that returns a const&
 template<class P, class T>
 struct property<P, T, GET> {
 	property<P, T, GET>(P* parent, T(P::*getter)()) : m_parent(parent), get(getter) { }

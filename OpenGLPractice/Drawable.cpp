@@ -2,10 +2,12 @@
 
 #include "glm/gtx/transform.hpp"
 
-void Drawable::draw(Transform* t) { draw(t->position, t->scale, t->rotAxis(), t->rotAngle()); }
+void Drawable::draw(Transform* t) { draw(t->getMats()->world); }
 void Drawable::draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale) { draw(vec3(x, y, 0), vec3(xScale, yScale, 1), vec3(0, 0, 1), 0); }
-void Drawable::draw(vec3 pos, vec3 scale, vec3 rotAxis, float rot) {
-	setWorldMatrix(pos, scale, rotAxis, rot);
+void Drawable::draw(vec3 pos, vec3 scale, vec3 rotAxis, float rot) { draw(glm::translate(pos), glm::rotate(rot, rotAxis), glm::scale(scale)); }
+void Drawable::draw(const mat4& translate, const mat4& rotate, const mat4& scale) { draw(translate * rotate * scale); }
+void Drawable::draw(const mat4& world) {
+	setWorldMatrix(world);
 
 	//now the stuff done in init happens automatically since they were done
 	//while it was active
@@ -14,18 +16,14 @@ void Drawable::draw(vec3 pos, vec3 scale, vec3 rotAxis, float rot) {
 	//actual draw call is reserved for children
 }
 
-void Drawable::setWorldMatrix(vec3 pos, vec3 scaleV, vec3 rotAxis, float rot) {
-	auto translate = glm::translate(pos);
-	auto scale = glm::scale(scaleV);
-	auto rotate = glm::rotate(rot, rotAxis);
-	auto world = translate * rotate * scale;
+void Drawable::setWorldMatrix(const mat4& world) {
 	worldMatrix.update(world);
 	iTworldMatrix.update(glm::inverse(glm::transpose(world)));
 }
 
-std::map<const char*, GLuint> Drawable::loadedTextures;
+std::unordered_map<const char*, GLtexture> Drawable::loadedTextures;
 
-GLuint Drawable::genTexture(const char* texFile) {
+GLtexture Drawable::genTexture2D(const char* texFile) {
 	//check if the image was already loaded
 	if (loadedTextures.find(texFile) != loadedTextures.end()) {
 		return loadedTextures[texFile];
@@ -39,11 +37,11 @@ GLuint Drawable::genTexture(const char* texFile) {
 	auto h = FreeImage_GetHeight(image);
 	auto textureData = FreeImage_GetBits(image);
 
-	GLuint texture = 0;
-	glGenTextures(1, &texture);
-	glBindTexture(GL_TEXTURE_2D, texture);
+	GLtexture texture;
+	texture.create();
+	texture.bind();
 	//the texture is loaded in BGRA format
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, (GLvoid*)textureData);
+	texture.set2D<GLubyte>(textureData, w, h, GL_BGRA);
 	FreeImage_Unload(image);
 
 	loadedTextures[texFile] = texture;
