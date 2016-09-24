@@ -27,7 +27,7 @@ void ColliderEntity::update(double delta) {
 	transform.position += body.vel() * dt;
 	transform.rotate(body.angVel() * dt);
 	_collider->update();
-	assert(!NaN_CHECK(transform.position.x));
+	assert(!NaN_CHECK(transform.position().x));
 }
 
 void ColliderEntity::calcForces(double dt) {

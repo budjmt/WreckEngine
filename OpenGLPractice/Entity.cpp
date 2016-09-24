@@ -10,5 +10,5 @@ Entity::Entity(vec3 p, vec3 sc, vec3 rA, float r, shared<Drawable> s) : Entity(s
 
 void Entity::draw() {
 	shape->colorLoc.update(_color);
-	shape->draw(transform.getComputed());
+	shape->draw(&transform);
 }

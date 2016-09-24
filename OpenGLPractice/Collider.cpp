@@ -149,7 +149,7 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 		for (size_t i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
 
 			auto& curr = pair.second[i];
-			vec3 &a = currNormals[curr.faces.first], &b = currNormals[curr.faces.second];
+			vec3 a = currNormals[curr.faces.first], b = currNormals[curr.faces.second];
 
 			for (auto& otherPair : othergauss.adjacencies) {
 				for (size_t j = 0, othernumAdj = otherPair.second.size(); j < othernumAdj; j++) {
@@ -159,7 +159,7 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 						return manifold;
 
 					auto& otherCurr = otherPair.second[j];
-					vec3 &c = -otherNormals[otherCurr.faces.first], &d = -otherNormals[otherCurr.faces.second];//these must be negative to account for the minkowski DIFFERENCE
+					vec3 c = -otherNormals[otherCurr.faces.first], d = -otherNormals[otherCurr.faces.second];//these must be negative to account for the minkowski DIFFERENCE
 
 					//checks if the arcs between arc(a,b) and arc(c,d) intersect
 					auto bxa = glm::cross(b, a);
@@ -711,8 +711,7 @@ void Collider::updateNormals() {
 		break;
 	case ColliderType::BOX:
 	case ColliderType::MESH:
-		auto t = _transform->getComputed();
-		auto rot = glm::rotate(t->rotAngle(), t->rotAxis());
+		auto rot = _transform->getMats()->rotate;
 		//auto faceVerts = mesh->faces().verts;
 		for (size_t i = 0, numNormals = faceNormals.size(); i < numNormals; i++) {
 			currNormals[i] = (vec3)(rot * vec4(faceNormals[i], 1));
@@ -732,9 +731,9 @@ void Collider::updateEdges() {
 		break;
 	case ColliderType::BOX:
 	case ColliderType::MESH:
-		auto t = _transform->getComputed();
-		auto rot = glm::rotate(t->rotAngle(), t->rotAxis());
-		auto scale = glm::scale(t->scale());
+		auto m = _transform->getMats();
+		auto rot = m->rotate;
+		auto scale = m->scale;
 		int numEdges = edges.size();
 		for (int i = 0; i < numEdges; i++) {
 			currEdges[i] = (vec3)(rot * (scale * vec4(edges[i], 1)));//this is probably slow

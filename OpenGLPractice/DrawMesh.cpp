@@ -27,8 +27,8 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 	//enable attributes
 	attrSetup.apply();
 
-	textures.push_back(genTexture(texFile));
-	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	textures.push_back(genTexture2D(texFile));
+	textures[0].bind();
 
 	textureLoc = _shaderProg.getUniform<GLsampler>("uniformTex");
 	textureLoc.update(0);
@@ -40,12 +40,7 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 	glBindVertexArray(0);
 }
 
-void DrawMesh::draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale) {
-	Drawable::draw(x, y, xScale, yScale);
-	glDrawElements(GL_TRIANGLES, _mesh->meshElementArray.size(), GL_UNSIGNED_INT, nullptr);
-}
-
-void DrawMesh::draw(vec3 pos, vec3 scale, vec3 rotAxis, float rot) {
-	Drawable::draw(pos, scale, rotAxis, rot);
+void DrawMesh::draw(const mat4& world) {
+	Drawable::draw(world);
 	glDrawElements(GL_TRIANGLES, _mesh->meshElementArray.size(), GL_UNSIGNED_INT, nullptr);
 }

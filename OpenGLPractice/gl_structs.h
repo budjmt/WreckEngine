@@ -15,6 +15,10 @@ namespace {
 	// default value used to represent "unintialized" resources
 	const GLuint def = (GLuint) -1;
 
+	size_t local(getMaxNumTextures)() { GLint val; glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &val); return val; }
+
+	void local(delTexture)    (GLuint* t) { if (*t != def) glDeleteTextures(1, t);    delete t; }
+
 	void local(delBuffer)    (GLuint* b) { if (*b != def) glDeleteBuffers(1, b);      delete b; }
 	void local(delVAO)       (GLuint* a) { if (*a != def) glDeleteVertexArrays(1, a); delete a; }
 		 
@@ -40,6 +44,36 @@ template<> struct GLuniform<vec3> { GLuint location; void update(const vec3& val
 template<> struct GLuniform<vec4> { GLuint location; void update(const vec4& value) const { glUniform4fv(location, 1, &value[0]); }; };
 template<> struct GLuniform<mat3> { GLuint location; void update(const mat3& value, bool transpose = false) const { glUniformMatrix3fv(location, 1, transpose, &value[0][0]); }; };
 template<> struct GLuniform<mat4> { GLuint location; void update(const mat4& value, bool transpose = false) const { glUniformMatrix4fv(location, 1, transpose, &value[0][0]); }; };
+
+// wraps a texture. [type] reflects what type of sampler it needs.
+// https://www.opengl.org/wiki/Sampler_(GLSL)
+struct GLtexture {
+	static const GLint MAX_TEXTURES;
+	shared<GLuint> texture = shared<GLuint>(new GLuint(def), local(delTexture));
+	GLenum type;
+	GLuint& operator()() { return *texture; }
+
+	void create(GLenum type = GL_TEXTURE_2D) { glGenTextures(1, texture.get()); this->type = type; }
+	void bind(GLint index = 0) { 
+		if (index > MAX_TEXTURES) return; 
+		glActiveTexture(GL_TEXTURE0 + index); 
+		glBindTexture(type, *texture);
+	}
+
+	// these sets correspond to glTextImage. Texture must be bound for these to work.
+	template<typename value_T>
+	void set1D(GLvoid* pixelData, GLuint width, GLenum format_from = GL_RGBA, GLenum format_to = GL_RGBA, GLint mip_level = 0) {
+		glTexImage1D(type, mip_level, format_to, width, 0, format_from, GLtype<value_T>(), pixelData);
+	}
+	template<typename value_T>
+	void set2D(GLvoid* pixelData, GLuint width, GLuint height, GLenum format_from = GL_RGBA, GLenum format_to = GL_RGBA, GLint mip_level = 0) {
+		glTexImage2D(type, mip_level, format_to, width, height, 0, format_from, GLtype<value_T>(), pixelData);
+	}
+	template<typename value_T>
+	void set3D(GLvoid* pixelData, GLuint width, GLuint height, GLuint depth, GLenum format_from = GL_RGBA, GLenum format_to = GL_RGBA, GLint mip_level = 0) {
+		glTexImage3D(type, mip_level, format_to, width, height, depth, 0, format_from, GLtype<value_T>(), pixelData);
+	}
+};
 
 // wraps a buffer object on the GPU.
 struct GLbuffer {
