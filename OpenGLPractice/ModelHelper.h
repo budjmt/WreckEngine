@@ -19,7 +19,7 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 //generate uvs
 void genCube(const char* file);
 void genCylinder(const char* file, size_t res);
-//void genCone(const car* file, int res);
+void genCone(const char* file, size_t res);
 void genSphere(const char* file, size_t res);
 //void genTorus(const char* file, float r1, float r2);//hole rad, ring rad
 void genBezierSurface(const char* file, size_t ures, size_t vres, std::vector<std::vector<vec3>>& k);

@@ -2,13 +2,15 @@
 
 #include <intrin.h>
 
-int sign(int i) { return (i > 0) ? 1 : -1; } float signf(float f) { return (f > 0) ? 1.f : -1.f; }
-//float maxf(float a, float b) { _mm_store_ss(&a, _mm_max_ss(_mm_set_ss(a), _mm_set_ss(b))); return a; }
-//float minf(float a, float b) { _mm_store_ss(&a, _mm_min_ss(_mm_set_ss(a), _mm_set_ss(b))); return a; }
-//float clampf(float val, float min, float max) { _mm_store_ss(&val, _mm_min_ss(_mm_max_ss(_mm_set_ss(val), _mm_set_ss(min)), _mm_set_ss(max))); return val; }
-float maxf(float a, float b) { return glm::max(a, b); }
-float minf(float a, float b) { return glm::min(a, b); }
-float clampf(float val, float min, float max) { return maxf(min, minf(val, max)); }
+int sign(int i) { return glm::sign(i); } 
+int bitsign(int i) { const int signbit = 1 << 31; return i & signbit; }
+float signf(float f) { return glm::sign(f); }
+//inline float maxf(float a, float b) { _mm_store_ss(&a, _mm_max_ss(_mm_set_ss(a), _mm_set_ss(b))); return a; }
+//inline float minf(float a, float b) { _mm_store_ss(&a, _mm_min_ss(_mm_set_ss(a), _mm_set_ss(b))); return a; }
+//inline float clampf(float val, float min, float max) { _mm_store_ss(&val, _mm_min_ss(_mm_max_ss(_mm_set_ss(val), _mm_set_ss(min)), _mm_set_ss(max))); return val; }
+inline float maxf(float a, float b) { return glm::max(a, b); }
+inline float minf(float a, float b) { return glm::min(a, b); }
+inline float clampf(float val, float min, float max) { return maxf(min, minf(val, max)); }
 
 std::string to_string(const vec2& v) { return std::to_string(v.x) + "," + std::to_string(v.y); }
 std::string to_string(const vec3& v) { return std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z); }

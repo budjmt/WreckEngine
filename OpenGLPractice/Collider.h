@@ -13,6 +13,8 @@ class Collider;
 
 enum class ColliderType { SPHERE, BOX, MESH };
 
+const float COLLISION_PEN_TOLERANCE = 0.01f * -1.f;
+
 struct AABB {
 	vec3 center, halfDims;
 	bool intersects(const AABB& other) const;
@@ -42,7 +44,6 @@ struct EdgeManifold : Manifold { std::pair<Adj, Adj> edgePair; };
 class Collider
 {
 public:
-	Collider();
 	Collider(Transform* t, vec3 d, bool fudge = true);
 	Collider(Mesh* m, Transform* t);
 	
@@ -68,10 +69,10 @@ public:
 	const std::vector<vec3>& getCurrNormals() const;
 	const std::vector<vec3>& getEdges() const;
 
-	int getFaceVert(size_t index) const;
-	vec3 getVert(size_t index) const;
-	vec3 getNormal(size_t index) const;
-	vec3 getEdge(std::pair<GLuint, GLuint> e);
+	inline int getFaceVert(size_t index) const;
+	inline vec3 getVert(size_t index) const;
+	inline vec3 getNormal(size_t index) const;
+	inline vec3 getEdge(std::pair<GLuint, GLuint> e);
 
 	const GaussMap& getGaussMap() const;
 
@@ -92,12 +93,15 @@ private:
 	ACCS_GS_C (private, vec3,  dims, { return _dims; }, { _dims = base_aabb.halfDims = value; updateDims(); });
 	ACCS_G    (private, float, radius) = 0;
 
-	bool fudgeAABB = true;//if this is true, the transformed aabb will be scaled by a factor of 1.5
+	alloc<aligned_mat4> normalMatCache = alloc<aligned_mat4>(new aligned_mat4(0.f));
+	vec3 oldScale;
+
+	bool fudgeAABB = true;//if this is true, the transformed aabb will be scaled by some factor
 	AABB base_aabb, transformed_aabb;
 	ColliderType _type;
 
 	std::vector<vec3> faceNormals, currNormals, edges, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
-	std::unordered_map<std::string, int> edgeMap;//maps the edge pairs to the indices in edges
+	std::unordered_map<std::string, GLuint> edgeMap;//maps the edge pairs to the indices in edges
 	GaussMap gauss;
 	//std::vector<std::vector<Adj>> adjacencies;
 	Mesh* mesh;

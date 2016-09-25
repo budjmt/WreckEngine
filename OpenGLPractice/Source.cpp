@@ -50,6 +50,8 @@ void init() {
 	mouse_move_callback(window, 0, 0);//this is cheating but it works
 
 	game = make_unique<TriPlay>(shaderProg, window);
+
+	prevFrame = glfwGetTime();
 }
 
 void initGraphics(GLFWwindow* window) {
@@ -88,8 +90,8 @@ void initGraphics(GLFWwindow* window) {
 #include <iostream>
 
 void update() {
-	double currFrame = glfwGetTime();
-	double dt = currFrame - prevFrame;
+	auto currFrame = glfwGetTime();
+	auto dt = currFrame - prevFrame;
 	prevFrame = currFrame;
 	//need to separate drawing and update pipelines
 	//double spf = 1.0 / FPS;

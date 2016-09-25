@@ -70,11 +70,11 @@ Future developments:
 
 #define DEF_GET_P(type, name, body) type get_ ## name() body;
 #define DEF_GET(t_get, name) DEF_GET_C(t_get, name, { return _ ## name; });
-#define DEF_GET_C(t_get, name, body) t_get name() const body;
+#define DEF_GET_C(t_get, name, body) inline t_get name() const body;
 
 #define DEF_SET_P(type, name, body) const type& set_ ## name(type value) body;
 #define DEF_SET(t_set, name) DEF_SET_C(t_set, name, { _ ## name = value; });
-#define DEF_SET_C(t_set, name, body) void name(t_set value) body;
+#define DEF_SET_C(t_set, name, body) inline void name(t_set value) body;
 
 #define PROP_G(access, clss, type, name, get_body) public: DEF_PROP_G(clss, type, GET, name) access: DEF_GET_P(type, name, get_body) DECL_FLD(type, name)
 #define PROP_S(access, clss, type, name, set_body) public: DEF_PROP_S(clss, type, SET, name) access: DEF_SET_P(type, name, set_body) DECL_FLD(type, name)

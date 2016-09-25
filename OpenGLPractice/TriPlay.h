@@ -23,5 +23,7 @@ private:
 	std::vector<shared<Entity>> meshes;
 	shared<Camera> camera;
 	GLFWwindow* window;
+
+	bool started = false;
 };
 

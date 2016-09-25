@@ -31,7 +31,7 @@ void ColliderEntity::update(double delta) {
 }
 
 void ColliderEntity::calcForces(double dt) {
-	//body.applyGravity();
+	body.applyGravity();
 	
 	//collision resolution stuff here
 	body.netForce    += body.quadDrag(-0.5f, body.vel(), body.heading());// quadratic drag, no mass involved, it's all velocity dependent
@@ -70,16 +70,16 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 	auto F = j * m.axis;
 	body.netForce +=  F;
 	oRB.netForce  += -F;
-	DrawDebug::getInstance().drawDebugVector(_transform.position, _transform.position() + F);
-	DrawDebug::getInstance().drawDebugVector(other->transform.position, other->transform.position() - F);
+	DrawDebug::getInstance().drawDebugVector(_transform.position, _transform.position() + F, vec3(0,1,1));
+	DrawDebug::getInstance().drawDebugVector(other->transform.position, other->transform.position() - F, vec3(1,1,0));
 
 	//they have the same collision points by definition, but vecs to those points change, meaning torque and covariance also change
 	body.netAngAccel += calcAngularAccel(m, F);
 	oRB.netAngAccel += other->calcAngularAccel(m, -F);
 
 	//correct positions
-	const auto percent = 1.2f, slop = 0.05f;
-	auto correction = maxf(-m.pen - slop, 0.0f) * percent * (1 + body.fixed() + oRB.fixed()) / (body.invMass() + oRB.invMass()) * m.axis;
+	const auto percent = 1.2f, slop = 0.025f;
+	auto correction = maxf(-m.pen + slop, 0.0f) * percent * (1 + body.fixed() + oRB.fixed()) / (body.invMass() + oRB.invMass()) * m.axis;
 
 	transform.position        -= (body.invMass() + oRB.fixed()  * oRB.invMass())  * (1 - body.fixed()) * correction;
 	other->transform.position += (oRB.invMass()  + body.fixed() * body.invMass()) * (1 - oRB.fixed())  * correction;
@@ -87,7 +87,7 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 	assert(!NaN_CHECK(transform.position().x));
 	assert(!NaN_CHECK(other->transform.position().x));
 
-	--numCollisions;// YIKES
+	--numCollisions;
 }
 
 //Given a collision force F, calculates the change in angular acceleration it causes

@@ -16,7 +16,7 @@ struct alloc_ptr : public std::unique_ptr<T, Deleter> {
 
 template<class T, class... Args>
 //alloc_ptr<T> make_alloc(Args&&... args) { return alloc_ptr<T>(new T(std::forward<Args>(args)...)); }
-alloc_ptr<T> make_alloc(Args&&... args) { return alloc_ptr<T>(make_unique(args)); }
+alloc_ptr<T> make_alloc(Args&&... args) { return alloc_ptr<T>(make_unique<T>(args)); }
 
 template<class T>
 //alloc_ptr<T> make_alloc(size_t size) { return alloc_ptr<T>(new typename std::remove_extent<T>::type[size]()); }

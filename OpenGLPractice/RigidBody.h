@@ -24,7 +24,8 @@ private:
 
 	ACCS_GS_C (private, float, mass, { return _mass; }, { _mass = value; _invMass = 1.f / value; }) = 1;
 	ACCS_G    (private, float, invMass) = 1;
-	ACCS_GS   (private, float, restitution) = 1;
+	// 0 is perfectly inelastic, i.e. objects stick together, 1 is perfectly elastic, i.e. objects bounce apart entirely
+	ACCS_GS   (private, float, restitution) = 0;
 	
 	float _speed = 0, _angSpeed = 0;
 	ACCS_GS_C(private, vec3, vel,    { return _vel;    }, { _vel = value;    _speed = glm::length(value); });

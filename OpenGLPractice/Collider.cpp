@@ -2,7 +2,6 @@
 
 #include <iostream>
 
-Collider::Collider() { }
 Collider::Collider(Transform* t, vec3 d, bool fudge) : Collider(ColliderType::BOX, nullptr, t, d, fudge) { }
 Collider::Collider(Mesh* m, Transform* t) : Collider(ColliderType::MESH, m, t, m->getDims()) { }
 Collider::Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge) : _type(type), mesh(m), _transform(t), fudgeAABB(fudge) 
@@ -21,11 +20,20 @@ Collider::Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge)
 
 //makes sure the radius is up to date
 void Collider::updateDims() {
-	auto& scale = _transform->getComputed()->scale();
+	auto scale = _transform->getComputed()->scale();
 	_radius = maxf(maxf(_dims.x * scale.x, _dims.y * scale.y), _dims.z * scale.z);
+	if(scale != oldScale) { 
+		float x  = scale.x
+			, dy = x - scale.y
+			, dz = x - scale.z;
+		//this is for the case of non-uniform scale
+		//*normalMatCache = (EPS_CHECK(dy) || EPS_CHECK(dz)) ?  _transform->getMats()->rotate : glm::inverse(glm::transpose(_transform->getMats()->world));
+		*normalMatCache = _transform->getMats()->rotate;
+		oldScale = scale;
+	}
 	
 	auto factor = fudgeAABB ? 1.2f : 1.f;
-	transformed_aabb.halfDims = base_aabb.halfDims * scale * factor;
+	transformed_aabb.halfDims = scale * factor * base_aabb.halfDims;
 }
 
 void Collider::update() {
@@ -43,11 +51,11 @@ void Collider::update() {
 //gets the vertex of the collider furthest in the direction of dir
 SupportPoint Collider::getSupportPoint(vec3 dir) {
 	auto& verts = mesh->verts();
-	auto trans = _transform->getComputed();
+	auto world = _transform->getMats()->world;
 
-	SupportPoint support{ trans->getTransformed(verts[0]), glm::dot(support.point, dir) };
-	for (size_t i = 1, numVerts = verts.size(); i < numVerts; i++) {
-		auto vert = trans->getTransformed(verts[i]);
+	SupportPoint support{ (vec3)(world * vec4(verts[0], 1)), glm::dot(support.point, dir) };
+	for (size_t i = 1, numVerts = verts.size(); i < numVerts; ++i) {
+		auto vert = (vec3)(world * vec4(verts[i], 1));
 		auto proj = glm::dot(vert, dir);
 		if (proj > support.proj) {
 			support.point = vert;
@@ -73,14 +81,13 @@ FaceManifold Collider::getAxisMinPen(Collider* other) {
 	axis.originator = this;
 	axis.other = other;
 
-	int numAxes = currNormals.size();
-	auto meshVerts = mesh->verts();
-	auto faceVerts = mesh->faces().verts;
-	auto trans = _transform->getComputed();
-	for (int i = 0; axis.pen < 0 && i < numAxes; i++) {
-		auto& norm = currNormals[i];
+	auto& meshVerts = mesh->verts();
+	auto& faceVerts = mesh->faces().verts;
+	auto world = _transform->getMats()->world;
+	for (size_t i = 0, numAxes = currNormals.size(); axis.pen < COLLISION_PEN_TOLERANCE && i < numAxes; ++i) {
+		auto norm = currNormals[i];
 		auto support = other->getSupportPoint(-norm);
-		auto vert = trans->getTransformed(meshVerts[faceVerts[i * FLOATS_PER_VERT]]);
+		auto vert = (vec3)(world * vec4(meshVerts[faceVerts[i * FLOATS_PER_VERT]], 1));
 
 		auto pen = glm::dot(norm, support.point - vert);//point-plane signed distance, negative if penetrating, positive if not
 		if (pen > axis.pen) {
@@ -139,6 +146,8 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	manifold.other = other;
 	//manifold.pen = -FLT_MAX;//initial value
 
+	typedef union { float f; int i; } bfloat;
+
 	auto& othergauss = other->getGaussMap();
 	auto& otherNormals = other->getCurrNormals();
 
@@ -146,40 +155,49 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	auto otherTrans = other->transform()->getComputed();
 
 	for (auto& pair : gauss.adjacencies) {
-		for (size_t i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
+		for (size_t i = 0, numAdj = pair.second.size(); i < numAdj; ++i) {
 
-			auto& curr = pair.second[i];
+			auto curr = pair.second[i];
 			vec3 a = currNormals[curr.faces.first], b = currNormals[curr.faces.second];
 
 			for (auto& otherPair : othergauss.adjacencies) {
-				for (size_t j = 0, othernumAdj = otherPair.second.size(); j < othernumAdj; j++) {
+				for (size_t j = 0, othernumAdj = otherPair.second.size(); j < othernumAdj; ++j) {
 
 					//we found a separating axis boys
-					if (manifold.pen > 0)
+					if (manifold.pen > COLLISION_PEN_TOLERANCE)
 						return manifold;
 
-					auto& otherCurr = otherPair.second[j];
-					vec3 c = -otherNormals[otherCurr.faces.first], d = -otherNormals[otherCurr.faces.second];//these must be negative to account for the minkowski DIFFERENCE
+					auto otherCurr = otherPair.second[j];
+					//these must be negative to account for the minkowski DIFFERENCE
+					//however, that's more expensive than negating on demand, so that's what we'll do
+					vec3 c = otherNormals[otherCurr.faces.first], d = otherNormals[otherCurr.faces.second];
 
 					//checks if the arcs between arc(a,b) and arc(c,d) intersect
 					auto bxa = glm::cross(b, a);
-					float cba = glm::dot(c, bxa)
-						, dba = glm::dot(d, bxa);
+					bfloat cba, dba;
+					cba.f = -glm::dot(c, bxa);// negate for md
+					dba.f = -glm::dot(d, bxa);// negate for md
 
 					//if c and d are on different sides of arc ba
-					if (cba * dba < 0) {
+					//test with whether the signs or different or either is 0
+					//bitwise ops and int to bool ends up being faster than the multiplication
+					//if (cba * dba < 0) {
+					if (cba.i && dba.i && (cba.i ^ dba.i) < 0) {
 
-						auto dxc  = glm::cross(d, c);
-						float adc = glm::dot(a, dxc)
-							, bdc = glm::dot(b, dxc);
+						auto dxc  = glm::cross(d, c);// here the negative signs cancel out, so we're ok
+						bfloat adc, bdc;
+						adc.f = glm::dot(a, dxc);
+						bdc.f = glm::dot(b, dxc);
 
 						//if a and b are on different sides of arc dc &&
 						//if a and d are on the same side of the plane formed by b and c (c . (b x a) * b . (d x c) > 0)
 						//(this works because a . (b x c) == c . (b x a) and d . (b x c) == b . (d x c))(scalar triple product identity)
 						//[scalar triple product of a,b,c == [abc] = a . (b x c)]
-						if (adc * bdc < 0 && cba * bdc > 0) {
-							vec3 &edge = getEdge(curr.edge), 
-								 &otherEdge = other->getEdge(otherCurr.edge);
+						//same principle as brevious
+						//if (adc * bdc < 0 && cba * bdc > 0) {
+						if (adc.i && bdc.i && (adc.i ^ bdc.i) < 0 && (cba.i ^ bdc.i) > 0) {
+							vec3 edge      = getEdge(curr.edge), 
+								 otherEdge = other->getEdge(otherCurr.edge);
 
 							//if edges are parallel, we don't care since they don't define a plane
 							if (fuzzyParallel(edge, otherEdge)) continue;
@@ -216,36 +234,36 @@ Manifold Collider::intersects(Collider* other) {
 
 	//quick sphere collision optimization
 	auto d = _framePos - other->framePos();//ignores displaced colliders for now (it's the one thing still breaking the algorithm)
-	float distSq = d.x * d.x + d.y * d.y + d.z * d.z;
-	float rad = _radius + other->radius();//probably want to use aabbs
+	auto distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+	auto rad = _radius + other->radius();//probably want to use aabbs
 	if (distSq > rad * rad)
 		return Manifold();
 
 	//separating axis theorem 2: electric boogaloo
 	//axis of min pen on this collider
 	auto minAxis = getAxisMinPen(other);
-	if (minAxis.pen > 0) {
+	if (minAxis.pen > COLLISION_PEN_TOLERANCE) {
 		//std::cout << "This: " << minAxis.pen << "; " << minAxis.axis.x << ", " << minAxis.axis.y << ", " << minAxis.axis.z << std::endl;
 		return Manifold();
 	}
 
 	//axis of min pen on other collider
 	auto otherMinAxis = other->getAxisMinPen(this);
-	if (otherMinAxis.pen > 0) {
+	if (otherMinAxis.pen > COLLISION_PEN_TOLERANCE) {
 		//std::cout << "Other: " << otherMinAxis.pen << "; " << otherMinAxis.axis.x << ", " << otherMinAxis.axis.y << ", " << otherMinAxis.axis.z << std::endl;
 		return Manifold();
 	}
 
 	//closest penetrating edges on both colliders
 	auto minEdge = overlayGaussMaps(other);
-	if (minEdge.pen > 0) {
+	if (minEdge.pen > COLLISION_PEN_TOLERANCE) {
 		//debug code
-		auto t = _transform->getComputed();
-		auto ot = other->transform()->getComputed();
-		vec3 v1  = t->getTransformed(getVert(minEdge.edgePair.first.edge.first))
-		   , v2  = t->getTransformed(getVert(minEdge.edgePair.first.edge.second))
-		   , ov1 = ot->getTransformed(other->getVert(minEdge.edgePair.second.edge.first))
-		   , ov2 = ot->getTransformed(other->getVert(minEdge.edgePair.second.edge.second));
+		auto world = _transform->getMats()->world;
+		auto oworld = other->transform()->getMats()->world;
+		vec3  v1  = (vec3)(world * vec4(getVert(minEdge.edgePair.first.edge.first), 1))
+			, v2  = (vec3)(world * vec4(getVert(minEdge.edgePair.first.edge.second), 1))
+			, ov1 = (vec3)(world * vec4(other->getVert(minEdge.edgePair.second.edge.first), 1))
+			, ov2 = (vec3)(world * vec4(other->getVert(minEdge.edgePair.second.edge.second), 1));
 		DrawDebug::getInstance().drawDebugVector(v1, v2, vec3(1, 0, 0));
 		DrawDebug::getInstance().drawDebugVector(ov1, ov2, vec3(1, 1, 0));
 		//std::cout << "Edge: " << minEdge.pen << std::endl;
@@ -354,12 +372,13 @@ void Collider::clipPolygons(FaceManifold& reference, std::vector<GLuint>& incide
 		//DrawDebug::getInstance().drawDebugVector(vert, vert + norm, vec3(1, 0, 1));
 	}
 
+	auto oworld = otherTrans->getMats()->world;
 	for (size_t i = 0, numIncidents = incidents.size(); i < numIncidents; ++i) {
 
 		std::vector<vec3> incidentVerts = {
-			otherTrans->getTransformed(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3))),
-			otherTrans->getTransformed(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3 + 1))),
-			otherTrans->getTransformed(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3 + 2)))
+			(vec3)(oworld * vec4(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3)), 1)),
+			(vec3)(oworld * vec4(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3 + 1)), 1)),
+			(vec3)(oworld * vec4(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3 + 2)), 1))
 		};
 
 		auto clipped = incidentVerts;
@@ -410,9 +429,9 @@ std::vector<vec3> Collider::clipPolyAgainstEdge(std::vector<vec3>& input, vec3 s
 	std::vector<vec3> output;
 
 	//regular conditions protect against this, but just to be safe
-	if (!input.size()) return output;
+	if (!input.size()) { throw; return output; }
 
-	vec3 startpt = input[input.size() - 1], endpt;
+	vec3 startpt = input.back(), endpt;
 	for (size_t i = 0, numInputs = input.size(); i < numInputs; ++i, startpt = endpt) {
 		endpt = input[i];
 
@@ -543,46 +562,36 @@ vec3 Collider::closestPointBtwnSegments(vec3 p0, vec3 p1, vec3 q0, vec3 q1) {
 	sc = (EPS_CHECK(sNumer)) ? 0 : sNumer / sDenom;
 	tc = (EPS_CHECK(tNumer)) ? 0 : tNumer / tDenom;
 
-	vec3 wc = w0 + (sc * u) - (tc * v);//the vec between the 2 closest pts on the 2 segments
-	return q0 + tc * v + wc * 0.5f;//the closest point between the 2 segments in the world
+	v *= tc;
+	auto wc = w0; 
+	wc += (sc * u);
+	wc -= v; //the vec between the 2 closest pts on the 2 segments (wc = w0 + (sc * u) - (tc * v))
+	wc *= 0.5f;
+	wc += v;
+	wc += q0;
+	return wc;//the closest point between the 2 segments in the world (q0 + (tc * v) + wc * 0.5f)
 }
-
-//the code below will need updating when the system is updated for 3D
-/*void Collider::setCorners(std::vector<vec3> c) {
-corners = c;
-}*/
 
 void Collider::genVerts() {
 	if (_type != ColliderType::BOX)
 		return;
 	std::vector<vec3> verts, norms, uvs;//norms and uvs are empty
 	Face faces;
-	verts.push_back(vec3(_dims.x, _dims.y, _dims.z));
-	verts.push_back(vec3(-_dims.x, _dims.y, _dims.z));
-	verts.push_back(vec3(_dims.x, -_dims.y, _dims.z));
-	verts.push_back(vec3(-_dims.x, -_dims.y, _dims.z));
-	verts.push_back(vec3(_dims.x, _dims.y, -_dims.z));
-	verts.push_back(vec3(-_dims.x, _dims.y, -_dims.z));
-	verts.push_back(vec3(_dims.x, -_dims.y, -_dims.z));
-	verts.push_back(vec3(-_dims.x, -_dims.y, -_dims.z));
+	verts = { vec3( _dims.x,  _dims.y,  _dims.z),
+			  vec3(-_dims.x,  _dims.y,  _dims.z),
+			  vec3( _dims.x, -_dims.y,  _dims.z),
+			  vec3(-_dims.x, -_dims.y,  _dims.z),
+			  vec3( _dims.x,  _dims.y, -_dims.z),
+			  vec3(-_dims.x,  _dims.y, -_dims.z),
+			  vec3( _dims.x, -_dims.y, -_dims.z),
+			  vec3(-_dims.x, -_dims.y, -_dims.z) };
 
-	faces.verts.push_back(7); faces.verts.push_back(3); faces.verts.push_back(0);
-	faces.verts.push_back(7); faces.verts.push_back(4); faces.verts.push_back(0);
-
-	faces.verts.push_back(6); faces.verts.push_back(7); faces.verts.push_back(4);
-	faces.verts.push_back(6); faces.verts.push_back(5); faces.verts.push_back(4);
-
-	faces.verts.push_back(2); faces.verts.push_back(6); faces.verts.push_back(5);
-	faces.verts.push_back(2); faces.verts.push_back(1); faces.verts.push_back(5);
-
-	faces.verts.push_back(3); faces.verts.push_back(2); faces.verts.push_back(1);
-	faces.verts.push_back(3); faces.verts.push_back(0); faces.verts.push_back(1);
-
-	faces.verts.push_back(0); faces.verts.push_back(1); faces.verts.push_back(5);
-	faces.verts.push_back(0); faces.verts.push_back(4); faces.verts.push_back(5);
-
-	faces.verts.push_back(7); faces.verts.push_back(6); faces.verts.push_back(2);
-	faces.verts.push_back(7); faces.verts.push_back(3); faces.verts.push_back(2);
+	faces.verts = { 7, 3, 0, 7, 4, 0,
+					6, 7, 4, 6, 5, 4,
+					2, 6, 5, 2, 1, 5,
+					3, 2, 1, 3, 0, 1,
+					0, 1, 5, 0, 4, 5,
+					7, 6, 2, 7, 3, 2 };
 
 	mesh = new Mesh(verts, norms, uvs, faces);
 }
@@ -592,12 +601,12 @@ void Collider::genNormals() {
 	case ColliderType::SPHERE:
 		break;
 	case ColliderType::BOX:
-		faceNormals.push_back(vec3(1, 0, 0));//need to define some kind of vertex array for box colliders
-		faceNormals.push_back(vec3(0, 0, -1));
-		faceNormals.push_back(vec3(-1, 0, 0));
-		faceNormals.push_back(vec3(0, 0, 1));
-		faceNormals.push_back(vec3(0, 1, 0));
-		faceNormals.push_back(vec3(0, -1, 0));
+		faceNormals = { vec3( 1,  0,  0),
+					    vec3(-1,  0,  0),
+					    vec3( 0,  0,  1),
+					    vec3( 0,  0, -1),
+					    vec3( 0,  1,  0),
+					    vec3( 0, -1,  0) };
 		break;
 	case ColliderType::MESH:
 		// generate the face normals from the mesh's vertices
@@ -672,10 +681,6 @@ void Collider::genGaussMap() {
 							auto adj = Adj{ { i/3, j/3 }, { usrc, dst } };
 							if (usrc > dst) { adj.edge.first = dst; adj.edge.second = usrc; }
 							gauss.addAdj(faceNormals[adj.faces.first], adj);
-
-							//adjacencies[a.face1].push_back(a);
-							//adjacencies[a.face2].push_back(a);
-
 							added = true;
 						}
 						// none of the other verts can be equal to this one now, so move to the next one
@@ -697,6 +702,7 @@ bool Collider::fuzzyParallel(vec3 v1, vec3 v2) {
 	auto propz = (v1.z) ? v2.z / v1.z : 0;
 
 	// minimizes divisions
+	// equivalent to: return EPS_CHECK(a) && EPS_CHECK(b);
 	auto a = (propy - propx) / propx;
 	if (EPS_CHECK(a)) {
 		auto b = (propz - propx) / propx;
@@ -711,15 +717,18 @@ void Collider::updateNormals() {
 		break;
 	case ColliderType::BOX:
 	case ColliderType::MESH:
+		//mat4 rot = *normalMatCache;
 		auto rot = _transform->getMats()->rotate;
-		//auto faceVerts = mesh->faces().verts;
+		//auto& faceVerts = mesh->faces().verts;
 		for (size_t i = 0, numNormals = faceNormals.size(); i < numNormals; i++) {
-			currNormals[i] = (vec3)(rot * vec4(faceNormals[i], 1));
+			currNormals[i] = (vec3)(rot * vec4(faceNormals[i], 0));
 
-			/*vec3 a = t.getTransformed(getVert(faceVerts[i * 3])), b = t.getTransformed(getVert(faceVerts[i * 3 + 1])), c = t.getTransformed(getVert(faceVerts[i * 3 + 2]));
-			vec3 center = a + b + c;
-			center /= 3;
-			DrawDebug::getInstance().drawDebugVector(center, center + currNormals[i]);*/
+			//vec3  a = _transform->getTransformed(getVert(faceVerts[i * 3]))
+			//	, b = _transform->getTransformed(getVert(faceVerts[i * 3 + 1]))
+			//	, c = _transform->getTransformed(getVert(faceVerts[i * 3 + 2]));
+			//auto center = a + b + c;
+			//center /= 3;
+			//DrawDebug::getInstance().drawDebugVector(center, center + currNormals[i]);
 		}
 		break;
 	}
@@ -734,18 +743,17 @@ void Collider::updateEdges() {
 		auto m = _transform->getMats();
 		auto rot = m->rotate;
 		auto scale = m->scale;
-		int numEdges = edges.size();
-		for (int i = 0; i < numEdges; i++) {
-			currEdges[i] = (vec3)(rot * (scale * vec4(edges[i], 1)));//this is probably slow
+		for (size_t i = 0, numEdges = edges.size(); i < numEdges; ++i) {
+			currEdges[i] = (vec3)(rot * (scale * vec4(edges[i], 1)));
 		}
-		/*
-		for (std::pair<std::string, std::vector<Adj>> pair : gauss.adjacencies) {
-		for (int i = 0, numAdj = pair.second.size(); i < numAdj; i++) {
-		Adj a = pair.second[i];
-		vec3 s = t.getTransformed(getVert(a.edge[0]));
-		vec3 edge = getEdge(a.edge);
-		DrawDebug::getInstance().drawDebugVector(s,s + edge);
-		}
+		
+		/*for (auto& pair : gauss.adjacencies) {
+			for (size_t i = 0, numAdj = pair.second.size(); i < numAdj; ++i) {
+				auto a = pair.second[i];
+				auto s = _transform->getTransformed(getVert(a.edge[0]));
+				auto edge = getEdge(a.edge);
+				DrawDebug::getInstance().drawDebugVector(s, s + edge);
+			}
 		}*/
 		break;
 	}

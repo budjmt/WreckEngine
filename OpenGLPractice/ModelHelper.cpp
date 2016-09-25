@@ -180,15 +180,13 @@ void genCylinder(const char* file, size_t res) {
 	verts.push_back(bottom.x); verts.push_back(bottom.y); verts.push_back(bottom.z);//1 = bottom middle
 	
 	//these are the tops and bottoms for each pair of verts, 0 is the very first (and would be last) ones added
-	vec3 t0, b0, tprev, tcurr, bprev, bcurr;
+	vec3 tcurr, bcurr;
 	
-	t0 = vec3(0.5f,  0.5f, 0);
-	b0 = vec3(0.5f, -0.5f, 0);
-	verts.push_back(t0.x); verts.push_back(t0.y); verts.push_back(t0.z);
-	verts.push_back(b0.x); verts.push_back(b0.y); verts.push_back(b0.z);
+	tcurr = vec3(0.5f,  0.5f, 0);
+	bcurr = vec3(0.5f, -0.5f, 0);
+	verts.push_back(tcurr.x); verts.push_back(tcurr.y); verts.push_back(tcurr.z);
+	verts.push_back(bcurr.x); verts.push_back(bcurr.y); verts.push_back(bcurr.z);
 
-	tprev = t0;
-	bcurr = b0;
 	for (size_t i = 1; i < res; i++) {
 		auto a = (float)(i * PI * 2 / res);
 		tcurr = vec3(cosf(a),  1.0f, sinf(a)) * 0.5f;
@@ -212,9 +210,6 @@ void genCylinder(const char* file, size_t res) {
 		//side faces
 		vertFaces.push_back(2 * i + 1 + 1); vertFaces.push_back(2 * i + 1); vertFaces.push_back(2 * i + 2 + 1);
 		vertFaces.push_back(2 * i + 2 + 1); vertFaces.push_back(2 * i + 3 + 1); vertFaces.push_back(2 * i + 1 + 1);
-
-		tprev = tprev;
-		bprev = bprev;
 	}
 	//final top face
 	vertFaces.push_back(2 * (res - 1) + 2 + 1); vertFaces.push_back(1); vertFaces.push_back(3);
@@ -227,6 +222,53 @@ void genCylinder(const char* file, size_t res) {
 	//generate normals
 	genNormals(verts, vertFaces, norms, normFaces);
 	
+	//generate uvs
+	genUVCylindrical(verts, vertFaces, uvs, uvFaces);
+
+	genOBJ(file, verts, uvs, norms, vertFaces, uvFaces, normFaces);
+}
+
+void genCone(const char* file, size_t res) {
+	std::vector<GLfloat> verts, uvs, norms;
+	std::vector<GLuint> vertFaces, uvFaces, normFaces;
+
+	//generate verts and vert faces
+	auto top = vec3(0, 0.5f, 0);
+	auto bottom = vec3(0, -0.5f, 0);
+	verts.push_back(top.x); verts.push_back(top.y); verts.push_back(top.z);//0 = top middle
+	verts.push_back(bottom.x); verts.push_back(bottom.y); verts.push_back(bottom.z);//1 = bottom middle
+
+	//these are the verts around the bottom
+
+	auto p0 = vec3(0.5f, -0.5f, 0);
+	verts.push_back(p0.x); verts.push_back(p0.y); verts.push_back(p0.z);
+
+	for (size_t i = 1; i < res; ++i) {
+		auto a = (float)(i * PI * 2 / res);
+		auto curr = vec3(cosf(a), -1.0f, sinf(a)) * 0.5f;
+		verts.push_back(curr.x); verts.push_back(curr.y); verts.push_back(curr.z);
+
+		/*faces, side and bottom:
+(top middle) 0 ---------- i + 2
+		     |			/	  |
+		     |		  /		  |
+		     |		/		  |
+		     |	  /			  |
+		   i + 1 ------------ 1 (bottom middle)
+		*/
+		//bottom face
+		vertFaces.push_back(i + 3); vertFaces.push_back(2); vertFaces.push_back(i + 2);
+		//side face
+		vertFaces.push_back(i + 2); vertFaces.push_back(1); vertFaces.push_back(i + 3);
+	}
+	//final bottom face
+	vertFaces.push_back(3); vertFaces.push_back(2); vertFaces.push_back(res + 2);
+	//final side face
+	vertFaces.push_back(res + 2); vertFaces.push_back(1); vertFaces.push_back(3);
+
+	//generate normals
+	genNormals(verts, vertFaces, norms, normFaces);
+
 	//generate uvs
 	genUVCylindrical(verts, vertFaces, uvs, uvFaces);
 
@@ -451,6 +493,7 @@ void genNormals(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces
 	}
 }
 
+// depends on CLOCKWISE winding
 vec3 genNormal(vec3 v1, vec3 v2, vec3 v3) {
 	auto e1 = v2 - v1;
 	auto e2 = v3 - v1;

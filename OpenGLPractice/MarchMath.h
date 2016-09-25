@@ -7,7 +7,7 @@
 #include <string>
 
 //use for floating point error correction
-#define EPS_CHECK(x) x < FLT_EPSILON && x > -FLT_EPSILON
+#define EPS_CHECK(x) (x < FLT_EPSILON && x > -FLT_EPSILON)
 //all NaN related comparisons evaluate to false, this could be implemented as x != x
 //but that could be optimized out; std::isnan(x) is part of the standard library
 #define NaN_CHECK(x) std::isnan(x)
@@ -15,10 +15,12 @@
 const double PI_D = 3.14159265358979323846;
 const float PI = (float)PI_D;
 
-int sign(int i); float signf(float f);
-float maxf(float a, float b);
-float minf(float a, float b);
-float clampf(float val, float min, float max);
+int sign(int i); 
+int bitsign(int i);
+float signf(float f);
+inline float maxf(float a, float b);
+inline float minf(float a, float b);
+inline float clampf(float val, float min, float max);
 
 typedef glm::vec2 vec2;
 typedef glm::vec3 vec3;
@@ -31,6 +33,18 @@ std::string to_string(const vec2&);
 std::string to_string(const vec3&);
 std::string to_string(const vec4&);
 std::string to_string(const quat&);
+
+_declspec(align(16)) struct aligned_mat4 {
+	mat4 data;
+	template<class... Args>
+	aligned_mat4(Args&&... args) : data(mat4(std::forward<Args>(args)...)) { }
+	mat4& operator=(const mat4& other) { return data = other; }
+	mat4 operator()() { return data; }
+	operator mat4() { return data; }
+	virtual ~aligned_mat4() = default;
+	void* operator new(size_t i) { return _aligned_malloc(i, 16); }
+	void operator delete(void* p) { _aligned_free(p); }
+};
 
 class quat {
 public:

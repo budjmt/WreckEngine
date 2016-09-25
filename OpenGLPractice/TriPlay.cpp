@@ -17,6 +17,17 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	meshes.push_back(mesh);
 	//me = mesh;
 
+	genCone("Assets/_debug/arrow.obj", 8);
+	m = loadOBJ("Assets/_debug/arrow.obj");
+	dm = make_shared<DrawMesh>(m, "Assets/texture.png", prog);
+	shapes.push_back(dm);
+	mesh = make_shared<ColliderEntity>(dm);
+	mesh->transform.position = vec3(-5.5f, 0, 0);
+	mesh->id = (void*)0xdc;
+	entities.push_back(mesh);
+	meshes.push_back(mesh);
+	mesh->rigidBody.floating(1);
+
 	std::vector<std::vector<vec3>> k = {
 		{ vec3( 1,-1,-1), vec3( 1,-1, 1), vec3( 1, 1, 1) },
 		{ vec3(-1, 1,-1), vec3(-1, 1, 1), vec3(-1,-1, 1) },
@@ -94,6 +105,11 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 
 #include "CollisionManager.h"
 void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
+	//if (!started) {
+	//	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) started = true;
+	//	return;
+	//}
+
 	auto dt = (float)delta;
 
 	Game::update(delta);

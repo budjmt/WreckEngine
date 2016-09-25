@@ -47,7 +47,7 @@ void RigidBody::updateAngVel(double dt) {
 
 void RigidBody::applyGravity() {
 	const float g = 9.8f;
-	netForce += vec3(0, _mass * -g * 0.5f * (1 - _floating), 0);
+	netForce += vec3(0, _mass * -g * (1 - _floating), 0);
 }
 
 //the coefficient here is equivalent to 0.5 * density of fluid (here just air) * C_d (drag coeff), which we boil down to C_d
