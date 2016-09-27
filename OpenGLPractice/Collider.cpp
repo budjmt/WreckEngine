@@ -19,18 +19,14 @@ Collider::Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge)
 }
 
 //makes sure the radius is up to date
+// IMPORTANT NOTE:
+// using non-uniform scaling requires the use of the inverse-transpose of the transformation matrix to transform normals properly
+// additionally, these normals then must be normalized. (the rotation is changed by the scale)
+// the work involved is too much to be worth it; use non-uniform colliders if and only if you know they don't depend on rotation,
+// e.g. a distended cube. Otherwise, your results will be inaccurate.
 void Collider::updateDims() {
 	auto scale = _transform->getComputed()->scale();
 	_radius = maxf(maxf(_dims.x * scale.x, _dims.y * scale.y), _dims.z * scale.z);
-	if(scale != oldScale) { 
-		float x  = scale.x
-			, dy = x - scale.y
-			, dz = x - scale.z;
-		//this is for the case of non-uniform scale
-		//*normalMatCache = (EPS_CHECK(dy) || EPS_CHECK(dz)) ?  _transform->getMats()->rotate : glm::inverse(glm::transpose(_transform->getMats()->world));
-		*normalMatCache = _transform->getMats()->rotate;
-		oldScale = scale;
-	}
 	
 	auto factor = fudgeAABB ? 1.2f : 1.f;
 	transformed_aabb.halfDims = scale * factor * base_aabb.halfDims;
@@ -717,7 +713,6 @@ void Collider::updateNormals() {
 		break;
 	case ColliderType::BOX:
 	case ColliderType::MESH:
-		//mat4 rot = *normalMatCache;
 		auto rot = _transform->getMats()->rotate;
 		//auto& faceVerts = mesh->faces().verts;
 		for (size_t i = 0, numNormals = faceNormals.size(); i < numNormals; i++) {

@@ -46,6 +46,8 @@ _declspec(align(16)) struct aligned_mat4 {
 	void operator delete(void* p) { _aligned_free(p); }
 };
 
+mat4 inv_tp_tf(const mat4& m);
+
 class quat {
 public:
 	quat() {};

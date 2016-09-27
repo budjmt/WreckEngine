@@ -9,7 +9,6 @@ CollisionManager::CollisionManager() {
 }
 
 void CollisionManager::addEntity(ColliderEntity* o) {
-	o->update(0);
 	//octTree->add(o);
 	for (auto c : objects) {
 		collisionPairs.push_back(std::pair<ColliderEntity*, ColliderEntity*>(o, c));

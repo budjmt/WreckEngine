@@ -93,9 +93,6 @@ private:
 	ACCS_GS_C (private, vec3,  dims, { return _dims; }, { _dims = base_aabb.halfDims = value; updateDims(); });
 	ACCS_G    (private, float, radius) = 0;
 
-	alloc<aligned_mat4> normalMatCache = alloc<aligned_mat4>(new aligned_mat4(0.f));
-	vec3 oldScale;
-
 	bool fudgeAABB = true;//if this is true, the transformed aabb will be scaled by some factor
 	AABB base_aabb, transformed_aabb;
 	ColliderType _type;

@@ -36,8 +36,6 @@ void ColliderEntity::calcForces(double dt) {
 	//collision resolution stuff here
 	body.netForce    += body.quadDrag(-0.5f, body.vel(), body.heading());// quadratic drag, no mass involved, it's all velocity dependent
 	body.netAngAccel += body.quadDrag(-10.f, body.angVel(), body.angHeading());// for ang accel too
-
-	//body.netForce *= body.invMass();
 }
 
 //override this (and preferably call it) to change on-collision behavior
@@ -45,7 +43,7 @@ void ColliderEntity::calcForces(double dt) {
 void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double dt, size_t& numCollisions) {
 	auto& oRB = other->rigidBody;
 
-	//if the two bodies are travelling in the same direction along the axis
+	//if the two bodies are traveling in the same direction along the axis
 	auto velAlongAxis = glm::dot(oRB.vel() - body.vel(), m.axis);
 	if (velAlongAxis > 0) return;
 
@@ -69,16 +67,16 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 	j /= (float)dt;
 	auto F = j * m.axis;
 	body.netForce +=  F;
-	oRB.netForce  += -F;
+	oRB.netForce  -=  F;
 	DrawDebug::getInstance().drawDebugVector(_transform.position, _transform.position() + F, vec3(0,1,1));
 	DrawDebug::getInstance().drawDebugVector(other->transform.position, other->transform.position() - F, vec3(1,1,0));
 
 	//they have the same collision points by definition, but vecs to those points change, meaning torque and covariance also change
 	body.netAngAccel += calcAngularAccel(m, F);
-	oRB.netAngAccel += other->calcAngularAccel(m, -F);
+	oRB.netAngAccel  += other->calcAngularAccel(m, -F);
 
 	//correct positions
-	const auto percent = 1.2f, slop = 0.025f;
+	const auto percent = 0.4f, slop = 0.025f;
 	auto correction = maxf(-m.pen + slop, 0.0f) * percent * (1 + body.fixed() + oRB.fixed()) / (body.invMass() + oRB.invMass()) * m.axis;
 
 	transform.position        -= (body.invMass() + oRB.fixed()  * oRB.invMass())  * (1 - body.fixed()) * correction;

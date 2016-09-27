@@ -18,7 +18,7 @@ void Drawable::draw(const mat4& world) {
 
 void Drawable::setWorldMatrix(const mat4& world) {
 	worldMatrix.update(world);
-	iTworldMatrix.update(glm::inverse(glm::transpose(world)));
+	iTworldMatrix.update(inv_tp_tf(world));
 }
 
 std::unordered_map<const char*, GLtexture> Drawable::loadedTextures;
