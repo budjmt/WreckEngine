@@ -13,13 +13,60 @@
 #include "ModelHelper.h"
 #include "Mesh.h"
 
+#include <functional>
+
 #define DEBUG true
 
-const size_t MAX_VECTORS = 2500;
-const size_t MAX_SPHERES = 1000;
-const size_t MAX_BOXES = 1000;
+constexpr size_t MAX_VECTORS = 2500;
+constexpr size_t MAX_SPHERES = 1000;
+constexpr size_t MAX_BOXES = 1000;
 
-struct Sphere { vec4 color; vec3 center; float rad; };
+template<class T>
+struct InstMesh { 
+	std::vector<T> instances;
+
+	InstMesh() = default;
+	InstMesh(const Mesh* mesh, const size_t numInsts, const size_t baseIndex, const std::function<void(GLattrarr&)> attrs) {
+		GLattrarr attrSetup;
+
+		vao.create();
+		vao.bind();
+		verts.create(GL_ARRAY_BUFFER);
+		insts.create(GL_ARRAY_BUFFER, GL_STREAM_DRAW);
+		elems.create(GL_ELEMENT_ARRAY_BUFFER);
+
+		elems.bind();
+		numVerts = mesh->faces().verts.size();
+		elems.data(sizeof(GLuint) * numVerts, &mesh->faces().verts[0]);
+
+		verts.bind();
+		verts.data(sizeof(vec3) * mesh->verts().size(), &mesh->verts()[0]);
+
+		attrSetup.add<vec3>(1);
+		attrSetup.apply();
+
+		insts.bind();
+		insts.data(sizeof(T) * numInsts, nullptr);
+		instances.reserve(numInsts);
+
+		attrs(attrSetup);
+		attrSetup.apply(baseIndex);
+	}
+	
+	inline void bind() const { vao.bind(); }
+	inline void update() const {
+		insts.bind();
+		insts.data(&instances[0]);
+	}
+	inline void draw() const {
+		glDrawElementsInstanced(GL_TRIANGLES, numVerts, GL_UNSIGNED_INT, nullptr, instances.size());
+	}
+
+private:
+	size_t numVerts;
+	GLVAO vao;
+	GLbuffer verts, elems, insts;
+};
 
 class DrawDebug
 {
@@ -33,8 +80,8 @@ public:
 	//these are called externally for drawing stuff
 	void drawDebugVector(vec3 start, vec3 end, vec3 color = vec3(0.7f, 1, 0));
 	void drawDebugSphere(vec3 pos, float rad, vec3 color = vec3(0.8f, 0.7f, 1.f), float opacity = 0.3f);
-	//void drawDebugCube(vec3 pos, float l) { drawDebugCube(pos, l, l, l); };
-	//void drawDebugCube(vec3 pos, float w, float h, float d);
+	//void drawDebugBox(vec3 pos, float l) { drawDebugBox(pos, l, l, l); };
+	//void drawDebugBox(vec3 pos, float w, float h, float d);
 private:
 	DrawDebug();
 	DrawDebug(const DrawDebug&) = delete;
@@ -43,22 +90,24 @@ private:
 	//these are to separate the individual processes
 	void drawVectors();
 	void drawSpheres();
+	//void drawBoxes();
 
 	Camera* cam = nullptr;
 	GLuniform<mat4> vecCamLoc, meshCamLoc;
 
-	shared<Mesh> sphere;
-	size_t numSphereVerts;
+	shared<Mesh> arrow, sphere, box;
+	size_t numArrowVerts, numSphereVerts, numBoxVerts;
 
 	GLprogram vecShader, meshShader;
-
-	GLVAO vecVAO, arrowVAO, sphereVAO;
-	GLbuffer vecBuffer, arrowBuffer;
-	GLbuffer sphereBuffer, sphereInstBuffer, sphereElBuffer;
 	
 	struct m_MeshData { vec4 color; mat4 transform; };
 
-	std::vector<vec3> debugVectors, debugBoxes, arrows;
+	GLVAO vecVAO;
+	GLbuffer vecBuffer;
+	InstMesh<m_MeshData> arrows, spheres, boxes;
+	
+	struct Sphere { vec4 color; vec3 center; float rad; };
+
+	std::vector<vec3> debugVectors, debugBoxes;
 	std::vector<Sphere> debugSpheres;
-	std::vector<m_MeshData> sphereInsts;
 };

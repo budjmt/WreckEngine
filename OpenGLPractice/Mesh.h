@@ -18,7 +18,16 @@ class Mesh
 {
 public:
 	Mesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u, Face f);
-	vec3 getDims();
+	
+	vec3 getGrossDims();
+	vec3 getPreciseDims();
+	vec3 getCentroid();
+
+	void translate(const vec3 t);
+	void translateTo(const vec3 t);
+	void scale(const vec3 s);
+	void scaleTo(const vec3 s);
+	void rotate(const quat q);
 protected:
 	ACCS_GS_T (protected, std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, verts);
 	ACCS_GS_T (protected, std::vector<vec3>, const std::vector<vec3>&, const std::vector<vec3>&, normals);

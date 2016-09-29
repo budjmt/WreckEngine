@@ -19,11 +19,11 @@ void CollisionManager::addEntity(ColliderEntity* o) {
 void CollisionManager::update(float dt) {
 	//octTree->update();
 
-	size_t numCollisions;
+	size_t numCollisions, maxIters = 8;
 	do {
 		collisionPairs = broadPhase();
 		numCollisions = narrowPhase(dt);
-	} while (numCollisions > 0);
+	} while (numCollisions > 0 && --maxIters > 0);
 }
 
 void CollisionManager::draw() {

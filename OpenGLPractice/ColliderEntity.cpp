@@ -77,7 +77,7 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 
 	//correct positions
 	const auto percent = 0.4f, slop = 0.025f;
-	auto correction = maxf(-m.pen + slop, 0.0f) * percent * (1 + body.fixed() + oRB.fixed()) / (body.invMass() + oRB.invMass()) * m.axis;
+	auto correction = maxf(-m.pen + slop, 0.f) * percent * (1 + body.fixed() + oRB.fixed()) / (body.invMass() + oRB.invMass()) * m.axis;
 
 	transform.position        -= (body.invMass() + oRB.fixed()  * oRB.invMass())  * (1 - body.fixed()) * correction;
 	other->transform.position += (oRB.invMass()  + body.fixed() * body.invMass()) * (1 - oRB.fixed())  * correction;

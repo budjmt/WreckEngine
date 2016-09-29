@@ -3,7 +3,7 @@
 
 void RigidBody::update(double dt) {
 	updateVel(dt);
-	updateAngVel(dt);
+	//updateAngVel(dt);
 
 	netForce = vec3();
 	netAngAccel = vec3();

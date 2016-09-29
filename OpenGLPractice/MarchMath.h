@@ -47,6 +47,7 @@ _declspec(align(16)) struct aligned_mat4 {
 };
 
 mat4 inv_tp_tf(const mat4& m);
+mat4 rotateBetween(const vec3 from, const vec3 to);
 
 class quat {
 public:

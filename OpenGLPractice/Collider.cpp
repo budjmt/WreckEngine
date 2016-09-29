@@ -2,9 +2,9 @@
 
 #include <iostream>
 
-Collider::Collider(Transform* t, vec3 d, bool fudge) : Collider(ColliderType::BOX, nullptr, t, d, fudge) { }
-Collider::Collider(Mesh* m, Transform* t) : Collider(ColliderType::MESH, m, t, m->getDims()) { }
-Collider::Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge) : _type(type), mesh(m), _transform(t), fudgeAABB(fudge) 
+Collider::Collider(Transform* t, const vec3 d, const bool fudge) : Collider(ColliderType::BOX, nullptr, t, d, fudge) { }
+Collider::Collider(Mesh* m, Transform* t) : Collider(ColliderType::MESH, m, t, m->getGrossDims()) { }
+Collider::Collider(const ColliderType type, Mesh* m, Transform* t, const vec3 d, const bool fudge) : _type(type), mesh(m), _transform(t), fudgeAABB(fudge) 
 {
 	dims(d);
 	base_aabb.center = _transform->getComputed()->position;
@@ -25,10 +25,10 @@ Collider::Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge)
 // the work involved is too much to be worth it; use non-uniform colliders if and only if you know they don't depend on rotation,
 // e.g. a distended cube. Otherwise, your results will be inaccurate.
 void Collider::updateDims() {
-	auto scale = _transform->getComputed()->scale();
+	const auto scale = _transform->getComputed()->scale();
 	_radius = maxf(maxf(_dims.x * scale.x, _dims.y * scale.y), _dims.z * scale.z);
 	
-	auto factor = fudgeAABB ? 1.2f : 1.f;
+	const auto factor = fudgeAABB ? 1.2f : 1.f;
 	transformed_aabb.halfDims = scale * factor * base_aabb.halfDims;
 }
 
@@ -45,14 +45,14 @@ void Collider::update() {
 }
 
 //gets the vertex of the collider furthest in the direction of dir
-SupportPoint Collider::getSupportPoint(vec3 dir) {
+SupportPoint Collider::getSupportPoint(const vec3 dir) const {
 	auto& verts = mesh->verts();
-	auto world = _transform->getMats()->world;
+	const auto world = _transform->getMats()->world;
 
 	SupportPoint support{ (vec3)(world * vec4(verts[0], 1)), glm::dot(support.point, dir) };
 	for (size_t i = 1, numVerts = verts.size(); i < numVerts; ++i) {
-		auto vert = (vec3)(world * vec4(verts[i], 1));
-		auto proj = glm::dot(vert, dir);
+		const auto vert = (vec3)(world * vec4(verts[i], 1));
+		const auto proj = glm::dot(vert, dir);
 		if (proj > support.proj) {
 			support.point = vert;
 			support.proj = proj;
@@ -79,13 +79,13 @@ FaceManifold Collider::getAxisMinPen(Collider* other) {
 
 	auto& meshVerts = mesh->verts();
 	auto& faceVerts = mesh->faces().verts;
-	auto world = _transform->getMats()->world;
+	const auto world = _transform->getMats()->world;
 	for (size_t i = 0, numAxes = currNormals.size(); axis.pen < COLLISION_PEN_TOLERANCE && i < numAxes; ++i) {
-		auto norm = currNormals[i];
-		auto support = other->getSupportPoint(-norm);
-		auto vert = (vec3)(world * vec4(meshVerts[faceVerts[i * FLOATS_PER_VERT]], 1));
+		const auto norm = currNormals[i];
+		const auto support = other->getSupportPoint(-norm);
+		const auto vert = (vec3)(world * vec4(meshVerts[faceVerts[i * FLOATS_PER_VERT]], 1));
 
-		auto pen = glm::dot(norm, support.point - vert);//point-plane signed distance, negative if penetrating, positive if not
+		const auto pen = glm::dot(norm, support.point - vert);//point-plane signed distance, negative if penetrating, positive if not
 		if (pen > axis.pen) {
 			axis.norm = i;
 			axis.pen = pen;
@@ -150,69 +150,64 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	auto trans = _transform->getComputed();
 	auto otherTrans = other->transform()->getComputed();
 
-	for (auto& pair : gauss.adjacencies) {
-		for (size_t i = 0, numAdj = pair.second.size(); i < numAdj; ++i) {
+	for (const auto& pair : gauss.adjacencies) {
+		for (const auto curr : pair.second) {
 
-			auto curr = pair.second[i];
-			vec3 a = currNormals[curr.faces.first], b = currNormals[curr.faces.second];
+			const auto a = currNormals[curr.faces.first], b = currNormals[curr.faces.second];
+			const auto bxa = glm::cross(b, a);
 
-			for (auto& otherPair : othergauss.adjacencies) {
-				for (size_t j = 0, othernumAdj = otherPair.second.size(); j < othernumAdj; ++j) {
+			for (const auto& otherPair : othergauss.adjacencies) {
+				for (const auto otherCurr : otherPair.second) {
 
-					//we found a separating axis boys
-					if (manifold.pen > COLLISION_PEN_TOLERANCE)
-						return manifold;
-
-					auto otherCurr = otherPair.second[j];
 					//these must be negative to account for the minkowski DIFFERENCE
 					//however, that's more expensive than negating on demand, so that's what we'll do
-					vec3 c = otherNormals[otherCurr.faces.first], d = otherNormals[otherCurr.faces.second];
+					const auto c = otherNormals[otherCurr.faces.first], d = otherNormals[otherCurr.faces.second];
 
 					//checks if the arcs between arc(a,b) and arc(c,d) intersect
-					auto bxa = glm::cross(b, a);
-					bfloat cba, dba;
-					cba.f = -glm::dot(c, bxa);// negate for md
-					dba.f = -glm::dot(d, bxa);// negate for md
+					const bfloat cba{ -glm::dot(c, bxa) }
+					           , dba{ -glm::dot(d, bxa) };// negate for MD
 
-					//if c and d are on different sides of arc ba
+					//if c and d are on different sides of arc BA
 					//test with whether the signs or different or either is 0
 					//bitwise ops and int to bool ends up being faster than the multiplication
-					//if (cba * dba < 0) {
+					//if (CBA * DBA < 0) {
 					if (cba.i && dba.i && (cba.i ^ dba.i) < 0) {
 
-						auto dxc  = glm::cross(d, c);// here the negative signs cancel out, so we're ok
-						bfloat adc, bdc;
-						adc.f = glm::dot(a, dxc);
-						bdc.f = glm::dot(b, dxc);
+						const auto dxc = glm::cross(d, c);// here the negative signs cancel out, so we're OK
+						const bfloat adc{ glm::dot(a, dxc) }
+						           , bdc{ glm::dot(b, dxc) };
 
-						//if a and b are on different sides of arc dc &&
+						//if a and b are on different sides of arc DC &&
 						//if a and d are on the same side of the plane formed by b and c (c . (b x a) * b . (d x c) > 0)
 						//(this works because a . (b x c) == c . (b x a) and d . (b x c) == b . (d x c))(scalar triple product identity)
-						//[scalar triple product of a,b,c == [abc] = a . (b x c)]
-						//same principle as brevious
-						//if (adc * bdc < 0 && cba * bdc > 0) {
+						//[scalar triple product of a,b,c == [ABC] = a . (b x c)]
+						//same principle as previous
+						//if (ADC * BDC < 0 && CBA * BDC > 0) {
 						if (adc.i && bdc.i && (adc.i ^ bdc.i) < 0 && (cba.i ^ bdc.i) > 0) {
-							vec3 edge      = getEdge(curr.edge), 
-								 otherEdge = other->getEdge(otherCurr.edge);
+							const auto edge      = getEdge(curr.edge), 
+								       otherEdge = other->getEdge(otherCurr.edge);
 
 							//if edges are parallel, we don't care since they don't define a plane
 							if (fuzzyParallel(edge, otherEdge)) continue;
 
-							vec3 v1 = trans->getTransformed(getVert(curr.edge.first)),
-								 v2 = otherTrans->getTransformed(other->getVert(otherCurr.edge.first));
+							const auto v1 = trans->getTransformed(getVert(curr.edge.first)),
+								       v2 = otherTrans->getTransformed(other->getVert(otherCurr.edge.first));
 
 							//check distance from plane defined by edge normal and one vertex on this body's edge
 							auto edgeNormal = glm::normalize(glm::cross(edge, otherEdge));
 							edgeNormal *= signf(glm::dot(edgeNormal, v1 - trans->position()));//make sure the edge normal is facing outwards from the body
 
-							auto pen = glm::dot(edgeNormal, v2 - v1);//does this work regardless of the edges' points used?
+							const auto pen = glm::dot(edgeNormal, v2 - v1);//does this work regardless of the edges' points used?
 							if (pen > manifold.pen) {
 								manifold.edgePair.first  = curr;
 								manifold.edgePair.second = otherCurr;
 								manifold.pen = pen;
 								manifold.axis = edgeNormal;
+								//we found a separating axis boys
+								if (manifold.pen > COLLISION_PEN_TOLERANCE) return manifold;
 							}
 						}
+
 					}//end edge culling
 
 				}
@@ -229,9 +224,9 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 Manifold Collider::intersects(Collider* other) {
 
 	//quick sphere collision optimization
-	auto d = _framePos - other->framePos();//ignores displaced colliders for now (it's the one thing still breaking the algorithm)
-	auto distSq = d.x * d.x + d.y * d.y + d.z * d.z;
-	auto rad = _radius + other->radius();//probably want to use aabbs
+	const auto d = _framePos - other->framePos();//ignores displaced colliders for now (it's the one thing still breaking the algorithm)
+	const auto distSq = d.x * d.x + d.y * d.y + d.z * d.z;
+	const auto rad = _radius + other->radius();//probably want to use AABBs
 	if (distSq > rad * rad)
 		return Manifold();
 
@@ -254,12 +249,12 @@ Manifold Collider::intersects(Collider* other) {
 	auto minEdge = overlayGaussMaps(other);
 	if (minEdge.pen > COLLISION_PEN_TOLERANCE) {
 		//debug code
-		auto world = _transform->getMats()->world;
-		auto oworld = other->transform()->getMats()->world;
-		vec3  v1  = (vec3)(world * vec4(getVert(minEdge.edgePair.first.edge.first), 1))
-			, v2  = (vec3)(world * vec4(getVert(minEdge.edgePair.first.edge.second), 1))
-			, ov1 = (vec3)(world * vec4(other->getVert(minEdge.edgePair.second.edge.first), 1))
-			, ov2 = (vec3)(world * vec4(other->getVert(minEdge.edgePair.second.edge.second), 1));
+		const auto world = _transform->getMats()->world;
+		const auto oworld = other->transform()->getMats()->world;
+		const auto  v1  = (vec3)(world * vec4(getVert(minEdge.edgePair.first.edge.first), 1))
+			      , v2  = (vec3)(world * vec4(getVert(minEdge.edgePair.first.edge.second), 1))
+			      , ov1 = (vec3)(oworld * vec4(other->getVert(minEdge.edgePair.second.edge.first), 1))
+			      , ov2 = (vec3)(oworld * vec4(other->getVert(minEdge.edgePair.second.edge.second), 1));
 		DrawDebug::getInstance().drawDebugVector(v1, v2, vec3(1, 0, 0));
 		DrawDebug::getInstance().drawDebugVector(ov1, ov2, vec3(1, 1, 0));
 		//std::cout << "Edge: " << minEdge.pen << std::endl;
@@ -271,13 +266,13 @@ Manifold Collider::intersects(Collider* other) {
 	//edge-edge collision
 	if (minEdge.pen > minFace.pen) {
 		std::cout << "EDGE ";
-		auto t = _transform->getComputed();
-		auto ot = other->transform()->getComputed();
+		const auto world = _transform->getMats()->world;
+		const auto oworld = other->transform()->getMats()->world;
 		//get the points defining both edges in the collision in world space
-		vec3  p0 = t->getTransformed(getVert(minEdge.edgePair.first.edge.first))
-			, p1 = t->getTransformed(getVert(minEdge.edgePair.first.edge.second))
-			, q0 = ot->getTransformed(other->getVert(minEdge.edgePair.second.edge.first))
-			, q1 = ot->getTransformed(other->getVert(minEdge.edgePair.second.edge.second));
+		const auto p0 = (vec3)(world * vec4(getVert(minEdge.edgePair.first.edge.first), 1))
+			     , p1 = (vec3)(world * vec4(getVert(minEdge.edgePair.first.edge.second), 1))
+			     , q0 = (vec3)(oworld * vec4(other->getVert(minEdge.edgePair.second.edge.first), 1))
+			     , q1 = (vec3)(oworld * vec4(other->getVert(minEdge.edgePair.second.edge.second), 1));
 
 		//find the closest point between the two edges
 		minEdge.colPoints.push_back(closestPointBtwnSegments(p0, p1, q0, q1));
@@ -289,33 +284,33 @@ Manifold Collider::intersects(Collider* other) {
 		assert(minFace.axis.x || minFace.axis.y || minFace.axis.z);// Axis has not been set, collision probably got through with NaN errors
 		
 		//find the possible incident faces; the axis is the reference normal
-		auto incidents = minFace.other->getIncidentFaces(minFace.axis);
+		const auto incidents = minFace.other->getIncidentFaces(minFace.axis);
 		assert(incidents.size());// There were no incident faces! Somehow!
 
 		//clip the incident face(s) against the reference face
 		minFace.originator->clipPolygons(minFace, incidents);
 
-		for (auto& colPoint : minFace.colPoints)
+		for (const auto& colPoint : minFace.colPoints)
 			DrawDebug::getInstance().drawDebugSphere(colPoint, 0.1f, vec3(1,0,0), 0.8f);
 
 		return minFace;
 	}
 }
 
-//Gets the indexes of the faces on this body that are most antiparallel to the reference normal
-std::vector<GLuint> Collider::getIncidentFaces(vec3 refNormal) {
+//Gets the indexes of the faces on this body that are most anti-parallel to the reference normal
+std::vector<GLuint> Collider::getIncidentFaces(const vec3 refNormal) const {
 	std::vector<GLuint> faces;
 	auto antiProj = glm::dot(currNormals[0], refNormal);
 	for (size_t i = 1, numFaces = currNormals.size(); i < numFaces; ++i) {
 		//if + -, diff > 0; if - +, diff < 0; if same sign, magnitude of projection determines sign
-		auto proj = glm::dot(currNormals[i], refNormal);
-		auto diff = antiProj - proj;
+		const auto proj = glm::dot(currNormals[i], refNormal);
+		const auto diff = antiProj - proj;
 
-		//if the face has close to 0 difference with the last anti-normal projection, then it's another incident face
+		//if the face has close to 0 difference to the last anti-normal projection, then it's another incident face
 		if (EPS_CHECK(diff))
 			faces.push_back(i);
 
-		//if the face is more antiparallel than the previous, we replace our previous incident faces with this one
+		//if the face is more anti-parallel than the previous, we replace our previous incident faces with this one
 		else if (diff > 0) {
 			faces = std::vector<GLuint>();
 			faces.push_back(i);
@@ -336,13 +331,13 @@ std::vector<GLuint> Collider::getIncidentFaces(vec3 refNormal) {
 - http://gamedevelopment.tutsplus.com/tutorials/understanding-sutherland-hodgman-clipping-for-physics-engines--gamedev-11917
 ------------------------------------------------------------------------------------------------------------------------------------
 */
-void Collider::clipPolygons(FaceManifold& reference, std::vector<GLuint>& incidents) {
+void Collider::clipPolygons(FaceManifold& reference, const std::vector<GLuint>& incidents) const {
 	auto trans = _transform->getComputed();
 	auto otherTrans = reference.other->transform()->getComputed();
 
 	//get the transformed center point of the reference face
 	auto& vertFaces = mesh->faces().verts;
-	auto index = reference.norm * 3;
+	const auto index = reference.norm * 3;
 	auto refCenter = getVert(vertFaces[index]) + getVert(vertFaces[index + 1]) + getVert(vertFaces[index + 2]);
 	refCenter = trans->getTransformed(refCenter / 3.f);
 
@@ -353,10 +348,10 @@ void Collider::clipPolygons(FaceManifold& reference, std::vector<GLuint>& incide
 	//I use the actual side planes of the face, 
 	//i.e. normals from the edges perpendicular to the edge and face normal facing outward from the face's center
 	std::vector<vec3> sidePlanes, sideVerts;
-	for (auto i = 0; i < 3; i++) {
+	for (auto i = 0; i < 3; ++i) {
 		auto& v = vertFaces[reference.norm * 3 + i];
-		vec3 vert = trans->getTransformed(getVert(v))
-			, edge = getEdge({ v, vertFaces[reference.norm * 3 + (i + 1) % 3] });
+		const auto vert = trans->getTransformed(getVert(v))
+			     , edge = getEdge({ v, vertFaces[reference.norm * 3 + (i + 1) % 3] });
 
 		auto norm = glm::cross(reference.axis, edge);
 		norm *= signf(glm::dot(norm, vert - refCenter));
@@ -368,13 +363,13 @@ void Collider::clipPolygons(FaceManifold& reference, std::vector<GLuint>& incide
 		//DrawDebug::getInstance().drawDebugVector(vert, vert + norm, vec3(1, 0, 1));
 	}
 
-	auto oworld = otherTrans->getMats()->world;
-	for (size_t i = 0, numIncidents = incidents.size(); i < numIncidents; ++i) {
+	const auto oworld = otherTrans->getMats()->world;
+	for (const auto incidentFace : incidents) {
 
 		std::vector<vec3> incidentVerts = {
-			(vec3)(oworld * vec4(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3)), 1)),
-			(vec3)(oworld * vec4(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3 + 1)), 1)),
-			(vec3)(oworld * vec4(reference.other->getVert(reference.other->getFaceVert(incidents[i] * 3 + 2)), 1))
+			(vec3)(oworld * vec4(reference.other->getVert(reference.other->getFaceVert(incidentFace * 3)), 1)),
+			(vec3)(oworld * vec4(reference.other->getVert(reference.other->getFaceVert(incidentFace * 3 + 1)), 1)),
+			(vec3)(oworld * vec4(reference.other->getVert(reference.other->getFaceVert(incidentFace * 3 + 2)), 1))
 		};
 
 		auto clipped = incidentVerts;
@@ -391,10 +386,10 @@ void Collider::clipPolygons(FaceManifold& reference, std::vector<GLuint>& incide
 - Takes an input of a set of vertices, clips them against a single edge of the reference face (a side plane) defined by sidePlane (the normal) and sideVert (point on plane)
 
 - Culls those that don't fall below the reference face, defined by refNorm and refCenter (normal and point on plane respectively)
-- Clipping has 4 cases to determine which vertices are kept, going through sets of start and end pts:
+- Clipping has 4 cases to determine which vertices are kept, going through sets of start and end points:
 - Start and End both inside the reference face (here defined as behind it, since these are side planes facing outward): we keep only the end pt
-- The reason we keep the end point and not the start point is because this algorithm ensures that all start pts will be end pts at one point, and vice versa
-- This means enclosed start pts will be added at some point no matter what, so we only worry about end pts
+- The reason we keep the end point and not the start point is because this algorithm ensures that all start points will be end points at one point, and vice versa
+- This means enclosed start points will be added at some point no matter what, so we only worry about end points
 - This case is more important for telling us there will be no intersection between the plane and the edge between start and end, so we don't need to add it
 
 - Start and End both outside: we keep nothing, as nothing falls within the clip polygon
@@ -407,32 +402,32 @@ void Collider::clipPolygons(FaceManifold& reference, std::vector<GLuint>& incide
 - All we're saying is that since the start pt is NOT inside and the end pt IS, there must be an intersection, so we have to add that on top of the end pt
 - Another way of describing these cases is to base it on the positioning of the end pt
 - If the end pt is inside, we'll be keeping the end pt, otherwise we won't since it falls outside
-- If the start pt is on the opposite side of the plane of the end pt, we also keep the intersection between the plane and the edge between the two pts
+- If the start pt is on the opposite side of the plane of the end pt, we also keep the intersection between the plane and the edge between the two points
 
 - These 2 simpler cases with possible overlap lead to the more complex explanation and the original 4 cases
 
 - This is the version I use; it's less for optimization and more for reducing obfuscation, as the meaning here is easier to remember than the original 4 cases
-- I should mention that it isn't really any less efficient than the original version; it adds a bitwise xor between startInside and endInside, but that's extremely negligible
+- I should mention that it isn't really any less efficient than the original version; it adds a bitwise XOR between startInside and endInside, but that's extremely negligible
 - It's also less code, as the intersection code doesn't need to be duplicated
 
 - There is one additional case that occurs for our purposes to account for floating point error
 - Either the Start or End falls ON the side plane: we keep the end pt
-- We define this as the dot product of the side plane normal and the vector from the plane to either vert being within -FLT_EPSILON and FLT_EPSILON
+- We define this as the dot product of the side plane normal and the vector from the plane to either vertex being within -FLT_EPSILON and FLT_EPSILON
 - We call this using thick planes, rather than planes of indeterminably small thickness which is what we normally use
 ------------------------------------------------------------------------------------------------------------------------------------
 */
-std::vector<vec3> Collider::clipPolyAgainstEdge(std::vector<vec3>& input, vec3 sidePlane, vec3 sideVert, vec3 refNorm, vec3 refCenter) {
+std::vector<vec3> Collider::clipPolyAgainstEdge(std::vector<vec3>& input, const vec3 sidePlane, const vec3 sideVert, const vec3 refNorm, const vec3 refCenter) const {
 	std::vector<vec3> output;
 
 	//regular conditions protect against this, but just to be safe
-	if (!input.size()) { throw; return output; }
+	if (!input.size()) return output;
 
 	vec3 startpt = input.back(), endpt;
 	for (size_t i = 0, numInputs = input.size(); i < numInputs; ++i, startpt = endpt) {
 		endpt = input[i];
 
-		auto clipStart = glm::dot(sidePlane, startpt - sideVert);
-		auto clipEnd   = glm::dot(sidePlane, endpt - sideVert);
+		const auto clipStart = glm::dot(sidePlane, startpt - sideVert);
+		const auto clipEnd   = glm::dot(sidePlane, endpt - sideVert);
 
 		//the edge is "on the plane" (thick planes); keep end pt if it falls below reference face
 		if (EPS_CHECK(clipStart) || EPS_CHECK(clipEnd)) {
@@ -450,10 +445,10 @@ std::vector<vec3> Collider::clipPolyAgainstEdge(std::vector<vec3>& input, vec3 s
 		//start pt and end pt fall on different sides of the plane, keep intersection if it falls below the reference face
 		if (startInside != endInside) {
 			//find intersection
-			auto e = glm::dot(sidePlane, startpt - endpt);
-			auto t = (e) ? clipStart / e : 0;
+			const auto e = glm::dot(sidePlane, startpt - endpt);
+			const auto t = (e) ? clipStart / e : 0;
 			//float t = clipStart * 1.f / (clipStart - clipEnd);
-			auto intersect = glm::mix(startpt, endpt, t);
+			const auto intersect = glm::mix(startpt, endpt, t);
 			if (glm::dot(refNorm, intersect - refCenter) < 0) output.push_back(intersect);
 		}
 	}
@@ -467,20 +462,20 @@ std::vector<vec3> Collider::clipPolyAgainstEdge(std::vector<vec3>& input, vec3 s
 
 - For such a seemingly simple task, the solution is quite complex, and requires a bit of explanation
 - Too much for here, I wrote a long post on the topic on my blog: *insert link*
-- You can also find a pdf copy in the proofs folder in the root of the repository
+- You can also find a PDF copy in the proofs folder in the root of the repository
 - As an alternative, my main source was http://geomalgorithms.com/a07-_distance.html
 
 - The general thought process is that you start with the problem of finding an intersection between two lines
 - The lines are defined by p = { p0, u = p1 - p0 } and q = { q0, v = q1 - q0 }
 - This uses the parametric equations for the lines and the vector between them, w.
-- The smallest w is defined as w(sc, tc) or wc
-- sc = (be - cd) / (ac - b^2)
-- tc = (ae - bd) / (ac - b^2)
+- The smallest w is defined as w(Sc, Tc) or W_c
+- Sc = (b*e - c*d) / (a*c - b^2)
+- Tc = (a*e - b*d) / (a*c - b^2)
 - You can find the values for a,b,c,d,e in the code below
-- If ac - b^2 = 0, then the lines are parallel and sc = 0, tc = e / c
-- The closest point to q on p is p0 + sc * u
-- The closest point to p on q is q0 + tc * v
-- To get the closest point in space we just compute p0 - wc / 2 or q0 + wc / 2
+- If a*c - b^2 = 0, then the lines are parallel and Sc = 0, Tc = e / c
+- The closest point to q on p is p0 + Sc * u
+- The closest point to p on q is q0 + Tc * v
+- To get the closest point in space we just compute p0 - W_c / 2 or q0 + W_c / 2
 
 - The line problem isn't complex enough to account for the fact that these are segments
 - The closest point between the two lines may not occur within the 0 to 1 range dictated by their segments
@@ -490,18 +485,18 @@ std::vector<vec3> Collider::clipPolyAgainstEdge(std::vector<vec3>& input, vec3 s
 - if t < 0, s = -d / a. if t > 1, s = (-d + b) / a
 - After accounting for these, just do a basic clamp on these values to the 0 to 1 range
 - We can save computations by just storing the numerators and denominators and doing the range checks with them
-- That way there's only two divisions (sc and tc) at the end
+- That way there's only two divisions (Sc and Tc) at the end
 ------------------------------------------------------------------------------------------------------------------------------------
 */
-vec3 Collider::closestPointBtwnSegments(vec3 p0, vec3 p1, vec3 q0, vec3 q1) {
-	vec3 u = p1 - p0, v = q1 - q0, w0 = p0 - q0;
+vec3 Collider::closestPointBtwnSegments(const vec3 p0, const vec3 p1, const vec3 q0, const vec3 q1) const {
+	auto u = p1 - p0, v = q1 - q0, w0 = p0 - q0;
 
-	float a = glm::dot(u, u)
-		, b = glm::dot(u, v)
-		, c = glm::dot(v, v)
-		, d = glm::dot(u, w0)
-		, e = glm::dot(v, w0)
-		, D = a * c - b * b;
+	const auto a = glm::dot(u, u)
+		     , b = glm::dot(u, v)
+		     , c = glm::dot(v, v)
+		     , d = glm::dot(u, w0)
+		     , e = glm::dot(v, w0)
+		     , D = a * c - b * b;
 
 	float sc, sNumer, sDenom = D;
 	float tc, tNumer, tDenom = D;
@@ -515,38 +510,38 @@ vec3 Collider::closestPointBtwnSegments(vec3 p0, vec3 p1, vec3 q0, vec3 q1) {
 		sNumer = b * e - c * d;
 		tNumer = a * e - b * d;
 
-		//if sc < 0, sc = 0 and tc = e / c
+		//if Sc < 0, Sc = 0 and Tc = e / c
 		if (sNumer < 0) {
 			sNumer = 0;
 			tNumer = e; tDenom = c;
 		}
-		//if sc > 1, sc = 1 and tc = (e + b) / c
+		//if Sc > 1, Sc = 1 and Tc = (e + b) / c
 		else if (sNumer > sDenom) {
 			sNumer = sDenom;
 			tNumer = e + b; tDenom = c;
 		}
 	}
 
-	//if tc < 0, tc = 0 and sc = -d / a
+	//if Tc < 0, Tc = 0 and Sc = -d / a
 	if (tNumer < 0) {
 		tNumer = 0;
-		//if sc < 0, sc = 0; tc = 0
+		//if Sc < 0, Sc = 0; Tc = 0
 		if (-d < 0)
 			sNumer = 0;
-		//if sc > 1, sc = 1; tc = 0
+		//if Sc > 1, Sc = 1; Tc = 0
 		else if (-d > a)
 			sNumer = sDenom;
 		else {
 			sNumer = -d; sDenom = a;
 		}
 	}
-	//if tc > 1, tc = 1 and sc = (-d + b) / a
+	//if Tc > 1, Tc = 1 and Sc = (-d + b) / a
 	else if (tNumer > tDenom) {
 		tNumer = tDenom;
-		//if sc < 0, sc = 0; tc = 1
+		//if Sc < 0, Sc = 0; Tc = 1
 		if (-d + b < 0)
 			sNumer = 0;
-		//if sc > 1, sc = 1; tc = 1
+		//if Sc > 1, Sc = 1; Tc = 1
 		else if (-d + b > a)
 			sNumer = sDenom;
 		else {
@@ -561,17 +556,17 @@ vec3 Collider::closestPointBtwnSegments(vec3 p0, vec3 p1, vec3 q0, vec3 q1) {
 	v *= tc;
 	auto wc = w0; 
 	wc += (sc * u);
-	wc -= v; //the vec between the 2 closest pts on the 2 segments (wc = w0 + (sc * u) - (tc * v))
+	wc -= v; //the vector between the 2 closest points on the 2 segments (W_c = w0 + (Sc * u) - (Tc * v))
 	wc *= 0.5f;
 	wc += v;
 	wc += q0;
-	return wc;//the closest point between the 2 segments in the world (q0 + (tc * v) + wc * 0.5f)
+	return wc;//the closest point between the 2 segments in the world (q0 + (Tc * v) + W_c * 0.5f)
 }
 
 void Collider::genVerts() {
 	if (_type != ColliderType::BOX)
 		return;
-	std::vector<vec3> verts, norms, uvs;//norms and uvs are empty
+	std::vector<vec3> verts, norms, uvs;//norms and UVs are empty
 	Face faces;
 	verts = { vec3( _dims.x,  _dims.y,  _dims.z),
 			  vec3(-_dims.x,  _dims.y,  _dims.z),
@@ -614,10 +609,10 @@ void Collider::genNormals() {
 		for (size_t i = 0, numFaces = faceVerts.size(); i < numFaces; i += 3) {
 			auto& v  = meshVerts[faceVerts[i]];
 
-			auto e1 = meshVerts[faceVerts[i + 1]] - v;
-			auto e2 = meshVerts[faceVerts[i + 2]] - v;
+			const auto e1 = meshVerts[faceVerts[i + 1]] - v;
+			const auto e2 = meshVerts[faceVerts[i + 2]] - v;
 			
-			auto cross = glm::cross(e1, e2);			
+			const auto cross = glm::cross(e1, e2);			
 			faceNormals.push_back(cross / glm::length(cross));
 		}
 		break;
@@ -632,9 +627,9 @@ void Collider::genEdges() {
 	case ColliderType::BOX:
 	case ColliderType::MESH:
 		auto& meshVerts = mesh->verts();
-		for (auto& pair : gauss.adjacencies) {
+		for (const auto& pair : gauss.adjacencies) {
 			for (size_t i = 0, numAdj = pair.second.size(); i < numAdj; ++i) {
-				auto& adj = pair.second[i];
+				const auto& adj = pair.second[i];
 				setEdge(adj.edge, edges.size());
 				edges.push_back(meshVerts[adj.edge.second] - meshVerts[adj.edge.first]);
 			}
@@ -672,14 +667,14 @@ void Collider::genGaussMap() {
 						if (src < 0) src = faceVerts[i + p1];
 						//otherwise, record it, set the normal, push it back, and end the loop
 						else {
-							GLuint usrc = src;
-							auto dst = faceVerts[i + p1];
+							const GLuint usrc = src;
+							const auto dst = faceVerts[i + p1];
 							auto adj = Adj{ { i/3, j/3 }, { usrc, dst } };
 							if (usrc > dst) { adj.edge.first = dst; adj.edge.second = usrc; }
 							gauss.addAdj(faceNormals[adj.faces.first], adj);
 							added = true;
 						}
-						// none of the other verts can be equal to this one now, so move to the next one
+						// none of the other vertices can be equal to this one now, so move to the next one
 						break;
 					}
 				}//end edge loop
@@ -690,17 +685,17 @@ void Collider::genGaussMap() {
 	}
 }
 
-bool Collider::fuzzyParallel(vec3 v1, vec3 v2) {
+bool Collider::fuzzyParallel(const vec3 v1, const vec3 v2) const {
 	if (v1 == v2)
 		return true;
-	auto propx = (v1.x) ? v2.x / v1.x : 0;
-	auto propy = (v1.y) ? v2.y / v1.y : 0;
-	auto propz = (v1.z) ? v2.z / v1.z : 0;
+	const auto propx = (v1.x) ? v2.x / v1.x : 0;
+	const auto propy = (v1.y) ? v2.y / v1.y : 0;
 
 	// minimizes divisions
 	// equivalent to: return EPS_CHECK(a) && EPS_CHECK(b);
 	auto a = (propy - propx) / propx;
 	if (EPS_CHECK(a)) {
+		const auto propz = (v1.z) ? v2.z / v1.z : 0;
 		auto b = (propz - propx) / propx;
 		return EPS_CHECK(b);
 	}
@@ -713,14 +708,14 @@ void Collider::updateNormals() {
 		break;
 	case ColliderType::BOX:
 	case ColliderType::MESH:
-		auto rot = _transform->getMats()->rotate;
+		const auto rot = _transform->getMats()->rotate;
 		//auto& faceVerts = mesh->faces().verts;
-		for (size_t i = 0, numNormals = faceNormals.size(); i < numNormals; i++) {
+		for (size_t i = 0, numNormals = faceNormals.size(); i < numNormals; ++i) {
 			currNormals[i] = (vec3)(rot * vec4(faceNormals[i], 0));
 
-			//vec3  a = _transform->getTransformed(getVert(faceVerts[i * 3]))
-			//	, b = _transform->getTransformed(getVert(faceVerts[i * 3 + 1]))
-			//	, c = _transform->getTransformed(getVert(faceVerts[i * 3 + 2]));
+			//const auto  a = _transform->getTransformed(getVert(faceVerts[i * 3]))
+			//	      , b = _transform->getTransformed(getVert(faceVerts[i * 3 + 1]))
+			//	      , c = _transform->getTransformed(getVert(faceVerts[i * 3 + 2]));
 			//auto center = a + b + c;
 			//center /= 3;
 			//DrawDebug::getInstance().drawDebugVector(center, center + currNormals[i]);
@@ -735,11 +730,10 @@ void Collider::updateEdges() {
 		break;
 	case ColliderType::BOX:
 	case ColliderType::MESH:
-		auto m = _transform->getMats();
-		auto rot = m->rotate;
-		auto scale = m->scale;
+		const auto m = _transform->getMats();
+		const auto tmat = m->rotate * m->scale;
 		for (size_t i = 0, numEdges = edges.size(); i < numEdges; ++i) {
-			currEdges[i] = (vec3)(rot * (scale * vec4(edges[i], 1)));
+			currEdges[i] = (vec3)(tmat * vec4(edges[i], 1));
 		}
 		
 		/*for (auto& pair : gauss.adjacencies) {
@@ -757,16 +751,16 @@ void Collider::updateEdges() {
 const std::vector<vec3>& Collider::getCurrNormals() const { return currNormals; }
 const std::vector<vec3>& Collider::getEdges() const { return currEdges; }
 
-int Collider::getFaceVert(size_t index) const { return mesh->faces().verts[index]; }
-vec3 Collider::getVert(size_t index) const { return mesh->verts()[index]; }
-vec3 Collider::getNormal(size_t index) const { return currNormals[index]; }
-vec3 Collider::getEdge(std::pair<GLuint, GLuint> e) {
+GLuint Collider::getFaceVert(GLuint index) const { return mesh->faces().verts[index]; }
+vec3 Collider::getVert(GLuint index) const { return mesh->verts()[index]; }
+vec3 Collider::getNormal(GLuint index) const { return currNormals[index]; }
+vec3 Collider::getEdge(std::pair<GLuint, GLuint> e) const {
 	std::string key;
 	if (e.first < e.second) { key = std::to_string(e.first) + "," + std::to_string(e.second); }
 	else                    { key = std::to_string(e.second) + "," + std::to_string(e.first); }
-	return currEdges[edgeMap[key]];
+	return currEdges[edgeMap.at(key)];
 }
-void Collider::setEdge(std::pair<GLuint, GLuint> e, size_t index) {
+void Collider::setEdge(std::pair<GLuint, GLuint> e, const GLuint index) {
 	std::string key;
 	if (e.first < e.second) { key = std::to_string(e.first) + "," + std::to_string(e.second); }
 	else                    { key = std::to_string(e.second) + "," + std::to_string(e.first); }
@@ -775,8 +769,8 @@ void Collider::setEdge(std::pair<GLuint, GLuint> e, size_t index) {
 
 const GaussMap& Collider::getGaussMap() const { return gauss; }
 
-std::vector<Adj>& GaussMap::getAdjs(vec3 v) { return adjacencies[to_string(v)]; }
-void GaussMap::addAdj(vec3 v, Adj a) { adjacencies[to_string(v)].push_back(a); }
+const std::vector<Adj>& GaussMap::getAdjs(const vec3 v) const { return adjacencies.at(to_string(v)); }
+void GaussMap::addAdj(const vec3 v, const Adj a) { adjacencies[to_string(v)].push_back(a); }
 
 bool AABB::intersects(const AABB& other) const {
 	auto xSeparate = (center.x - halfDims.x > other.center.x + other.halfDims.x) || (center.x + halfDims.x < other.center.x - other.halfDims.x);

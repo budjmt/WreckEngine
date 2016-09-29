@@ -3,7 +3,7 @@
 #include "MarchMath.h"
 #include "property.h"
 
-const float MIN_VEL = .1f;//it's strangely high
+const float MIN_VEL = .001f;
 const float MAX_VEL = 40.f;
 
 class RigidBody {

@@ -19,25 +19,25 @@ class Transform
 {
 public:
 	Transform();
-	Transform* clone();
+	Transform* clone() const;
 
-	void makeDirty();
+	void makeDirty() const;
 
-	Transform* parent(); void parent(Transform* p);
+	Transform* parent() const; void parent(Transform* p);
 	std::unordered_set<Transform*> children;
-	Transform* getComputed();
-	TransformMats* getMats();
+	const Transform* getComputed() const;
+	TransformMats* getMats() const;
 
-	void setBaseDirections(vec3 t_forward, vec3 t_up);
-	void rotate(float x, float y, float z);
-	void rotate(vec3 v);
-	void rotate(float theta, vec3 axis);
+	void setBaseDirections(const vec3 t_forward, const vec3 t_up);
+	void rotate(const float x, const float y, const float z);
+	void rotate(const vec3 v);
+	void rotate(const float theta, const vec3 axis);
 
-	vec3 getTransformed(vec3 v);
+	vec3 getTransformed(const vec3 v) const;
 private: 
 	PROP_GS (private, Transform, vec3, position, { return _position; }, { makeDirty(); return _position = value; });
 	PROP_GS (private, Transform, vec3, scale,    { return _scale;    }, { makeDirty(); return _scale = value; }) = vec3(1);
-	PROP_GS (private, Transform, quat, rotation, { return _rotation; }, { makeDirty(); return _rotation = value; });
+	PROP_GS(private, Transform, quat, rotation, { return _rotation; }, { makeDirty(); _rotation = value; updateRot(); return _rotation; });
 	ACCS_G  (private, vec3, rotAxis);
 	ACCS_G  (private, float, rotAngle);
 
@@ -46,13 +46,13 @@ private:
 	ACCS_G (private, vec3, up);
 	ACCS_G (private, vec3, right);
 
-	bool dirtyComp, dirtyMats;
-	alloc<Transform> computed = alloc<Transform>(nullptr);
-	alloc<TransformMats> mats = alloc<TransformMats>(nullptr);
+	mutable bool dirtyComp, dirtyMats;
+	mutable alloc<Transform> computed = alloc<Transform>(nullptr);
+	mutable alloc<TransformMats> mats = alloc<TransformMats>(nullptr);
 	Transform* _parent = nullptr;
-	Transform* computeTransform();
+	Transform* computeTransform() const;
 
 	void updateDirections();
 	void updateRot();
-	void updateMats();
+	void updateMats() const;
 };

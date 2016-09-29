@@ -38,6 +38,17 @@ mat4 inv_tp_tf(const mat4& m) {
 	return mat4(tc0, tc1, tc2, tc3);
 }
 
+// [from] and [to] are unit vectors representing directions
+// http://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+mat4 rotateBetween(const vec3 from, const vec3 to) {
+	const auto c = glm::dot(from, to);// cosine of angle between unit vectors
+	if (c == -1.f) return glm::rotate(PI, vec3(1,0,0));// for the case of vectors facing the complete opposite direction
+	
+	const auto v = glm::cross(from, to);// normal of the plane shared by the two vectors
+	const auto vx = mat3(vec3(0, v.z, -v.y), vec3(-v.z, 0, v.x), vec3(v.y, -v.x, 0));
+	return mat4(mat3() + vx + vx * vx / (1.f + c));
+}
+
 //quat
 #include <assert.h>
 void quat::updateAngles() { _theta = acosf(v0); assert(!NaN_CHECK(_theta)); sin_t_half = sinf(_theta); if (sin_t_half) { _axis = _v / sin_t_half; } _axis /= glm::length(_axis); _theta *= 2; }

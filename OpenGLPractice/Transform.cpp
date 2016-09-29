@@ -1,15 +1,15 @@
 #include "Transform.h"
 
 Transform::Transform() { updateRot(); }
-Transform* Transform::clone() { return new Transform(*this); }
+Transform* Transform::clone() const { return new Transform(*this); }
 
-void Transform::makeDirty() {
+void Transform::makeDirty() const {
 	dirtyComp = dirtyMats = true;
 	for (auto child : children)
 		child->makeDirty();
 }
 
-Transform* Transform::parent() { return _parent; }
+Transform* Transform::parent() const { return _parent; }
 void Transform::parent(Transform* p) {
 	if (p == _parent) return;
 	// current parent must remove us as a child
@@ -22,7 +22,7 @@ void Transform::parent(Transform* p) {
 	_parent = p;
 }
 
-TransformMats* Transform::getMats() {
+TransformMats* Transform::getMats() const {
 	auto t = getComputed();
 	if (!t->mats) { t->mats.reset(new TransformMats); goto DIRTY; }
 	if (dirtyMats) {
@@ -33,17 +33,17 @@ TransformMats* Transform::getMats() {
 	return t->mats.get();
 }
 
-void Transform::updateMats() {
-	auto t = glm::translate(_position);
-	auto r = glm::rotate(_rotAngle, _rotAxis);
-	auto s = glm::scale(_scale);
+void Transform::updateMats() const {
+	const auto t = glm::translate(_position);
+	const auto r = glm::rotate(_rotAngle, _rotAxis);
+	const auto s = glm::scale(_scale);
 	mats->translate = t;
 	mats->rotate = r;
 	mats->scale = s;
 	mats->world = t * r * s;
 }
 
-Transform* Transform::getComputed() {
+const Transform* Transform::getComputed() const {
 	//if there's no parent, this is already an accurate transform
 	if (!_parent) return this;
 	//if there is no previously computed transform, allocate one so we can compute it
@@ -55,7 +55,7 @@ Transform* Transform::getComputed() {
 	return computeTransform();
 }
 
-Transform* Transform::computeTransform() {
+Transform* Transform::computeTransform() const {
 	auto p = _parent->getComputed();
 	computed->_position = _position + p->_position;
 	computed->_scale    = _scale * p->_scale;
@@ -64,14 +64,14 @@ Transform* Transform::computeTransform() {
 	return computed.get();
 }
 
-void Transform::setBaseDirections(vec3 t_forward, vec3 t_up) {
+void Transform::setBaseDirections(const vec3 t_forward, const vec3 t_up) {
 	base_forward = t_forward;
 	base_up = t_up;
 	updateDirections();
 }
 
 void Transform::updateDirections() {
-	auto r = glm::rotate(_rotAngle, _rotAxis);
+	const auto r = glm::rotate(_rotAngle, _rotAxis);
 	_forward = (vec3)(r * vec4(base_forward, 1));
 	_up      = (vec3)(r * vec4(base_up, 1));
 	_right   = glm::cross(_up, _forward);
@@ -84,20 +84,20 @@ void Transform::updateRot() {
 }
 
 //quats are rotated through the rotate function here
-void Transform::rotate(vec3 v) { rotate(v.x, v.y, v.z); }
-void Transform::rotate(float x, float y, float z) {
-	if (x) { _rotation = quat::rotate(_rotation, x, vec3(1, 0, 0)); makeDirty(); }
-	if (y) { _rotation = quat::rotate(_rotation, y, vec3(0, 1, 0)); makeDirty(); }
-	if (z) { _rotation = quat::rotate(_rotation, z, vec3(0, 0, 1)); makeDirty(); }
-	updateRot();
+void Transform::rotate(const vec3 v) { rotate(v.x, v.y, v.z); }
+void Transform::rotate(const float x, const float y, const float z) {
+	auto dirtied = false;
+	if (x) { _rotation = quat::rotate(_rotation, x, vec3(1, 0, 0)); dirtied = true; }
+	if (y) { _rotation = quat::rotate(_rotation, y, vec3(0, 1, 0)); dirtied = true; }
+	if (z) { _rotation = quat::rotate(_rotation, z, vec3(0, 0, 1)); dirtied = true; }
+	
+	if (dirtied) { makeDirty(); updateRot(); }
 }
 
-void Transform::rotate(float theta, vec3 axis) {
-	if (theta) { _rotation = quat::rotate(_rotation, theta, axis); makeDirty(); }
-	updateRot();
+void Transform::rotate(const float theta, const vec3 axis) {
+	if (theta) rotation = quat::rotate(_rotation, theta, axis);
 }
 
-vec3 Transform::getTransformed(vec3 v)
-{
+vec3 Transform::getTransformed(const vec3 v) const {
 	return (vec3)(getMats()->world * vec4(v, 1));
 }

@@ -25,8 +25,8 @@ struct Adj { std::pair<GLuint, GLuint> faces, edge; };
 struct GaussMap {
 	//keys are untransformed normals, adjs use indices because of rotations
 	std::unordered_map<std::string, std::vector<Adj>> adjacencies;
-	void addAdj(vec3 v, Adj a);
-	std::vector<Adj>& getAdjs(vec3 v);
+	void addAdj(const vec3 v, const Adj a);
+	const std::vector<Adj>& getAdjs(const vec3 v) const;
 };
 
 struct SupportPoint { vec3 point; float proj; };
@@ -44,19 +44,19 @@ struct EdgeManifold : Manifold { std::pair<Adj, Adj> edgePair; };
 class Collider
 {
 public:
-	Collider(Transform* t, vec3 d, bool fudge = true);
+	Collider(Transform* t, const vec3 d, const bool fudge = true);
 	Collider(Mesh* m, Transform* t);
 	
-	AABB& aabb = transformed_aabb;
-	ColliderType& type = _type;
+	const AABB& aabb = transformed_aabb;
+	const ColliderType& type = _type;
 	void updateDims();
 
 	Manifold intersects(Collider* other);
 
-	std::vector<GLuint> getIncidentFaces(vec3 refNormal);
-	void clipPolygons(FaceManifold& reference, std::vector<GLuint>& incidents);
-	std::vector<vec3> clipPolyAgainstEdge(std::vector<vec3>& input, vec3 sidePlane, vec3 sideVert, vec3 refNorm, vec3 refCenter);
-	vec3 closestPointBtwnSegments(vec3 p0, vec3 p1, vec3 q0, vec3 q1);
+	std::vector<GLuint> getIncidentFaces(const vec3 refNormal) const;
+	void clipPolygons(FaceManifold& reference, const std::vector<GLuint>& incidents) const;
+	std::vector<vec3> clipPolyAgainstEdge(std::vector<vec3>& input, const vec3 sidePlane, const vec3 sideVert, const vec3 refNorm, const vec3 refCenter) const;
+	vec3 closestPointBtwnSegments(const vec3 p0, const vec3 p1, const vec3 q0, const vec3 q1) const;
 
 	void update();
 
@@ -69,39 +69,38 @@ public:
 	const std::vector<vec3>& getCurrNormals() const;
 	const std::vector<vec3>& getEdges() const;
 
-	inline int getFaceVert(size_t index) const;
-	inline vec3 getVert(size_t index) const;
-	inline vec3 getNormal(size_t index) const;
-	inline vec3 getEdge(std::pair<GLuint, GLuint> e);
+	inline GLuint getFaceVert(const GLuint index) const;
+	inline vec3 getVert(const GLuint index) const;
+	inline vec3 getNormal(const GLuint index) const;
+	inline vec3 getEdge(std::pair<GLuint, GLuint> e) const;
 
 	const GaussMap& getGaussMap() const;
 
 	void updateNormals();
 	void updateEdges();
 
-	bool fuzzyParallel(vec3 v1, vec3 v2);
+	bool fuzzyParallel(const vec3 v1, const vec3 v2) const;
 
-	SupportPoint getSupportPoint(vec3 dir);
+	SupportPoint getSupportPoint(const vec3 dir) const;
 	FaceManifold getAxisMinPen(Collider* other);
 	EdgeManifold overlayGaussMaps(Collider* other);
 
 private:
-	Collider(ColliderType type, Mesh* m, Transform* t, vec3 d, bool fudge = true);
+	Collider(const ColliderType type, Mesh* m, Transform* t, const vec3 d, const bool fudge = true);
 
 	ACCS_G    (private, Transform*, transform);
 	ACCS_G    (private, vec3,  framePos);
 	ACCS_GS_C (private, vec3,  dims, { return _dims; }, { _dims = base_aabb.halfDims = value; updateDims(); });
 	ACCS_G    (private, float, radius) = 0;
 
-	bool fudgeAABB = true;//if this is true, the transformed aabb will be scaled by some factor
+	bool fudgeAABB = true;//if this is true, the transformed AABB will be scaled by some factor
 	AABB base_aabb, transformed_aabb;
 	ColliderType _type;
 
 	std::vector<vec3> faceNormals, currNormals, edges, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
 	std::unordered_map<std::string, GLuint> edgeMap;//maps the edge pairs to the indices in edges
 	GaussMap gauss;
-	//std::vector<std::vector<Adj>> adjacencies;
 	Mesh* mesh;
 
-	void setEdge(std::pair<GLuint, GLuint> e, size_t index);
+	void setEdge(std::pair<GLuint, GLuint> e, const GLuint index);
 };
