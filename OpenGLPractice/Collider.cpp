@@ -3,7 +3,7 @@
 #include <iostream>
 
 Collider::Collider(Transform* t, const vec3 d, const bool fudge) : Collider(ColliderType::BOX, nullptr, t, d, fudge) { }
-Collider::Collider(Mesh* m, Transform* t) : Collider(ColliderType::MESH, m, t, m->getGrossDims()) { }
+Collider::Collider(Mesh* m, Transform* t) : Collider(ColliderType::MESH, m, t, m->getPreciseDims()) { }
 Collider::Collider(const ColliderType type, Mesh* m, Transform* t, const vec3 d, const bool fudge) : _type(type), mesh(m), _transform(t), fudgeAABB(fudge) 
 {
 	dims(d);
@@ -42,6 +42,7 @@ void Collider::update() {
 	updateEdges();
 	
 	//DrawDebug::getInstance().drawDebugSphere(_framePos, _radius);
+	//DrawDebug::getInstance().drawDebugBox(transformed_aabb.center, transformed_aabb.halfDims.x * 2.f, transformed_aabb.halfDims.y * 2.f, transformed_aabb.halfDims.z * 2.f);
 }
 
 //gets the vertex of the collider furthest in the direction of dir

@@ -95,6 +95,10 @@ vec3 Mesh::getCentroid() {
 void Mesh::translate(const vec3 t) {
 	const auto trans = glm::translate(t);
 	for (auto& vert : _verts) vert = (vec3)(trans * vec4(vert, 1));
+	for(size_t i = 0, malen = meshArray.size(); i < malen; i += FLOATS_PER_VERT + FLOATS_PER_UV + FLOATS_PER_NORM) { 
+		const auto vec = trans * vec4(meshArray[i], meshArray[i + 1], meshArray[i + 2], 1);
+		memcpy(&meshArray[i], &vec[0], sizeof(float) * FLOATS_PER_VERT);
+	}
 }
 
 void Mesh::translateTo(const vec3 t) {
@@ -105,9 +109,17 @@ void Mesh::translateTo(const vec3 t) {
 void Mesh::scale(const vec3 s) {
 	const auto sc = glm::scale(s);
 	for (auto& vert : _verts) vert = (vec3)(sc * vec4(vert, 0));
+	for (size_t i = 0, malen = meshArray.size(); i < malen; i += FLOATS_PER_VERT + FLOATS_PER_UV + FLOATS_PER_NORM) {
+		const auto vec = sc * vec4(meshArray[i], meshArray[i + 1], meshArray[i + 2], 0);
+		memcpy(&meshArray[i], &vec[0], sizeof(float) * FLOATS_PER_VERT);
+	}
 	if (s.x != s.y || s.x != s.z) {
 		const auto inv_sc = inv_tp_tf(sc);
 		for (auto& normal : _normals) normal = (vec3)(inv_sc * vec4(normal, 0));
+		for (size_t i = FLOATS_PER_VERT + FLOATS_PER_UV, malen = meshArray.size(); i < malen; i += FLOATS_PER_VERT + FLOATS_PER_UV + FLOATS_PER_NORM) {
+			const auto vec = sc * vec4(meshArray[i], meshArray[i + 1], meshArray[i + 2], 0);
+			memcpy(&meshArray[i], &vec[0], sizeof(float) * FLOATS_PER_NORM);
+		}
 	}
 }
 
@@ -120,4 +132,12 @@ void Mesh::rotate(const quat q) {
 	const auto rot = glm::rotate(q.theta(), q.axis());
 	for (auto& vert : _verts) vert = (vec3)(rot * vec4(vert, 0));
 	for (auto& normal : _normals) normal = (vec3)(rot * vec4(normal, 0));
+	for (size_t i = 0, malen = meshArray.size(); i < malen; i += FLOATS_PER_VERT + FLOATS_PER_UV + FLOATS_PER_NORM) {
+		const auto vert = rot * vec4(meshArray[i], meshArray[i + 1], meshArray[i + 2], 0),
+				   norm = rot * vec4(meshArray[i + FLOATS_PER_VERT + FLOATS_PER_UV]
+					               , meshArray[i + FLOATS_PER_VERT + FLOATS_PER_UV + 1]
+					               , meshArray[i + FLOATS_PER_VERT + FLOATS_PER_UV + 2], 0);
+		memcpy(&meshArray[i], &vert[0], sizeof(float) * FLOATS_PER_VERT);
+		memcpy(&meshArray[i + FLOATS_PER_VERT + FLOATS_PER_UV], &norm[0], sizeof(float) * FLOATS_PER_NORM);
+	}
 }

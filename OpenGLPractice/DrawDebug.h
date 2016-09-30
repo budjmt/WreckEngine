@@ -80,8 +80,8 @@ public:
 	//these are called externally for drawing stuff
 	void drawDebugVector(vec3 start, vec3 end, vec3 color = vec3(0.7f, 1, 0));
 	void drawDebugSphere(vec3 pos, float rad, vec3 color = vec3(0.8f, 0.7f, 1.f), float opacity = 0.3f);
-	//void drawDebugBox(vec3 pos, float l) { drawDebugBox(pos, l, l, l); };
-	//void drawDebugBox(vec3 pos, float w, float h, float d);
+	void drawDebugBox(vec3 pos, float l, vec3 color = vec3(1.f), float opacity = 1.f) { drawDebugBox(pos, l, l, l, color, opacity); };
+	void drawDebugBox(vec3 pos, float w, float h, float d, vec3 color = vec3(1.f), float opacity = 1.f);
 private:
 	DrawDebug();
 	DrawDebug(const DrawDebug&) = delete;
@@ -90,7 +90,7 @@ private:
 	//these are to separate the individual processes
 	void drawVectors();
 	void drawSpheres();
-	//void drawBoxes();
+	void drawBoxes();
 
 	Camera* cam = nullptr;
 	GLuniform<mat4> vecCamLoc, meshCamLoc;
@@ -108,6 +108,7 @@ private:
 	
 	struct Sphere { vec4 color; vec3 center; float rad; };
 
-	std::vector<vec3> debugVectors, debugBoxes;
+	std::vector<vec3> debugVectors;
+	std::vector<vec4> debugBoxes;
 	std::vector<Sphere> debugSpheres;
 };

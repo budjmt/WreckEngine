@@ -9,6 +9,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	glfwGetWindowSize(window, &width, &height);
 
 	auto m = loadOBJ("Assets/basic.obj");
+	m->translateTo(vec3());
 	auto dm = make_shared<DrawMesh>(m, "Assets/texture.png", prog);
 	shapes.push_back(dm);
 	auto mesh = make_shared<ColliderEntity>(dm);
@@ -102,7 +103,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
 	//	return;
 	//}
 
-	auto dt = (float)delta;
+	const auto dt = (float)delta;
 
 	Game::update(delta);
 	CollisionManager::getInstance().update(dt);
@@ -155,12 +156,6 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
 	}
 
 	Camera::mayaCam(window, m, dt, camera.get());
-
-	//edges, gauss map, and normals confirmed to be ok
-	//auto c = ((ColliderEntity*)me)->collider();
-	//auto edge = c->getEdge({ 1,2 });
-	//auto norm = c->getCurrNormals()[0];
-	//std::cout << norm.x << ", " << norm.y << ", " << norm.z << std::endl;*/
 
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));

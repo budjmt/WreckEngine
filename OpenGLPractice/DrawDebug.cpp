@@ -18,6 +18,12 @@ DrawDebug::DrawDebug() {
 		sphere = loadOBJ("Assets/_debug/sphere.obj");
 	}
 
+	box = loadOBJ("Assets/_debug/cube.obj");
+	if (!box) {
+		genCube("Assets/_debug/cube.obj");
+		box = loadOBJ("Assets/_debug/cube.obj");
+	}
+
 	GLattrarr attrSetup;
 	const auto vecSize = sizeof(GLfloat) * FLOATS_PER_VERT;
 
@@ -39,6 +45,7 @@ DrawDebug::DrawDebug() {
 
 	arrows = InstMesh<m_MeshData>(arrow.get(), MAX_VECTORS, 1, mSetup);
 	spheres = InstMesh<m_MeshData>(sphere.get(), MAX_SPHERES, 1, mSetup);
+	boxes = InstMesh<m_MeshData>(box.get(), MAX_BOXES, 1, mSetup);
 
 	glBindVertexArray(0);
 
@@ -60,6 +67,7 @@ void DrawDebug::draw() {
 	
 	drawVectors();
 	drawSpheres();
+	drawBoxes();
 	
 	glDisable(GL_CULL_FACE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -131,9 +139,31 @@ void DrawDebug::drawSpheres() {
 	spheres.instances.clear();
 }
 
+void DrawDebug::drawBoxes() {
+	if (!debugBoxes.size()) for(auto i = 0; i < 3; ++i) debugBoxes.push_back(vec4());
+
+	for (size_t i = 0, numBoxes = debugBoxes.size(); i < numBoxes; i += 3) {
+		const auto translate = glm::translate(vec3(debugBoxes[i]));
+		const auto scale = glm::scale(vec3(debugBoxes[i + 1]));
+		boxes.instances.push_back({ debugBoxes[i + 2], translate * scale });
+	}
+
+	meshShader.use();
+	if (cam) cam->updateCamMat(meshCamLoc);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	boxes.bind();
+	boxes.update();
+	boxes.draw();
+
+	debugBoxes = std::vector<vec4>();
+	boxes.instances.clear();
+}
+
 void DrawDebug::drawDebugVector(vec3 start, vec3 end, vec3 color) {
 #if DEBUG
-	if (debugVectors.size() / 4 > MAX_VECTORS) return;
+	if (debugVectors.size() > MAX_VECTORS * 4) return;
 	debugVectors.push_back(start);
 	debugVectors.push_back(color);
 	debugVectors.push_back(end);
@@ -145,6 +175,14 @@ void DrawDebug::drawDebugSphere(vec3 pos, float rad, vec3 color, float opacity) 
 #if DEBUG
 	if (debugSpheres.size() > MAX_SPHERES) return;
 	debugSpheres.push_back({ vec4(color, opacity), pos, rad });
-	//drawDebugVector(pos, pos + vec3(rad, 0, 0));
+#endif
+}
+
+void DrawDebug::drawDebugBox(vec3 pos, float w, float h, float d, vec3 color, float opacity) {
+#if DEBUG
+	if (debugBoxes.size() > MAX_BOXES * 2) return;
+	debugBoxes.push_back(vec4(pos, 0));
+	debugBoxes.push_back(vec4(w, h, d, 0));
+	debugBoxes.push_back(vec4(color, opacity));
 #endif
 }

@@ -16,7 +16,7 @@ void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>&
 //general generation process is:
 //generate vertices
 //generate faces and normals
-//generate uvs
+//generate UVs
 void genCube(const char* file);
 void genCylinder(const char* file, size_t res);
 void genCone(const char* file, size_t res);
@@ -29,8 +29,8 @@ float binomialCoeff(int n, int i);
 int factorial(int n);
 
 void genNormals(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces, std::vector<GLfloat>& norms, std::vector<GLuint>& normFaces);
-vec3 genNormal(vec3 v1, vec3 v2, vec3 v3);
+vec3 genNormal(const vec3 a, const vec3 b, const vec3 c);
 
-size_t findIndexIn(std::vector<GLfloat>& vecs, size_t stride, vec3 vec);
+size_t findIndexIn(const std::vector<GLfloat>& vecs, const size_t stride, const vec3 vec);
 
 std::vector<std::string> tokenize(std::string str, std::string delimiter);
