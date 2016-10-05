@@ -168,11 +168,13 @@
     <ClCompile Include="DrawDebug.cpp" />
     <ClCompile Include="DrawMesh.cpp" />
     <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="Event.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GLDebug.cpp" />
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="DebugBenchmark.h" />
     <ClInclude Include="DrawDebug.h" />
+    <ClInclude Include="Event.h" />
     <ClInclude Include="GLDebug.h" />
     <ClCompile Include="MarchMath.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -180,6 +182,7 @@
     <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="ShaderHelper.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="State.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="TriPlay.cpp" />
     <ClCompile Include="utility.cpp" />
@@ -203,8 +206,10 @@
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ShaderHelper.h" />
     <ClInclude Include="smart_ptr.h" />
+    <ClInclude Include="State.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TriPlay.h" />
+    <ClInclude Include="unique_id.h" />
     <ClInclude Include="UV.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

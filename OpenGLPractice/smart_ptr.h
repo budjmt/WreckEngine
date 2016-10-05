@@ -25,11 +25,7 @@ alloc_ptr<T> make_alloc(size_t size) { return alloc_ptr<T>(make_unique(size)); }
 template<class T, class Deleter = std::default_delete<T>>
 using unique = std::unique_ptr<T, Deleter>;
 
-template<class T>
-using shared = std::shared_ptr<T>;
+template<class T> using shared = std::shared_ptr<T>;
+template<class T> using weak = std::weak_ptr<T>;
 
-template<class T >
-using weak = std::weak_ptr<T>;
-
-template<class T>
-using alloc = alloc_ptr<T>;
+template<class T> using alloc = alloc_ptr<T>;
