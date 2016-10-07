@@ -78,8 +78,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;C:\Program Files (x86)\Visual Leak Detector\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/FreeImage/lib/x32;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)lib/GLEW/include;$(ProjectDir)lib/GLFW/include;$(ProjectDir)lib/glm/include;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib/GLEW/lib;$(ProjectDir)lib/GLFW/lib;$(ProjectDir)lib/FreeImage/lib;$(LibraryPath)</LibraryPath>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -91,8 +91,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <ExecutablePath>$(ExecutablePath)</ExecutablePath>
-    <IncludePath>$(ProjectDir)lib/glew-1.13.0/include;$(ProjectDir)lib/glm-0.9.7.0;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;C:\Program Files (x86)\Visual Leak Detector\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)lib/glew-1.13.0/lib/Release/Win32;$(ProjectDir)lib/glfw-3.1.1/lib;$(ProjectDir)lib/FreeImage/lib/x32;C:\Program Files (x86)\Visual Leak Detector\lib\Win32;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)lib/GLEW/include;$(ProjectDir)lib/GLFW/include;$(ProjectDir)lib/glm/include;$(ProjectDir)lib/glfw-3.1.1/include;$(ProjectDir)lib/FreeImage/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib/GLEW/lib;$(ProjectDir)lib/GLFW/lib;$(ProjectDir)lib/FreeImage/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
