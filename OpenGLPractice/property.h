@@ -99,47 +99,58 @@ Future developments:
 enum property_type { GET = 1, SET = 2, GET_SET = 3 };
 template <typename P, typename T, property_type pt> class property { };
 
-// it might be worth considering a specialization for objects that returns a const&
 template<class P, class T>
-struct property<P, T, GET> {
-	property<P, T, GET>(P* parent, T(P::*getter)() const) : m_parent(parent), get(getter) { }
-	inline T operator()() const { return (m_parent->*get)(); }
-	inline operator T() const { return operator()(); }
-private:
-	P* m_parent = nullptr;
+struct prop_g {
+	prop_g(P* parent, T(P::*getter)() const) : g_parent(parent), get(getter) { }
+	inline T operator()() const { return g(); }
+	inline operator T() const { return g(); }
+protected:
+	P* g_parent = nullptr;
 	T(P::*get)() const = nullptr;
+	inline T g() const { return (g_parent->*get)(); }
 };
 
 template<class P, class T>
-struct property<P, T*, GET> {
-	property<P, T*, GET>(P* parent, T*(P::*getter)() const) : m_parent(parent), get(getter) { }
-	inline T* operator()() const { return (m_parent->*get)(); }
-	inline operator T*() const { return operator()(); }
-	inline T operator*() const { return *operator()(); }
-	inline T* operator->() const { return operator()(); }
-	inline T operator[](const size_t i) { return *(operator()() + i); }
-	inline T* operator+(const int i) { return operator()() + i; }
-	inline T* operator-(const int i) { return operator()() - i; }
-private:
-	P* m_parent = nullptr;
+struct prop_g<P, T*> {
+	prop_g(P* parent, T(P::*getter)() const) : g_parent(parent), get(getter) { }
+	inline T* operator()() const { return g(); }
+	inline operator T*() const { return g(); }
+	inline T operator*() const { return *g(); }
+	inline T* operator->() const { return g(); }
+	inline T operator[](const size_t i) { return *(g() + i); }
+	inline T* operator+(const int i) { return g() + i; }
+	inline T* operator-(const int i) { return g() - i; }
+protected:
+	P* g_parent = nullptr;
 	T*(P::*get)() const = nullptr;
+	inline T* g() const { return (m_parent->*get)(); }
 };
 
 template<class P, class T>
-struct property<P, T, SET> {
-	property<P, T, SET>(P* parent, const T&(P::*setter)(T)) : m_parent(parent), set(setter) { }
-	inline const T& operator=(T value) { return (m_parent->*set)(value); }
-private:
-	P* m_parent = nullptr;
+struct prop_s {
+	prop_s(P* parent, const T&(P::*setter)(T)) : s_parent(parent), set(setter) {}
+	inline const T& operator=(T value) { return (s_parent->*set)(value); }
+protected:
+	P* s_parent = nullptr;
 	const T&(P::*set)(T) = nullptr;
 };
 
+// it might be worth considering a specialization for objects that returns a const&
 template<class P, class T>
-struct property<P, T, GET_SET> {
-	property<P, T, GET_SET>(P* parent, T(P::*getter)() const, const T&(P::*setter)(T)) : m_parent(parent), get(getter), set(setter) { }
-	inline T operator()() const { return g(); }
-	inline operator T() const { return g(); }
-	inline const T& operator=(const T value) { return (m_parent->*set)(value); }
+struct property<P, T, GET> : prop_g<P, T> {
+	property<P, T, GET>(P* parent, T(P::*getter)() const) : prop_g(parent, getter) { }
+};
+
+template<class P, class T>
+struct property<P, T, SET> : prop_s<P, T> {
+	property<P, T, SET>(P* parent, const T&(P::*setter)(T)) : prop_s(parent, setter) { }
+	inline const T& operator=(T value) { return (s_parent->*set)(value); }
+};
+
+template<class P, class T>
+struct property<P, T, GET_SET> : prop_g<P, T>, prop_s<P, T> {
+	property<P, T, GET_SET>(P* parent, T(P::*getter)() const, const T&(P::*setter)(T)) : prop_g(parent, getter), prop_s(parent, setter) { }
+	inline const T& operator=(T value) { return (s_parent->*set)(value); }
 	inline const T& operator+=(const T value) { return operator=(g() + value); }
 	inline const T& operator-=(const T value) { return operator=(g() - value); }
 	inline const T& operator*=(const T value) { return operator=(g() * value); }
@@ -149,36 +160,4 @@ struct property<P, T, GET_SET> {
 	inline const T& operator^=(const T value) { return operator=(g() ^ value); }
 	inline const T& operator>>=(const size_t value) { return operator=(g() >> value); }
 	inline const T& operator<<=(const size_t value) { return operator=(g() << value); }
-private:
-	P* m_parent = nullptr;
-	T(P::*get)() const = nullptr;
-	const T&(P::*set)(T) = nullptr;
-	inline T g() const { return (m_parent->*get)(); }
-};
-
-template<class P, class T>
-struct property<P, T*, GET_SET> {
-	property<P, T*, GET_SET>(P* parent, T*(P::*getter)() const, const T*&(P::*setter)(T*)) : m_parent(parent), get(getter), set(setter) { }
-	inline T* operator()() const { return g(); }
-	inline operator T*() const { return g(); }
-	inline T operator*() const { return *g(); }
-	inline T* operator->() const { return g(); }
-	inline T operator[](const size_t i) { return *(g() + i); }
-	inline T* operator+(const int i) { return g() + i; }
-	inline T* operator-(const int i) { return g() - i; }
-	inline const T*& operator=(const T* value) { return (m_parent->*set)(value); }
-	inline const T*& operator+=(const T* value) { return operator=(g() + value); }
-	inline const T*& operator-=(const T* value) { return operator=(g() - value); }
-	inline const T*& operator*=(const T* value) { return operator=(g() * value); }
-	inline const T*& operator/=(const T* value) { return operator=(g() / value); }
-	inline const T*& operator&=(const T* value) { return operator=(g() & value); }
-	inline const T*& operator|=(const T* value) { return operator=(g() | value); }
-	inline const T*& operator^=(const T* value) { return operator=(g() ^ value); }
-	inline const T*& operator>>=(const size_t value) { return operator=(g() >> value); }
-	inline const T*& operator<<=(const size_t value) { return operator=(g() << value); }
-private:
-	P* m_parent = nullptr;
-	T*(P::*get)() const = nullptr;
-	const T*&(P::*set)(T) = nullptr;
-	inline T* g() const { return (m_parent->*get)(); }
 };

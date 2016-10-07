@@ -3,7 +3,7 @@
 #include <string>
 
 unique_name<Event> Event::names;
-unique_name<EventTriggers> EventTriggers::names;
+unique_name<EventTrigger> EventTrigger::names;
 unique_name<EventHandler> EventHandler::names;
 
 std::unordered_map<uint32_t, EventHandler*> EventDispatcher::handlers;

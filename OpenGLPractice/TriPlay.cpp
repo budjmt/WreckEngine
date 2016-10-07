@@ -2,20 +2,23 @@
 
 #include <iostream>
 
-TriPlay::TriPlay() { }
 TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 {
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
 
+	auto mainState = make_shared<State>("main");
+	mainState->handler_func = [](Event e) {
+		//nothing right now
+	};
+	addState(mainState);
+
 	auto m = loadOBJ("Assets/basic.obj");
 	m->translateTo(vec3());
 	auto dm = make_shared<DrawMesh>(m, "Assets/texture.png", prog);
-	shapes.push_back(dm);
 	auto mesh = make_shared<ColliderEntity>(dm);
 	mesh->id = (void*)0xcaca;
-	entities.push_back(mesh);
-	meshes.push_back(mesh);
+	mainState->addEntity(mesh);
 	//me = mesh;
 
 	std::vector<std::vector<vec3>> k = {
@@ -33,64 +36,54 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	//auto bezier = loadOBJ("Assets/bezier.obj");
 	auto cone = loadOBJ("Assets/cone.obj");
 	dm = make_shared<DrawMesh>(cone, "Assets/texture.png", prog);
-	shapes.push_back(dm);
 	mesh = make_shared<ColliderEntity>(dm);
 	mesh->transform.position = vec3(2.5f, 0, 0);
 	//mesh->id = (void*)0xb;
 	mesh->id = (void*)0xc1;
-	entities.push_back(mesh);
-	meshes.push_back(mesh);
+	mainState->addEntity(mesh);
 
 	//genCylinder("Assets/cylinder.obj", 64);
 	auto cylinder = loadOBJ("Assets/cylinder.obj");
 	dm = make_shared<DrawMesh>(cylinder, "Assets/texture.png", prog);
-	shapes.push_back(dm);
 	mesh = make_shared<ColliderEntity>(dm);
 	mesh->id = (void*)0xc;
 	mesh->transform.position = vec3(-2.5f, 0, 0);
-	entities.push_back(mesh);
-	meshes.push_back(mesh);
+	mainState->addEntity(mesh);
 	mesh->rigidBody.floating(1);
 
 	//genSphere("Assets/sphere.obj", 16);
 	auto sphere = loadOBJ("Assets/sphere.obj");
 	dm = make_shared<DrawMesh>(sphere, "Assets/texture.png", prog);
-	shapes.push_back(dm);
 	mesh = make_shared<ColliderEntity>(dm);
 	mesh->id = (void*)0xcc;
 	mesh->transform.position = vec3(0, 2.5f, 0);
-	entities.push_back(mesh);
-	meshes.push_back(mesh);
+	mainState->addEntity(mesh);
 	mesh->rigidBody.floating(1);
 
 	//genCube("Assets/cube.obj");
 	auto cube = loadOBJ("Assets/cube.obj");
 	dm = make_shared<DrawMesh>(cube, "Assets/texture.png", prog);
-	shapes.push_back(dm);
 	mesh = make_shared<ColliderEntity>(dm);
 	mesh->id = (void*)0xc2fb;
 	mesh->transform.position = vec3(0, -5.f, 0);
 	mesh->transform.scale = vec3(64, 1.5f, 64);
 	mesh->rigidBody.fixed(1);
 	mesh->rigidBody.mass(10000);
-	entities.push_back(mesh);
-	meshes.push_back(mesh);
+	mainState->addEntity(mesh);
 
 	dm = make_shared<DrawMesh>(cube, "Assets/texture.png", prog);
-	shapes.push_back(dm);
 	mesh = make_shared<ColliderEntity>(dm);
 	mesh->id = (void*)0xc2;
 	mesh->transform.position = vec3(-2.5f, -2.5f, 0);
 	mesh->rigidBody.floating(1);
-	entities.push_back(mesh);
-	meshes.push_back(mesh);
+	mainState->addEntity(mesh);
 	me = mesh;
 
 	camera = make_shared<Camera>(prog, window);
 	camera->id = (void*)0xcab;
 	camera->transform.position = vec3(0, 0, 1);
 	camera->transform.rotate(0, PI, 0);
-	entities.push_back(camera);
+	mainState->addEntity(camera);
 
 	if(DEBUG)
 		DrawDebug::getInstance().camera(camera.get());

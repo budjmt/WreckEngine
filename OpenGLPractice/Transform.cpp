@@ -12,12 +12,15 @@ void Transform::makeDirty() const {
 Transform* Transform::parent() const { return _parent; }
 void Transform::parent(Transform* p) {
 	if (p == _parent) return;
+	
 	// current parent must remove us as a child
 	if (_parent) { _parent->children.erase(this); }
 	else { mats.release(); }
+	
 	// new parent must add us, or if there is none we no longer need to compute a transform
 	if (p) { p->children.insert(this); }
 	else { computed.release(); }
+	
 	makeDirty();
 	_parent = p;
 }

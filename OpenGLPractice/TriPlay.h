@@ -15,12 +15,11 @@
 class TriPlay : public Game
 {
 public:
-	TriPlay();
+	TriPlay() = default;
 	TriPlay(GLprogram prog, GLFWwindow* w);
 	void update(GLFWwindow* window, Mouse* m, double dt);
 private:
 	shared<Entity> me;
-	std::vector<shared<Entity>> meshes;
 	shared<Camera> camera;
 	GLFWwindow* window;
 

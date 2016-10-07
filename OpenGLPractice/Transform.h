@@ -41,14 +41,17 @@ private:
 	ACCS_G  (private, vec3, rotAxis);
 	ACCS_G  (private, float, rotAngle);
 
-	vec3 base_forward = vec3(0, 0, 1), base_up = vec3(0, 1, 0);
+	vec3 base_forward = vec3(0, 0, 1)
+	   , base_up      = vec3(0, 1, 0);
 	ACCS_G (private, vec3, forward);
 	ACCS_G (private, vec3, up);
 	ACCS_G (private, vec3, right);
 
+	// computes are const, so these must be mutable
 	mutable bool dirtyComp, dirtyMats;
 	mutable alloc<Transform> computed = alloc<Transform>(nullptr);
 	mutable alloc<TransformMats> mats = alloc<TransformMats>(nullptr);
+	
 	Transform* _parent = nullptr;
 	Transform* computeTransform() const;
 
