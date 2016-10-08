@@ -15,8 +15,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 
 	auto m = loadOBJ("Assets/basic.obj");
 	m->translateTo(vec3());
-	auto dm = make_shared<DrawMesh>(m, "Assets/texture.png", prog);
-	auto mesh = make_shared<ColliderEntity>(dm);
+	auto mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(m, "Assets/texture.png", prog));
 	mesh->id = (void*)0xcaca;
 	mainState->addEntity(mesh);
 	//me = mesh;
@@ -35,8 +34,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	//genCone("Assets/cone.obj", 8);
 	//auto bezier = loadOBJ("Assets/bezier.obj");
 	auto cone = loadOBJ("Assets/cone.obj");
-	dm = make_shared<DrawMesh>(cone, "Assets/texture.png", prog);
-	mesh = make_shared<ColliderEntity>(dm);
+	mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(cone, "Assets/texture.png", prog));
 	mesh->transform.position = vec3(2.5f, 0, 0);
 	//mesh->id = (void*)0xb;
 	mesh->id = (void*)0xc1;
@@ -44,8 +42,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 
 	//genCylinder("Assets/cylinder.obj", 64);
 	auto cylinder = loadOBJ("Assets/cylinder.obj");
-	dm = make_shared<DrawMesh>(cylinder, "Assets/texture.png", prog);
-	mesh = make_shared<ColliderEntity>(dm);
+	mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(cylinder, "Assets/texture.png", prog));
 	mesh->id = (void*)0xc;
 	mesh->transform.position = vec3(-2.5f, 0, 0);
 	mainState->addEntity(mesh);
@@ -53,8 +50,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 
 	//genSphere("Assets/sphere.obj", 16);
 	auto sphere = loadOBJ("Assets/sphere.obj");
-	dm = make_shared<DrawMesh>(sphere, "Assets/texture.png", prog);
-	mesh = make_shared<ColliderEntity>(dm);
+	mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(sphere, "Assets/texture.png", prog));
 	mesh->id = (void*)0xcc;
 	mesh->transform.position = vec3(0, 2.5f, 0);
 	mainState->addEntity(mesh);
@@ -62,8 +58,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 
 	//genCube("Assets/cube.obj");
 	auto cube = loadOBJ("Assets/cube.obj");
-	dm = make_shared<DrawMesh>(cube, "Assets/texture.png", prog);
-	mesh = make_shared<ColliderEntity>(dm);
+	mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(cube, "Assets/texture.png", prog));
 	mesh->id = (void*)0xc2fb;
 	mesh->transform.position = vec3(0, -5.f, 0);
 	mesh->transform.scale = vec3(64, 1.5f, 64);
@@ -71,8 +66,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	mesh->rigidBody.mass(10000);
 	mainState->addEntity(mesh);
 
-	dm = make_shared<DrawMesh>(cube, "Assets/texture.png", prog);
-	mesh = make_shared<ColliderEntity>(dm);
+	mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(cube, "Assets/butt.png", prog));
 	mesh->id = (void*)0xc2;
 	mesh->transform.position = vec3(-2.5f, -2.5f, 0);
 	mesh->rigidBody.floating(1);

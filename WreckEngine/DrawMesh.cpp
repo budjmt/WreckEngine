@@ -30,6 +30,7 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 	textures.push_back(genTexture2D(texFile));
 	textures[0].bind();
 
+	// this needs to be refined at some point when multiple samplers come into the picture, probably with the material system
 	textureLoc = _shaderProg.getUniform<GLsampler>("uniformTex");
 	textureLoc.update(0);
 
@@ -42,5 +43,6 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 
 void DrawMesh::draw(const mat4& world) {
 	Drawable::draw(world);
+	textures[0].bind();
 	glDrawElements(GL_TRIANGLES, _mesh->meshElementArray.size(), GL_UNSIGNED_INT, nullptr);
 }

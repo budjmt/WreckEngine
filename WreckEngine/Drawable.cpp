@@ -42,6 +42,7 @@ GLtexture Drawable::genTexture2D(const char* texFile) {
 	texture.bind();
 	//the texture is loaded in BGRA format
 	texture.set2D<GLubyte>(textureData, w, h, GL_BGRA);
+	texture.genMipMap();
 	FreeImage_Unload(image);
 
 	loadedTextures[texFile] = texture;

@@ -54,13 +54,15 @@ struct GLtexture {
 	inline GLuint& operator()() const { return *texture; }
 
 	inline void create(const GLenum type = GL_TEXTURE_2D) { glGenTextures(1, texture.get()); this->type = type; }
+	// must be done while bound
+	inline void genMipMap() { glGenerateMipmap(type); }
 	inline void bind(const GLint index = 0) const { 
 		if (index > MAX_TEXTURES) return; 
 		glActiveTexture(GL_TEXTURE0 + index); 
 		glBindTexture(type, *texture);
 	}
 
-	// these sets correspond to glTextImage. Texture must be bound for these to work.
+	// these sets correspond to glTexImage. Texture must be bound for these to work.
 	template<typename value_T>
 	inline void set1D(const GLvoid* pixelData, const GLuint width, const GLenum format_from = GL_RGBA, const GLenum format_to = GL_RGBA, const GLint mip_level = 0) const {
 		glTexImage1D(type, mip_level, format_to, width, 0, format_from, GLtype<value_T>(), pixelData);
