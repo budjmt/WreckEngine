@@ -22,6 +22,8 @@ inline float maxf(float a, float b);
 inline float minf(float a, float b);
 inline float clampf(float val, float min, float max);
 
+typedef union { float f; uint32_t i; } bfloat;// allows for binary ops on a float
+
 typedef glm::vec2 vec2;
 typedef glm::vec3 vec3;
 typedef glm::vec4 vec4;

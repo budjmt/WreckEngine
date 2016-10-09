@@ -143,8 +143,6 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 	manifold.other = other;
 	//manifold.pen = -FLT_MAX;//initial value
 
-	typedef union { float f; int i; } bfloat;
-
 	auto& othergauss = other->getGaussMap();
 	auto& otherNormals = other->getCurrNormals();
 
@@ -160,7 +158,7 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 			for (const auto& otherPair : othergauss.adjacencies) {
 				for (const auto otherCurr : otherPair.second) {
 
-					//these must be negative to account for the minkowski DIFFERENCE
+					//these must be negative to account for the Minkowski DIFFERENCE
 					//however, that's more expensive than negating on demand, so that's what we'll do
 					const auto c = otherNormals[otherCurr.faces.first], d = otherNormals[otherCurr.faces.second];
 

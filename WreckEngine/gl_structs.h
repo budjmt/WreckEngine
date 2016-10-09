@@ -45,6 +45,7 @@ template<> struct GLuniform<vec4> { GLuint location; inline void update(const ve
 template<> struct GLuniform<mat3> { GLuint location; inline void update(const mat3& value, bool transpose = false) const { glUniformMatrix3fv(location, 1, transpose, &value[0][0]); }; };
 template<> struct GLuniform<mat4> { GLuint location; inline void update(const mat4& value, bool transpose = false) const { glUniformMatrix4fv(location, 1, transpose, &value[0][0]); }; };
 
+#include "GLError.h"
 // wraps a texture. [type] reflects what type of sampler it needs.
 // https://www.opengl.org/wiki/Sampler_(GLSL)
 struct GLtexture {
@@ -52,8 +53,14 @@ struct GLtexture {
 	shared<GLuint> texture = shared<GLuint>(new GLuint(def), local(delTexture));
 	GLenum type;
 	inline GLuint& operator()() const { return *texture; }
-
-	inline void create(const GLenum type = GL_TEXTURE_2D) { glGenTextures(1, texture.get()); this->type = type; }
+	inline void create(const GLenum type = GL_TEXTURE_2D, const GLint max_mip_level = 0) { 
+		glGenTextures(1, texture.get());
+		// these are globally bound, so technically this line affects every texture [of the type] each time the value changes
+		// this can be fixed with immutable textures in 4.3+
+		glTexParameteri(type, GL_TEXTURE_BASE_LEVEL, 0);
+		glTexParameteri(type, GL_TEXTURE_MAX_LEVEL, max_mip_level);
+		this->type = type; 
+	}
 	// must be done while bound
 	inline void genMipMap() { glGenerateMipmap(type); }
 	inline void bind(const GLint index = 0) const { 

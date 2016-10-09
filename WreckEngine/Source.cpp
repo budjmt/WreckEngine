@@ -49,7 +49,7 @@ void init() {
 
 	mouse_move_callback(window, 0, 0);//this is cheating but it works
 
-	game = make_unique<TriPlay>(shaderProg, window);
+	game = make_unique<TriPlay>(shaderProg, window);// this won't be initialized until after GLFW/GLEW are
 
 	prevFrame = glfwGetTime();
 }
@@ -67,8 +67,6 @@ void initGraphics(GLFWwindow* window) {
 	glEnable(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	//wraps UVs
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -86,7 +84,7 @@ void initGraphics(GLFWwindow* window) {
 	//glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
 	glClearColor(0.f, 0.f, 0.f, 1.f);
 
-	//render as wireframe
+	//render as wire-frame
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
@@ -185,8 +183,6 @@ int main(int argc, char** argv) {
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 	mouse.button = button;
 	if (action == GLFW_PRESS) {
-		//cout << "Mouse: " << mousex << "," << mousey << endl;
-		//entities[0].setPos(vec3(mousex,mousey,0));
 		mouse.down = true;
 		mouse.lastClick = glfwGetTime();
 	}
