@@ -2,6 +2,8 @@
 
 #include "GL/glew.h"
 
+#include "GLError.h"
+
 #include <vector>
 
 #include "MarchMath.h"
@@ -15,7 +17,7 @@ namespace {
 	// default value used to represent "uninitialized" resources
 	constexpr GLuint def = (GLuint) -1;
 
-	size_t local(getMaxNumTextures)() { GLint val; glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &val); return val; }
+	GLint local(getMaxNumTextures)() { GLint val; glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &val); return val; }
 
 	void local(delTexture)   (GLuint* t) { if (*t != def) glDeleteTextures(1, t);     delete t; }
 
@@ -45,11 +47,9 @@ template<> struct GLuniform<vec4> { GLuint location; inline void update(const ve
 template<> struct GLuniform<mat3> { GLuint location; inline void update(const mat3& value, bool transpose = false) const { glUniformMatrix3fv(location, 1, transpose, &value[0][0]); }; };
 template<> struct GLuniform<mat4> { GLuint location; inline void update(const mat4& value, bool transpose = false) const { glUniformMatrix4fv(location, 1, transpose, &value[0][0]); }; };
 
-#include "GLError.h"
 // wraps a texture. [type] reflects what type of sampler it needs.
 // https://www.opengl.org/wiki/Sampler_(GLSL)
 struct GLtexture {
-	static const GLint MAX_TEXTURES;
 	shared<GLuint> texture = shared<GLuint>(new GLuint(def), local(delTexture));
 	GLenum type;
 	inline GLuint& operator()() const { return *texture; }
@@ -82,6 +82,11 @@ struct GLtexture {
 	inline void set3D(const GLvoid* pixelData, const GLuint width, const GLuint height, const GLuint depth, const GLenum format_from = GL_RGBA, const GLenum format_to = GL_RGBA, const GLint mip_level = 0) const {
 		glTexImage3D(type, mip_level, format_to, width, height, depth, 0, format_from, GLtype<value_T>(), pixelData);
 	}
+
+private:
+	static GLint MAX_TEXTURES;
+	static void setMaxTextures() { MAX_TEXTURES = local(getMaxNumTextures)(); }
+	friend struct GLFWmanager;
 };
 
 // wraps a buffer object on the GPU.

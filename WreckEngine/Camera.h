@@ -5,15 +5,14 @@
 #include "glm/gtx/transform.hpp"
 
 #include "Entity.h"
-#include "Mouse.h"
+#include "External.h"
 
 const float CAM_FOV = 2 * PI / 5;
 
 class Camera : public Entity
 {
 public:
-	Camera(GLprogram shaderProg, GLFWwindow* w);
-	GLFWwindow* window;
+	Camera(GLprogram shaderProg);
 	
 	void updateCamMat(GLuniform<mat4> camLoc);
 	void update(double dt);
@@ -27,7 +26,7 @@ public:
 	vec3 getLookAt(float units = 1.f);
 	void updateProjection();
 
-	static void mayaCam(GLFWwindow* window, Mouse* m, double dt, Camera* camera);
+	static void mayaCam(Camera* camera, double dt);
 
 private:
 	mat4 projection, view;

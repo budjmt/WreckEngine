@@ -14,7 +14,7 @@ enum EntityType {
 class Entity
 {
 public:
-	Entity() { };
+	Entity() = default;
 	Entity(shared<Drawable> s);
 	Entity(vec3 p, vec3 sc, vec3 rA, float r, shared<Drawable> s);
 
@@ -34,3 +34,11 @@ protected:
 	ACCS_G (protected, EntityType, type);
 };
 
+class LogicEntity : public Entity {
+	using update_func = void(*)(LogicEntity*, double);
+public:
+	LogicEntity(update_func f) : Entity(), custom_update(f) { }
+	update_func custom_update;
+	void update(double dt) { custom_update(this, dt); }
+	void draw() {}
+};

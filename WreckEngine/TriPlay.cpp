@@ -2,12 +2,31 @@
 
 #include <iostream>
 
-TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
-{
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
+namespace {
+	void menu_update(LogicEntity* e, double dt) {
+		if (Window::getKey(GLFW_KEY_SPACE) == GLFW_PRESS) {
+			EventTrigger(e).sendEvent(EventHandler::get("menu_state"), Event::get("start_game"));
+		}
+	}
+}
 
+TriPlay::TriPlay(GLprogram prog) : Game(prog)
+{
+	Window::update();
+
+	auto menuState = make_shared<State>("menu");
 	auto mainState = make_shared<State>("main");
+	auto mainsp = mainState.get();
+
+	auto start_game_event = Event::add("start_game");
+	menuState->handler_func = [this, mainsp, start_game_event](Event e) {
+		if (e.id == start_game_event) {
+			currState = mainsp;
+		}
+	};
+	addState(menuState);
+	menuState->addEntity(make_shared<LogicEntity>(menu_update));
+
 	mainState->handler_func = [](Event e) {
 		//nothing right now
 	};
@@ -73,7 +92,7 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 	mainState->addEntity(mesh);
 	me = mesh;
 
-	camera = make_shared<Camera>(prog, window);
+	camera = make_shared<Camera>(prog);
 	camera->id = (void*)0xcab;
 	camera->transform.position = vec3(0, 0, 1);
 	camera->transform.rotate(0, PI, 0);
@@ -84,32 +103,22 @@ TriPlay::TriPlay(GLprogram prog, GLFWwindow* w) : Game(prog), window(w)
 }
 
 #include "CollisionManager.h"
-void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
-	//if (!started) {
-	//	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) started = true;
-	//	return;
-	//}
+void TriPlay::update(double delta) {
 
 	const auto dt = (float)delta;
 
 	Game::update(delta);
 	CollisionManager::getInstance().update(dt);
 
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-		//quit the game
-		glfwTerminate();
-		exit('q');
-	}
+	//quit the game
+	if (Window::getKey(GLFW_KEY_Q) == GLFW_PRESS) exit('q');
 
-	const auto speed = 5.f;
+	constexpr auto speed = 5.f;
 
-	bool shift = false, ctrl = false;
-	if (glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-		shift = true;
-	if (glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-		ctrl = true;
+	bool shift = Window::getKey(GLFW_KEY_RIGHT_SHIFT)   == GLFW_PRESS || Window::getKey(GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS;
+	bool ctrl  = Window::getKey(GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS || Window::getKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
 
-	if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) {
+	if (Window::getKey(GLFW_KEY_I) == GLFW_PRESS) {
 		if (shift)
 			me->transform.position += vec3(0, 0, -speed * dt);
 		else if (ctrl)
@@ -117,7 +126,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
 		else
 			me->transform.position += vec3(0, speed * dt, 0);
 	}
-	else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) {
+	else if (Window::getKey(GLFW_KEY_K) == GLFW_PRESS) {
 		if(shift)
 			me->transform.position += vec3(0, 0, speed * dt);
 		else if (ctrl)
@@ -125,7 +134,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
 		else
 			me->transform.position += vec3(0, -speed * dt, 0); 
 	}
-	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) {
+	if (Window::getKey(GLFW_KEY_L) == GLFW_PRESS) {
 		if (shift)
 			me->transform.rotate(0, 2 * PI * dt, 0);
 		else if (ctrl)
@@ -133,7 +142,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
 		else
 			me->transform.position += vec3(speed * dt, 0, 0);
 	}
-	else if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) {
+	else if (Window::getKey(GLFW_KEY_J) == GLFW_PRESS) {
 		if (shift)
 			me->transform.rotate(0, -2 * PI * dt, 0);
 		else if (ctrl)
@@ -142,7 +151,7 @@ void TriPlay::update(GLFWwindow* window, Mouse* m, double delta) {
 			me->transform.position += vec3(-speed * dt, 0, 0);
 	}
 
-	Camera::mayaCam(window, m, dt, camera.get());
+	Camera::mayaCam(camera.get(), dt);
 
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));

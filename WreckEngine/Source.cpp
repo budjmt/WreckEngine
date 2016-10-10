@@ -9,15 +9,56 @@
 #include "GLDebug.h"
 #include "ShaderHelper.h"
 #include "ModelHelper.h"
-#include "Mouse.h"
+#include "External.h"
 #include "TriPlay.h"
 
 using namespace std;
 
+void initGraphics();
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void mouse_move_callback(GLFWwindow* window, double x, double y);
+
 struct GLFWmanager { 
 	bool initialized = false; 
 	~GLFWmanager() { if(initialized) glfwTerminate(); };
-	int init() { auto val = glfwInit(); initialized = val != 0; return val; };
+	GLFWmanager(const size_t width, const size_t height) { 
+		auto val = glfwInit(); 
+		initialized = val != 0; 
+		if(!initialized) exit(val); 
+
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+
+		GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+
+		/*const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+		glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+		glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+		glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+		glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);*/
+
+		if (DEBUG) glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+
+		Window::window = glfwCreateWindow(width, height, "Wreck Engine", nullptr, nullptr);
+		if (!Window::window) exit('w');
+		glfwMakeContextCurrent(Window::window);
+
+		Mouse::button_callback(mouse_button_callback);
+		Mouse::move_callback(mouse_move_callback);
+
+		GLtexture::setMaxTextures();
+	};
+};
+
+struct GLEWmanager {
+	bool initialized = false;
+	GLEWmanager() {
+		glewExperimental = GL_TRUE;
+		auto val = glewInit();
+		initialized = val == GLEW_OK;
+		if (!initialized) exit(val);
+	}
 };
 
 //DEBUG is defined in DrawDebug.h
@@ -27,43 +68,37 @@ double runningAvgDelta = 1.0 / FPS;
 int samples = 10;
 bool fpsMode = true;
 
-GLFWwindow* window;
 GLprogram shaderProg;
 GLuniform<float> uniTime;
 
 double prevFrame;
-Mouse mouse;
 
 unique<TriPlay> game;
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-void mouse_move_callback(GLFWwindow* window, double x, double y);
 
 void init() {
 	shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
 	if(shaderProg()) {
 		shaderProg.use();
-		shaderProg.getUniform<vec3>("tint").update(vec3(1, 1, 1));
+		shaderProg.getUniform<vec3>("tint").update(vec3(1));
 		uniTime = shaderProg.getUniform<float>("time");
 	}
 
-	mouse_move_callback(window, 0, 0);//this is cheating but it works
+	mouse_move_callback(Window::window, 0, 0);//this is cheating but it works for initializing the mouse
 
-	game = make_unique<TriPlay>(shaderProg, window);// this won't be initialized until after GLFW/GLEW are
+	game = make_unique<TriPlay>(shaderProg);// this won't be initialized until after GLFW/GLEW are
 
 	prevFrame = glfwGetTime();
+	initGraphics();
 }
 
-void initGraphics(GLFWwindow* window) {
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
+void initGraphics() {
+	glViewport(0, 0, Window::width, Window::height);
 
-	float aspect = (float)width / (float)height;
-	glViewport(0, 0, width, height);
-
+	// alpha blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	// texture filtering
 	glEnable(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_LINEAR);
@@ -72,19 +107,16 @@ void initGraphics(GLFWwindow* window) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+	// depth buffering
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	//back-face culling
+	// back-face culling
+	if (!DEBUG) { glEnable(GL_CULL_FACE); }
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
-	if (!DEBUG) { glEnable(GL_CULL_FACE); }
 
-	//cornflower blue
-	//glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
-	glClearColor(0.f, 0.f, 0.f, 1.f);
-
-	//render as wire-frame
+	// render as wire-frame
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
 
@@ -108,23 +140,22 @@ void update() {
 	auto decimal = title.find('.', 2);
 	if (title.length() - decimal > 3) title = title.erase(decimal + 3);
 	title += fpsMode ? " FpS" : " MSpF";
-	glfwSetWindowTitle(window, title.c_str());
-
-	mouse.prevx = glm::mix(mouse.prevx, mouse.x, 0.15f);
-	mouse.prevy = glm::mix(mouse.prevy, mouse.y, 0.15f);
+	glfwSetWindowTitle(Window::window, title.c_str());
 	
-	bool alt = glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
+	Mouse::update();
+
+	bool alt = Window::getKey(GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || Window::getKey(GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
 	if (alt) {
-		if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
+		if (Window::getKey(GLFW_KEY_0) == GLFW_PRESS)
 			fpsMode = !fpsMode;
-		if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS)
+		if (Window::getKey(GLFW_KEY_EQUAL) == GLFW_PRESS)
 			FPS += (FPS < 5) ? 1 : ((FPS < 20) ? 5 : ((FPS < 60) ? 10 : 0));
-		if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS)
+		if (Window::getKey(GLFW_KEY_MINUS) == GLFW_PRESS)
 			FPS -= (FPS > 20) ? 10 : ((FPS > 5) ? 5 : ((FPS > 1) ? 1 : 0));
 	}
 
 	uniTime.update((float)currFrame);
-	game->update(window, &mouse, dt);
+	game->update(dt);
 }
 
 void draw() {
@@ -133,47 +164,16 @@ void draw() {
 }
 
 int main(int argc, char** argv) {
-	GLFWmanager glfw;
-	if (!glfw.init())
-		return -1;
+	GLFWmanager glfw(800, 600);
+	GLEWmanager glew;
 
-	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-	
-	/*const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-	glfwWindowHint(GLFW_RED_BITS, mode->redBits);
-	glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
-	glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
-	glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);*/
-
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-
-	if(DEBUG)
-		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-
-	window = glfwCreateWindow(800, 600, "Wreck Engine", NULL, NULL);
-	if (!window) {
-		return -1;
-	}
-
-	glfwSetMouseButtonCallback(window, mouse_button_callback);
-	glfwSetCursorPosCallback(window, mouse_move_callback);
-
-	glfwMakeContextCurrent(window);
-
-	glewExperimental = GL_TRUE;
-
-	if (glewInit() != GLEW_OK)
-		return -1;
-
-	if(DEBUG)
+	if(DEBUG) 
 		initDebug();
 	init();
-	initGraphics(window);
-	while (!glfwWindowShouldClose(window)) {
+	while (!glfwWindowShouldClose(Window::window)) {
 		update();
 		draw();
-		glfwSwapBuffers(window);
+		glfwSwapBuffers(Window::window);
 		glfwPollEvents();
 	}
 
@@ -181,13 +181,13 @@ int main(int argc, char** argv) {
 }
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-	mouse.button = button;
+	Mouse::info.button = button;
 	if (action == GLFW_PRESS) {
-		mouse.down = true;
-		mouse.lastClick = glfwGetTime();
+		Mouse::info.down = true;
+		Mouse::info.lastClick = glfwGetTime();
 	}
 	else if (action == GLFW_RELEASE) {
-		mouse.down = false;
+		Mouse::info.down = false;
 	}
 }
 
@@ -195,8 +195,8 @@ void mouse_move_callback(GLFWwindow* window, double x, double y) {
 	double cursorx, cursory;
 	// retrieves the mouse coordinates in screen-space, relative to top-left corner
 	glfwGetCursorPos(window, &cursorx, &cursory);
-	mouse.prevx = mouse.x;
-	mouse.prevy = mouse.y;
-	mouse.x =   2 * cursorx - 1;
-	mouse.y = -(2 * cursory - 1);
+	Mouse::info.prevx = Mouse::info.x;
+	Mouse::info.prevy = Mouse::info.y;
+	Mouse::info.x =   2 * cursorx - 1;
+	Mouse::info.y = -(2 * cursory - 1);
 }

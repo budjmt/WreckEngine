@@ -187,6 +187,7 @@
     <ClCompile Include="TriPlay.cpp" />
     <ClCompile Include="utility.cpp" />
     <ClCompile Include="UV.cpp" />
+    <ClInclude Include="External.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -201,7 +202,6 @@
     <ClInclude Include="MarchMath.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ModelHelper.h" />
-    <ClInclude Include="Mouse.h" />
     <ClInclude Include="property.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ShaderHelper.h" />
