@@ -2,22 +2,24 @@
 
 DrawMesh::DrawMesh(shared<Mesh> m, const char* texFile, GLprogram shader) : _mesh(m) { setup(texFile, shader); }
 
-DrawMesh::DrawMesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u, Face f, const char* texFile, GLprogram shader) 
+DrawMesh::DrawMesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u, Mesh::Face f, const char* texFile, GLprogram shader) 
 	: DrawMesh(make_shared<Mesh>(v, n, u, f), texFile, shader) {}
 
 void DrawMesh::setup(const char* texFile, GLprogram shader) {
 	shaderProg = shader;
+	
+	auto renderData = _mesh->getRenderData();
 
 	vArray.create();
 	vArray.bind();
 
 	vertBuffer.create(GL_ARRAY_BUFFER);
 	vertBuffer.bind();
-	vertBuffer.data(sizeof(GLfloat) * _mesh->meshArray.size(), &_mesh->meshArray[0]);
+	vertBuffer.data(sizeof(GLfloat) * renderData->vbuffer.size(), &renderData->vbuffer[0]);
 
 	elBuffer.create(GL_ELEMENT_ARRAY_BUFFER);
 	elBuffer.bind();
-	elBuffer.data(sizeof(GLuint) * _mesh->meshElementArray.size(), &_mesh->meshElementArray[0]);
+	elBuffer.data(sizeof(GLuint) * renderData->ebuffer.size(), &renderData->ebuffer[0]);
 
 	//set up an attribute for how the coordinates will be read
 	GLattrarr attrSetup;
@@ -44,5 +46,5 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 void DrawMesh::draw(const mat4& world) {
 	Drawable::draw(world);
 	textures[0].bind();
-	glDrawElements(GL_TRIANGLES, _mesh->meshElementArray.size(), GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, _mesh->getRenderData()->ebuffer.size(), GL_UNSIGNED_INT, nullptr);
 }

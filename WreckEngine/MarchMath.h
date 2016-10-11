@@ -6,11 +6,13 @@
 #include <cmath>
 #include <string>
 
-//use for floating point error correction
-#define EPS_CHECK(x) (x < FLT_EPSILON && x > -FLT_EPSILON)
 //all NaN related comparisons evaluate to false, this could be implemented as x != x
 //but that could be optimized out; std::isnan(x) is part of the standard library
 #define NaN_CHECK(x) std::isnan(x)
+
+//use for floating point error correction
+inline bool epsCheck(float x) { return x < FLT_EPSILON && x > -FLT_EPSILON; }
+inline bool epsCheck(double x) { return x < DBL_EPSILON && x > -DBL_EPSILON; }
 
 const double PI_D = 3.14159265358979323846;
 const float PI = (float)PI_D;

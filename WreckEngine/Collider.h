@@ -11,9 +11,7 @@
 
 class Collider;
 
-enum class ColliderType { SPHERE, BOX, MESH };
-
-const float COLLISION_PEN_TOLERANCE = 0.01f * -1.f;
+constexpr float COLLISION_PEN_TOLERANCE = 0.01f * -1.f;
 
 struct AABB {
 	vec3 center, halfDims;
@@ -44,11 +42,13 @@ struct EdgeManifold : Manifold { std::pair<Adj, Adj> edgePair; };
 class Collider
 {
 public:
+	enum class Type { SPHERE, BOX, MESH };
+
 	Collider(Transform* t, const vec3 d, const bool fudge = true);
 	Collider(Mesh* m, Transform* t);
 	
 	const AABB& aabb = transformed_aabb;
-	const ColliderType& type = _type;
+	const Type& type = _type;
 	void updateDims();
 
 	Manifold intersects(Collider* other);
@@ -86,7 +86,7 @@ public:
 	EdgeManifold overlayGaussMaps(Collider* other);
 
 private:
-	Collider(const ColliderType type, Mesh* m, Transform* t, const vec3 d, const bool fudge = true);
+	Collider(const Type type, Mesh* m, Transform* t, const vec3 d, const bool fudge = true);
 
 	ACCS_G    (private, Transform*, transform);
 	ACCS_G    (private, vec3,  framePos);
@@ -95,7 +95,7 @@ private:
 
 	bool fudgeAABB = true;//if this is true, the transformed AABB will be scaled by some factor
 	AABB base_aabb, transformed_aabb;
-	ColliderType _type;
+	Type _type;
 
 	std::vector<vec3> faceNormals, currNormals, edges, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
 	std::unordered_map<std::string, GLuint> edgeMap;//maps the edge pairs to the indices in edges

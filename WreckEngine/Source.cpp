@@ -16,9 +16,6 @@ using namespace std;
 
 void initGraphics();
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-void mouse_move_callback(GLFWwindow* window, double x, double y);
-
 struct GLFWmanager { 
 	bool initialized = false; 
 	~GLFWmanager() { if(initialized) glfwTerminate(); };
@@ -44,8 +41,8 @@ struct GLFWmanager {
 		if (!Window::window) exit('w');
 		glfwMakeContextCurrent(Window::window);
 
-		Mouse::button_callback(mouse_button_callback);
-		Mouse::move_callback(mouse_move_callback);
+		Mouse::button_callback(Mouse::default_button);
+		Mouse::move_callback(Mouse::default_move);
 
 		GLtexture::setMaxTextures();
 	};
@@ -83,7 +80,7 @@ void init() {
 		uniTime = shaderProg.getUniform<float>("time");
 	}
 
-	mouse_move_callback(Window::window, 0, 0);//this is cheating but it works for initializing the mouse
+	Mouse::default_move(Window::window, 0, 0);//this is cheating but it works for initializing the mouse
 
 	game = make_unique<TriPlay>(shaderProg);// this won't be initialized until after GLFW/GLEW are
 
@@ -167,7 +164,7 @@ int main(int argc, char** argv) {
 	GLFWmanager glfw(800, 600);
 	GLEWmanager glew;
 
-	if(DEBUG) 
+	if (DEBUG)
 		initDebug();
 	init();
 	while (!glfwWindowShouldClose(Window::window)) {
@@ -178,25 +175,4 @@ int main(int argc, char** argv) {
 	}
 
 	return 0;
-}
-
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-	Mouse::info.button = button;
-	if (action == GLFW_PRESS) {
-		Mouse::info.down = true;
-		Mouse::info.lastClick = glfwGetTime();
-	}
-	else if (action == GLFW_RELEASE) {
-		Mouse::info.down = false;
-	}
-}
-
-void mouse_move_callback(GLFWwindow* window, double x, double y) {
-	double cursorx, cursory;
-	// retrieves the mouse coordinates in screen-space, relative to top-left corner
-	glfwGetCursorPos(window, &cursorx, &cursory);
-	Mouse::info.prevx = Mouse::info.x;
-	Mouse::info.prevy = Mouse::info.y;
-	Mouse::info.x =   2 * cursorx - 1;
-	Mouse::info.y = -(2 * cursory - 1);
 }

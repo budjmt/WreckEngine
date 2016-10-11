@@ -2,9 +2,9 @@
 
 #include <iostream>
 
-Collider::Collider(Transform* t, const vec3 d, const bool fudge) : Collider(ColliderType::BOX, nullptr, t, d, fudge) { }
-Collider::Collider(Mesh* m, Transform* t) : Collider(ColliderType::MESH, m, t, m->getPreciseDims()) { }
-Collider::Collider(const ColliderType type, Mesh* m, Transform* t, const vec3 d, const bool fudge) : _type(type), mesh(m), _transform(t), fudgeAABB(fudge) 
+Collider::Collider(Transform* t, const vec3 d, const bool fudge) : Collider(Type::BOX, nullptr, t, d, fudge) { }
+Collider::Collider(Mesh* m, Transform* t) : Collider(Type::MESH, m, t, m->getPreciseDims()) { }
+Collider::Collider(const Type type, Mesh* m, Transform* t, const vec3 d, const bool fudge) : _type(type), mesh(m), _transform(t), fudgeAABB(fudge) 
 {
 	dims(d);
 	base_aabb.center = _transform->getComputed()->position;
@@ -306,9 +306,9 @@ std::vector<GLuint> Collider::getIncidentFaces(const vec3 refNormal) const {
 		const auto diff = antiProj - proj;
 
 		//if the face has close to 0 difference to the last anti-normal projection, then it's another incident face
-		if (EPS_CHECK(diff))
+		if (epsCheck(diff)) {
 			faces.push_back(i);
-
+		}
 		//if the face is more anti-parallel than the previous, we replace our previous incident faces with this one
 		else if (diff > 0) {
 			faces = std::vector<GLuint>();
@@ -429,7 +429,7 @@ std::vector<vec3> Collider::clipPolyAgainstEdge(std::vector<vec3>& input, const 
 		const auto clipEnd   = glm::dot(sidePlane, endpt - sideVert);
 
 		//the edge is "on the plane" (thick planes); keep end pt if it falls below reference face
-		if (EPS_CHECK(clipStart) || EPS_CHECK(clipEnd)) {
+		if (epsCheck(clipStart) || epsCheck(clipEnd)) {
 			if (glm::dot(refNorm, endpt - refCenter) < 0) output.push_back(endpt);
 			continue;
 		}
@@ -549,8 +549,8 @@ vec3 Collider::closestPointBtwnSegments(const vec3 p0, const vec3 p1, const vec3
 	}
 
 	//prevents possible divide by zero
-	sc = (EPS_CHECK(sNumer)) ? 0 : sNumer / sDenom;
-	tc = (EPS_CHECK(tNumer)) ? 0 : tNumer / tDenom;
+	sc = epsCheck(sNumer) ? 0 : sNumer / sDenom;
+	tc = epsCheck(tNumer) ? 0 : tNumer / tDenom;
 
 	v *= tc;
 	auto wc = w0; 
@@ -563,10 +563,10 @@ vec3 Collider::closestPointBtwnSegments(const vec3 p0, const vec3 p1, const vec3
 }
 
 void Collider::genVerts() {
-	if (_type != ColliderType::BOX)
+	if (_type != Type::BOX)
 		return;
 	std::vector<vec3> verts, norms, uvs;//norms and UVs are empty
-	Face faces;
+	Mesh::Face faces;
 	verts = { vec3( _dims.x,  _dims.y,  _dims.z),
 			  vec3(-_dims.x,  _dims.y,  _dims.z),
 			  vec3( _dims.x, -_dims.y,  _dims.z),
@@ -588,9 +588,9 @@ void Collider::genVerts() {
 
 void Collider::genNormals() {
 	switch (_type) {
-	case ColliderType::SPHERE:
+	case Type::SPHERE:
 		break;
-	case ColliderType::BOX:
+	case Type::BOX:
 		faceNormals = { vec3( 1,  0,  0),
 					    vec3(-1,  0,  0),
 					    vec3( 0,  0,  1),
@@ -598,7 +598,7 @@ void Collider::genNormals() {
 					    vec3( 0,  1,  0),
 					    vec3( 0, -1,  0) };
 		break;
-	case ColliderType::MESH:
+	case Type::MESH:
 		// generate the face normals from the mesh's vertices
 		// when iterating over normals, to retrieve the vertices of the face corresponding to the normal at index i,
 		// the nth (0, 1, or 2) vertex in the face is meshVerts[faceVerts[i * 3 + n]]
@@ -621,10 +621,10 @@ void Collider::genNormals() {
 
 void Collider::genEdges() {
 	switch (_type) {
-	case ColliderType::SPHERE:
+	case Type::SPHERE:
 		break;
-	case ColliderType::BOX:
-	case ColliderType::MESH:
+	case Type::BOX:
+	case Type::MESH:
 		auto& meshVerts = mesh->verts();
 		for (const auto& pair : gauss.adjacencies) {
 			for (size_t i = 0, numAdj = pair.second.size(); i < numAdj; ++i) {
@@ -640,14 +640,14 @@ void Collider::genEdges() {
 
 void Collider::genGaussMap() {
 	switch (_type) {
-	case ColliderType::SPHERE:
+	case Type::SPHERE:
 		break;
-	case ColliderType::BOX:
+	case Type::BOX:
 		//need to set up proper handling for box colliders for vertices
 		//gauss.addAdj(faceNormals[0], Adj{  });
 		//gauss.adjacencies[faceNormals[1]] = { Adj{ 2, {,} } };
 		break;
-	case ColliderType::MESH:
+	case Type::MESH:
 		//set up the edge associations
 		auto& faceVerts = mesh->faces().verts;
 		//adjacencies = std::vector<std::vector<Adj>>(numFaces / 3, std::vector<Adj>());
@@ -692,21 +692,19 @@ bool Collider::fuzzyParallel(const vec3 v1, const vec3 v2) const {
 
 	// minimizes divisions
 	// equivalent to: return EPS_CHECK(a) && EPS_CHECK(b);
-	auto a = (propy - propx) / propx;
-	if (EPS_CHECK(a)) {
+	if (epsCheck((propy - propx) / propx)) {
 		const auto propz = (v1.z) ? v2.z / v1.z : 0;
-		auto b = (propz - propx) / propx;
-		return EPS_CHECK(b);
+		return epsCheck((propz - propx) / propx);
 	}
 	return false;
 }
 
 void Collider::updateNormals() {
 	switch (_type) {
-	case ColliderType::SPHERE:
+	case Type::SPHERE:
 		break;
-	case ColliderType::BOX:
-	case ColliderType::MESH:
+	case Type::BOX:
+	case Type::MESH:
 		const auto rot = _transform->getMats()->rotate;
 		//auto& faceVerts = mesh->faces().verts;
 		for (size_t i = 0, numNormals = faceNormals.size(); i < numNormals; ++i) {
@@ -725,14 +723,13 @@ void Collider::updateNormals() {
 
 void Collider::updateEdges() {
 	switch (_type) {
-	case ColliderType::SPHERE:
+	case Type::SPHERE:
 		break;
-	case ColliderType::BOX:
-	case ColliderType::MESH:
-		const auto m = _transform->getMats();
-		const auto tmat = m->rotate * m->scale;
+	case Type::BOX:
+	case Type::MESH:
+		const auto world = _transform->getMats()->world;
 		for (size_t i = 0, numEdges = edges.size(); i < numEdges; ++i) {
-			currEdges[i] = (vec3)(tmat * vec4(edges[i], 1));
+			currEdges[i] = (vec3)(world * vec4(edges[i], 0));
 		}
 		
 		/*for (auto& pair : gauss.adjacencies) {

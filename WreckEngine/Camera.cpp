@@ -49,10 +49,10 @@ void Camera::mayaCam(Camera* camera, double delta) {
 	auto mouse = Mouse::info;
 	if (mouse.down) {
 		// mouse coords are represented in screen coords
-		auto dx = (float)(mouse.x - mouse.prevx) * dt;
-		auto dy = (float)(mouse.y - mouse.prevy) * dt;
+		auto dx = (float)(mouse.curr.x - mouse.prev.x) * dt;
+		auto dy = (float)(mouse.curr.y - mouse.prev.y) * dt;
 
-		if (mouse.button == GLFW_MOUSE_BUTTON_LEFT) {
+		if (mouse.getButtonState(GLFW_MOUSE_BUTTON_LEFT)) {
 			auto rot = PI * dt;
 
 			dx = signf(dx) * dx * dx * rot;
@@ -65,10 +65,10 @@ void Camera::mayaCam(Camera* camera, double delta) {
 			camera->turn(dx, dy);
 			camera->transform.position = look - camera->getForward();
 		}
-		else if (mouse.button == GLFW_MOUSE_BUTTON_RIGHT) {
+		else if (mouse.getButtonState(GLFW_MOUSE_BUTTON_RIGHT)) {
 			camera->transform.position += (dx + dy) * 0.5f * camera->getForward();
 		}
-		else if (mouse.button == GLFW_MOUSE_BUTTON_MIDDLE) {
+		else if (mouse.getButtonState(GLFW_MOUSE_BUTTON_MIDDLE)) {
 			camera->transform.position += camera->getRight() * -dx + camera->getUp() * dy;
 		}
 	}

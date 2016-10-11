@@ -8,25 +8,32 @@ struct Window {
 	static int width, height;
 	static float aspect;
 
-	static void update() { glfwGetWindowSize(window, &width, &height); aspect = (float)width / (float)height; }
-	static int getKey(const int keyCode) { return glfwGetKey(window, keyCode); }
+	static inline void update() { glfwGetWindowSize(window, &width, &height); aspect = (float)width / (float)height; }
+	static inline int getKey(const int keyCode) { return glfwGetKey(window, keyCode); }
 };
 
 struct Mouse {
 	// this style enables copies to be made, for better concurrency
 	struct Info {
-		int button = 0;
-		double x = 0, y = 0, prevx = 0, prevy = 0;
-		bool down = false;
-		double clickCoolDown = 0.2, lastClick = 0;
+		struct button { double lastDown = 0; };
+		struct cursor { double x = 0, y = 0; };
+
+		uint32_t down = 0;// bit-field
+		button buttons[3];
+		cursor curr, prev;
+		const double clickCoolDown = 0.2;
+
+		inline uint32_t getButtonState(int b) { return down & (1 << b); }
+		inline void setButtonDown(int b) { down |= 1 << b; }
+		inline void setButtonUp(int b) { down &= ~(1 << b); }
 	};
 	static Info info;
 
-	static void update() {
-		info.prevx = glm::mix(info.prevx, info.x, 0.15f);
-		info.prevy = glm::mix(info.prevy, info.y, 0.15f);
-	}
+	static void update();
 
-	static void button_callback(GLFWmousebuttonfun f) { glfwSetMouseButtonCallback(Window::window, f); }
-	static void move_callback(GLFWcursorposfun f) { glfwSetCursorPosCallback(Window::window, f); }
+	static inline void button_callback(GLFWmousebuttonfun f) { glfwSetMouseButtonCallback(Window::window, f); }
+	static inline void move_callback(GLFWcursorposfun f)     { glfwSetCursorPosCallback(Window::window, f); }
+
+	static void default_button(GLFWwindow* window, int button, int action, int mods);
+	static void default_move(GLFWwindow* window, double x, double y);
 };

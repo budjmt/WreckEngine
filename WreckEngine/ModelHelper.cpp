@@ -26,7 +26,7 @@ shared<Mesh> loadOBJ(const char* file) {
 		cout << "File " << file << " Loading..." << endl;
 
 	vector<vec3> verts, normals, uvs;
-	Face faces;
+	Mesh::Face faces;
 
 	std::string line;
 	while (getline(infile, line)) {
