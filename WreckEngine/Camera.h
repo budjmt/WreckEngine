@@ -14,9 +14,11 @@ class Camera : public Entity
 public:
 	Camera(GLprogram shaderProg);
 	
-	void updateCamMat(GLuniform<mat4> camLoc);
+	void updateCamMat(GLuniform<mat4>& camLoc);
 	void update(double dt);
 	void draw();
+
+	GLuniform<mat4> cameraMatrix;
 
 	float zoom;
 	vec3 getForward();
@@ -30,6 +32,5 @@ public:
 
 private:
 	mat4 projection, view;
-	GLuniform<mat4> cameraMatrix;
 };
 

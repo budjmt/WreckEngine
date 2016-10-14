@@ -20,7 +20,7 @@ public:
 	void addState(shared<State> s);
 
 	virtual void update(double dt);
-	void draw();
+	virtual void draw();
 protected:
 	GLprogram shader;
 	std::vector<shared<State>> states;

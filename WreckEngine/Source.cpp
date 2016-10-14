@@ -40,6 +40,7 @@ struct GLFWmanager {
 		Window::window = glfwCreateWindow(width, height, "Wreck Engine", nullptr, nullptr);
 		if (!Window::window) exit('w');
 		glfwMakeContextCurrent(Window::window);
+		Window::update();
 
 		Mouse::button_callback(Mouse::default_button);
 		Mouse::move_callback(Mouse::default_move);
@@ -66,7 +67,6 @@ int samples = 10;
 bool fpsMode = true;
 
 GLprogram shaderProg;
-GLuniform<float> uniTime;
 
 double prevFrame;
 
@@ -76,16 +76,16 @@ void init() {
 	shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
 	if(shaderProg()) {
 		shaderProg.use();
-		shaderProg.getUniform<vec3>("tint").update(vec3(1));
-		uniTime = shaderProg.getUniform<float>("time");
+		shaderProg.getUniform<vec4>("tint").update(vec4(1));
 	}
 
+	prevFrame = glfwGetTime();
 	Mouse::default_move(Window::window, 0, 0);//this is cheating but it works for initializing the mouse
 
-	game = make_unique<TriPlay>(shaderProg);// this won't be initialized until after GLFW/GLEW are
-
-	prevFrame = glfwGetTime();
 	initGraphics();
+
+	Text::init();
+	game = make_unique<TriPlay>(shaderProg);// this won't be initialized until after GLFW/GLEW are
 }
 
 void initGraphics() {
@@ -94,11 +94,10 @@ void initGraphics() {
 	// alpha blending
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+	
 	// texture filtering
-	glEnable(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	//wraps UVs
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -138,7 +137,7 @@ void update() {
 	if (title.length() - decimal > 3) title = title.erase(decimal + 3);
 	title += fpsMode ? " FpS" : " MSpF";
 	glfwSetWindowTitle(Window::window, title.c_str());
-	
+
 	Mouse::update();
 
 	bool alt = Window::getKey(GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || Window::getKey(GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
@@ -151,7 +150,6 @@ void update() {
 			FPS -= (FPS > 20) ? 10 : ((FPS > 5) ? 5 : ((FPS > 1) ? 1 : 0));
 	}
 
-	uniTime.update((float)currFrame);
 	game->update(dt);
 }
 
@@ -167,9 +165,11 @@ int main(int argc, char** argv) {
 	if (DEBUG)
 		initDebug();
 	init();
+	CHECK_GL_ERR;
 	while (!glfwWindowShouldClose(Window::window)) {
 		update();
 		draw();
+		CHECK_GL_ERR;
 		glfwSwapBuffers(Window::window);
 		glfwPollEvents();
 	}

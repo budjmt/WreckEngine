@@ -2,15 +2,13 @@
 
 using namespace std;
 
-void genUVs(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces, std::vector<GLfloat>& uvs, std::vector<GLuint>& uvFaces) {
-	genUVSpherical(verts, vertFaces, uvs, uvFaces);
-}
+void genUVs(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces, std::vector<GLfloat>& uvs, std::vector<GLuint>& uvFaces) { genUVSpherical(verts, vertFaces, uvs, uvFaces); }
 
 void genUVCylindrical(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces, std::vector<GLfloat>& uvs, std::vector<GLuint>& uvFaces) {
 	for (size_t i = 0, numFaces = vertFaces.size(); i < numFaces; i++) {
 		auto index = (vertFaces[i] - 1) * FLOATS_PER_VERT;
-		auto u = atan2f(verts[index + 1], verts[index]);//azimuth, atan2 does a lot of the work for you
-		auto v = verts[index + 2];//just z
+		auto u = atan2f(verts[index + 1], verts[index]); // azimuth, atan2 does a lot of the work for you
+		auto v = verts[index + 2]; // just z
 		//u += 2 * PI; u -= (int)u;
 		//v += 0.5f;
 		auto uv = vec3(u, v, 0);
@@ -34,8 +32,8 @@ void genUVCylindrical(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFace
 void genUVSpherical(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces, std::vector<GLfloat>& uvs, std::vector<GLuint>& uvFaces) {
 	for (size_t i = 0, numFaces = vertFaces.size(); i < numFaces; i++) {
 		auto index = (vertFaces[i] - 1) * FLOATS_PER_VERT;
-		auto u = atan2f(verts[index + 2], sqrt(pow(verts[index], 2) + pow(verts[index + 1], 2)));//theta
-		auto v = atan2f(verts[index + 1], verts[index]);//azimuth
+		auto u = atan2f(verts[index + 2], sqrt(pow<2>(verts[index]) + pow<2>(verts[index + 1]))); // theta
+		auto v = atan2f(verts[index + 1], verts[index]); // azimuth
 		//u += 2 * PI; u -= (int) u;
 		//v += 2 * PI; v -= (int) v;
 		auto uv = vec3(u, v, 0);

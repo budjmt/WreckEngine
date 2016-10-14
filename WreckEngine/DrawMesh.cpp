@@ -29,18 +29,19 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 	//enable attributes
 	attrSetup.apply();
 
+	vArray.unbind();
+
 	textures.push_back(genTexture2D(texFile));
 	textures[0].bind();
 
 	// this needs to be refined at some point when multiple samplers come into the picture, probably with the material system
+	shaderProg.use();
 	textureLoc = _shaderProg.getUniform<GLsampler>("uniformTex");
 	textureLoc.update(0);
 
 	worldMatrix   = _shaderProg.getUniform<mat4>("worldMatrix");
 	iTworldMatrix = _shaderProg.getUniform<mat4>("iTworldMatrix");
 	colorLoc = _shaderProg.getUniform<vec4>("tint");
-
-	glBindVertexArray(0);
 }
 
 void DrawMesh::draw(const mat4& world) {

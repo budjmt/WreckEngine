@@ -38,7 +38,7 @@ GLtexture Drawable::genTexture2D(const char* texFile) {
 	auto textureData = FreeImage_GetBits(image);
 
 	GLtexture texture;
-	texture.create(GL_TEXTURE_2D, 5);
+	texture.create(GL_TEXTURE_2D, 0);
 	texture.bind();
 	//the texture is loaded in BGRA format
 	texture.set2D<GLubyte>(textureData, w, h, GL_BGRA);

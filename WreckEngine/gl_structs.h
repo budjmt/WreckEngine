@@ -28,12 +28,24 @@ namespace {
 	void local(delShaderProg)(GLuint* p) { if (*p != def) glDeleteProgram(*p); delete p; }
 }
 
+struct GLtexture;
+struct GLbuffer; 
+struct GLVAO; 
+struct GLshader;
+struct GLprogram;
+
 // maps primitive types to their matching GLenum values, (if applicable) or returns GL_FALSE.
 template<typename T> inline constexpr GLenum GLtype() { return GL_FALSE; }
 template<> inline constexpr GLenum GLtype<GLbyte>()  { return GL_BYTE;  } template<> inline constexpr GLenum GLtype<GLubyte>()  { return GL_UNSIGNED_BYTE; }
 template<> inline constexpr GLenum GLtype<GLshort>() { return GL_SHORT; } template<> inline constexpr GLenum GLtype<GLushort>() { return GL_UNSIGNED_SHORT; }
 template<> inline constexpr GLenum GLtype<GLint>()   { return GL_INT;   } template<> inline constexpr GLenum GLtype<GLuint>()   { return GL_UNSIGNED_INT; }
 template<> inline constexpr GLenum GLtype<GLfloat>() { return GL_FLOAT; } template<> inline constexpr GLenum GLtype<GLdouble>() { return GL_DOUBLE; }
+
+template<> inline constexpr GLenum GLtype<GLtexture>() { return GL_TEXTURE; }
+template<> inline constexpr GLenum GLtype<GLbuffer>()  { return GL_BUFFER;  }
+template<> inline constexpr GLenum GLtype<GLVAO>()     { return GL_VERTEX_ARRAY; }
+template<> inline constexpr GLenum GLtype<GLshader>()  { return GL_SHADER;  }
+template<> inline constexpr GLenum GLtype<GLprogram>() { return GL_PROGRAM; }
 
 // wraps a location pointing to a uniform variable of type T. the value is updated using update(T t). If there is no definition for update, the type is unsupported.
 template<typename T> struct GLuniform { GLuint location; };
@@ -53,13 +65,13 @@ struct GLtexture {
 	shared<GLuint> texture = shared<GLuint>(new GLuint(def), local(delTexture));
 	GLenum type;
 	inline GLuint& operator()() const { return *texture; }
-	inline void create(const GLenum type = GL_TEXTURE_2D, const GLint max_mip_level = 0) { 
+	inline void create(const GLenum _type = GL_TEXTURE_2D, const GLint max_mip_level = 0) { 
+		type = _type;
 		glGenTextures(1, texture.get());
 		// these are globally bound, so technically this line affects every texture [of the type] each time the value changes
 		// this can be fixed with immutable textures in 4.3+
-		glTexParameteri(type, GL_TEXTURE_BASE_LEVEL, 0);
-		glTexParameteri(type, GL_TEXTURE_MAX_LEVEL, max_mip_level);
-		this->type = type; 
+		param(GL_TEXTURE_BASE_LEVEL, 0);
+		param(GL_TEXTURE_MAX_LEVEL, max_mip_level);
 	}
 	// must be done while bound
 	inline void genMipMap() { glGenerateMipmap(type); }
@@ -68,6 +80,10 @@ struct GLtexture {
 		glActiveTexture(GL_TEXTURE0 + index); 
 		glBindTexture(type, *texture);
 	}
+	inline void unbind() { glBindTexture(type, 0); }
+
+	inline void param(const GLenum name, const int val) { glTexParameteri(type, name, val); }
+	inline void param(const GLenum name, const float val) { glTexParameterf(type, name, val); }
 
 	// these sets correspond to glTexImage. Texture must be bound for these to work.
 	template<typename value_T>
@@ -104,17 +120,23 @@ struct GLbuffer {
 	
 	// call to bind the buffer to its target
 	inline void bind() const { glBindBuffer(target, *buffer); }
+	inline void unbind() { glBindBuffer(target, 0); }
 
 	// allocate the buffer after binding to contain [size] bytes from [_data].
 	// IMPORTANT: the size of the array [_data] points to must match [size], or there will be access exceptions
 	// calling these methods from an unbound buffer is allowed, but will have undefined results
 	inline void data(const size_t size, const GLvoid* _data) { glBufferData(target, size, _data, usage); this->size = size; }
 	
-	// this version is intended for updates, not instantiations
+	// this version is intended for updates, (for streams) not instantiations
 	inline void data(const GLvoid* _data) const { 
 		if (usage == GL_STATIC_DRAW || !size) return; 
 		glBufferData(target, size, nullptr, usage);
 		glBufferData(target, size, _data, usage);
+	}
+
+	inline void subdata(const GLvoid* _data, const GLuint _size, const GLuint offset = 0) const {
+		if (usage == GL_STATIC_DRAW || !size) return;
+		glBufferSubData(target, offset, _size, _data);
 	}
 };
 
@@ -125,6 +147,7 @@ struct GLVAO {
 
 	inline void create() const { if (*vao != def) return; glGenVertexArrays(1, vao.get()); }
 	inline void bind() const { glBindVertexArray(*vao); }
+	static inline void unbind() { glBindVertexArray(0); }
 };
 
 // wraps a compiled shader

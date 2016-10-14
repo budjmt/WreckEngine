@@ -6,7 +6,16 @@
 
 #include <stdio.h>
 
-static void GLPrintError(GLenum error) {
+#define BREAK "----------------------------------------------\n"
+
+#define STRINGIZE2(x) #x
+#define STRINGIZE(x) STRINGIZE2(x)
+
+#define CLEAR_GL_ERR glGetError()
+#define CHECK_GL_ERR GLCheckError("GL-ERROR; \"" __FILE__ "\" before line " STRINGIZE(__LINE__) ": \n")
+
+static void GLPrintError(GLenum error, const char* prepend = "") {
+	printf(BREAK "%s", prepend);
 	switch (error) {
 	case GL_INVALID_ENUM:
 		printf("Invalid enum value\n");
@@ -33,6 +42,12 @@ static void GLPrintError(GLenum error) {
 		printf("Unknown error\n");
 		break;
 	}
+	printf(BREAK);
+}
+
+static inline void GLCheckError(const char* prepend = "") {
+	auto err = glGetError();
+	if (err) GLPrintError(err, prepend);
 }
 
 #endif

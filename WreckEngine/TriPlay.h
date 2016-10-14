@@ -5,6 +5,7 @@
 #include "glm/gtc/constants.hpp"
 
 #include "External.h"
+#include "Text.h"
 #include "Camera.h"
 #include "ColliderEntity.h"
 #include "ModelHelper.h"
@@ -18,8 +19,11 @@ public:
 	TriPlay() = default;
 	TriPlay(GLprogram prog);
 	void update(double dt);
+	void draw();
 private:
+	GLprogram program;
 	shared<Entity> me;
 	shared<Camera> camera;
+	shared<Text::FontFace> arial;
 };
 

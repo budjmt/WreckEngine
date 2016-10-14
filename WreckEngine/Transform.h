@@ -7,7 +7,7 @@
 #include "smart_ptr.h"
 #include "property.h"
 
-_declspec(align(16)) struct TransformMats { 
+struct alignas(16) TransformMats { 
 	mat4 translate, rotate, scale, world; 
 	TransformMats* clone() { return new TransformMats(*this); }
 	virtual ~TransformMats() = default;

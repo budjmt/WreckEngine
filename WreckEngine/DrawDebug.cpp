@@ -47,7 +47,7 @@ DrawDebug::DrawDebug() {
 	spheres = InstMesh<m_MeshData>(sphere.get(), MAX_SPHERES, 1, mSetup);
 	boxes = InstMesh<m_MeshData>(box.get(), MAX_BOXES, 1, mSetup);
 
-	glBindVertexArray(0);
+	vecVAO.unbind();
 
 	vecCamLoc  = vecShader.getUniform<mat4>("cameraMatrix");
 	meshCamLoc = meshShader.getUniform<mat4>("cameraMatrix");

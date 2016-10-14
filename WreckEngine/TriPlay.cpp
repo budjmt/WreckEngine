@@ -1,5 +1,7 @@
 #include "TriPlay.h"
 
+#include "TextEntity.h"
+
 #include <iostream>
 
 namespace {
@@ -12,7 +14,7 @@ namespace {
 
 TriPlay::TriPlay(GLprogram prog) : Game(prog)
 {
-	Window::update();
+	program = prog;
 
 	auto menuState = make_shared<State>("menu");
 	auto mainState = make_shared<State>("main");
@@ -22,10 +24,19 @@ TriPlay::TriPlay(GLprogram prog) : Game(prog)
 	menuState->handler_func = [this, mainsp, start_game_event](Event e) {
 		if (e.id == start_game_event) {
 			currState = mainsp;
+			glClearColor(0, 0, 0, 1);
 		}
 	};
 	addState(menuState);
 	menuState->addEntity(make_shared<LogicEntity>(menu_update));
+	
+	auto menuText = make_shared<TextEntity>("Press space to begin.", "QuartzMS.ttf", 48);
+	menuText->transform.position = vec3(Window::width * 0.5f, Window::height * 0.5f, 0);
+	menuText->transform.scale = vec3(0.5f, 1, 1);
+	menuState->addEntity(menuText);
+	//Text::active = false;
+
+	glClearColor(0, 0.5f, 0.2f, 1);
 
 	mainState->handler_func = [](Event e) {
 		//nothing right now
@@ -98,13 +109,11 @@ TriPlay::TriPlay(GLprogram prog) : Game(prog)
 	camera->transform.rotate(0, PI, 0);
 	mainState->addEntity(camera);
 
-	if(DEBUG)
-		DrawDebug::getInstance().camera(camera.get());
+	if(DEBUG) DrawDebug::getInstance().camera(camera.get());
 }
 
 #include "CollisionManager.h"
 void TriPlay::update(double delta) {
-
 	const auto dt = (float)delta;
 
 	Game::update(delta);
@@ -152,8 +161,16 @@ void TriPlay::update(double delta) {
 	}
 
 	Camera::mayaCam(camera.get(), dt);
+	program.use();
+	camera->updateCamMat(camera->cameraMatrix);
 
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
+}
+
+void TriPlay::draw() {
+	program.use();
+	Game::draw();
+	Text::render();
 }

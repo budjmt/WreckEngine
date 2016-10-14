@@ -6,16 +6,17 @@
 #include <cmath>
 #include <string>
 
+template<typename T> constexpr T pi = T(3.14159265358979323846);
+#define PI_D pi<double>
+#define PI   pi<float>
+
 //all NaN related comparisons evaluate to false, this could be implemented as x != x
 //but that could be optimized out; std::isnan(x) is part of the standard library
 #define NaN_CHECK(x) std::isnan(x)
 
 //use for floating point error correction
-inline bool epsCheck(float x) { return x < FLT_EPSILON && x > -FLT_EPSILON; }
+inline bool epsCheck(float x)  { return x < FLT_EPSILON && x > -FLT_EPSILON; }
 inline bool epsCheck(double x) { return x < DBL_EPSILON && x > -DBL_EPSILON; }
-
-const double PI_D = 3.14159265358979323846;
-const float PI = (float)PI_D;
 
 int sign(int i); 
 int bitsign(int i);
@@ -23,6 +24,13 @@ float signf(float f);
 inline float maxf(float a, float b);
 inline float minf(float a, float b);
 inline float clampf(float val, float min, float max);
+
+template<typename T, size_t n> struct mmpowstr : std::is_arithmetic<T> { 
+	static_assert(n >= 0, "this method does not support negative powers");
+	static inline T pow(T val) { return val * powstr<T, n - 1>::pow(val); } 
+};
+template<typename T> struct mmpowstr<T, 0> : std::is_arithmetic<T> { static inline T pow(T val) { return 1; } };
+template<size_t n, typename T> inline T pow(T val) { return mmpowstr<T, n>::pow(val); }
 
 typedef union { float f; uint32_t i; } bfloat;// allows for binary ops on a float
 
@@ -38,7 +46,7 @@ std::string to_string(const vec3&);
 std::string to_string(const vec4&);
 std::string to_string(const quat&);
 
-_declspec(align(16)) struct aligned_mat4 {
+struct alignas(16) aligned_mat4 {
 	mat4 data;
 	template<class... Args>
 	aligned_mat4(Args&&... args) : data(mat4(std::forward<Args>(args)...)) { }

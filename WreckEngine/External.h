@@ -37,3 +37,8 @@ struct Mouse {
 	static void default_button(GLFWwindow* window, int button, int action, int mods);
 	static void default_move(GLFWwindow* window, double x, double y);
 };
+
+inline std::string getEnvVar(const std::string& var) {
+	auto val = std::getenv(var.c_str());
+	return std::string(val ? val : "");
+}

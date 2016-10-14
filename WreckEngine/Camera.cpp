@@ -6,15 +6,12 @@ Camera::Camera(GLprogram shaderProg)
 	cameraMatrix = shaderProg.getUniform<mat4>("cameraMatrix");
 }
 
-void Camera::updateCamMat(GLuniform<mat4> camLoc) {
-	camLoc.update(projection * view);
-}
+void Camera::updateCamMat(GLuniform<mat4>& camLoc) { camLoc.update(projection * view); }
 
 void Camera::update(double dt) {
 	view = glm::lookAt(transform.position(), getLookAt(), getUp());
 	//update projection
 	//updateProjection();
-	updateCamMat(cameraMatrix);
 }
 
 void Camera::draw() {

@@ -22,12 +22,12 @@
     <Filter Include="Misc">
       <UniqueIdentifier>{1b4a783d-1e03-4ca1-a0c5-5ca1eb1bb9d3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Entities">
+      <UniqueIdentifier>{9ca6f6c8-6139-4789-8520-eaa56098dee4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Collider.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ColliderEntity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
@@ -45,9 +45,6 @@
     <ClCompile Include="CollisionManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UV.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
     <ClCompile Include="utility.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
@@ -61,9 +58,6 @@
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="Drawable.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Entity.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Event.cpp">
@@ -90,12 +84,24 @@
     <ClCompile Include="TriPlay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Text.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity.cpp">
+      <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="TextEntity.cpp">
+      <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="ColliderEntity.cpp">
+      <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="UV.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Collider.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ColliderEntity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
@@ -146,9 +152,6 @@
     <ClInclude Include="Event.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Entity.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Core</Filter>
     </ClInclude>
@@ -173,5 +176,20 @@
     <ClInclude Include="External.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="Text.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Entity.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="ColliderEntity.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="TextEntity.h">
+      <Filter>Entities</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
