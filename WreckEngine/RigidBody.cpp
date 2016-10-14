@@ -1,5 +1,5 @@
 #include "RigidBody.h"
-#include <assert.h>
+#include <cassert>
 
 void RigidBody::update(double dt) {
 	updateVel(dt);

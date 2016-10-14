@@ -2,8 +2,7 @@
 
 DrawMesh::DrawMesh(shared<Mesh> m, const char* texFile, GLprogram shader) : _mesh(m) { setup(texFile, shader); }
 
-DrawMesh::DrawMesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u, Mesh::Face f, const char* texFile, GLprogram shader) 
-	: DrawMesh(make_shared<Mesh>(v, n, u, f), texFile, shader) {}
+DrawMesh::DrawMesh(Mesh::FaceData& fd, Mesh::FaceIndex& fi, const char* texFile, GLprogram shader) : DrawMesh(make_shared<Mesh>(fd, fi), texFile, shader) {}
 
 void DrawMesh::setup(const char* texFile, GLprogram shader) {
 	shaderProg = shader;

@@ -47,7 +47,7 @@ void Collider::update() {
 
 //gets the vertex of the collider furthest in the direction of dir
 SupportPoint Collider::getSupportPoint(const vec3 dir) const {
-	auto& verts = mesh->verts();
+	auto& verts = mesh->data().verts;
 	const auto world = _transform->getMats()->world;
 
 	SupportPoint support{ (vec3)(world * vec4(verts[0], 1)), glm::dot(support.point, dir) };
@@ -78,8 +78,8 @@ FaceManifold Collider::getAxisMinPen(Collider* other) {
 	axis.originator = this;
 	axis.other = other;
 
-	auto& meshVerts = mesh->verts();
-	auto& faceVerts = mesh->faces().verts;
+	auto& meshVerts = mesh->data().verts;
+	auto& faceVerts = mesh->indices().verts;
 	const auto world = _transform->getMats()->world;
 	for (size_t i = 0, numAxes = currNormals.size(); axis.pen < COLLISION_PEN_TOLERANCE && i < numAxes; ++i) {
 		const auto norm = currNormals[i];
@@ -335,7 +335,7 @@ void Collider::clipPolygons(FaceManifold& reference, const std::vector<GLuint>& 
 	auto otherTrans = reference.other->transform()->getComputed();
 
 	//get the transformed center point of the reference face
-	auto& vertFaces = mesh->faces().verts;
+	auto& vertFaces = mesh->indices().verts;
 	const auto index = reference.norm * 3;
 	auto refCenter = getVert(vertFaces[index]) + getVert(vertFaces[index + 1]) + getVert(vertFaces[index + 2]);
 	refCenter = trans->getTransformed(refCenter / 3.f);
@@ -565,9 +565,9 @@ vec3 Collider::closestPointBtwnSegments(const vec3 p0, const vec3 p1, const vec3
 void Collider::genVerts() {
 	if (_type != Type::BOX)
 		return;
-	std::vector<vec3> verts, norms, uvs;//norms and UVs are empty
-	Mesh::Face faces;
-	verts = { vec3( _dims.x,  _dims.y,  _dims.z),
+	Mesh::FaceData data;//norms and UVs are empty
+	Mesh::FaceIndex indices;
+	data.verts = { vec3( _dims.x,  _dims.y,  _dims.z),
 			  vec3(-_dims.x,  _dims.y,  _dims.z),
 			  vec3( _dims.x, -_dims.y,  _dims.z),
 			  vec3(-_dims.x, -_dims.y,  _dims.z),
@@ -576,14 +576,14 @@ void Collider::genVerts() {
 			  vec3( _dims.x, -_dims.y, -_dims.z),
 			  vec3(-_dims.x, -_dims.y, -_dims.z) };
 
-	faces.verts = { 7, 3, 0, 7, 4, 0,
+	indices.verts = { 7, 3, 0, 7, 4, 0,
 					6, 7, 4, 6, 5, 4,
 					2, 6, 5, 2, 1, 5,
 					3, 2, 1, 3, 0, 1,
 					0, 1, 5, 0, 4, 5,
 					7, 6, 2, 7, 3, 2 };
 
-	mesh = new Mesh(verts, norms, uvs, faces);
+	mesh = new Mesh(data, indices);
 }
 
 void Collider::genNormals() {
@@ -603,8 +603,8 @@ void Collider::genNormals() {
 		// when iterating over normals, to retrieve the vertices of the face corresponding to the normal at index i,
 		// the nth (0, 1, or 2) vertex in the face is meshVerts[faceVerts[i * 3 + n]]
 		// alternatively, if you aren't getting meshVerts, use the function getVert(faceVerts[i * 3 + n])
-		auto& faceVerts = mesh->faces().verts;
-		auto& meshVerts = mesh->verts();
+		auto& faceVerts = mesh->indices().verts;
+		auto& meshVerts = mesh->data().verts;
 		for (size_t i = 0, numFaces = faceVerts.size(); i < numFaces; i += 3) {
 			auto& v  = meshVerts[faceVerts[i]];
 
@@ -625,7 +625,7 @@ void Collider::genEdges() {
 		break;
 	case Type::BOX:
 	case Type::MESH:
-		auto& meshVerts = mesh->verts();
+		auto& meshVerts = mesh->data().verts;
 		for (const auto& pair : gauss.adjacencies) {
 			for (size_t i = 0, numAdj = pair.second.size(); i < numAdj; ++i) {
 				const auto& adj = pair.second[i];
@@ -649,7 +649,7 @@ void Collider::genGaussMap() {
 		break;
 	case Type::MESH:
 		//set up the edge associations
-		auto& faceVerts = mesh->faces().verts;
+		auto& faceVerts = mesh->indices().verts;
 		//adjacencies = std::vector<std::vector<Adj>>(numFaces / 3, std::vector<Adj>());
 		for (size_t i = 0, numFaces = faceVerts.size(); i < numFaces; i += 3) {
 			for (auto j = i + 3; j < numFaces; j += 3) {
@@ -747,8 +747,8 @@ void Collider::updateEdges() {
 const std::vector<vec3>& Collider::getCurrNormals() const { return currNormals; }
 const std::vector<vec3>& Collider::getEdges() const { return currEdges; }
 
-GLuint Collider::getFaceVert(GLuint index) const { return mesh->faces().verts[index]; }
-vec3 Collider::getVert(GLuint index) const { return mesh->verts()[index]; }
+GLuint Collider::getFaceVert(GLuint index) const { return mesh->indices().verts[index]; }
+vec3 Collider::getVert(GLuint index) const { return mesh->data().verts[index]; }
 vec3 Collider::getNormal(GLuint index) const { return currNormals[index]; }
 vec3 Collider::getEdge(std::pair<GLuint, GLuint> e) const {
 	std::string key;

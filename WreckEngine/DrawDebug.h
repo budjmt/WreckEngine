@@ -36,11 +36,11 @@ struct InstMesh {
 		elems.create(GL_ELEMENT_ARRAY_BUFFER);
 
 		elems.bind();
-		numVerts = mesh->faces().verts.size();
-		elems.data(sizeof(GLuint) * numVerts, &mesh->faces().verts[0]);
+		numVerts = mesh->indices().verts.size();
+		elems.data(sizeof(GLuint) * numVerts, &mesh->indices().verts[0]);
 
 		verts.bind();
-		verts.data(sizeof(vec3) * mesh->verts().size(), &mesh->verts()[0]);
+		verts.data(sizeof(vec3) * mesh->data().verts.size(), &mesh->data().verts[0]);
 
 		attrSetup.add<vec3>(1);
 		attrSetup.apply();

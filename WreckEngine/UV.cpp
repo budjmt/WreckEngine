@@ -2,54 +2,48 @@
 
 using namespace std;
 
-void genUVs(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces, std::vector<GLfloat>& uvs, std::vector<GLuint>& uvFaces) { genUVSpherical(verts, vertFaces, uvs, uvFaces); }
+void genUVs(Mesh::FaceData& data, Mesh::FaceIndex& indices) { genUVSpherical(data, indices); }
 
-void genUVCylindrical(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces, std::vector<GLfloat>& uvs, std::vector<GLuint>& uvFaces) {
-	for (size_t i = 0, numFaces = vertFaces.size(); i < numFaces; i++) {
-		auto index = (vertFaces[i] - 1) * FLOATS_PER_VERT;
-		auto u = atan2f(verts[index + 1], verts[index]); // azimuth, atan2 does a lot of the work for you
-		auto v = verts[index + 2]; // just z
+void genUVCylindrical(Mesh::FaceData& data, Mesh::FaceIndex& indices) {
+	for (const auto index : indices.verts) {
+		
+		const auto vert = data.verts[index - 1];
+		auto u = atan2f(vert.y, vert.x); // azimuth, atan2 does a lot of the work for you
+		auto v = vert.z; // just z
 		//u += 2 * PI; u -= (int)u;
 		//v += 0.5f;
 		auto uv = vec3(u, v, 0);
 
 		//redundancy check
-		int uvIndex = findIndexIn(uvs, FLOATS_PER_VERT, uv);
+		auto uvIndex = find_index(data.uvs, uv);
 
-		if (uvIndex == uvs.size()) { //if it's a new uv
-			uvs.push_back(uv[0]);
-			uvs.push_back(uv[1]);
-			uvs.push_back(uv[2]);
-		}
-		uvIndex /= FLOATS_PER_VERT;
+		//if it's a new uv
+		if (uvIndex >= data.uvs.size()) data.uvs.push_back(uv);
 
-		uvFaces.push_back(uvIndex + 1);
-		//uvFaces.push_back(uvIndex + 1);
-		//uvFaces.push_back(uvIndex + 1);
+		indices.uvs.push_back(uvIndex + 1);
+		//indices.uvs.push_back(uvIndex + 1);
+		//indices.uvs.push_back(uvIndex + 1);
 	}
 }
 
-void genUVSpherical(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces, std::vector<GLfloat>& uvs, std::vector<GLuint>& uvFaces) {
-	for (size_t i = 0, numFaces = vertFaces.size(); i < numFaces; i++) {
-		auto index = (vertFaces[i] - 1) * FLOATS_PER_VERT;
-		auto u = atan2f(verts[index + 2], sqrt(pow<2>(verts[index]) + pow<2>(verts[index + 1]))); // theta
-		auto v = atan2f(verts[index + 1], verts[index]); // azimuth
+void genUVSpherical(Mesh::FaceData& data, Mesh::FaceIndex& indices) {
+	for (const auto index : indices.verts) {
+		
+		const auto vert = data.verts[index - 1];
+		auto u = atan2f(vert.z, sqrt(std::pow(vert.x, 2) + std::pow(vert.y, 2))); // theta
+		auto v = atan2f(vert.y, vert.x); // azimuth
 		//u += 2 * PI; u -= (int) u;
 		//v += 2 * PI; v -= (int) v;
 		auto uv = vec3(u, v, 0);
 
 		//redundancy check
-		int uvIndex = findIndexIn(uvs, FLOATS_PER_VERT, uv);
+		auto uvIndex = find_index(data.uvs, uv);
 
-		if (uvIndex == uvs.size()) { //if it's a new uv
-			uvs.push_back(uv[0]);
-			uvs.push_back(uv[1]);
-			uvs.push_back(uv[2]);
-		}
-		uvIndex /= FLOATS_PER_NORM;
+		//if it's a new uv
+		if (uvIndex >= data.uvs.size()) data.uvs.push_back(uv);
 
-		uvFaces.push_back(uvIndex + 1);
-		//uvFaces.push_back(uvIndex + 1);
-		//uvFaces.push_back(uvIndex + 1);
+		indices.uvs.push_back(uvIndex + 1);
+		//indices.uvs.push_back(uvIndex + 1);
+		//indices.uvs.push_back(uvIndex + 1);
 	}
 }

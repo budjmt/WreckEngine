@@ -7,7 +7,7 @@ class DrawMesh : public Drawable
 {
 public:
 	DrawMesh(shared<Mesh> m, const char* texFile, GLprogram shader);
-	DrawMesh(std::vector<vec3> v, std::vector<vec3> n, std::vector<vec3> u, Mesh::Face f, const char* texFile, GLprogram shader);
+	DrawMesh(Mesh::FaceData& fd, Mesh::FaceIndex& fi, const char* texFile, GLprogram shader);
 	
 	void setup(const char* texFile, GLprogram shader);
 	void draw(const mat4& world);

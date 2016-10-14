@@ -10,8 +10,7 @@
 
 //char* loadFBX(const char* file);
 shared<Mesh> loadOBJ(const char* file);//loads a .obj
-void genOBJ(const char* file, std::vector<GLfloat>& verts, std::vector<GLfloat>& uvs, std::vector<GLfloat>& norms
-	, std::vector<GLuint>& vertFaces, std::vector<GLuint>& uvFaces, std::vector<GLuint>& normFaces);
+void genOBJ(const char* file, Mesh::FaceData& data, Mesh::FaceIndex& indices);
 
 //general generation process is:
 //generate vertices
@@ -28,9 +27,9 @@ float bernsteinPolynomial(int i, int n, float u);
 float binomialCoeff(int n, int i);
 int factorial(int n);
 
-void genNormals(std::vector<GLfloat>& verts, std::vector<GLuint>& vertFaces, std::vector<GLfloat>& norms, std::vector<GLuint>& normFaces);
+void genNormals(Mesh::FaceData& data, Mesh::FaceIndex& indices);
 vec3 genNormal(const vec3 a, const vec3 b, const vec3 c);
 
-size_t findIndexIn(const std::vector<GLfloat>& vecs, const size_t stride, const vec3 vec);
+template<typename T> size_t find_index(const std::vector<T>& container, const T item) { return std::find(container.begin(), container.end(), item) - container.begin(); }
 
 std::vector<std::string> tokenize(std::string str, std::string delimiter);

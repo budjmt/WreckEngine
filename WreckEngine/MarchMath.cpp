@@ -50,7 +50,7 @@ mat4 rotateBetween(const vec3 from, const vec3 to) {
 }
 
 //quat
-#include <assert.h>
+#include <cassert>
 void quat::updateAngles() { _theta = acosf(v0); assert(!NaN_CHECK(_theta)); sin_t_half = sinf(_theta); if (sin_t_half) { _axis = _v / sin_t_half; } _axis /= glm::length(_axis); _theta *= 2; }
 void quat::updateValues(vec3& a, float t) { t *= 0.5f; sin_t_half = sinf(t); v0 = cosf(t); _v = a * sin_t_half; }
 

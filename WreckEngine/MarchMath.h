@@ -25,13 +25,6 @@ inline float maxf(float a, float b);
 inline float minf(float a, float b);
 inline float clampf(float val, float min, float max);
 
-template<typename T, size_t n> struct mmpowstr : std::is_arithmetic<T> { 
-	static_assert(n >= 0, "this method does not support negative powers");
-	static inline T pow(T val) { return val * powstr<T, n - 1>::pow(val); } 
-};
-template<typename T> struct mmpowstr<T, 0> : std::is_arithmetic<T> { static inline T pow(T val) { return 1; } };
-template<size_t n, typename T> inline T pow(T val) { return mmpowstr<T, n>::pow(val); }
-
 typedef union { float f; uint32_t i; } bfloat;// allows for binary ops on a float
 
 typedef glm::vec2 vec2;
