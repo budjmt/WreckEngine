@@ -10,17 +10,14 @@
 #include "unique_id.h"
 #include "gl_structs.h"
 
-class Camera;
-
-class Text
+namespace Text
 {
-public:
-	static void init() { FT.init(); renderer.init(); }
-	static bool active;
+	void init();
+	extern bool active;
 
 	struct FontFace;
-	static shared<FontFace> loadFont(const std::string& font, const uint32_t height, const uint32_t width = 0);
-	static shared<FontFace> loadWinFont(const std::string& font, const uint32_t height, const uint32_t width = 0);
+	shared<FontFace> loadFont(const std::string& font, const uint32_t height, const uint32_t width = 0);
+	shared<FontFace> loadWinFont(const std::string& font, const uint32_t height, const uint32_t width = 0);
 
 	struct glyph {
 		GLtexture tex;
@@ -62,21 +59,10 @@ public:
 		static Shader shader;
 	};
 	
-	static void draw(const std::string& text, const FontFace* font, float x, float y, float scale, const vec4& color = vec4(0, 0, 0, 1));
-	static void render();
+	enum Justify : GLubyte { START, MIDDLE, END };
 
-	static vec2 getDims(const std::string& text, const FontFace* font, float scale);
-private:
-	struct FT_Wrapper {
-		void init();
-		~FT_Wrapper();
-		FT_Library lib = nullptr;
-	};
-	static FT_Wrapper FT;
+	void draw(const std::string& text, const FontFace* font, Justify vertical, Justify horizontal, float x, float y, float scale, const vec4& color = vec4(0, 0, 0, 1));
+	void render();
 
-	static Renderer renderer;
-	static std::vector<Instance> instances;
-	static std::unordered_map<std::string, shared<FontFace>> fontFaces;
-	static const std::string WIN_DIR;
-};
-
+	vec2 getDims(const std::string& text, const FontFace* font, float scale);
+}

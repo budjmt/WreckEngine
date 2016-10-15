@@ -4,15 +4,31 @@
 
 #include "External.h"
 
-void Text::FT_Wrapper::init() {
-	auto error = FT_Init_FreeType(&lib); 
-	if (error) printf("FreeType initialization failed. Error Code: %d\n", error);
+namespace {
+	struct FT_Wrapper {
+		
+		void init() {
+			auto error = FT_Init_FreeType(&lib);
+			if (error) printf("FreeType initialization failed. Error Code: %d\n", error);
+		}
+
+		~FT_Wrapper() { if (lib) { FT_Done_FreeType(lib); lib = nullptr; } }
+		FT_Library lib = nullptr;
+	};
+	FT_Wrapper FT;
+
+	Text::Renderer renderer;
+	std::vector<Text::Instance> instances;
+	std::unordered_map<std::string, shared<Text::FontFace>> fontFaces;
+	
+	const std::string WIN_DIR = getEnvVar("windir");
 }
-Text::FT_Wrapper::~FT_Wrapper() { if (lib) { FT_Done_FreeType(lib); lib = nullptr; } }
-Text::FT_Wrapper Text::FT;
+
+bool Text::active = true;
+void Text::init() { FT.init(); renderer.init(); }
 
 Text::FontFace::FontFace(const std::string& font) {
-	auto error = FT_New_Face(Text::FT.lib, font.c_str(), loadedFonts++, &fontFace);
+	auto error = FT_New_Face(FT.lib, font.c_str(), loadedFonts++, &fontFace);
 	if (error) {
 		fontFace = nullptr;
 		std::cout << "Font face \"" << font << "\" failed to load: " << std::endl;
@@ -30,12 +46,10 @@ Text::FontFace::FontFace(const std::string& font) {
 }
 Text::FontFace::~FontFace() { 
 	// the lib, on destruction, takes care of all its children
-	if (Text::FT.lib) FT_Done_Face(fontFace);
+	if (FT.lib) FT_Done_Face(fontFace);
 	--loadedFonts;
 }
 FT_Long Text::FontFace::loadedFonts = 0;
-
-std::unordered_map<std::string, shared<Text::FontFace>> Text::fontFaces;
 
 shared<Text::FontFace> Text::loadWinFont(const std::string& font, const uint32_t height, const uint32_t width) { return loadFont(WIN_DIR + "\\Fonts\\" + font, height, width); }
 shared<Text::FontFace> Text::loadFont(const std::string& font, const uint32_t height, const uint32_t width) {
@@ -72,9 +86,6 @@ void Text::FontFace::loadGlyphs() {
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 }
 
-bool Text::active = true;
-Text::Renderer Text::renderer;
-
 #include "ShaderHelper.h"
 Text::Renderer::Shader Text::Renderer::shader;
 void Text::Renderer::init() {
@@ -99,10 +110,20 @@ void Text::Renderer::init() {
 	shader.color   = shader.program.getUniform<vec4>("textColor");
 }
 
-std::vector<Text::Instance> Text::instances;
-void Text::draw(const std::string& text, const FontFace* font, float x, float y, float scale, const vec4& color) {
+void Text::draw(const std::string& text, const FontFace* font, Justify vertical, Justify horizontal, float x, float y, float scale, const vec4& color) {
 	if (!Text::active || font == nullptr) 
 		return;
+
+	float xoff = 0, yoff = 0;
+	if (vertical != Justify::START || horizontal != Justify::START) {
+		auto textDims = getDims(text, font, scale);
+		
+		if (vertical == Justify::MIDDLE)   y -= textDims.y * 0.5f;
+		else if (vertical == Justify::END) y -= textDims.y;
+
+		if (horizontal == Justify::MIDDLE)   x -= textDims.x * 0.5f;
+		else if (horizontal == Justify::END) x -= textDims.x;
+	}
 
 	Instance i;
 	i.text = text;
@@ -173,5 +194,3 @@ void Text::Renderer::draw(Text::Instance& instance) {
 		instance.x += (glyph.advance >> 6) * instance.scale;// the advance is measured in 1/64 pixels, i.e. 1/2^6
 	}
 }
-
-const std::string Text::WIN_DIR = getEnvVar("windir");

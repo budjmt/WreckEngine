@@ -14,6 +14,8 @@ class Camera : public Entity
 public:
 	Camera(GLprogram shaderProg);
 	
+	static Camera* main;
+
 	void updateCamMat(GLuniform<mat4>& camLoc);
 	void update(double dt);
 	void draw();

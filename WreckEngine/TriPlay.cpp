@@ -30,7 +30,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(prog)
 	addState(menuState);
 	menuState->addEntity(make_shared<LogicEntity>(menu_update));
 	
-	auto menuText = make_shared<TextEntity>("Press space to begin.", "QuartzMS.ttf", 48);
+	auto menuText = make_shared<TextEntity>("Press space to begin.", "QuartzMS.ttf", Text::Justify::MIDDLE, Text::Justify::MIDDLE, 48);
 	menuText->transform.position = vec3(Window::width * 0.5f, Window::height * 0.5f, 0);
 	menuText->transform.scale = vec3(0.5f, 1, 1);
 	menuState->addEntity(menuText);
@@ -103,7 +103,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(prog)
 	mainState->addEntity(mesh);
 	me = mesh;
 
-	camera = make_shared<Camera>(prog);
+	auto camera = make_shared<Camera>(prog);
 	camera->id = (void*)0xcab;
 	camera->transform.position = vec3(0, 0, 1);
 	camera->transform.rotate(0, PI, 0);
@@ -160,9 +160,9 @@ void TriPlay::update(double delta) {
 			me->transform.position += vec3(-speed * dt, 0, 0);
 	}
 
-	Camera::mayaCam(camera.get(), dt);
+	Camera::mayaCam(Camera::main, dt);
 	program.use();
-	camera->updateCamMat(camera->cameraMatrix);
+	Camera::main->updateCamMat(Camera::main->cameraMatrix);
 
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));

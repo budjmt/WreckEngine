@@ -1,7 +1,10 @@
 #include "Camera.h"
 
+Camera* Camera::main = nullptr;
+
 Camera::Camera(GLprogram shaderProg)
 {
+	if (!main) main = this;
 	updateProjection();
 	cameraMatrix = shaderProg.getUniform<mat4>("cameraMatrix");
 }

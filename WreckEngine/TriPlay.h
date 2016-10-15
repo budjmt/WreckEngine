@@ -23,7 +23,5 @@ public:
 private:
 	GLprogram program;
 	shared<Entity> me;
-	shared<Camera> camera;
-	shared<Text::FontFace> arial;
 };
 
