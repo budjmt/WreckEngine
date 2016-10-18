@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <string>
 
-#include <assert.h>
+#include <cassert>
 
 #define UNIQUE_NAMES(access, type) \
 static uint32_t get(const std::string name) { return names.get(name); } \
@@ -11,7 +11,13 @@ static uint32_t add(const std::string name) { return names.add(name); } \
 access: static unique_name<type> names; public: 
 
 template<typename T>
-class unique_counter { protected: static uint32_t counter; };
+class unique_counter {
+protected: 
+	static uint32_t counter;
+public:
+	uint32_t operator++() { return ++counter; };
+	uint32_t operator++(int) { return counter++; };
+};
 
 template<typename T> uint32_t unique_counter<T>::counter = rand();
 
@@ -26,7 +32,7 @@ public:
 
 	static uint32_t add(const std::string name) {
 		const auto res = ids.insert({ name, counter + 1 });
-		if (!res.second) throw "The event name \"" + name + "\" is already in use; ID: " + std::to_string(ids[name]);
+		if (!res.second) throw "The name \"" + name + "\" is already in use; ID: " + std::to_string(ids[name]);
 		return ++counter;
 	}
 
