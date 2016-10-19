@@ -3,6 +3,8 @@
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 
+#include "Random.h"
+
 struct Window {
 	static GLFWwindow* window;
 	static int width, height;

@@ -2,6 +2,8 @@
 
 #include "smart_ptr.h"
 
+#include "Random.h"
+
 #include "Drawable.h"
 #include "Transform.h"
 
@@ -22,7 +24,7 @@ public:
 	bool& active = _active;
 	vec4& color = _color;
 
-	void* id = (void*)rand();//meant to identify the object for debugging purposes
+	void* id = (void*)Random::get();//meant to identify the object for debugging purposes
 
 	virtual void update(double dt) { };
 	virtual void draw();

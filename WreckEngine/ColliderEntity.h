@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 
+#include "unique_id.h"
 #include "smart_ptr.h"
 
 #include "Entity.h"
@@ -27,3 +28,5 @@ protected:
 	ACCS_G_T_C (protected, unique<Collider>, Collider*, collider, { return _collider.get(); });
 	RigidBody body;
 };
+
+PARENT_TYPE(ColliderEntity, Entity);

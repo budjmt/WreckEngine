@@ -6,6 +6,8 @@
 #include "smart_ptr.h"
 #include "unique_id.h"
 
+#define ADD_EVENT(event_name) auto event_name ## _event = Event::add(#event_name)
+
 // data about a event endpoint, (i.e. trigger or handler) including its type and id
 // [type] = unique_type<T>::id
 // [id] = e.g. EventTrigger::get("bomb")
@@ -14,7 +16,7 @@ struct EventEndpointData {
 	uint32_t id, type; 
 	void* originator; 
 
-	template<class Owner> EventEndpointData(uint32_t _id, Owner* _originator) : EventEndpointData(_id, unique_type<Owner>::id, _originator) {}
+	template<class Owner> EventEndpointData(uint32_t _id, Owner* _originator) : EventEndpointData(_id, unique_type::index<Owner>::id, _originator) {}
 	EventEndpointData(uint32_t _id, uint32_t _type, void* _originator) : id(_id), type(_type), originator(_originator) {}
 };
 
@@ -59,7 +61,7 @@ class EventTrigger {
 public:
 	const EvED info;
 
-	template<class Owner> EventTrigger(Owner* _this) : EventTrigger(_this, rand()) {}
+	template<class Owner> EventTrigger(Owner* _this) : EventTrigger(_this, Random::get()) {}
 	template<class Owner> EventTrigger(Owner* _this, const std::string name) : EventTrigger(_this, get(name)) {}
 	template<class Owner> EventTrigger(Owner* _this, const uint32_t _id) : info(EvED(_id, _this)) {}
 
@@ -87,7 +89,7 @@ class EventHandler {
 public:
 	const EvED info;
 
-	template<class Owner> EventHandler(Owner* _this, const std::function<void(Event)> f) : EventHandler(_this, rand(), f) {}
+	template<class Owner> EventHandler(Owner* _this, const std::function<void(Event)> f) : EventHandler(_this, Random::get(), f) {}
 	template<class Owner> EventHandler(Owner* _this, const std::string name, const std::function<void(Event)> f) : EventHandler(_this, get(name), f) {	}
 	template<class Owner> EventHandler(Owner* _this, const uint32_t _id, const std::function<void(Event)> f) : info(EvED(_id, _this)), handler(f) {
 		EventDispatcher::handlers.insert({ info.id, this });

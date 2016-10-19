@@ -17,4 +17,6 @@ void EventDispatcher::sendToType(const uint32_t type_id, Event e) {
 	for (const auto handler : handlerTypes.at(type_id)) {
 		handler->process(std::move(e));
 	}
+	for (const auto child_type : unique_type::get_data(type_id).child_ids)
+		sendToType(child_type, std::move(e));
 }

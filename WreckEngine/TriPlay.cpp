@@ -20,7 +20,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(prog)
 	auto mainState = make_shared<State>("main");
 	auto mainsp = mainState.get();
 
-	auto start_game_event = Event::add("start_game");
+	ADD_EVENT(start_game);
 	menuState->handler_func = [this, mainsp, start_game_event](Event e) {
 		if (e.id == start_game_event) {
 			currState = mainsp;
