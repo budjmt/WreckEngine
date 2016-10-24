@@ -92,8 +92,8 @@ TriPlay::TriPlay(GLprogram prog) : Game(prog)
 	mesh->id = (void*)0xc2fb;
 	mesh->transform.position = vec3(0, -5.f, 0);
 	mesh->transform.scale = vec3(64, 1.5f, 64);
-	mesh->rigidBody.fixed(1);
-	mesh->rigidBody.mass(10000);
+	mesh->rigidBody.floating(1);
+	mesh->rigidBody.mass(100000);
 	mainState->addEntity(mesh);
 
 	mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(cube, "Assets/butt.png", prog));

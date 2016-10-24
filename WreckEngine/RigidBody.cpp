@@ -3,14 +3,14 @@
 
 void RigidBody::update(double dt) {
 	updateVel(dt);
-	//updateAngVel(dt);
+	updateAngVel(dt);
 
 	netForce = vec3();
 	netAngAccel = vec3();
 }
 
 void RigidBody::updateVel(double dt) {
-	_vel += (1 - _fixed) * _invMass * (float)dt * netForce;
+	_vel += _invMass * (float)dt * netForce;
 	_speed = glm::length(_vel);
 
 	if (_speed < MIN_VEL) {
@@ -29,7 +29,7 @@ void RigidBody::updateVel(double dt) {
 }
 
 void RigidBody::updateAngVel(double dt) {
-	_angVel += (1 - _fixed) * (float)dt * netAngAccel;
+	_angVel += (float)dt * netAngAccel;
 	_angSpeed = glm::length(_angVel);
 
 	if (_angSpeed < MIN_VEL) {

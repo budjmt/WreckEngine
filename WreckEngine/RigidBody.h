@@ -20,16 +20,15 @@ public:
 private:
 	ACCS_GS   (private, float, floating) = 0;
 	ACCS_GS   (private, short, solid)    = 1;
-	ACCS_GS_C (private, float, fixed, { return _fixed; }, { _fixed = value; _floating = value; }) = 0;
 
-	ACCS_GS_C (private, float, mass, { return _mass; }, { _mass = value; _invMass = 1.f / value; }) = 1;
+	ACCS_GS_C (private, float, mass, { return _mass; }, { _mass = value; _invMass = value ? 1.f / value : 0; }) = 1; // infinite mass is represented by 0; this means gravity won't work
 	ACCS_G    (private, float, invMass) = 1;
 	// 0 is perfectly inelastic, i.e. objects stick together, 1 is perfectly elastic, i.e. objects bounce apart entirely
-	ACCS_GS   (private, float, restitution) = 0;
+	ACCS_GS   (private, float, restitution) = 1;
 	
 	float _speed = 0, _angSpeed = 0;
-	ACCS_GS_C(private, vec3, vel,    { return _vel;    }, { _vel = value;    _speed = glm::length(value); });
-	ACCS_GS_C(private, vec3, angVel, { return _angVel; }, { _angVel = value; _angSpeed = glm::length(value); });
+	PROP_GS (private, RigidBody, vec3, vel,    { return _vel;    }, { _speed = glm::length(value);    return _vel = value; });
+	PROP_GS (private, RigidBody, vec3, angVel, { return _angVel; }, { _angSpeed = glm::length(value); return _angVel = value; });
 	ACCS_G(private, vec3, heading)    = vec3(1, 0, 0);
 	ACCS_G(private, vec3, angHeading) = vec3(1, 0, 0);
 };

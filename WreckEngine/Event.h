@@ -6,17 +6,17 @@
 #include "smart_ptr.h"
 #include "unique_id.h"
 
-#define ADD_EVENT(event_name) auto event_name ## _event = Event::add(#event_name)
+#define ADD_EVENT(event_name) auto event_name ## _event = Event::add(#event_name) 
 
 // data about a event endpoint, (i.e. trigger or handler) including its type and id
-// [type] = unique_type<T>::id
+// [type] = unique_type::index<T>::id
 // [id] = e.g. EventTrigger::get("bomb")
 // [originator] would be the "this" pointer of the Event[Thing] object
 struct EventEndpointData { 
 	uint32_t id, type; 
 	void* originator; 
 
-	template<class Owner> EventEndpointData(uint32_t _id, Owner* _originator) : EventEndpointData(_id, unique_type::index<Owner>::id, _originator) {}
+	template<class Owner> EventEndpointData(uint32_t _id, Owner* _originator) : EventEndpointData(_id, UNIQUE_TYPE_ID(Owner), _originator) {}
 	EventEndpointData(uint32_t _id, uint32_t _type, void* _originator) : id(_id), type(_type), originator(_originator) {}
 };
 
@@ -51,6 +51,9 @@ class EventDispatcher {
 
 public:
 	static void sendToHandler(const uint32_t handler_id, Event e);
+	// for standard dispatch, nothing special is required, just pass unique_type::index<T>::id
+	// for polymorphic dispatch, either add the PARENT_TYPE macro below the child definition or the CHILD_TYPE macro below the parent definition
+	// this will enable the association at runtime
 	static void sendToType(const uint32_t type_id, Event e);
 
 	friend class EventHandler;
@@ -78,7 +81,7 @@ public:
 	void sendBulkEvent(const uint32_t event_id, Args&&... args) {
 		Event e(event_id, info, sizeof...(Args));
 		e.data.construct(std::forward<Args>(args)...);
-		EventDispatcher::sendToType(unique_type<T>::id, std::move(e));
+		EventDispatcher::sendToType(UNIQUE_TYPE_ID(T), std::move(e));
 	}
 
 	UNIQUE_NAMES(private, EventTrigger);

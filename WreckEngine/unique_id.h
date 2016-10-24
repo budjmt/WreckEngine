@@ -43,6 +43,8 @@ private:
 
 template<typename T> std::unordered_map<std::string, const uint32_t> unique_name<T>::ids;
 
+#define UNIQUE_TYPE_ID(type) unique_type::index<type>::id
+
 #define PARENT_TYPE(child_t, parent_t) \
 template class unique_type::index<parent_t>; \
 template class unique_type::index<child_t>; \
@@ -64,6 +66,7 @@ public:
 		friend unique_type;
 	};
 
+	// do not use this, it's just used to create parent-child relationships in the macro
 	template<typename P, typename C>
 	class parent_index {
 		using parent = index<P>;
@@ -71,20 +74,19 @@ public:
 		static const int add_result;
 	};
 
-	static inline int add_child(const uint32_t parent, const uint32_t child) { registry().at(parent).child_ids.insert(child); return 0; }
-
 	// this is done instead of a static field to ensure initialization
 	static inline std::unordered_map<uint32_t, data>& registry() { static std::unordered_map<uint32_t, data> r; return r; };
 
 	static inline data& get_data(const uint32_t id) { return registry().at(id); }
 
 private:
-
 	static uint32_t register_type() {
 		auto counter = ++unique_counter<unique_type>();
 		registry().insert({ counter, data() }); 
 		return counter;
 	}
+
+	static inline int add_child(const uint32_t parent, const uint32_t child) { registry().at(parent).child_ids.insert(child); return 0; }
 };
 
 template<typename T> const uint32_t unique_type::index<T>::id = unique_type::register_type();
