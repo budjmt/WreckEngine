@@ -17,9 +17,9 @@ Stuff I've Done:
 - Safe, low-impact CPU-side wrappers for GPU-side OpenGL constructs (gl_structs.h)
 - Graphical debug primitives, using streamed buffer data and instanced rendering
 - Properties (a la C#, property.h)
+- Dynamic Event System
 
 Stuff I Want to Do:
-- Dynamic Event System (in progress!!)
 - Physically accurate collision resolution (in progress!!)
 - Constraints
 - Flexible Material System
