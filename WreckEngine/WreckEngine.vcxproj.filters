@@ -9,21 +9,29 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Header Files\Entities">
+      <UniqueIdentifier>{9ca6f6c8-6139-4789-8520-eaa56098dee4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Utilities">
-      <UniqueIdentifier>{a992f258-3045-47b8-8658-66bcce393788}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core">
+    <Filter Include="Header Files\Core">
       <UniqueIdentifier>{97d09d34-e88f-4a4f-842d-12d856a31497}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Misc">
+    <Filter Include="Header Files\Misc">
       <UniqueIdentifier>{1b4a783d-1e03-4ca1-a0c5-5ca1eb1bb9d3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Entities">
-      <UniqueIdentifier>{9ca6f6c8-6139-4789-8520-eaa56098dee4}</UniqueIdentifier>
+    <Filter Include="Header Files\Utilities">
+      <UniqueIdentifier>{a992f258-3045-47b8-8658-66bcce393788}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{71898bfa-5579-4676-ac07-9e00586e372f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Entities">
+      <UniqueIdentifier>{6a176e60-2cb5-4db1-9ef8-9c34a3aaf5f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Misc">
+      <UniqueIdentifier>{ec2c4329-e854-4af9-a562-84c496072cf8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities">
+      <UniqueIdentifier>{2a789b2a-dff1-4933-bab9-d55de8538d84}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -45,59 +53,59 @@
     <ClCompile Include="CollisionManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="utility.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="GLDebug.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="ShaderHelper.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelHelper.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="Drawable.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Event.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Game.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Source.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="State.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="DrawDebug.cpp">
-      <Filter>Misc</Filter>
-    </ClCompile>
-    <ClCompile Include="MarchMath.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
     <ClCompile Include="TriPlay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Text.cpp">
-      <Filter>Core</Filter>
+    <ClCompile Include="GLDebug.cpp">
+      <Filter>Source Files\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="Entity.cpp">
-      <Filter>Entities</Filter>
+    <ClCompile Include="MarchMath.cpp">
+      <Filter>Source Files\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="TextEntity.cpp">
-      <Filter>Entities</Filter>
+    <ClCompile Include="ModelHelper.cpp">
+      <Filter>Source Files\Utilities</Filter>
     </ClCompile>
-    <ClCompile Include="ColliderEntity.cpp">
-      <Filter>Entities</Filter>
+    <ClCompile Include="ShaderHelper.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="utility.cpp">
+      <Filter>Source Files\Utilities</Filter>
     </ClCompile>
     <ClCompile Include="UV.cpp">
-      <Filter>Utilities</Filter>
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawDebug.cpp">
+      <Filter>Source Files\Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="ColliderEntity.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Entity.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="TextEntity.cpp">
+      <Filter>Source Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Drawable.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Event.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="State.cpp">
+      <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Text.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -120,76 +128,76 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="unique_id.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="UV.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="smart_ptr.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="ShaderHelper.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="property.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="gl_structs.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="GLError.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="GLDebug.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="ModelHelper.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">
-      <Filter>Core</Filter>
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="Event.h">
-      <Filter>Core</Filter>
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
-      <Filter>Core</Filter>
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="Drawable.h">
-      <Filter>Core</Filter>
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="State.h">
-      <Filter>Core</Filter>
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="DrawDebug.h">
-      <Filter>Misc</Filter>
+      <Filter>Header Files\Misc</Filter>
     </ClInclude>
     <ClInclude Include="DebugBenchmark.h">
-      <Filter>Misc</Filter>
+      <Filter>Header Files\Misc</Filter>
     </ClInclude>
     <ClInclude Include="MarchMath.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="TriPlay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="External.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
     <ClInclude Include="Text.h">
-      <Filter>Core</Filter>
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
     <ClInclude Include="Entity.h">
-      <Filter>Entities</Filter>
+      <Filter>Header Files\Entities</Filter>
     </ClInclude>
     <ClInclude Include="ColliderEntity.h">
-      <Filter>Entities</Filter>
+      <Filter>Header Files\Entities</Filter>
     </ClInclude>
     <ClInclude Include="TextEntity.h">
-      <Filter>Entities</Filter>
+      <Filter>Header Files\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Random.h">
-      <Filter>Utilities</Filter>
+      <Filter>Header Files\Utilities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
