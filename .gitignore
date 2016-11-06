@@ -1,10 +1,6 @@
-!/WreckEngine/bin/*
-!/WreckEngine/lib/*
-
 # Ignored directories
 /WreckEngine/.vs/*
-/WreckEngine/[Dd]ebug/*
-/WreckEngine/[Rr]elease/*
+/WreckEngine/[Bb]uild/*
 /WreckEngine/[Pp]ackages/*
 /WreckEngine/x64/*
 

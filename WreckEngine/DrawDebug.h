@@ -15,7 +15,11 @@
 
 #include <functional>
 
+#if (defined(_DEBUG) || defined(DEBUG)) && !defined(NDEBUG)
 #define DEBUG true
+#else
+#define DEBUG false
+#endif
 
 constexpr size_t MAX_VECTORS = 2500;
 constexpr size_t MAX_SPHERES = 1000;

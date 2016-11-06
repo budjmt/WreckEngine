@@ -1,5 +1,6 @@
 
 #include <vld.h>
+#include <iostream>
 
 #include "GL/glew.h"
 #include "GLFW/glfw3.h"
@@ -70,7 +71,7 @@ GLprogram shaderProg;
 
 double prevFrame;
 
-unique<TriPlay> game;
+unique<Game> game;
 
 void init() {
 	shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
@@ -115,8 +116,6 @@ void initGraphics() {
 	// render as wire-frame
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 }
-
-#include <iostream>
 
 void update() {
 	auto currFrame = glfwGetTime();
