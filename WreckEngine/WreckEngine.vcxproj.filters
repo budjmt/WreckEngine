@@ -33,6 +33,18 @@
     <Filter Include="Source Files\Utilities">
       <UniqueIdentifier>{2a789b2a-dff1-4933-bab9-d55de8538d84}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ThirdParty">
+      <UniqueIdentifier>{946c4228-bd03-45fb-a5b6-37b42ad0a2bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ThirdParty">
+      <UniqueIdentifier>{ac521bb3-c68f-4c11-afe5-10c895445154}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ThirdParty\imgui">
+      <UniqueIdentifier>{e464478a-2acd-4aba-a457-4eed47a02654}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ThirdParty\imgui">
+      <UniqueIdentifier>{2eaaf67b-784f-4f25-b431-b84a239e4ecc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Collider.cpp">
@@ -106,6 +118,15 @@
     </ClCompile>
     <ClCompile Include="Text.cpp">
       <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp">
+      <Filter>Source Files\ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\Source\imgui\imgui_demo.cpp">
+      <Filter>Source Files\ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp">
+      <Filter>Source Files\ThirdParty\imgui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -198,6 +219,9 @@
     </ClInclude>
     <ClInclude Include="Random.h">
       <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\Include\imconfig.h">
+      <Filter>Header Files\ThirdParty\imgui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

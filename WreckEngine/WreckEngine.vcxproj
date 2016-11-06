@@ -179,6 +179,9 @@
     <ClCompile Include="Event.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GLDebug.cpp" />
+    <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp" />
+    <ClCompile Include="ThirdParty\Source\imgui\imgui_demo.cpp" />
+    <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp" />
     <ClCompile Include="UV.cpp" />
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="DebugBenchmark.h" />
@@ -220,6 +223,7 @@
     <ClInclude Include="State.h" />
     <ClInclude Include="Text.h" />
     <ClInclude Include="TextEntity.h" />
+    <ClInclude Include="ThirdParty\Include\imconfig.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TriPlay.h" />
     <ClInclude Include="unique_id.h" />
