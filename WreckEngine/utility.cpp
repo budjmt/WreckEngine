@@ -9,6 +9,7 @@ GLFWwindow* Window::window;
 int Window::width;
 int Window::height;
 float Window::aspect;
+int Window::cursorMode = GLFW_CURSOR_NORMAL;
 
 Mouse::Info Mouse::info;
 

@@ -45,6 +45,12 @@
     <Filter Include="Header Files\ThirdParty\imgui">
       <UniqueIdentifier>{2eaaf67b-784f-4f25-b431-b84a239e4ecc}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Games">
+      <UniqueIdentifier>{a47084c8-9a16-499f-be4c-c6658dba7258}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Games">
+      <UniqueIdentifier>{9494d770-edf9-44a4-8d39-0a169fcf579c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Collider.cpp">
@@ -63,9 +69,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CollisionManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TriPlay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GLDebug.cpp">
@@ -127,6 +130,18 @@
     </ClCompile>
     <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp">
       <Filter>Source Files\ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="TriPlay.cpp">
+      <Filter>Source Files\Games</Filter>
+    </ClCompile>
+    <ClCompile Include="UiTest.cpp">
+      <Filter>Source Files\Games</Filter>
+    </ClCompile>
+    <ClCompile Include="gl_structs.cpp">
+      <Filter>Source Files\Utilities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -199,9 +214,6 @@
     <ClInclude Include="MarchMath.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="TriPlay.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="External.h">
       <Filter>Header Files\Utilities</Filter>
     </ClInclude>
@@ -222,6 +234,15 @@
     </ClInclude>
     <ClInclude Include="ThirdParty\Include\imconfig.h">
       <Filter>Header Files\ThirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="TriPlay.h">
+      <Filter>Header Files\Games</Filter>
+    </ClInclude>
+    <ClInclude Include="UiTest.h">
+      <Filter>Header Files\Games</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

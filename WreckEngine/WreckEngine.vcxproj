@@ -179,9 +179,12 @@
     <ClCompile Include="Event.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GLDebug.cpp" />
+    <ClCompile Include="gl_structs.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui_demo.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp" />
+    <ClCompile Include="UI.cpp" />
+    <ClCompile Include="UiTest.cpp" />
     <ClCompile Include="UV.cpp" />
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="DebugBenchmark.h" />
@@ -226,6 +229,8 @@
     <ClInclude Include="ThirdParty\Include\imconfig.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TriPlay.h" />
+    <ClInclude Include="UI.h" />
+    <ClInclude Include="UiTest.h" />
     <ClInclude Include="unique_id.h" />
     <ClInclude Include="UV.h" />
   </ItemGroup>

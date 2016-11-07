@@ -14,16 +14,18 @@
 class Game
 {
 public:
-	Game() = default;
-	Game(GLprogram prog);
+    Game();
+    Game(GLprogram prog);
+    virtual ~Game() = default;
 
-	void addState(shared<State> s);
+    void addState(shared<State> s);
 
-	virtual void update(double dt);
-	virtual void draw();
+    virtual void update(double dt);
+    virtual void draw();
 protected:
-	GLprogram shader;
-	std::vector<shared<State>> states;
-	State* currState;
+    GLprogram shader;
+    std::vector<shared<State>> states;
+    State* currState;
+    bool drawDebug;
 };
 

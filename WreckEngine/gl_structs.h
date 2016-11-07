@@ -188,6 +188,78 @@ struct GLprogram {
 	template<typename T> inline GLuniform<T> getUniform(const char* name) const { GLuniform<T> u; u.location = glGetUniformLocation(*program, name); return u; }
 };
 
+/**
+ * Defines an OpenGL rendering state.
+ */
+class GLstate
+{
+public:
+    /**
+     * \brief Creates a new OpenGL state.
+     */
+    GLstate();
+
+    /**
+     * \brief Applies this state to OpenGL.
+     */
+    void apply();
+
+    /**
+     * \brief Gets the OpenGL state at the top of the stack.
+     *
+     * \return The OpenGL state at the top of the stack, or null if there are no states.
+     */
+    static GLstate* peek();
+
+    /**
+     * \brief Pushes the current OpenGL state.
+     */
+    static void push();
+
+    /**
+     * \brief Attempts to pop an OpenGL state off of the stack.
+     *
+     * \return True if there was a state to pop, otherwise false.
+     */
+    static bool pop();
+
+private:
+    static std::vector<GLstate> s_States;
+    GLint m_Viewport[4];
+    GLint m_ScissorBox[4];
+    GLint m_Program;
+    GLint m_Texture;
+    GLint m_ActiveTexture;
+    GLint m_ArrayBuffer;
+    GLint m_ElementArrayBuffer;
+    GLint m_VertexArray;
+    GLint m_BlendSrc;
+    GLint m_BlendDst;
+    GLint m_BlendEquationRGB;
+    GLint m_BlendEquationAlpha;
+    GLboolean m_EnableBlend;
+    GLboolean m_EnableCullFace;
+    GLboolean m_EnableDepthTest;
+    GLboolean m_EnableScissorTest;
+
+    /**
+     * \brief Captures the current OpenGL state.
+     */
+    void capture();
+};
+
+struct GLstatehelper
+{
+    GLstatehelper()
+    {
+        GLstate::push();
+    }
+    ~GLstatehelper()
+    {
+        GLstate::pop();
+    }
+};
+
 // helper class, used to assist in creating vertex array attribute bindings (create and use locally, DO NOT STORE!)
 class GLattrarr {
 	struct GLattr { GLenum type; GLuint size, bytes, divisor; bool normalize; };

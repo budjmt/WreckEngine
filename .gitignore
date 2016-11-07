@@ -9,3 +9,6 @@
 # Ignored file types
 *.db
 *.opendb
+
+# Specific ignored files
+/WreckEngine/imgui.ini
