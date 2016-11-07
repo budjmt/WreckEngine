@@ -10,10 +10,8 @@ class UiTest : public Game
 public:
     /**
      * \brief Creates a new UI test game.
-     *
-     * \param program The shader program to use.
      */
-    UiTest(GLprogram program);
+    UiTest();
 
     /**
      * \brief Destroys the UI test game.

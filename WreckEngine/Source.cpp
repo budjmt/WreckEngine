@@ -29,6 +29,7 @@ struct GLFWmanager {
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
         GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 
@@ -44,6 +45,10 @@ struct GLFWmanager {
         if (!Window::window) exit('w');
         glfwMakeContextCurrent(Window::window);
         Window::update();
+
+        // Center the window
+        const GLFWvidmode* vm = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        glfwSetWindowPos(Window::window, (vm->width - width) / 2, (vm->height - height) / 2);
 
         Mouse::button_callback(Mouse::default_button);
         Mouse::move_callback(Mouse::default_move);
@@ -94,7 +99,7 @@ void init() {
     Text::init();
 
     //game = make_unique<TriPlay>(shaderProg);// this won't be initialized until after GLFW/GLEW are
-    game = make_unique<UiTest>(shaderProg);
+    game = make_unique<UiTest>();
 }
 
 void initGraphics() {
@@ -161,7 +166,7 @@ void update() {
 }
 
 void draw() {
-        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         game->draw();
 }
 
@@ -173,12 +178,13 @@ int main(int argc, char** argv) {
         initDebug();
     init();
     CHECK_GL_ERR;
+    glfwShowWindow(Window::window);
     while (!glfwWindowShouldClose(Window::window)) {
         glfwPollEvents();
         update();
         draw();
         CHECK_GL_ERR;
-        //glfwSwapBuffers(Window::window);
+        glfwSwapBuffers(Window::window);
     }
 
     return 0;

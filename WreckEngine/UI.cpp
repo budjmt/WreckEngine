@@ -192,7 +192,7 @@ namespace UI
     /**
      * \brief Creates the ImGui font texture.
      */
-    static void ImGuiCreateFontTexture()
+    static bool ImGuiCreateFontTexture()
     {
         // Build texture atlas
         ImGuiIO& io = ImGui::GetIO();
@@ -209,6 +209,7 @@ namespace UI
         GLint last_texture;
         glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
         glGenTextures(1, &g_FontTexture);
+        if (!g_FontTexture) return false;
         glBindTexture(GL_TEXTURE_2D, g_FontTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -219,6 +220,8 @@ namespace UI
 
         // Restore state
         glBindTexture(GL_TEXTURE_2D, last_texture);
+
+        return true;
     }
 
     /**
@@ -306,8 +309,7 @@ namespace UI
         glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv));
         glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col));
 
-        ImGuiCreateFontTexture();
-        return true;
+        return ImGuiCreateFontTexture();
     }
 
     /**
@@ -363,6 +365,15 @@ namespace UI
      */
     bool Initialize()
     {
+        // Let's attempt to load a better looking font
+        ImGuiIO& io = ImGui::GetIO();
+        io.Fonts->ClearFonts();
+        //io.Fonts->AddFontDefault();
+        //io.Fonts->AddFontFromFileTTF("Assets/Fonts/Cousine-Regular.ttf", 15.0f);
+        io.Fonts->AddFontFromFileTTF("Assets/Fonts/DroidSans.ttf", 12.0f);
+        //io.Fonts->AddFontFromFileTTF("Assets/Fonts/ProggyClean.ttf", 13.0f);
+        //io.Fonts->AddFontFromFileTTF("Assets/Fonts/ProggyTiny.ttf", 10.0f);
+
         return InitializeSystem() && InitializeGraphics();
     }
     

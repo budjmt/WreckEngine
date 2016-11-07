@@ -21,19 +21,13 @@ void Game::addState(shared<State> s) {
 }
 
 void Game::update(double dt) {
-    if (!currState)
-    {
-        return;
-    }
+    if (!currState) return;
     currState->update(dt);
 }
 
 void Game::draw() {
-    shader.use();
-    if (currState)
-    {
-        currState->draw();
-    }
+    if (shader()) shader.use();
+    if (currState) currState->draw();
 #if DEBUG
     if (drawDebug)
     {

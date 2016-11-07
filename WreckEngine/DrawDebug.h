@@ -15,7 +15,7 @@
 
 #include <functional>
 
-#if (defined(_DEBUG) || defined(DEBUG)) && !defined(NDEBUG)
+#if defined(_DEBUG) && !defined(NDEBUG)
 #define DEBUG true
 #else
 #define DEBUG false

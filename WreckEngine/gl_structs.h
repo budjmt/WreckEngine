@@ -200,11 +200,6 @@ public:
     GLstate();
 
     /**
-     * \brief Applies this state to OpenGL.
-     */
-    void apply();
-
-    /**
      * \brief Gets the OpenGL state at the top of the stack.
      *
      * \return The OpenGL state at the top of the stack, or null if there are no states.
@@ -241,6 +236,11 @@ private:
     GLboolean m_EnableCullFace;
     GLboolean m_EnableDepthTest;
     GLboolean m_EnableScissorTest;
+    
+    /**
+     * \brief Applies this state to OpenGL.
+     */
+    void apply();
 
     /**
      * \brief Captures the current OpenGL state.
@@ -248,12 +248,22 @@ private:
     void capture();
 };
 
+/**
+ * Defines a scoped state helper.
+ */
 struct GLstatehelper
 {
+    /**
+     * \brief Creates a new state helper and pushes the current OpenGL state.
+     */
     GLstatehelper()
     {
         GLstate::push();
     }
+
+    /**
+     * \brief Destroys this state helper and pops the current OpenGL state.
+     */
     ~GLstatehelper()
     {
         GLstate::pop();

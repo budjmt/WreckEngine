@@ -25,44 +25,12 @@ void GLstate::apply()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ElementArrayBuffer);
     glBlendEquationSeparate(m_BlendEquationRGB, m_BlendEquationAlpha);
     glBlendFunc(m_BlendSrc, m_BlendDst);
+    if (m_EnableBlend)       glEnable(GL_BLEND);        else glDisable(GL_BLEND);
+    if (m_EnableCullFace)    glEnable(GL_CULL_FACE);    else glDisable(GL_CULL_FACE);
+    if (m_EnableDepthTest)   glEnable(GL_DEPTH_TEST);   else glDisable(GL_DEPTH_TEST);
+    if (m_EnableScissorTest) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
     glViewport(m_Viewport[0], m_Viewport[1], (GLsizei)m_Viewport[2], (GLsizei)m_Viewport[3]);
     glScissor(m_ScissorBox[0], m_ScissorBox[1], (GLsizei)m_ScissorBox[2], (GLsizei)m_ScissorBox[3]);
-    
-    if (m_EnableBlend)
-    {
-        glEnable(GL_BLEND);
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-    }
-
-    if (m_EnableCullFace)
-    {
-        glEnable(GL_CULL_FACE);
-    }
-    else
-    {
-        glDisable(GL_CULL_FACE);
-    }
-
-    if (m_EnableDepthTest)
-    {
-        glEnable(GL_DEPTH_TEST);
-    }
-    else
-    {
-        glDisable(GL_DEPTH_TEST);
-    }
-
-    if (m_EnableScissorTest)
-    {
-        glEnable(GL_SCISSOR_TEST);
-    }
-    else
-    {
-        glDisable(GL_SCISSOR_TEST);
-    }
 }
 
 /**
@@ -120,6 +88,7 @@ bool GLstate::pop()
 {
     if (s_States.size())
     {
+        s_States.back().apply();
         s_States.pop_back();
         return true;
     }
