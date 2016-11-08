@@ -70,5 +70,5 @@ void UiTest::draw()
     }
 
     UI::Draw();
-    glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+    glCheck(glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w));
 }

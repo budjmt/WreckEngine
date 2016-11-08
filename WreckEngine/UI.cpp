@@ -1,13 +1,8 @@
 #include "UI.h"
 #include "gl_structs.h"
+#include "GLError.h"
 #include "External.h"
-#include <assert.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#if !defined(_WIN32) && !defined(_WIN64)
-#include <unistd.h>
-#else
+#if defined(_WIN32) || defined(_WIN64)
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 #endif
@@ -58,45 +53,6 @@ namespace UI
     static GLuint   g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
 
     /**
-     * \brief Converts an error to a string.
-     *
-     * \param error The error.
-     * \return The text represented by the string.
-     */
-    static const char* const ErrorToString(int error)
-    {
-        switch (error)
-        {
-            case EACCES:        return u8"Search permission is denied for one of the directories in the path prefix of pathname.";
-            case EFAULT:        return u8"Bad address.";
-            case ELOOP:         return u8"Too many symbolic links encountered while traversing the path.";
-            case ENAMETOOLONG:  return u8"pathname is too long.";
-            case ENOENT:        return u8"A component of pathname does not exist, or pathname is an empty string.";
-            case ENOMEM:        return u8"Out of memory.";
-            case ENOTDIR:       return u8"A component of the path prefix of pathname is not a directory.";
-            case EOVERFLOW:     return u8"The file is too large.";
-        }
-        return u8"An unknown error occurred.";
-    }
-
-    /**
-     * \brief Checks to see if the given file exists.
-     *
-     * \param fname The file name.
-     * \return True if the file exists, otherwise false.
-     */
-    static bool FileExists(const char* fname)
-    {
-        struct stat fileStats;
-        if (stat(fname, &fileStats))
-        {
-            printf(u8"File error for '%s': %s\n", fname, ErrorToString(errno));
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * \brief The implementation for retrieving the clipboard's text for ImGui.
      *
      * \param userData ImGui user data.
@@ -138,16 +94,16 @@ namespace UI
         dd->ScaleClipRects(io.DisplayFramebufferScale);
 
         // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
-        glEnable(GL_BLEND);
-        glBlendEquation(GL_FUNC_ADD);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
-        glEnable(GL_SCISSOR_TEST);
-        glActiveTexture(GL_TEXTURE0);
+        glCheck(glEnable(GL_BLEND));
+        glCheck(glBlendEquation(GL_FUNC_ADD));
+        glCheck(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+        glCheck(glDisable(GL_CULL_FACE));
+        glCheck(glDisable(GL_DEPTH_TEST));
+        glCheck(glEnable(GL_SCISSOR_TEST));
+        glCheck(glActiveTexture(GL_TEXTURE0));
 
         // Setup viewport, orthographic projection matrix
-        glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height);
+        glCheck(glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height));
         const float ortho_projection[4][4] =
         {
             {2.0f / io.DisplaySize.x, 0.0f,                     0.0f, 0.0f},
@@ -155,21 +111,21 @@ namespace UI
             {0.0f,                    0.0f,                    -1.0f, 0.0f},
             {-1.0f,                   1.0f,                     0.0f, 1.0f},
         };
-        glUseProgram(g_ShaderHandle);
-        glUniform1i(g_AttribLocationTex, 0);
-        glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]);
-        glBindVertexArray(g_VaoHandle);
+        glCheck(glUseProgram(g_ShaderHandle));
+        glCheck(glUniform1i(g_AttribLocationTex, 0));
+        glCheck(glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]));
+        glCheck(glBindVertexArray(g_VaoHandle));
 
         for (int n = 0; n < dd->CmdListsCount; n++)
         {
             const ImDrawList* cmd_list = dd->CmdLists[n];
             const ImDrawIdx* idx_buffer_offset = 0;
 
-            glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
-            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW);
+            glCheck(glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle));
+            glCheck(glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW));
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
+            glCheck(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle));
+            glCheck(glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW));
 
             for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
             {
@@ -180,9 +136,9 @@ namespace UI
                 }
                 else
                 {
-                    glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
-                    glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
-                    glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset);
+                    glCheck(glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId));
+                    glCheck(glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y)));
+                    glCheck(glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset));
                 }
                 idx_buffer_offset += pcmd->ElemCount;
             }
@@ -207,19 +163,19 @@ namespace UI
 
         // Upload texture to graphics system
         GLint last_texture;
-        glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
-        glGenTextures(1, &g_FontTexture);
+        glCheck(glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture));
+        glCheck(glGenTextures(1, &g_FontTexture));
         if (!g_FontTexture) return false;
-        glBindTexture(GL_TEXTURE_2D, g_FontTexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        glCheck(glBindTexture(GL_TEXTURE_2D, g_FontTexture));
+        glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+        glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+        glCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels));
 
         // Store our identifier
         io.Fonts->TexID = (void *)(intptr_t)g_FontTexture;
 
         // Restore state
-        glBindTexture(GL_TEXTURE_2D, last_texture);
+        glCheck(glBindTexture(GL_TEXTURE_2D, last_texture));
 
         return true;
     }
@@ -278,36 +234,36 @@ namespace UI
     {
         GLstatehelper glStateHelper;
 
-        g_ShaderHandle = glCreateProgram();
-        g_VertHandle = glCreateShader(GL_VERTEX_SHADER);
-        g_FragHandle = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(g_VertHandle, 1, &ImGuiVertexShader, 0);
-        glShaderSource(g_FragHandle, 1, &ImGuiFragmentShader, 0);
-        glCompileShader(g_VertHandle);
-        glCompileShader(g_FragHandle);
-        glAttachShader(g_ShaderHandle, g_VertHandle);
-        glAttachShader(g_ShaderHandle, g_FragHandle);
-        glLinkProgram(g_ShaderHandle);
+        glCheck(g_ShaderHandle = glCreateProgram());
+        glCheck(g_VertHandle = glCreateShader(GL_VERTEX_SHADER));
+        glCheck(g_FragHandle = glCreateShader(GL_FRAGMENT_SHADER));
+        glCheck(glShaderSource(g_VertHandle, 1, &ImGuiVertexShader, 0));
+        glCheck(glShaderSource(g_FragHandle, 1, &ImGuiFragmentShader, 0));
+        glCheck(glCompileShader(g_VertHandle));
+        glCheck(glCompileShader(g_FragHandle));
+        glCheck(glAttachShader(g_ShaderHandle, g_VertHandle));
+        glCheck(glAttachShader(g_ShaderHandle, g_FragHandle));
+        glCheck(glLinkProgram(g_ShaderHandle));
 
-        g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture");
-        g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx");
-        g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position");
-        g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV");
-        g_AttribLocationColor = glGetAttribLocation(g_ShaderHandle, "Color");
+        glCheck(g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture"));
+        glCheck(g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx"));
+        glCheck(g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position"));
+        glCheck(g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV"));
+        glCheck(g_AttribLocationColor = glGetAttribLocation(g_ShaderHandle, "Color"));
 
-        glGenBuffers(1, &g_VboHandle);
-        glGenBuffers(1, &g_ElementsHandle);
+        glCheck(glGenBuffers(1, &g_VboHandle));
+        glCheck(glGenBuffers(1, &g_ElementsHandle));
 
-        glGenVertexArrays(1, &g_VaoHandle);
-        glBindVertexArray(g_VaoHandle);
-        glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle);
-        glEnableVertexAttribArray(g_AttribLocationPosition);
-        glEnableVertexAttribArray(g_AttribLocationUV);
-        glEnableVertexAttribArray(g_AttribLocationColor);
+        glCheck(glGenVertexArrays(1, &g_VaoHandle));
+        glCheck(glBindVertexArray(g_VaoHandle));
+        glCheck(glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle));
+        glCheck(glEnableVertexAttribArray(g_AttribLocationPosition));
+        glCheck(glEnableVertexAttribArray(g_AttribLocationUV));
+        glCheck(glEnableVertexAttribArray(g_AttribLocationColor));
 
-        glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, pos));
-        glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv));
-        glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col));
+        glCheck(glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, pos)));
+        glCheck(glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv)));
+        glCheck(glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col)));
 
         return ImGuiCreateFontTexture();
     }

@@ -103,31 +103,31 @@ void init() {
 }
 
 void initGraphics() {
-    glViewport(0, 0, Window::width, Window::height);
+    glCheck(glViewport(0, 0, Window::width, Window::height));
 
     // alpha blending
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glCheck(glEnable(GL_BLEND));
+    glCheck(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
         
     // texture filtering
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR));
+    glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
     //wraps UVs
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+    glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 
     // depth buffering
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glCheck(glEnable(GL_DEPTH_TEST));
+    glCheck(glDepthFunc(GL_LESS));
 
     // back-face culling
-    if (!DEBUG) { glEnable(GL_CULL_FACE); }
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW);
+    if (!DEBUG) { glCheck(glEnable(GL_CULL_FACE)); }
+    glCheck(glCullFace(GL_BACK));
+    glCheck(glFrontFace(GL_CCW));
 
     // render as wire-frame
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glCheck(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
 }
 
 void update() {
@@ -166,7 +166,7 @@ void update() {
 }
 
 void draw() {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glCheck(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
         game->draw();
 }
 

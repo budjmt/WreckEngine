@@ -26,7 +26,7 @@ void Game::update(double dt) {
 }
 
 void Game::draw() {
-    if (shader()) shader.use();
+    if (shader) shader.use();
     if (currState) currState->draw();
 #if DEBUG
     if (drawDebug)

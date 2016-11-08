@@ -1,4 +1,5 @@
 #include "gl_structs.h"
+#include "GLError.h"
 
 #pragma region GLstate Definition
 
@@ -17,20 +18,20 @@ GLstate::GLstate()
  */
 void GLstate::apply()
 {
-    glUseProgram(m_Program);
-    glActiveTexture(m_ActiveTexture);
-    glBindTexture(GL_TEXTURE_2D, m_Texture);
-    glBindVertexArray(m_VertexArray);
-    glBindBuffer(GL_ARRAY_BUFFER, m_ArrayBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ElementArrayBuffer);
-    glBlendEquationSeparate(m_BlendEquationRGB, m_BlendEquationAlpha);
-    glBlendFunc(m_BlendSrc, m_BlendDst);
-    if (m_EnableBlend)       glEnable(GL_BLEND);        else glDisable(GL_BLEND);
-    if (m_EnableCullFace)    glEnable(GL_CULL_FACE);    else glDisable(GL_CULL_FACE);
-    if (m_EnableDepthTest)   glEnable(GL_DEPTH_TEST);   else glDisable(GL_DEPTH_TEST);
-    if (m_EnableScissorTest) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
-    glViewport(m_Viewport[0], m_Viewport[1], (GLsizei)m_Viewport[2], (GLsizei)m_Viewport[3]);
-    glScissor(m_ScissorBox[0], m_ScissorBox[1], (GLsizei)m_ScissorBox[2], (GLsizei)m_ScissorBox[3]);
+    glCheck(glUseProgram(m_Program));
+    glCheck(glActiveTexture(m_ActiveTexture));
+    glCheck(glBindTexture(GL_TEXTURE_2D, m_Texture));
+    glCheck(glBindVertexArray(m_VertexArray));
+    glCheck(glBindBuffer(GL_ARRAY_BUFFER, m_ArrayBuffer));
+    glCheck(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ElementArrayBuffer));
+    glCheck(glBlendEquationSeparate(m_BlendEquationRGB, m_BlendEquationAlpha));
+    glCheck(glBlendFunc(m_BlendSrc, m_BlendDst));
+    if (m_EnableBlend)       { glCheck(glEnable(GL_BLEND));        } else { glCheck(glDisable(GL_BLEND)); };
+    if (m_EnableCullFace)    { glCheck(glEnable(GL_CULL_FACE));    } else { glCheck(glDisable(GL_CULL_FACE)); };
+    if (m_EnableDepthTest)   { glCheck(glEnable(GL_DEPTH_TEST));   } else { glCheck(glDisable(GL_DEPTH_TEST)); };
+    if (m_EnableScissorTest) { glCheck(glEnable(GL_SCISSOR_TEST)); } else { glCheck(glDisable(GL_SCISSOR_TEST)); };
+    glCheck(glViewport(m_Viewport[0], m_Viewport[1], (GLsizei)m_Viewport[2], (GLsizei)m_Viewport[3]));
+    glCheck(glScissor(m_ScissorBox[0], m_ScissorBox[1], (GLsizei)m_ScissorBox[2], (GLsizei)m_ScissorBox[3]));
 }
 
 /**
@@ -38,23 +39,26 @@ void GLstate::apply()
  */
 void GLstate::capture()
 {
-    glGetIntegerv(GL_CURRENT_PROGRAM, &m_Program);
-    glGetIntegerv(GL_TEXTURE_BINDING_2D, &m_Texture);
-    glGetIntegerv(GL_ACTIVE_TEXTURE, &m_ActiveTexture);
-    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &m_ArrayBuffer);
-    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &m_ElementArrayBuffer);
-    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &m_VertexArray);
-    glGetIntegerv(GL_BLEND_SRC, &m_BlendSrc);
-    glGetIntegerv(GL_BLEND_DST, &m_BlendDst);
-    glGetIntegerv(GL_BLEND_EQUATION_RGB, &m_BlendEquationRGB);
-    glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &m_BlendEquationAlpha);
-    glGetIntegerv(GL_VIEWPORT, m_Viewport);
-    glGetIntegerv(GL_SCISSOR_BOX, m_ScissorBox);
+    int x = 42;
+    glCheck(x /= 10);
 
-    m_EnableBlend = glIsEnabled(GL_BLEND);
-    m_EnableCullFace = glIsEnabled(GL_CULL_FACE);
-    m_EnableDepthTest = glIsEnabled(GL_DEPTH_TEST);
-    m_EnableScissorTest = glIsEnabled(GL_SCISSOR_TEST);
+    glCheck(glGetIntegerv(GL_CURRENT_PROGRAM, &m_Program));
+    glCheck(glGetIntegerv(GL_TEXTURE_BINDING_2D, &m_Texture));
+    glCheck(glGetIntegerv(GL_ACTIVE_TEXTURE, &m_ActiveTexture));
+    glCheck(glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &m_ArrayBuffer));
+    glCheck(glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &m_ElementArrayBuffer));
+    glCheck(glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &m_VertexArray));
+    glCheck(glGetIntegerv(GL_BLEND_SRC, &m_BlendSrc));
+    glCheck(glGetIntegerv(GL_BLEND_DST, &m_BlendDst));
+    glCheck(glGetIntegerv(GL_BLEND_EQUATION_RGB, &m_BlendEquationRGB));
+    glCheck(glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &m_BlendEquationAlpha));
+    glCheck(glGetIntegerv(GL_VIEWPORT, m_Viewport));
+    glCheck(glGetIntegerv(GL_SCISSOR_BOX, m_ScissorBox));
+
+    glCheck(m_EnableBlend = glIsEnabled(GL_BLEND));
+    glCheck(m_EnableCullFace = glIsEnabled(GL_CULL_FACE));
+    glCheck(m_EnableDepthTest = glIsEnabled(GL_DEPTH_TEST));
+    glCheck(m_EnableScissorTest = glIsEnabled(GL_SCISSOR_TEST));
 }
 
 /**
