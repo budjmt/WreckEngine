@@ -39,9 +39,6 @@ void GLstate::apply()
  */
 void GLstate::capture()
 {
-    int x = 42;
-    glCheck(x /= 10);
-
     glCheck(glGetIntegerv(GL_CURRENT_PROGRAM, &m_Program));
     glCheck(glGetIntegerv(GL_TEXTURE_BINDING_2D, &m_Texture));
     glCheck(glGetIntegerv(GL_ACTIVE_TEXTURE, &m_ActiveTexture));
