@@ -67,6 +67,7 @@ public:
 	};
 
 	// do not use this, it's just used to create parent-child relationships in the macro
+	// an exceptions based approach: http://stackoverflow.com/questions/15832679/how-to-get-a-type-from-type-info-for-template-parameters
 	template<typename P, typename C>
 	class parent_index {
 		using parent = index<P>;

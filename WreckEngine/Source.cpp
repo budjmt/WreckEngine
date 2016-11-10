@@ -133,7 +133,7 @@ void update() {
 	runningAvgDelta -= runningAvgDelta / samples;
 	runningAvgDelta += dt / samples;
 	auto title = std::to_string(fpsMode ? 1.0 / runningAvgDelta : runningAvgDelta * 1000.0);
-	auto decimal = title.find('.', 2);
+	auto decimal = title.find('.');
 	if (title.length() - decimal > 3) title = title.erase(decimal + 3);
 	title += fpsMode ? " FpS" : " MSpF";
 	glfwSetWindowTitle(Window::window, title.c_str());

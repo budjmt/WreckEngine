@@ -7,26 +7,26 @@
 #include "smart_ptr.h"
 #include "property.h"
 
-struct alignas(16) TransformMats { 
-	mat4 translate, rotate, scale, world; 
-	TransformMats* clone() { return new TransformMats(*this); }
-	virtual ~TransformMats() = default;
-	void* operator new(size_t i) { return _aligned_malloc(i, 16); }
-	void operator delete(void* p) { _aligned_free(p); }
-};
-
 class Transform
 {
 public:
 	Transform();
 	Transform* clone() const;
 
+	struct alignas(16) mat_cache {
+		mat4 translate, rotate, scale, world;
+		mat_cache* clone() { return new mat_cache(*this); }
+		virtual ~mat_cache() = default;
+		void* operator new(size_t i) { return _aligned_malloc(i, 16); }
+		void operator delete(void* p) { _aligned_free(p); }
+	};
+
 	void makeDirty() const;
 
 	Transform* parent() const; void parent(Transform* p);
 	std::unordered_set<Transform*> children;
 	const Transform* getComputed() const;
-	TransformMats* getMats() const;
+	mat_cache* getMats() const;
 
 	void setBaseDirections(const vec3 t_forward, const vec3 t_up);
 	void rotate(const float x, const float y, const float z);
@@ -50,7 +50,7 @@ private:
 	// computes are const, so these must be mutable
 	mutable bool dirtyComp, dirtyMats;
 	mutable alloc<Transform> computed = alloc<Transform>(nullptr);
-	mutable alloc<TransformMats> mats = alloc<TransformMats>(nullptr);
+	mutable alloc<mat_cache> mats = alloc<mat_cache>(nullptr);
 	
 	Transform* _parent = nullptr;
 	Transform* computeTransform() const;

@@ -25,9 +25,9 @@ void Transform::parent(Transform* p) {
 	_parent = p;
 }
 
-TransformMats* Transform::getMats() const {
+Transform::mat_cache* Transform::getMats() const {
 	auto t = getComputed();
-	if (!t->mats) { t->mats.reset(new TransformMats); goto DIRTY; }
+	if (!t->mats) { t->mats.reset(new mat_cache); goto DIRTY; }
 	if (dirtyMats) {
 	DIRTY: 
 		dirtyMats = false;

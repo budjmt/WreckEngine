@@ -11,7 +11,7 @@
 
 class Collider;
 
-constexpr float COLLISION_PEN_TOLERANCE = 0.01f * -1.f;
+constexpr float COLLISION_PEN_TOLERANCE = 0.03f * -1.f;
 
 struct AABB {
 	vec3 center, halfDims;
@@ -21,7 +21,7 @@ struct AABB {
 struct Adj { std::pair<GLuint, GLuint> faces, edge; };
 
 struct GaussMap {
-	//keys are untransformed normals, adjs use indices because of rotations
+	//keys are untransformed normals, adjacencies use indices because of rotations
 	std::unordered_map<std::string, std::vector<Adj>> adjacencies;
 	void addAdj(const vec3 v, const Adj a);
 	const std::vector<Adj>& getAdjs(const vec3 v) const;
