@@ -20,14 +20,14 @@
 
 #if defined(_DEBUG) && !defined(NDEBUG)
 #define GL_CHECK(x) x; ::CheckGlErrorImpl(#x, __FILE__, __LINE__, __PRETTY_FUNCTION__)
+#define IF_GL_CHECK(x) x; if (::CheckGlErrorImpl(#x, __FILE__, __LINE__, __PRETTY_FUNCTION__))
 #else
 #define GL_CHECK(x) x
+#define IF_GL_CHECK(x) x; if (0)
 #endif
 
-inline const char* const GetGlErrorString(GLenum error)
-{
-    switch (error)
-    {
+inline const char* const GetGlErrorString(GLenum error) {
+    switch (error) {
         case GL_NO_ERROR:
             return "No error has been recorded.";
         case GL_INVALID_ENUM:
@@ -49,12 +49,12 @@ inline const char* const GetGlErrorString(GLenum error)
     }
 }
 
-inline void CheckGlErrorImpl(const char* call, const char* file, int line, const char* function)
-{
+inline bool CheckGlErrorImpl(const char* call, const char* file, int line, const char* function) {
     GLenum error = glGetError();
-    if (error == GL_NO_ERROR) return;
+    if (error == GL_NO_ERROR) return false;
 
-    printf(u8"[GL] '%s': %s\n  FILE: %s(%i)\n  FUNC: %s\n\n", call, GetGlErrorString(error), file, line, function);
+    printf("[GL] '%s': %s\n  FILE: %s(%i)\n  FUNC: %s\n\n", call, GetGlErrorString(error), file, line, function);
+    return true;
 }
 
 static void GLPrintError(GLenum error, const char* prepend = "") {

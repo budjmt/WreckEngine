@@ -17,7 +17,7 @@ namespace {
 	// default value used to represent "uninitialized" resources
 	constexpr GLuint def = (GLuint) -1;
 
-	GLint local(getMaxNumTextures)() { GLint val; glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &val); return val; }
+	GLint local(getMaxNumTextures)() { GLint val; GL_CHECK(glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &val)); return val; }
 
 	void local(delTexture)   (GLuint* t) { if (*t != def) GL_CHECK(glDeleteTextures(1, t));     delete t; }
 	void local(delBuffer)    (GLuint* b) { if (*b != def) GL_CHECK(glDeleteBuffers(1, b));      delete b; }
@@ -82,6 +82,13 @@ struct GLtexture {
 		GL_CHECK(glBindTexture(type, *texture));
 	}
 	inline void unbind() { GL_CHECK(glBindTexture(type, 0)); }
+        
+    inline void unload() {
+        if (*texture != def) {
+            GL_CHECK(glDeleteTextures(1, texture.get()));
+        }
+        *texture = def;
+    }
 
 	inline void param(const GLenum name, const int val)   { GL_CHECK(glTexParameteri(type, name, val)); }
 	inline void param(const GLenum name, const float val) { GL_CHECK(glTexParameterf(type, name, val)); }

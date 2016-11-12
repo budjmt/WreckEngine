@@ -25,8 +25,8 @@ public:
     virtual void draw(const mat4& world);
     virtual void draw(Transform* t);
     void setWorldMatrix(const mat4& world);
-    GLtexture genTexture2D(const char* texFile);
 
+    static GLtexture genTexture2D(const char* texFile);
     static void unloadTextures();
 protected:
     GLVAO vArray;
