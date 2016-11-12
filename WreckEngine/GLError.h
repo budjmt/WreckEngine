@@ -19,11 +19,9 @@
 #define CHECK_GL_ERR GLCheckError("GL-ERROR; \"" __FILE__ "\" before line " STRINGIZE(__LINE__) ": \n")
 
 #if defined(_DEBUG) && !defined(NDEBUG)
-#define GL_CHECK(x) x; ::CheckGlErrorImpl(#x, __FILE__, __LINE__, __PRETTY_FUNCTION__)
-#define IF_GL_CHECK(x) x; if (::CheckGlErrorImpl(#x, __FILE__, __LINE__, __PRETTY_FUNCTION__))
+#define GL_CHECK(x) { x; ::CheckGlErrorImpl(#x, __FILE__, __LINE__, __PRETTY_FUNCTION__); }
 #else
 #define GL_CHECK(x) x
-#define IF_GL_CHECK(x) x; if (0)
 #endif
 
 inline const char* const GetGlErrorString(GLenum error) {
