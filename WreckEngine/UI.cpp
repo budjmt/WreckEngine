@@ -323,12 +323,18 @@ namespace UI
     {
         // Let's attempt to load a better looking font
         ImGuiIO& io = ImGui::GetIO();
+        ImFont* font = nullptr;
         io.Fonts->ClearFonts();
-        //io.Fonts->AddFontDefault();
-        //io.Fonts->AddFontFromFileTTF("Assets/Fonts/Cousine-Regular.ttf", 15.0f);
-        io.Fonts->AddFontFromFileTTF("Assets/Fonts/DroidSans.ttf", 12.0f);
-        //io.Fonts->AddFontFromFileTTF("Assets/Fonts/ProggyClean.ttf", 13.0f);
-        //io.Fonts->AddFontFromFileTTF("Assets/Fonts/ProggyTiny.ttf", 10.0f);
+        //font = io.Fonts->AddFontDefault();
+        //font = io.Fonts->AddFontFromFileTTF("Assets/Fonts/Cousine-Regular.ttf", 15.0f);
+        font = io.Fonts->AddFontFromFileTTF("Assets/Fonts/DroidSans.ttf", 12.0f);
+        //font = io.Fonts->AddFontFromFileTTF("Assets/Fonts/ProggyClean.ttf", 13.0f);
+        //font = io.Fonts->AddFontFromFileTTF("Assets/Fonts/ProggyTiny.ttf", 10.0f);
+
+        if (!font)
+        {
+            return false;
+        }
 
         return InitializeSystem() && InitializeGraphics();
     }
