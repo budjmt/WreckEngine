@@ -1,248 +1,219 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Header Files\Entities">
-      <UniqueIdentifier>{9ca6f6c8-6139-4789-8520-eaa56098dee4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Core">
+    <Filter Include="Core">
       <UniqueIdentifier>{97d09d34-e88f-4a4f-842d-12d856a31497}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Misc">
-      <UniqueIdentifier>{1b4a783d-1e03-4ca1-a0c5-5ca1eb1bb9d3}</UniqueIdentifier>
+    <Filter Include="Entities">
+      <UniqueIdentifier>{9ca6f6c8-6139-4789-8520-eaa56098dee4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Utilities">
-      <UniqueIdentifier>{a992f258-3045-47b8-8658-66bcce393788}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Core">
-      <UniqueIdentifier>{71898bfa-5579-4676-ac07-9e00586e372f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Entities">
-      <UniqueIdentifier>{6a176e60-2cb5-4db1-9ef8-9c34a3aaf5f6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Misc">
-      <UniqueIdentifier>{ec2c4329-e854-4af9-a562-84c496072cf8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Utilities">
-      <UniqueIdentifier>{2a789b2a-dff1-4933-bab9-d55de8538d84}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\ThirdParty">
-      <UniqueIdentifier>{946c4228-bd03-45fb-a5b6-37b42ad0a2bf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\ThirdParty">
-      <UniqueIdentifier>{ac521bb3-c68f-4c11-afe5-10c895445154}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\ThirdParty\imgui">
-      <UniqueIdentifier>{e464478a-2acd-4aba-a457-4eed47a02654}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\ThirdParty\imgui">
-      <UniqueIdentifier>{2eaaf67b-784f-4f25-b431-b84a239e4ecc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Games">
+    <Filter Include="Games">
       <UniqueIdentifier>{a47084c8-9a16-499f-be4c-c6658dba7258}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Games">
-      <UniqueIdentifier>{9494d770-edf9-44a4-8d39-0a169fcf579c}</UniqueIdentifier>
+    <Filter Include="Misc">
+      <UniqueIdentifier>{1b4a783d-1e03-4ca1-a0c5-5ca1eb1bb9d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{946c4228-bd03-45fb-a5b6-37b42ad0a2bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\imgui">
+      <UniqueIdentifier>{2eaaf67b-784f-4f25-b431-b84a239e4ecc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities">
+      <UniqueIdentifier>{a992f258-3045-47b8-8658-66bcce393788}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Collider.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Transform.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DrawMesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RigidBody.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CollisionManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GLDebug.cpp">
-      <Filter>Source Files\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="MarchMath.cpp">
-      <Filter>Source Files\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelHelper.cpp">
-      <Filter>Source Files\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="ShaderHelper.cpp">
-      <Filter>Source Files\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="utility.cpp">
-      <Filter>Source Files\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="UV.cpp">
-      <Filter>Source Files\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="DrawDebug.cpp">
-      <Filter>Source Files\Misc</Filter>
-    </ClCompile>
-    <ClCompile Include="ColliderEntity.cpp">
-      <Filter>Source Files\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="Entity.cpp">
-      <Filter>Source Files\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="TextEntity.cpp">
-      <Filter>Source Files\Entities</Filter>
-    </ClCompile>
     <ClCompile Include="Drawable.cpp">
-      <Filter>Source Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Event.cpp">
-      <Filter>Source Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Game.cpp">
-      <Filter>Source Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
-      <Filter>Source Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Source.cpp">
-      <Filter>Source Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="State.cpp">
-      <Filter>Source Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Text.cpp">
-      <Filter>Source Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp">
-      <Filter>Source Files\ThirdParty\imgui</Filter>
+    <ClCompile Include="ColliderEntity.cpp">
+      <Filter>Entities</Filter>
     </ClCompile>
-    <ClCompile Include="ThirdParty\Source\imgui\imgui_demo.cpp">
-      <Filter>Source Files\ThirdParty\imgui</Filter>
+    <ClCompile Include="Entity.cpp">
+      <Filter>Entities</Filter>
     </ClCompile>
-    <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp">
-      <Filter>Source Files\ThirdParty\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="UI.cpp">
-      <Filter>Source Files\Utilities</Filter>
+    <ClCompile Include="TextEntity.cpp">
+      <Filter>Entities</Filter>
     </ClCompile>
     <ClCompile Include="TriPlay.cpp">
-      <Filter>Source Files\Games</Filter>
+      <Filter>Games</Filter>
     </ClCompile>
     <ClCompile Include="UiTest.cpp">
-      <Filter>Source Files\Games</Filter>
+      <Filter>Games</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawDebug.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp">
+      <Filter>ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\Source\imgui\imgui_demo.cpp">
+      <Filter>ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp">
+      <Filter>ThirdParty\imgui</Filter>
     </ClCompile>
     <ClCompile Include="gl_structs.cpp">
-      <Filter>Source Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="GLDebug.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="MarchMath.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelHelper.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderHelper.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="utility.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="UV.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Collider.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionManager.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawMesh.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="RigidBody.cpp">
+      <Filter>Misc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Collider.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DrawMesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RigidBody.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="unique_id.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="UV.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="smart_ptr.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="ShaderHelper.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="property.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="gl_structs.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="GLError.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="GLDebug.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="ModelHelper.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">
-      <Filter>Header Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Event.h">
-      <Filter>Header Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
-      <Filter>Header Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Drawable.h">
-      <Filter>Header Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="State.h">
-      <Filter>Header Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="DrawDebug.h">
-      <Filter>Header Files\Misc</Filter>
+      <Filter>Misc</Filter>
     </ClInclude>
     <ClInclude Include="DebugBenchmark.h">
-      <Filter>Header Files\Misc</Filter>
+      <Filter>Misc</Filter>
     </ClInclude>
     <ClInclude Include="MarchMath.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="External.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="Text.h">
-      <Filter>Header Files\Core</Filter>
+      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Entity.h">
-      <Filter>Header Files\Entities</Filter>
+      <Filter>Entities</Filter>
     </ClInclude>
     <ClInclude Include="ColliderEntity.h">
-      <Filter>Header Files\Entities</Filter>
+      <Filter>Entities</Filter>
     </ClInclude>
     <ClInclude Include="TextEntity.h">
-      <Filter>Header Files\Entities</Filter>
+      <Filter>Entities</Filter>
     </ClInclude>
     <ClInclude Include="Random.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="ThirdParty\Include\imconfig.h">
-      <Filter>Header Files\ThirdParty\imgui</Filter>
+      <Filter>ThirdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="UI.h">
-      <Filter>Header Files\Utilities</Filter>
+      <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="TriPlay.h">
-      <Filter>Header Files\Games</Filter>
+      <Filter>Games</Filter>
     </ClInclude>
     <ClInclude Include="UiTest.h">
-      <Filter>Header Files\Games</Filter>
+      <Filter>Games</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Collider.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionManager.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawMesh.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidBody.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Misc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
