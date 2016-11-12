@@ -83,7 +83,7 @@ namespace UI
     {
         // NOTE - This function is basically the same as ImGui's GLFW example
 
-        GLstatehelper glStateHelper;
+        GLsavestate glStateHelper;
 
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
         ImGuiIO& io = ImGui::GetIO();
@@ -232,7 +232,7 @@ namespace UI
      */
     static bool InitializeGraphics()
     {
-        GLstatehelper glStateHelper;
+        GLsavestate glStateHelper;
 
         GL_CHECK(g_ShaderHandle = glCreateProgram());
         GL_CHECK(g_VertHandle = glCreateShader(GL_VERTEX_SHADER));

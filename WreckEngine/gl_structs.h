@@ -267,12 +267,12 @@ private:
 /**
  * Defines a scoped state helper.
  */
-struct GLstatehelper
+struct GLsavestate
 {
     /**
      * \brief Creates a new state helper and pushes the current OpenGL state.
      */
-    GLstatehelper()
+    GLsavestate()
     {
         GLstate::push();
     }
@@ -280,7 +280,7 @@ struct GLstatehelper
     /**
      * \brief Destroys this state helper and pops the current OpenGL state.
      */
-    ~GLstatehelper()
+    ~GLsavestate()
     {
         GLstate::pop();
     }
