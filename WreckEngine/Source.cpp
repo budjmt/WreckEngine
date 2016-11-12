@@ -21,8 +21,12 @@ void initGraphics();
 
 struct GLFWmanager { 
     bool initialized = false; 
-    ~GLFWmanager() { if(initialized) glfwTerminate(); };
-    GLFWmanager(const size_t width, const size_t height) { 
+    ~GLFWmanager() {
+        Drawable::unloadTextures();
+        if(initialized)
+            glfwTerminate();
+    };
+    bool init(const size_t width, const size_t height) { 
         auto val = glfwInit(); 
         initialized = val != 0; 
         if(!initialized) exit(val); 
@@ -42,7 +46,7 @@ struct GLFWmanager {
         if (DEBUG) glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
         Window::window = glfwCreateWindow(width, height, "Wreck Engine", nullptr, nullptr);
-        if (!Window::window) exit('w');
+        if (!Window::window) return false;
         glfwMakeContextCurrent(Window::window);
         Window::update();
 
@@ -57,20 +61,24 @@ struct GLFWmanager {
         glfwSetInputMode(Window::window, GLFW_CURSOR, Window::cursorMode);
 
         GLtexture::setMaxTextures();
+        return true;
     };
 };
 
 struct GLEWmanager {
     bool initialized = false;
-    GLEWmanager() {
+    GLenum initValue = 0;
+    bool init() {
         glewExperimental = GL_TRUE;
-        auto val = glewInit();
-        initialized = val == GLEW_OK;
-        if (!initialized) exit(val);
+        initValue = glewInit();
+        initialized = initValue == GLEW_OK;
+        return initialized;
     }
 };
 
-//DEBUG is defined in DrawDebug.h
+// DON'T declare any globals above here
+GLFWmanager glfw;
+GLEWmanager glew;
 
 double FPS = 60;
 double runningAvgDelta = 1.0 / FPS;
@@ -98,8 +106,8 @@ void init() {
     UI::Initialize();
     Text::init();
 
-    //game = make_unique<TriPlay>(shaderProg);// this won't be initialized until after GLFW/GLEW are
-    game = make_unique<UiTest>();
+    game = make_unique<TriPlay>(shaderProg);// this won't be initialized until after GLFW/GLEW are
+    //game = make_unique<UiTest>();
 }
 
 void initGraphics() {
@@ -171,8 +179,8 @@ void draw() {
 }
 
 int main(int argc, char** argv) {
-    GLFWmanager glfw(800, 600);
-    GLEWmanager glew;
+    if (!glfw.init(800, 600)) return 'w';
+    if (!glew.init()) return glew.initValue;
 
     if (DEBUG)
         initDebug();
@@ -187,5 +195,6 @@ int main(int argc, char** argv) {
         glfwSwapBuffers(Window::window);
     }
 
+    game.reset(); // Destroys current game
     return 0;
 }

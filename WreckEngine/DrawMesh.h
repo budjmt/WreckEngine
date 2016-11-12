@@ -11,8 +11,6 @@ public:
         
     void setup(const char* texFile, GLprogram shader);
     void draw(const mat4& world);
-
-    static shared<DrawMesh> FromFile(shared<Mesh> m, const char* textureFile, GLprogram shader);
 private:
     GLbuffer vertBuffer, elBuffer;
     GLuniform<GLsampler> textureLoc;
