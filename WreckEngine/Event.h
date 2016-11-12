@@ -8,6 +8,15 @@
 
 #define ADD_EVENT(event_name) auto event_name ## _event = Event::add(#event_name) 
 
+// Issues:
+//  - Handlers use std::function
+//      - use of std::function creates a bit of performance degradation at the expense of more flexibility
+//      - realistically, this should be a plain old function pointer
+//  - owner pointers
+//		- if the owning object gets copied and the handler/trigger is a member, the copied handler/trigger is ALSO owned by the original object
+//		- assignment is already invalid because of the const data members, but copy or move CONSTRUCTION is fine.
+//		- we could overload/delete the copy/move constructors every time, but that's bad
+
 // data about a event endpoint, (i.e. trigger or handler) including its type and id
 // [type] = unique_type::index<T>::id
 // [id] = e.g. EventTrigger::get("bomb")
@@ -66,7 +75,7 @@ public:
 
 	template<class Owner> EventTrigger(Owner* _this) : EventTrigger(_this, Random::get()) {}
 	template<class Owner> EventTrigger(Owner* _this, const std::string name) : EventTrigger(_this, get(name)) {}
-	template<class Owner> EventTrigger(Owner* _this, const uint32_t _id) : info(EvED(_id, _this)) {}
+	template<class Owner> EventTrigger(Owner* _this, const uint32_t _id) : info(EvED(_id, _this)) { }
 
 	// sends an event to a single handler
 	template<typename... Args>
@@ -94,10 +103,10 @@ public:
 
 	template<class Owner> EventHandler(Owner* _this, const std::function<void(Event)> f) : EventHandler(_this, Random::get(), f) {}
 	template<class Owner> EventHandler(Owner* _this, const std::string name, const std::function<void(Event)> f) : EventHandler(_this, get(name), f) {	}
-	template<class Owner> EventHandler(Owner* _this, const uint32_t _id, const std::function<void(Event)> f) : info(EvED(_id, _this)), handler(f) {
-		EventDispatcher::handlers.insert({ info.id, this });
-		EventDispatcher::handlerTypes[info.type].push_back(this);
-	}
+	template<class Owner> EventHandler(Owner* _this, const uint32_t _id, const std::function<void(Event)> f) : info(EvED(_id, _this)), handler(f) { register_self(); }
+
+	EventHandler(const EventHandler& other) : info(other.info), handler(other.handler) { register_self(); }
+	EventHandler(EventHandler&& other)      : info(other.info), handler(other.handler) { register_self(); }
 
 	// processes an Event received from the dispatcher through the handler function
 	inline void process(Event e) { handler(std::move(e)); }
@@ -105,6 +114,20 @@ public:
 	std::function<void(Event)> handler;
 
 	UNIQUE_NAMES(private, EventHandler);
+
+private:
+
+	void register_self() {
+		EventDispatcher::handlers.insert({ info.id, this });
+		EventDispatcher::handlerTypes[info.type].push_back(this);
+	}
+
+	void unregister_self() {
+		EventDispatcher::handlers.erase(info.id);
+		auto t_handlers = EventDispatcher::handlerTypes[info.type]; 
+		t_handlers.erase(std::find(t_handlers.begin(), t_handlers.end(), this));
+	}
+
 };
 
 #undef EvED

@@ -150,13 +150,13 @@ void update() {
     //  prevFrame = currFrame;
     //}
 
-    runningAvgDelta -= runningAvgDelta / samples;
-    runningAvgDelta += dt / samples;
-    auto title = std::to_string(fpsMode ? 1.0 / runningAvgDelta : runningAvgDelta * 1000.0);
-    auto decimal = title.find('.', 2);
-    if (title.length() - decimal > 3) title = title.erase(decimal + 3);
-    title += fpsMode ? " F/S" : " MS/F";
-    glfwSetWindowTitle(Window::window, title.c_str());
+	runningAvgDelta -= runningAvgDelta / samples;
+	runningAvgDelta += dt / samples;
+	auto title = std::to_string(fpsMode ? 1.0 / runningAvgDelta : runningAvgDelta * 1000.0);
+	auto decimal = title.find('.');
+	if (title.length() - decimal > 3) title = title.erase(decimal + 3);
+	title += fpsMode ? " FpS" : " MSpF";
+	glfwSetWindowTitle(Window::window, title.c_str());
 
     Mouse::update();
 

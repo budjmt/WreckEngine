@@ -34,8 +34,8 @@ void ColliderEntity::calcForces(double dt) {
 	body.applyGravity();
 	
 	//collision resolution stuff here
-	body.netForce    += body.quadDrag(-0.5f, body.vel(), body.heading());// quadratic drag, no mass involved, it's all velocity dependent
-	body.netAngAccel += body.quadDrag(-10.f, body.angVel(), body.angHeading());// for ang accel too
+	body.netForce    += body.quadDrag(-1.f, body.vel(), body.heading());// quadratic drag, no mass involved, it's all velocity dependent
+	body.netAngAccel += body.quadDrag(-2.f, body.angVel(), body.angHeading());// for angular acceleration too
 }
 
 //override this (and preferably call it) to change on-collision behavior

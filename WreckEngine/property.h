@@ -60,6 +60,8 @@ Future developments:
 	- The only major detraction for properties remaining is the inability to implicitly cast for template specializations, most glaringly operators. 
 	  If there was a good way to get this to work, that would be great. (operator. might help with this in cases where the property is on the LHS, 
 	  but the RHS case is still annoying)
+	- There is a bug: if an owner object gets copied, the property copy will still point to the original object instead of the copy
+	  This can be solved by deleting the copy-constructor, but that's not a great solution
 ----------------------------------------------------------
 */
 
