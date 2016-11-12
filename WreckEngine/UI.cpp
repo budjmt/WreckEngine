@@ -94,16 +94,16 @@ namespace UI
         dd->ScaleClipRects(io.DisplayFramebufferScale);
 
         // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
-        glCheck(glEnable(GL_BLEND));
-        glCheck(glBlendEquation(GL_FUNC_ADD));
-        glCheck(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-        glCheck(glDisable(GL_CULL_FACE));
-        glCheck(glDisable(GL_DEPTH_TEST));
-        glCheck(glEnable(GL_SCISSOR_TEST));
-        glCheck(glActiveTexture(GL_TEXTURE0));
+        GL_CHECK(glEnable(GL_BLEND));
+        GL_CHECK(glBlendEquation(GL_FUNC_ADD));
+        GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+        GL_CHECK(glDisable(GL_CULL_FACE));
+        GL_CHECK(glDisable(GL_DEPTH_TEST));
+        GL_CHECK(glEnable(GL_SCISSOR_TEST));
+        GL_CHECK(glActiveTexture(GL_TEXTURE0));
 
         // Setup viewport, orthographic projection matrix
-        glCheck(glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height));
+        GL_CHECK(glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height));
         const float ortho_projection[4][4] =
         {
             {2.0f / io.DisplaySize.x, 0.0f,                     0.0f, 0.0f},
@@ -111,21 +111,21 @@ namespace UI
             {0.0f,                    0.0f,                    -1.0f, 0.0f},
             {-1.0f,                   1.0f,                     0.0f, 1.0f},
         };
-        glCheck(glUseProgram(g_ShaderHandle));
-        glCheck(glUniform1i(g_AttribLocationTex, 0));
-        glCheck(glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]));
-        glCheck(glBindVertexArray(g_VaoHandle));
+        GL_CHECK(glUseProgram(g_ShaderHandle));
+        GL_CHECK(glUniform1i(g_AttribLocationTex, 0));
+        GL_CHECK(glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]));
+        GL_CHECK(glBindVertexArray(g_VaoHandle));
 
         for (int n = 0; n < dd->CmdListsCount; n++)
         {
             const ImDrawList* cmd_list = dd->CmdLists[n];
             const ImDrawIdx* idx_buffer_offset = 0;
 
-            glCheck(glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle));
-            glCheck(glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW));
+            GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle));
+            GL_CHECK(glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW));
 
-            glCheck(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle));
-            glCheck(glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW));
+            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle));
+            GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW));
 
             for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
             {
@@ -136,9 +136,9 @@ namespace UI
                 }
                 else
                 {
-                    glCheck(glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId));
-                    glCheck(glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y)));
-                    glCheck(glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset));
+                    GL_CHECK(glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId));
+                    GL_CHECK(glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y)));
+                    GL_CHECK(glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset));
                 }
                 idx_buffer_offset += pcmd->ElemCount;
             }
@@ -163,19 +163,19 @@ namespace UI
 
         // Upload texture to graphics system
         GLint last_texture;
-        glCheck(glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture));
-        glCheck(glGenTextures(1, &g_FontTexture));
+        GL_CHECK(glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture));
+        GL_CHECK(glGenTextures(1, &g_FontTexture));
         if (!g_FontTexture) return false;
-        glCheck(glBindTexture(GL_TEXTURE_2D, g_FontTexture));
-        glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-        glCheck(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-        glCheck(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, g_FontTexture));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels));
 
         // Store our identifier
         io.Fonts->TexID = (void *)(intptr_t)g_FontTexture;
 
         // Restore state
-        glCheck(glBindTexture(GL_TEXTURE_2D, last_texture));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, last_texture));
 
         return true;
     }
@@ -234,36 +234,36 @@ namespace UI
     {
         GLstatehelper glStateHelper;
 
-        glCheck(g_ShaderHandle = glCreateProgram());
-        glCheck(g_VertHandle = glCreateShader(GL_VERTEX_SHADER));
-        glCheck(g_FragHandle = glCreateShader(GL_FRAGMENT_SHADER));
-        glCheck(glShaderSource(g_VertHandle, 1, &ImGuiVertexShader, 0));
-        glCheck(glShaderSource(g_FragHandle, 1, &ImGuiFragmentShader, 0));
-        glCheck(glCompileShader(g_VertHandle));
-        glCheck(glCompileShader(g_FragHandle));
-        glCheck(glAttachShader(g_ShaderHandle, g_VertHandle));
-        glCheck(glAttachShader(g_ShaderHandle, g_FragHandle));
-        glCheck(glLinkProgram(g_ShaderHandle));
+        GL_CHECK(g_ShaderHandle = glCreateProgram());
+        GL_CHECK(g_VertHandle = glCreateShader(GL_VERTEX_SHADER));
+        GL_CHECK(g_FragHandle = glCreateShader(GL_FRAGMENT_SHADER));
+        GL_CHECK(glShaderSource(g_VertHandle, 1, &ImGuiVertexShader, 0));
+        GL_CHECK(glShaderSource(g_FragHandle, 1, &ImGuiFragmentShader, 0));
+        GL_CHECK(glCompileShader(g_VertHandle));
+        GL_CHECK(glCompileShader(g_FragHandle));
+        GL_CHECK(glAttachShader(g_ShaderHandle, g_VertHandle));
+        GL_CHECK(glAttachShader(g_ShaderHandle, g_FragHandle));
+        GL_CHECK(glLinkProgram(g_ShaderHandle));
 
-        glCheck(g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture"));
-        glCheck(g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx"));
-        glCheck(g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position"));
-        glCheck(g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV"));
-        glCheck(g_AttribLocationColor = glGetAttribLocation(g_ShaderHandle, "Color"));
+        GL_CHECK(g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture"));
+        GL_CHECK(g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx"));
+        GL_CHECK(g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position"));
+        GL_CHECK(g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV"));
+        GL_CHECK(g_AttribLocationColor = glGetAttribLocation(g_ShaderHandle, "Color"));
 
-        glCheck(glGenBuffers(1, &g_VboHandle));
-        glCheck(glGenBuffers(1, &g_ElementsHandle));
+        GL_CHECK(glGenBuffers(1, &g_VboHandle));
+        GL_CHECK(glGenBuffers(1, &g_ElementsHandle));
 
-        glCheck(glGenVertexArrays(1, &g_VaoHandle));
-        glCheck(glBindVertexArray(g_VaoHandle));
-        glCheck(glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle));
-        glCheck(glEnableVertexAttribArray(g_AttribLocationPosition));
-        glCheck(glEnableVertexAttribArray(g_AttribLocationUV));
-        glCheck(glEnableVertexAttribArray(g_AttribLocationColor));
+        GL_CHECK(glGenVertexArrays(1, &g_VaoHandle));
+        GL_CHECK(glBindVertexArray(g_VaoHandle));
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle));
+        GL_CHECK(glEnableVertexAttribArray(g_AttribLocationPosition));
+        GL_CHECK(glEnableVertexAttribArray(g_AttribLocationUV));
+        GL_CHECK(glEnableVertexAttribArray(g_AttribLocationColor));
 
-        glCheck(glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, pos)));
-        glCheck(glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv)));
-        glCheck(glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col)));
+        GL_CHECK(glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, pos)));
+        GL_CHECK(glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv)));
+        GL_CHECK(glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col)));
 
         return ImGuiCreateFontTexture();
     }
