@@ -170,13 +170,11 @@ int main(int argc, char** argv) {
     if (DEBUG)
         initDebug();
     init();
-    CHECK_GL_ERR;
     glfwShowWindow(Window::window);
     while (!glfwWindowShouldClose(Window::window)) {
         glfwPollEvents();
         update();
         draw();
-        CHECK_GL_ERR;
         glfwSwapBuffers(Window::window);
     }
 
