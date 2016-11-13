@@ -24,10 +24,10 @@ struct GLFWmanager {
         if(initialized)
             glfwTerminate();
     };
-    bool init(const size_t width, const size_t height) { 
+    void init(const size_t width, const size_t height) { 
         auto val = glfwInit(); 
         initialized = val != 0; 
-        if (!initialized) return false;
+        if (!initialized) exit(val);
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
@@ -44,7 +44,7 @@ struct GLFWmanager {
         if (DEBUG) glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
         Window::window = glfwCreateWindow(width, height, "Wreck Engine", nullptr, nullptr);
-        if (!Window::window) return false;
+        if (!Window::window) exit('w');
         glfwMakeContextCurrent(Window::window);
         Window::default_resize(Window::window, width, height);
 
@@ -60,18 +60,16 @@ struct GLFWmanager {
         glfwSetInputMode(Window::window, GLFW_CURSOR, Window::cursorMode);
 
         GLtexture::setMaxTextures();
-        return true;
     };
 };
 
 struct GLEWmanager {
     bool initialized = false;
-    GLenum initValue = 0;
-    bool init() {
+    void init() {
         glewExperimental = GL_TRUE;
-        initValue = glewInit();
+        auto initValue = glewInit();
         initialized = initValue == GLEW_OK;
-        return initialized;
+        if (!initialized) exit(initValue);
     }
 };
 
@@ -166,8 +164,8 @@ int main(int argc, char** argv) {
     glfw = make_unique<GLFWmanager>();
     glew = make_unique<GLEWmanager>();
 
-    if (!glfw || !glfw->init(800, 600)) return 'w';
-    if (!glew || !glew->init()) return glew->initValue;
+    glfw->init(800, 600);
+    glew->init();
 
     if (DEBUG)
         initDebug();
