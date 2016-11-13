@@ -260,9 +260,16 @@ public:
     GLstate();
 
     /**
+     * \brief Checks to see if there are any cached states.
+     *
+     * \return True if there is a state on the stack, otherwise false.
+     */
+    static bool empty();
+
+    /**
      * \brief Gets the OpenGL state at the top of the stack.
      *
-     * \return The OpenGL state at the top of the stack, or null if there are no states.
+     * \return The OpenGL state at the top of the stack.
      */
     static GLstate* peek();
 

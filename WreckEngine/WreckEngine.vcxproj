@@ -223,6 +223,7 @@
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ShaderHelper.h" />
     <ClInclude Include="smart_ptr.h" />
+    <ClInclude Include="Source.h" />
     <ClInclude Include="State.h" />
     <ClInclude Include="Text.h" />
     <ClInclude Include="TextEntity.h" />

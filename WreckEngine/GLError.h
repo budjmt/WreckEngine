@@ -7,7 +7,9 @@
 #include <stdio.h>
 
 #if defined(_MSC_VER)
-#define __PRETTY_FUNCTION__ __FUNCSIG__
+#define WR_CURRENT_FUNCTION __FUNCSIG__
+#else
+#define WR_CURRENT_FUNCTION __PRETTY_FUNCTION__
 #endif
 
 #define BREAK "----------------------------------------------\n"
@@ -19,7 +21,7 @@
 #define CHECK_GL_ERR GLCheckError("GL-ERROR; \"" __FILE__ "\" before line " STRINGIZE(__LINE__) ": \n")
 
 #if defined(_DEBUG) && !defined(NDEBUG)
-#define GL_CHECK(x) { x; ::CheckGlErrorImpl(#x, __FILE__, __LINE__, __PRETTY_FUNCTION__); }
+#define GL_CHECK(x) { x; ::CheckGlErrorImpl(#x, __FILE__, __LINE__, WR_CURRENT_FUNCTION); }
 #else
 #define GL_CHECK(x) x
 #endif

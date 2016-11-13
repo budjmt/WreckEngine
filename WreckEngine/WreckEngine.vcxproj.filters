@@ -215,6 +215,9 @@
     <ClInclude Include="Transform.h">
       <Filter>Misc</Filter>
     </ClInclude>
+    <ClInclude Include="Source.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

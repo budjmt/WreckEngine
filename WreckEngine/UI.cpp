@@ -7,12 +7,6 @@
 #include <GLFW/glfw3native.h>
 #endif
 
-#if defined(offsetof)
-#define OFFSETOF(TYPE, ELEMENT) offsetof(TYPE, ELEMENT)
-#else
-#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
-#endif
-
 namespace UI
 {
     // NOTE - Shaders and globals are copied from ImGui's GLFW example
@@ -42,6 +36,8 @@ namespace UI
         "{\n"
         "   Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
         "}\n";
+
+    static constexpr GLenum ImGuiDrawType = (sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT);
 
     static double   g_Time = 0.0;
     static bool     g_MousePressed[3] = { false, false, false };
@@ -116,10 +112,11 @@ namespace UI
         GL_CHECK(glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]));
         GL_CHECK(glBindVertexArray(g_VaoHandle));
 
-        for (int n = 0; n < dd->CmdListsCount; n++)
+        auto cmdListCount = dd->CmdListsCount;
+        for (int n = 0; n < cmdListCount; n++)
         {
             const ImDrawList* cmd_list = dd->CmdLists[n];
-            const ImDrawIdx* idx_buffer_offset = 0;
+            const ImDrawIdx* idx_buffer_offset = nullptr;
 
             GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle));
             GL_CHECK(glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW));
@@ -127,7 +124,8 @@ namespace UI
             GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle));
             GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW));
 
-            for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+            auto cmdBufferSize = cmd_list->CmdBuffer.Size;
+            for (int cmd_i = 0; cmd_i < cmdBufferSize; cmd_i++)
             {
                 const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
                 if (pcmd->UserCallback)
@@ -138,7 +136,7 @@ namespace UI
                 {
                     GL_CHECK(glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId));
                     GL_CHECK(glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y)));
-                    GL_CHECK(glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer_offset));
+                    GL_CHECK(glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, ImGuiDrawType, idx_buffer_offset));
                 }
                 idx_buffer_offset += pcmd->ElemCount;
             }
@@ -200,7 +198,7 @@ namespace UI
     /**
      * \brief The key callback for GLFW.
      */
-    static void GlfwKeyCallback(GLFWwindow*, int key, int, int action, int mods)
+    static void GlfwKeyCallback(GLFWwindow*, int key, int, int action, int /*mods*/)
     {
         ImGuiIO& io = ImGui::GetIO();
         if (action == GLFW_PRESS)
@@ -208,7 +206,6 @@ namespace UI
         if (action == GLFW_RELEASE)
             io.KeysDown[key] = false;
 
-        (void)mods; // Modifiers are not reliable across systems
         io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
         io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
         io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
@@ -261,9 +258,9 @@ namespace UI
         GL_CHECK(glEnableVertexAttribArray(g_AttribLocationUV));
         GL_CHECK(glEnableVertexAttribArray(g_AttribLocationColor));
 
-        GL_CHECK(glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, pos)));
-        GL_CHECK(glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, uv)));
-        GL_CHECK(glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)OFFSETOF(ImDrawVert, col)));
+        GL_CHECK(glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, pos)));
+        GL_CHECK(glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, uv)));
+        GL_CHECK(glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, col)));
 
         return ImGuiCreateFontTexture();
     }
@@ -346,13 +343,9 @@ namespace UI
     {
         ImGuiIO& io = ImGui::GetIO();
 
-        // Setup display size (every frame to accommodate for window resizing)
-        int w, h;
-        int display_w, display_h;
-        glfwGetWindowSize(Window::window, &w, &h);
-        glfwGetFramebufferSize(Window::window, &display_w, &display_h);
-        io.DisplaySize = ImVec2((float)w, (float)h);
-        io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
+        // Setup display size
+        io.DisplaySize = Window::size;
+        io.DisplayFramebufferScale = Window::frameScale;
 
         // Setup time step
         double current_time = glfwGetTime();
@@ -363,11 +356,8 @@ namespace UI
         // (We've already got mouse wheel, keyboard keys & characters from GLFW callbacks polled in glfwPollEvents())
         if (glfwGetWindowAttrib(Window::window, GLFW_FOCUSED))
         {
-            double mouse_x, mouse_y;
-            glfwGetCursorPos(Window::window, &mouse_x, &mouse_y);
-
-            // Mouse position in screen coordinates (set to -1,-1 if no mouse / on another screen, etc.)
-            io.MousePos = ImVec2((float)mouse_x, (float)mouse_y);
+            // Mouse position in screen coordinates
+            io.MousePos = ImVec2((float)Mouse::info.curr.x * 0.5f, -(float)Mouse::info.curr.y * 0.5f);
         }
         else
         {

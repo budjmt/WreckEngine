@@ -8,11 +8,19 @@
 struct Window {
     static GLFWwindow* window;
     static int width, height;
+    static int frameWidth, frameHeight;
     static float aspect;
     static int cursorMode;
 
-    static inline void update() { glfwGetWindowSize(window, &width, &height); aspect = (float)width / (float)height; }
+    // These two are purely for convenience with ImGui
+    static vec2 size;
+    static vec2 frameScale;
+
     static inline int getKey(const int keyCode) { return glfwGetKey(window, keyCode); }
+
+    static inline void resize_callback(GLFWwindowsizefun f) { glfwSetWindowSizeCallback(window, f); }
+
+    static void default_resize(GLFWwindow* window, int width, int height);
 };
 
 struct Mouse {

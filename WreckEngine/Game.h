@@ -14,7 +14,7 @@
 class Game
 {
 public:
-    Game();
+    Game() = default;
     Game(GLprogram prog);
     virtual ~Game() = default;
 
@@ -25,7 +25,7 @@ public:
 protected:
     GLprogram shader;
     std::vector<shared<State>> states;
-    State* currState;
-    bool drawDebug;
+    State* currState { nullptr };
+    bool drawDebug { true };
 };
 

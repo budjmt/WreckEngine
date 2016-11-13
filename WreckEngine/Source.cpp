@@ -1,4 +1,4 @@
-
+#include "Source.h"
 #include <vld.h>
 #include <iostream>
 
@@ -17,8 +17,6 @@
 
 using namespace std;
 
-void initGraphics();
-
 struct GLFWmanager { 
     bool initialized = false; 
     ~GLFWmanager() {
@@ -29,7 +27,7 @@ struct GLFWmanager {
     bool init(const size_t width, const size_t height) { 
         auto val = glfwInit(); 
         initialized = val != 0; 
-        if(!initialized) exit(val); 
+        if (!initialized) return false;
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
@@ -48,12 +46,13 @@ struct GLFWmanager {
         Window::window = glfwCreateWindow(width, height, "Wreck Engine", nullptr, nullptr);
         if (!Window::window) return false;
         glfwMakeContextCurrent(Window::window);
-        Window::update();
+        Window::default_resize(Window::window, width, height);
 
         // Center the window
         const GLFWvidmode* vm = glfwGetVideoMode(glfwGetPrimaryMonitor());
         glfwSetWindowPos(Window::window, (vm->width - width) / 2, (vm->height - height) / 2);
 
+        Window::resize_callback(Window::default_resize);
         Mouse::button_callback(Mouse::default_button);
         Mouse::move_callback(Mouse::default_move);
 
@@ -76,21 +75,6 @@ struct GLEWmanager {
     }
 };
 
-// DON'T declare any globals above here
-GLFWmanager glfw;
-GLEWmanager glew;
-
-double FPS = 60;
-double runningAvgDelta = 1.0 / FPS;
-int samples = 10;
-bool fpsMode = true;
-
-GLprogram shaderProg;
-
-double prevFrame;
-
-unique<Game> game;
-
 void init() {
     shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
     if(shaderProg()) {
@@ -106,8 +90,8 @@ void init() {
     UI::Initialize();
     Text::init();
 
-    game = make_unique<TriPlay>(shaderProg);// this won't be initialized until after GLFW/GLEW are
-    //game = make_unique<UiTest>();
+    //game = make_unique<TriPlay>(shaderProg);// this won't be initialized until after GLFW/GLEW are
+    game = make_unique<UiTest>();
 }
 
 void initGraphics() {
@@ -150,13 +134,13 @@ void update() {
     //  prevFrame = currFrame;
     //}
 
-	runningAvgDelta -= runningAvgDelta / samples;
-	runningAvgDelta += dt / samples;
-	auto title = std::to_string(fpsMode ? 1.0 / runningAvgDelta : runningAvgDelta * 1000.0);
-	auto decimal = title.find('.');
-	if (title.length() - decimal > 3) title = title.erase(decimal + 3);
-	title += fpsMode ? " FpS" : " MSpF";
-	glfwSetWindowTitle(Window::window, title.c_str());
+    runningAvgDelta -= runningAvgDelta / samples;
+    runningAvgDelta += dt / samples;
+    auto title = std::to_string(fpsMode ? 1.0 / runningAvgDelta : runningAvgDelta * 1000.0);
+    auto decimal = title.find('.');
+    if (title.length() - decimal > 3) title = title.erase(decimal + 3);
+    title += fpsMode ? " FpS" : " MSpF";
+    glfwSetWindowTitle(Window::window, title.c_str());
 
     Mouse::update();
 
@@ -179,8 +163,11 @@ void draw() {
 }
 
 int main(int argc, char** argv) {
-    if (!glfw.init(800, 600)) return 'w';
-    if (!glew.init()) return glew.initValue;
+    glfw = make_unique<GLFWmanager>();
+    glew = make_unique<GLEWmanager>();
+
+    if (!glfw || !glfw->init(800, 600)) return 'w';
+    if (!glew || !glew->init()) return glew->initValue;
 
     if (DEBUG)
         initDebug();

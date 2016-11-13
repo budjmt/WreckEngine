@@ -1,16 +1,8 @@
 #include "Game.h"
 #include <iostream>
 
-Game::Game()
-    : currState(nullptr)
-    , drawDebug(true)
-{
-}
-
 Game::Game(GLprogram prog)
-    : currState(nullptr)
-    , shader(prog)
-    , drawDebug(true)
+    : shader(prog)
 {
 }
 
@@ -21,13 +13,12 @@ void Game::addState(shared<State> s) {
 }
 
 void Game::update(double dt) {
-    if (!currState) return;
     currState->update(dt);
 }
 
 void Game::draw() {
     if (shader) shader.use();
-    if (currState) currState->draw();
+    currState->draw();
 #if DEBUG
     if (drawDebug)
     {

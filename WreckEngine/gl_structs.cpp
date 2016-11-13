@@ -52,10 +52,20 @@ void GLstate::capture()
     GL_CHECK(glGetIntegerv(GL_VIEWPORT, m_Viewport));
     GL_CHECK(glGetIntegerv(GL_SCISSOR_BOX, m_ScissorBox));
 
-    GL_CHECK(m_EnableBlend = glIsEnabled(GL_BLEND));
-    GL_CHECK(m_EnableCullFace = glIsEnabled(GL_CULL_FACE));
-    GL_CHECK(m_EnableDepthTest = glIsEnabled(GL_DEPTH_TEST));
+    GL_CHECK(m_EnableBlend       = glIsEnabled(GL_BLEND));
+    GL_CHECK(m_EnableCullFace    = glIsEnabled(GL_CULL_FACE));
+    GL_CHECK(m_EnableDepthTest   = glIsEnabled(GL_DEPTH_TEST));
     GL_CHECK(m_EnableScissorTest = glIsEnabled(GL_SCISSOR_TEST));
+}
+
+/**
+ * \brief Checks to see if there are any cached states.
+ *
+ * \return True if there is a state on the stack, otherwise false.
+ */
+bool GLstate::empty()
+{
+    return s_States.size() > 0;
 }
 
 /**
@@ -65,11 +75,7 @@ void GLstate::capture()
  */
 GLstate* GLstate::peek()
 {
-    if (s_States.size())
-    {
-        return &s_States.back();
-    }
-    return nullptr;
+    return &s_States.back();
 }
 
 /**
