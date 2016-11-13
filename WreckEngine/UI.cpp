@@ -82,7 +82,7 @@ namespace UI
         GLsavestate glStateHelper;
 
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
-        ImGuiIO& io = ImGui::GetIO();
+        auto& io = ImGui::GetIO();
         int fb_width = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
         int fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
         if (fb_width == 0 || fb_height == 0)
@@ -115,7 +115,7 @@ namespace UI
         auto cmdListCount = dd->CmdListsCount;
         for (int n = 0; n < cmdListCount; n++)
         {
-            const ImDrawList* cmd_list = dd->CmdLists[n];
+            const auto* cmd_list = dd->CmdLists[n];
             const ImDrawIdx* idx_buffer_offset = nullptr;
 
             GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle));
@@ -127,7 +127,7 @@ namespace UI
             auto cmdBufferSize = cmd_list->CmdBuffer.Size;
             for (int cmd_i = 0; cmd_i < cmdBufferSize; cmd_i++)
             {
-                const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+                const auto pcmd = &cmd_list->CmdBuffer[cmd_i];
                 if (pcmd->UserCallback)
                 {
                     pcmd->UserCallback(cmd_list, pcmd);
@@ -149,7 +149,7 @@ namespace UI
     static bool ImGuiCreateFontTexture()
     {
         // Build texture atlas
-        ImGuiIO& io = ImGui::GetIO();
+        auto& io = ImGui::GetIO();
         unsigned char* pixels;
         int width, height;
 
@@ -200,7 +200,7 @@ namespace UI
      */
     static void GlfwKeyCallback(GLFWwindow*, int key, int, int action, int /*mods*/)
     {
-        ImGuiIO& io = ImGui::GetIO();
+        auto& io = ImGui::GetIO();
         if (action == GLFW_PRESS)
             io.KeysDown[key] = true;
         if (action == GLFW_RELEASE)
@@ -217,9 +217,9 @@ namespace UI
      */
     static void GlfwCharCallback(GLFWwindow*, unsigned int c)
     {
-        ImGuiIO& io = ImGui::GetIO();
+        auto& io = ImGui::GetIO();
         if (c > 0 && c < 0x10000)
-            io.AddInputCharacter((unsigned short)c);
+            io.AddInputCharacter((ImWchar)c);
     }
 
     /**
@@ -273,7 +273,7 @@ namespace UI
     static bool InitializeSystem()
     {
         // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
-        ImGuiIO& io = ImGui::GetIO();
+        auto& io = ImGui::GetIO();
         io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;
         io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
         io.KeyMap[ImGuiKey_RightArrow] = GLFW_KEY_RIGHT;
@@ -319,7 +319,7 @@ namespace UI
     bool Initialize()
     {
         // Let's attempt to load a better looking font
-        ImGuiIO& io = ImGui::GetIO();
+        auto& io = ImGui::GetIO();
         ImFont* font = nullptr;
         io.Fonts->ClearFonts();
         //font = io.Fonts->AddFontDefault();
@@ -341,7 +341,7 @@ namespace UI
      */
     void PrepareFrame()
     {
-        ImGuiIO& io = ImGui::GetIO();
+        auto& io = ImGui::GetIO();
 
         // Setup display size
         io.DisplaySize = Window::size;
