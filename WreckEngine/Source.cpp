@@ -1,4 +1,17 @@
-#include "Source.h"
+#pragma region Local Globals
+
+#include "smart_ptr.h"
+
+// We do these things not because we hate ourselves, but because C++ hates everyone
+
+struct GLFWmanager;
+struct GLEWmanager;
+
+unique<GLFWmanager> glfw;
+unique<GLEWmanager> glew;
+
+#pragma endregion
+
 #include <vld.h>
 #include <iostream>
 
@@ -15,6 +28,18 @@
 #include "UiTest.h"
 #include "UI.h"
 
+class Game;
+
+void initGraphics();
+
+double FPS = 60;
+double runningAvgDelta = 1.0 / FPS;
+int samples = 10;
+bool fpsMode = true;
+GLprogram shaderProg;
+double prevFrame;
+unique<Game> game;
+
 using namespace std;
 
 struct GLFWmanager { 
@@ -23,8 +48,8 @@ struct GLFWmanager {
         Drawable::unloadTextures();
         if(initialized)
             glfwTerminate();
-    };
-    void init(const size_t width, const size_t height) { 
+    }
+    GLFWmanager(const size_t width, const size_t height) { 
         auto val = glfwInit(); 
         initialized = val != 0; 
         if (!initialized) exit(val);
@@ -65,7 +90,7 @@ struct GLFWmanager {
 
 struct GLEWmanager {
     bool initialized = false;
-    void init() {
+    GLEWmanager() {
         glewExperimental = GL_TRUE;
         auto initValue = glewInit();
         initialized = initValue == GLEW_OK;
@@ -161,11 +186,8 @@ void draw() {
 }
 
 int main(int argc, char** argv) {
-    glfw = make_unique<GLFWmanager>();
+    glfw = make_unique<GLFWmanager>(800, 600);
     glew = make_unique<GLEWmanager>();
-
-    glfw->init(800, 600);
-    glew->init();
 
     if (DEBUG)
         initDebug();
