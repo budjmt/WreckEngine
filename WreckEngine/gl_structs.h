@@ -249,86 +249,83 @@ struct GLprogram {
     }
 };
 
-/**
- * Defines an OpenGL rendering state.
- */
+/// <summary>
+/// Defines an OpenGL rendering state.
+/// </summary>
 class GLstate {
 public:
-    /**
-     * \brief Creates a new OpenGL state.
-     */
+    /// <summary>
+    /// Creates a new OpenGL state.
+    /// </summary>
     GLstate();
 
-    /**
-     * \brief Checks to see if there are any cached states.
-     *
-     * \return True if there is a state on the stack, otherwise false.
-     */
+    /// <summary>
+    /// Checks to see if there are any cached states.
+    /// </summary>
+    /// <returns>True if there is a state on the stack, otherwise false.</returns>
     static bool empty();
 
-    /**
-     * \brief Gets the OpenGL state at the top of the stack.
-     *
-     * \return The OpenGL state at the top of the stack.
-     */
+    /// <summary>
+    /// Gets the OpenGL state at the top of the stack.
+    /// </summary>
+    /// <returns>The OpenGL state at the top of the stack.</returns>
     static GLstate* peek();
 
-    /**
-     * \brief Pushes the current OpenGL state.
-     */
+    /// <summary>
+    /// Pushes the current OpenGL state.
+    /// </summary>
     static void push();
 
-    /**
-     * \brief Attempts to pop an OpenGL state off of the stack.
-     *
-     * \return True if there was a state to pop, otherwise false.
-     */
+    /// <summary>
+    /// Attempts to pop an OpenGL state off of the stack.
+    /// </summary>
+    /// <returns>True if there was a state to pop, otherwise false.</returns>
     static bool pop();
 
 private:
-    static std::vector<GLstate> s_States;
-    GLint m_Viewport[4];
-    GLint m_ScissorBox[4];
-    GLint m_Program;
-    GLint m_Texture;
-    GLint m_ActiveTexture;
-    GLint m_ArrayBuffer;
-    GLint m_ElementArrayBuffer;
-    GLint m_VertexArray;
-    GLint m_BlendSrc;
-    GLint m_BlendDst;
-    GLint m_BlendEquationRGB;
-    GLint m_BlendEquationAlpha;
-    GLboolean m_EnableBlend;
-    GLboolean m_EnableCullFace;
-    GLboolean m_EnableDepthTest;
-    GLboolean m_EnableScissorTest;
+    static std::vector<GLstate> states;
+    GLint viewport[4];
+    GLint scissorBox[4];
+    GLint boundProgram;
+    GLint boundTexture;
+    GLint activeTexture;
+    GLint arrayBuffer;
+    GLint elementArrayBuffer;
+    GLint vertexArray;
+    GLint blendSrc;
+    GLint blendDst;
+    GLint blendEquationRGB;
+    GLint blendEquationAlpha;
+    GLboolean enableBlend;
+    GLboolean enableCullFace;
+    GLboolean enableDepthTest;
+    GLboolean enableScissorTest;
 
-    /**
-     * \brief Applies this state to OpenGL.
-     */
+    /// <summary>
+    /// Applies this state to OpenGL.
+    /// </summary>
     void apply();
 
-    /**
-     * \brief Captures the current OpenGL state.
-     */
+    /// <summary>
+    /// Captures the current OpenGL state.
+    /// </summary>
     void capture();
 };
 
-/**
- * Defines a scoped state helper.
- */
+/// <summary>
+/// Defines a scoped state helper.
+/// </summary>
 struct GLsavestate {
-    /**
-     * \brief Creates a new state helper and pushes the current OpenGL state.
-     */
+    /// <summary>
+    /// Creates a new state helper and pushes the current OpenGL state.
+    /// </summary>
     GLsavestate() {
         GLstate::push();
     }
 
-    /**
-     * \brief Destroys this state helper and pops the current OpenGL state.
-     */
+    /// <summary>
+    /// Destroys this state helper and pops the current OpenGL state.
+    /// </summary>
     ~GLsavestate() {
         GLstate::pop();
     }

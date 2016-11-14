@@ -39,14 +39,14 @@ namespace UI
 
     static constexpr GLenum ImGuiDrawType = (sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT);
 
-    static double   g_Time = 0.0;
-    static bool     g_MousePressed[3] = { false, false, false };
-    static float    g_MouseWheel = 0.0f;
-    static GLuint   g_FontTexture = 0;
-    static int      g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
-    static int      g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
-    static int      g_AttribLocationPosition = 0, g_AttribLocationUV = 0, g_AttribLocationColor = 0;
-    static GLuint   g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
+    static double   time = 0.0;
+    static bool     mouseButtons[3] = { false, false, false };
+    static float    mouseWheel = 0.0f;
+    static GLuint   fontTexture = 0;
+    static int      shaderHandle = 0, vertHandle = 0, fragHandle = 0;
+    static int      attribLocationTex = 0, attribLocationProjMtx = 0;
+    static int      attribLocationPosition = 0, attribLocationUV = 0, attribLocationColor = 0;
+    static GLuint   vboHandle = 0, vaoHandle = 0, elementsHandle = 0;
 
     /**
      * \brief The implementation for retrieving the clipboard's text for ImGui.
@@ -107,10 +107,10 @@ namespace UI
             {0.0f,                    0.0f,                    -1.0f, 0.0f},
             {-1.0f,                   1.0f,                     0.0f, 1.0f},
         };
-        GL_CHECK(glUseProgram(g_ShaderHandle));
-        GL_CHECK(glUniform1i(g_AttribLocationTex, 0));
-        GL_CHECK(glUniformMatrix4fv(g_AttribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]));
-        GL_CHECK(glBindVertexArray(g_VaoHandle));
+        GL_CHECK(glUseProgram(shaderHandle));
+        GL_CHECK(glUniform1i(attribLocationTex, 0));
+        GL_CHECK(glUniformMatrix4fv(attribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]));
+        GL_CHECK(glBindVertexArray(vaoHandle));
 
         auto cmdListCount = dd->CmdListsCount;
         for (int n = 0; n < cmdListCount; n++)
@@ -118,10 +118,10 @@ namespace UI
             const auto* cmd_list = dd->CmdLists[n];
             const ImDrawIdx* idx_buffer_offset = nullptr;
 
-            GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle));
+            GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vboHandle));
             GL_CHECK(glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW));
 
-            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle));
+            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementsHandle));
             GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW));
 
             auto cmdBufferSize = cmd_list->CmdBuffer.Size;
@@ -162,15 +162,15 @@ namespace UI
         // Upload texture to graphics system
         GLint last_texture;
         GL_CHECK(glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture));
-        GL_CHECK(glGenTextures(1, &g_FontTexture));
-        if (!g_FontTexture) return false;
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, g_FontTexture));
+        GL_CHECK(glGenTextures(1, &fontTexture));
+        if (!fontTexture) return false;
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, fontTexture));
         GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
         GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
         GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels));
 
         // Store our identifier
-        io.Fonts->TexID = (void *)(intptr_t)g_FontTexture;
+        io.Fonts->TexID = (void *)(intptr_t)fontTexture;
 
         // Restore state
         GL_CHECK(glBindTexture(GL_TEXTURE_2D, last_texture));
@@ -184,7 +184,7 @@ namespace UI
     static void GlfwMouseButtonCallback(GLFWwindow*, int button, int action, int /*mods*/)
     {
         if (action == GLFW_PRESS && button >= 0 && button < 3)
-            g_MousePressed[button] = true;
+            mouseButtons[button] = true;
     }
 
     /**
@@ -192,7 +192,7 @@ namespace UI
      */
     static void GlfwScrollCallback(GLFWwindow*, double /*xoffset*/, double yoffset)
     {
-        g_MouseWheel += (float)yoffset; // Use fractional mouse wheel, 1.0 unit 5 lines.
+        mouseWheel += (float)yoffset; // Use fractional mouse wheel, 1.0 unit 5 lines.
     }
 
     /**
@@ -231,36 +231,36 @@ namespace UI
     {
         GLsavestate glStateHelper;
 
-        GL_CHECK(g_ShaderHandle = glCreateProgram());
-        GL_CHECK(g_VertHandle = glCreateShader(GL_VERTEX_SHADER));
-        GL_CHECK(g_FragHandle = glCreateShader(GL_FRAGMENT_SHADER));
-        GL_CHECK(glShaderSource(g_VertHandle, 1, &ImGuiVertexShader, 0));
-        GL_CHECK(glShaderSource(g_FragHandle, 1, &ImGuiFragmentShader, 0));
-        GL_CHECK(glCompileShader(g_VertHandle));
-        GL_CHECK(glCompileShader(g_FragHandle));
-        GL_CHECK(glAttachShader(g_ShaderHandle, g_VertHandle));
-        GL_CHECK(glAttachShader(g_ShaderHandle, g_FragHandle));
-        GL_CHECK(glLinkProgram(g_ShaderHandle));
+        GL_CHECK(shaderHandle = glCreateProgram());
+        GL_CHECK(vertHandle = glCreateShader(GL_VERTEX_SHADER));
+        GL_CHECK(fragHandle = glCreateShader(GL_FRAGMENT_SHADER));
+        GL_CHECK(glShaderSource(vertHandle, 1, &ImGuiVertexShader, 0));
+        GL_CHECK(glShaderSource(fragHandle, 1, &ImGuiFragmentShader, 0));
+        GL_CHECK(glCompileShader(vertHandle));
+        GL_CHECK(glCompileShader(fragHandle));
+        GL_CHECK(glAttachShader(shaderHandle, vertHandle));
+        GL_CHECK(glAttachShader(shaderHandle, fragHandle));
+        GL_CHECK(glLinkProgram(shaderHandle));
 
-        GL_CHECK(g_AttribLocationTex = glGetUniformLocation(g_ShaderHandle, "Texture"));
-        GL_CHECK(g_AttribLocationProjMtx = glGetUniformLocation(g_ShaderHandle, "ProjMtx"));
-        GL_CHECK(g_AttribLocationPosition = glGetAttribLocation(g_ShaderHandle, "Position"));
-        GL_CHECK(g_AttribLocationUV = glGetAttribLocation(g_ShaderHandle, "UV"));
-        GL_CHECK(g_AttribLocationColor = glGetAttribLocation(g_ShaderHandle, "Color"));
+        GL_CHECK(attribLocationTex = glGetUniformLocation(shaderHandle, "Texture"));
+        GL_CHECK(attribLocationProjMtx = glGetUniformLocation(shaderHandle, "ProjMtx"));
+        GL_CHECK(attribLocationPosition = glGetAttribLocation(shaderHandle, "Position"));
+        GL_CHECK(attribLocationUV = glGetAttribLocation(shaderHandle, "UV"));
+        GL_CHECK(attribLocationColor = glGetAttribLocation(shaderHandle, "Color"));
 
-        GL_CHECK(glGenBuffers(1, &g_VboHandle));
-        GL_CHECK(glGenBuffers(1, &g_ElementsHandle));
+        GL_CHECK(glGenBuffers(1, &vboHandle));
+        GL_CHECK(glGenBuffers(1, &elementsHandle));
 
-        GL_CHECK(glGenVertexArrays(1, &g_VaoHandle));
-        GL_CHECK(glBindVertexArray(g_VaoHandle));
-        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, g_VboHandle));
-        GL_CHECK(glEnableVertexAttribArray(g_AttribLocationPosition));
-        GL_CHECK(glEnableVertexAttribArray(g_AttribLocationUV));
-        GL_CHECK(glEnableVertexAttribArray(g_AttribLocationColor));
+        GL_CHECK(glGenVertexArrays(1, &vaoHandle));
+        GL_CHECK(glBindVertexArray(vaoHandle));
+        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vboHandle));
+        GL_CHECK(glEnableVertexAttribArray(attribLocationPosition));
+        GL_CHECK(glEnableVertexAttribArray(attribLocationUV));
+        GL_CHECK(glEnableVertexAttribArray(attribLocationColor));
 
-        GL_CHECK(glVertexAttribPointer(g_AttribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, pos)));
-        GL_CHECK(glVertexAttribPointer(g_AttribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, uv)));
-        GL_CHECK(glVertexAttribPointer(g_AttribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, col)));
+        GL_CHECK(glVertexAttribPointer(attribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, pos)));
+        GL_CHECK(glVertexAttribPointer(attribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, uv)));
+        GL_CHECK(glVertexAttribPointer(attribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, col)));
 
         return ImGuiCreateFontTexture();
     }
@@ -349,8 +349,8 @@ namespace UI
 
         // Setup time step
         double current_time = glfwGetTime();
-        io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f / 60.0f);
-        g_Time = current_time;
+        io.DeltaTime = time > 0.0 ? (float)(current_time - time) : (float)(1.0f / 60.0f);
+        time = current_time;
 
         // Setup inputs
         // (We've already got mouse wheel, keyboard keys & characters from GLFW callbacks polled in glfwPollEvents())
@@ -368,12 +368,12 @@ namespace UI
         {
             // If a mouse press event came, always pass it as "mouse held this frame", so we don't
             // miss click-release events that are shorter than 1 frame.
-            io.MouseDown[i] = g_MousePressed[i] || glfwGetMouseButton(Window::window, i) != 0;
-            g_MousePressed[i] = false;
+            io.MouseDown[i] = mouseButtons[i] || glfwGetMouseButton(Window::window, i) != 0;
+            mouseButtons[i] = false;
         }
 
-        io.MouseWheel = g_MouseWheel;
-        g_MouseWheel = 0.0f;
+        io.MouseWheel = mouseWheel;
+        mouseWheel = 0.0f;
 
         // Hide OS mouse cursor if ImGui is drawing it
         glfwSetInputMode(Window::window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : Window::cursorMode);

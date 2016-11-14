@@ -3,100 +3,97 @@
 
 #pragma region GLstate Definition
 
-std::vector<GLstate> GLstate::s_States;
+std::vector<GLstate> GLstate::states;
 
-/**
- * \brief Creates a new OpenGL state.
- */
+/// <summary>
+/// Creates a new OpenGL state.
+/// </summary>
 GLstate::GLstate()
 {
     capture();
 }
 
-/**
- * \brief Applies this state to OpenGL.
- */
+/// <summary>
+/// Applies this state to OpenGL.
+/// </summary>
 void GLstate::apply()
 {
-    GL_CHECK(glUseProgram(m_Program));
-    GL_CHECK(glActiveTexture(m_ActiveTexture));
-    GL_CHECK(glBindTexture(GL_TEXTURE_2D, m_Texture));
-    GL_CHECK(glBindVertexArray(m_VertexArray));
-    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, m_ArrayBuffer));
-    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ElementArrayBuffer));
-    GL_CHECK(glBlendEquationSeparate(m_BlendEquationRGB, m_BlendEquationAlpha));
-    GL_CHECK(glBlendFunc(m_BlendSrc, m_BlendDst));
-    if (m_EnableBlend)       { GL_CHECK(glEnable(GL_BLEND));        } else { GL_CHECK(glDisable(GL_BLEND)); };
-    if (m_EnableCullFace)    { GL_CHECK(glEnable(GL_CULL_FACE));    } else { GL_CHECK(glDisable(GL_CULL_FACE)); };
-    if (m_EnableDepthTest)   { GL_CHECK(glEnable(GL_DEPTH_TEST));   } else { GL_CHECK(glDisable(GL_DEPTH_TEST)); };
-    if (m_EnableScissorTest) { GL_CHECK(glEnable(GL_SCISSOR_TEST)); } else { GL_CHECK(glDisable(GL_SCISSOR_TEST)); };
-    GL_CHECK(glViewport(m_Viewport[0], m_Viewport[1], (GLsizei)m_Viewport[2], (GLsizei)m_Viewport[3]));
-    GL_CHECK(glScissor(m_ScissorBox[0], m_ScissorBox[1], (GLsizei)m_ScissorBox[2], (GLsizei)m_ScissorBox[3]));
+    GL_CHECK(glUseProgram(boundProgram));
+    GL_CHECK(glActiveTexture(activeTexture));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, boundTexture));
+    GL_CHECK(glBindVertexArray(vertexArray));
+    GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, arrayBuffer));
+    GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayBuffer));
+    GL_CHECK(glBlendEquationSeparate(blendEquationRGB, blendEquationAlpha));
+    GL_CHECK(glBlendFunc(blendSrc, blendDst));
+    if (enableBlend)       { GL_CHECK(glEnable(GL_BLEND));        } else { GL_CHECK(glDisable(GL_BLEND)); };
+    if (enableCullFace)    { GL_CHECK(glEnable(GL_CULL_FACE));    } else { GL_CHECK(glDisable(GL_CULL_FACE)); };
+    if (enableDepthTest)   { GL_CHECK(glEnable(GL_DEPTH_TEST));   } else { GL_CHECK(glDisable(GL_DEPTH_TEST)); };
+    if (enableScissorTest) { GL_CHECK(glEnable(GL_SCISSOR_TEST)); } else { GL_CHECK(glDisable(GL_SCISSOR_TEST)); };
+    GL_CHECK(glViewport(viewport[0], viewport[1], (GLsizei)viewport[2], (GLsizei)viewport[3]));
+    GL_CHECK(glScissor(scissorBox[0], scissorBox[1], (GLsizei)scissorBox[2], (GLsizei)scissorBox[3]));
 }
 
-/**
- * \brief Captures the current OpenGL state.
- */
+/// <summary>
+/// Captures the current OpenGL state.
+/// </summary>
 void GLstate::capture()
 {
-    GL_CHECK(glGetIntegerv(GL_CURRENT_PROGRAM, &m_Program));
-    GL_CHECK(glGetIntegerv(GL_TEXTURE_BINDING_2D, &m_Texture));
-    GL_CHECK(glGetIntegerv(GL_ACTIVE_TEXTURE, &m_ActiveTexture));
-    GL_CHECK(glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &m_ArrayBuffer));
-    GL_CHECK(glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &m_ElementArrayBuffer));
-    GL_CHECK(glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &m_VertexArray));
-    GL_CHECK(glGetIntegerv(GL_BLEND_SRC, &m_BlendSrc));
-    GL_CHECK(glGetIntegerv(GL_BLEND_DST, &m_BlendDst));
-    GL_CHECK(glGetIntegerv(GL_BLEND_EQUATION_RGB, &m_BlendEquationRGB));
-    GL_CHECK(glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &m_BlendEquationAlpha));
-    GL_CHECK(glGetIntegerv(GL_VIEWPORT, m_Viewport));
-    GL_CHECK(glGetIntegerv(GL_SCISSOR_BOX, m_ScissorBox));
+    GL_CHECK(glGetIntegerv(GL_CURRENT_PROGRAM, &boundProgram));
+    GL_CHECK(glGetIntegerv(GL_TEXTURE_BINDING_2D, &boundTexture));
+    GL_CHECK(glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTexture));
+    GL_CHECK(glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &arrayBuffer));
+    GL_CHECK(glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &elementArrayBuffer));
+    GL_CHECK(glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vertexArray));
+    GL_CHECK(glGetIntegerv(GL_BLEND_SRC, &blendSrc));
+    GL_CHECK(glGetIntegerv(GL_BLEND_DST, &blendDst));
+    GL_CHECK(glGetIntegerv(GL_BLEND_EQUATION_RGB, &blendEquationRGB));
+    GL_CHECK(glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &blendEquationAlpha));
+    GL_CHECK(glGetIntegerv(GL_VIEWPORT, viewport));
+    GL_CHECK(glGetIntegerv(GL_SCISSOR_BOX, scissorBox));
 
-    GL_CHECK(m_EnableBlend       = glIsEnabled(GL_BLEND));
-    GL_CHECK(m_EnableCullFace    = glIsEnabled(GL_CULL_FACE));
-    GL_CHECK(m_EnableDepthTest   = glIsEnabled(GL_DEPTH_TEST));
-    GL_CHECK(m_EnableScissorTest = glIsEnabled(GL_SCISSOR_TEST));
+    GL_CHECK(enableBlend       = glIsEnabled(GL_BLEND));
+    GL_CHECK(enableCullFace    = glIsEnabled(GL_CULL_FACE));
+    GL_CHECK(enableDepthTest   = glIsEnabled(GL_DEPTH_TEST));
+    GL_CHECK(enableScissorTest = glIsEnabled(GL_SCISSOR_TEST));
 }
 
-/**
- * \brief Checks to see if there are any cached states.
- *
- * \return True if there is a state on the stack, otherwise false.
- */
+/// <summary>
+/// Checks to see if there are any cached states.
+/// </summary>
+/// <returns>True if there is a state on the stack, otherwise false.</returns>
 bool GLstate::empty()
 {
-    return s_States.size() > 0;
+    return states.size() > 0;
 }
 
-/**
- * \brief Gets the OpenGL state at the top of the stack.
- *
- * \return The OpenGL state at the top of the stack, or null if there are no states.
- */
+/// <summary>
+/// Gets the OpenGL state at the top of the stack.
+/// </summary>
+/// <returns>The OpenGL state at the top of the stack.</returns>
 GLstate* GLstate::peek()
 {
-    return &s_States.back();
+    return &states.back();
 }
 
-/**
- * \brief Pushes the current OpenGL state.
- */
+/// <summary>
+/// Pushes the current OpenGL state.
+/// </summary>
 void GLstate::push()
 {
-    s_States.push_back(GLstate());
+    states.push_back(GLstate());
 }
 
-/**
- * \brief Attempts to pop an OpenGL state off of the stack.
- *
- * \return True if there was a state to pop, otherwise false.
- */
+/// <summary>
+/// Attempts to pop an OpenGL state off of the stack.
+/// </summary>
+/// <returns>True if there was a state to pop, otherwise false.</returns>
 bool GLstate::pop()
 {
-    if (s_States.size())
+    if (states.size())
     {
-        s_States.back().apply();
-        s_States.pop_back();
+        states.back().apply();
+        states.pop_back();
         return true;
     }
     return false;
