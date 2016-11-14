@@ -1,8 +1,6 @@
-!/WreckEngine/bin/*
-!/WreckEngine/lib/*
-
 # Ignored directories
 /WreckEngine/.vs/*
+/WreckEngine/[Bb]uild/*
 /WreckEngine/[Dd]ebug/*
 /WreckEngine/[Rr]elease/*
 /WreckEngine/[Pp]ackages/*
@@ -11,3 +9,11 @@
 # Ignored file types
 *.db
 *.opendb
+
+# Specific ignored files
+/WreckEngine/imgui.ini
+/WreckEngine/Assets/_debug/*
+/WreckEngine/Assets/*.fbx
+/WreckEngine/Assets/*.obj
+/WreckEngine/Assets/*.png
+/WreckEngine/Assets/*.jpg

@@ -1,62 +1,29 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Utilities">
-      <UniqueIdentifier>{a992f258-3045-47b8-8658-66bcce393788}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Core">
       <UniqueIdentifier>{97d09d34-e88f-4a4f-842d-12d856a31497}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Misc">
-      <UniqueIdentifier>{1b4a783d-1e03-4ca1-a0c5-5ca1eb1bb9d3}</UniqueIdentifier>
     </Filter>
     <Filter Include="Entities">
       <UniqueIdentifier>{9ca6f6c8-6139-4789-8520-eaa56098dee4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Games">
+      <UniqueIdentifier>{a47084c8-9a16-499f-be4c-c6658dba7258}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Misc">
+      <UniqueIdentifier>{1b4a783d-1e03-4ca1-a0c5-5ca1eb1bb9d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{946c4228-bd03-45fb-a5b6-37b42ad0a2bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\imgui">
+      <UniqueIdentifier>{2eaaf67b-784f-4f25-b431-b84a239e4ecc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities">
+      <UniqueIdentifier>{a992f258-3045-47b8-8658-66bcce393788}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Collider.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Transform.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DrawMesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RigidBody.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CollisionManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="utility.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="GLDebug.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="ShaderHelper.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelHelper.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
     <ClCompile Include="Drawable.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -75,17 +42,11 @@
     <ClCompile Include="State.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="DrawDebug.cpp">
-      <Filter>Misc</Filter>
-    </ClCompile>
-    <ClCompile Include="MarchMath.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="TriPlay.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Text.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="ColliderEntity.cpp">
+      <Filter>Entities</Filter>
     </ClCompile>
     <ClCompile Include="Entity.cpp">
       <Filter>Entities</Filter>
@@ -93,32 +54,68 @@
     <ClCompile Include="TextEntity.cpp">
       <Filter>Entities</Filter>
     </ClCompile>
-    <ClCompile Include="ColliderEntity.cpp">
-      <Filter>Entities</Filter>
+    <ClCompile Include="TriPlay.cpp">
+      <Filter>Games</Filter>
+    </ClCompile>
+    <ClCompile Include="UiTest.cpp">
+      <Filter>Games</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawDebug.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp">
+      <Filter>ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\Source\imgui\imgui_demo.cpp">
+      <Filter>ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp">
+      <Filter>ThirdParty\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="gl_structs.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="GLDebug.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="MarchMath.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelHelper.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderHelper.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="utility.cpp">
+      <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="UV.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="Collider.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionManager.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawMesh.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="RigidBody.cpp">
+      <Filter>Misc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Collider.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DrawMesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RigidBody.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="unique_id.h">
       <Filter>Utilities</Filter>
     </ClInclude>
@@ -170,9 +167,6 @@
     <ClInclude Include="MarchMath.h">
       <Filter>Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="TriPlay.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="External.h">
       <Filter>Utilities</Filter>
     </ClInclude>
@@ -190,6 +184,36 @@
     </ClInclude>
     <ClInclude Include="Random.h">
       <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\Include\imconfig.h">
+      <Filter>ThirdParty\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="TriPlay.h">
+      <Filter>Games</Filter>
+    </ClInclude>
+    <ClInclude Include="UiTest.h">
+      <Filter>Games</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Collider.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionManager.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawMesh.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="RigidBody.h">
+      <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Misc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
