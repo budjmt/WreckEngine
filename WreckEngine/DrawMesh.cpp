@@ -46,5 +46,5 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 void DrawMesh::draw(const mat4& world) {
 	Drawable::draw(world);
 	textures[0].bind();
-	glDrawElements(GL_TRIANGLES, _mesh->getRenderData()->ebuffer.size(), GL_UNSIGNED_INT, nullptr);
+	GL_CHECK(glDrawElements(GL_TRIANGLES, _mesh->getRenderData()->ebuffer.size(), GL_UNSIGNED_INT, nullptr));
 }

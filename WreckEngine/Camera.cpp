@@ -32,7 +32,6 @@ vec3 Camera::getLookAt(float units) {
 }
 
 void Camera::updateProjection() {
-	Window::update();
 	constexpr auto znear = 0.01f;
 	constexpr auto zfar  = 1000.f;
 	projection = glm::perspective(CAM_FOV, Window::aspect, znear, zfar);
