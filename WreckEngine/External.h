@@ -21,6 +21,8 @@ struct Window {
     static inline void resize_callback(GLFWwindowsizefun f) { glfwSetWindowSizeCallback(window, f); }
 
     static void default_resize(GLFWwindow* window, int width, int height);
+
+    class ResizeHandler {}; // inherit or create handler of type to handle window resize events
 };
 
 struct Mouse {
@@ -50,6 +52,10 @@ struct Mouse {
     static void default_button(GLFWwindow* window, int button, int action, int mods);
     static void default_move(GLFWwindow* window, double x, double y);
     static void default_scroll(GLFWwindow* window, double xoffset, double yoffset);
+
+    class ButtonHandler {}; // inherit or create handler of type to handle mouse button events
+    class MoveHandler   {}; // inherit or create handler of type to handle mouse move events
+    class ScrollHandler {}; // inherit or create handler of type to handle mouse scroll events
 };
 
 inline std::string getEnvVar(const std::string& var) {

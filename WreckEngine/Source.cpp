@@ -98,6 +98,10 @@ void update() {
     //  prevFrame = currFrame;
     //}
 
+    // game update occurs before anything else
+    // this enables simpler rules for clearing events per frame
+    game->update(dt);
+
     runningAvgDelta -= runningAvgDelta / samples;
     runningAvgDelta += dt / samples;
     auto title = std::to_string(fpsMode ? 1.0 / runningAvgDelta : runningAvgDelta * 1000.0);
@@ -105,8 +109,6 @@ void update() {
     if (title.length() - decimal > 3) title = title.erase(decimal + 3);
     title += fpsMode ? " FpS" : " MSpF";
     glfwSetWindowTitle(Window::window, title.c_str());
-
-    Mouse::update();
 
     bool alt = Window::getKey(GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || Window::getKey(GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
     if (alt) {
@@ -118,7 +120,7 @@ void update() {
             FPS -= (FPS > 20) ? 10 : ((FPS > 5) ? 5 : ((FPS > 1) ? 1 : 0));
     }
 
-    game->update(dt);
+    Mouse::update();
 }
 
 void draw() {

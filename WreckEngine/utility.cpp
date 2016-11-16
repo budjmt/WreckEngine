@@ -1,3 +1,5 @@
+#include "Event.h"
+
 #include "gl_structs.h"
 #include "GLmanager.h"
 #include "External.h"
@@ -65,15 +67,18 @@ int Window::cursorMode = GLFW_CURSOR_NORMAL;
 
 Mouse::Info Mouse::info;
 
-void Window::default_resize(GLFWwindow* window, int width, int height) {
-    Window::width = width;
-    Window::height = height;
-    Window::aspect = (float)width / (float)height;
-    glfwGetFramebufferSize(window, &Window::frameWidth, &Window::frameHeight);
+void Window::default_resize(GLFWwindow* window, int w, int h) {
+    width = w;
+    height = h;
+    aspect = (float) width / height;
+    glfwGetFramebufferSize(window, &frameWidth, &frameHeight);
 
-    Window::size = vec2(width, height);
-    Window::frameScale = vec2(width  > 0 ? ((float)frameWidth  / width ) : 0,
-                              height > 0 ? ((float)frameHeight / height) : 0);
+    size = vec2(width, height);
+    frameScale = vec2(width  > 0 ? ((float) frameWidth  / width ) : 0,
+                      height > 0 ? ((float) frameHeight / height) : 0);
+
+    static uint32_t resize_id = Message::add("window_resize");
+    Dispatcher::central_trigger.sendBulkEvent<ResizeHandler>(resize_id);
 }
 
 void Mouse::update() {
@@ -97,6 +102,9 @@ void Mouse::default_button(GLFWwindow* window, int button, int action, int mods)
     {
         info.setButtonUp(button);
     }
+
+    static uint32_t button_id = Message::add("mouse_button");
+    Dispatcher::central_trigger.sendBulkEvent<ButtonHandler>(button_id, button, action, mods);
 }
 
 void Mouse::default_move(GLFWwindow* window, double x, double y) {
@@ -107,8 +115,14 @@ void Mouse::default_move(GLFWwindow* window, double x, double y) {
     
     info.currPixel.x = x;
     info.currPixel.y = y;
+
+    static uint32_t move_id = Message::add("mouse_move");
+    Dispatcher::central_trigger.sendBulkEvent<MoveHandler>(move_id);
 }
 
 void Mouse::default_scroll(GLFWwindow* window, double xoffset, double yoffset) {
     info.wheel += (float) yoffset;
+
+    static uint32_t scroll_id = Message::add("mouse_scroll");
+    Dispatcher::central_trigger.sendBulkEvent<ScrollHandler>(scroll_id);
 }

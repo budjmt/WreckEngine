@@ -38,7 +38,7 @@ struct void_array {
 	void_array(const size_t _members) : members(_members), data(make_unique<shared<void>[]>(_members)) {}
 
 	// peeks at/gets the data [index] elements into the structure and puts it on the stack as a variable of type T
-	template<typename T> inline T peek(const size_t index) { return *(T*)data[index].get(); }
+	template<typename T> inline T peek(const size_t index) const { return *(T*)data[index].get(); }
 
 	// pushes a copy of [d] from the stack into the structure on the heap; assumes T is copy constructible
 	template<typename T> inline void push(const T& d) { data[size++] = make_shared<T>(d); }
@@ -49,12 +49,12 @@ struct void_array {
 
 	// extracts the contents of the structure in the form of a tuple on the stack, according to the explicit types passed
 	template<typename T1, typename T2, typename... Args>
-	std::tuple<T1, T2, Args...> extract() { return std::tuple_cat(peekTuple<T1>(members - sizeof...(Args) - 2), extractData<T2, Args...>()); }
+	std::tuple<T1, T2, Args...> extract() const { return std::tuple_cat(peekTuple<T1>(members - sizeof...(Args) - 2), extractData<T2, Args...>()); }
 	// extracts the contents of the structure in the form of a tuple on the stack, according to the explicit types passed
-	template<typename T> std::tuple<T> extract() { return peekTuple<T>(members - 1); }
+	template<typename T> std::tuple<T> extract() const { return peekTuple<T>(members - 1); }
 
 private:
 	unique<shared<void>[]> data;
 	size_t size = 0;
-	template<typename T> inline std::tuple<T> peekTuple(const size_t index) { return std::tuple<T>(peek(index)); }
+	template<typename T> inline std::tuple<T> peekTuple(const size_t index) const { return std::tuple<T>(peek(index)); }
 };

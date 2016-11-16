@@ -2,6 +2,8 @@
 
 #include "Game.h"
 
+#include "Event.h"
+
 /**
  * Defines a UI test game.
  */
@@ -17,4 +19,8 @@ public:
      * \brief Destroys the UI test game.
      */
     ~UiTest();
+
+    void testHandler(Event::Handler::param e);
+
+    Event::Handler button_handler = Event::make_handler<Mouse::ButtonHandler>(Event::Handler::wrap_member_func(this, &UiTest::testHandler));
 };
