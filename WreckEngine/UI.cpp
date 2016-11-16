@@ -1,5 +1,4 @@
 #include "UI.h"
-#include "gl_structs.h"
 #include "GLError.h"
 #include "External.h"
 #if defined(_WIN32) || defined(_WIN64)
@@ -14,9 +13,9 @@ namespace UI
     static const char* const ImGuiVertexShader =
         "#version 330\n"
         "uniform mat4 ProjMtx;\n"
-        "in vec2 Position;\n"
-        "in vec2 UV;\n"
-        "in vec4 Color;\n"
+        "layout (location = 0) in vec2 Position;\n"
+        "layout (location = 1) in vec2 UV;\n"
+        "layout (location = 2) in vec4 Color;\n"
         "out vec2 Frag_UV;\n"
         "out vec4 Frag_Color;\n"
         "void main()\n"
@@ -37,16 +36,7 @@ namespace UI
         "   Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
         "}\n";
 
-    static constexpr GLenum ImGuiDrawType = (sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT);
-
-    static double   time = 0.0;
-    static bool     mouseButtons[3] = { false, false, false };
-    static float    mouseWheel = 0.0f;
-    static GLuint   fontTexture = 0;
-    static int      shaderHandle = 0, vertHandle = 0, fragHandle = 0;
-    static int      attribLocationTex = 0, attribLocationProjMtx = 0;
-    static int      attribLocationPosition = 0, attribLocationUV = 0, attribLocationColor = 0;
-    static GLuint   vboHandle = 0, vaoHandle = 0, elementsHandle = 0;
+    static constexpr GLenum ImGuiDrawType = (sizeof(ImDrawIdx) == 2) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
 
     /**
      * \brief The implementation for retrieving the clipboard's text for ImGui.
@@ -83,7 +73,8 @@ namespace UI
 
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
         auto& io = ImGui::GetIO();
-        int fb_width = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
+        
+        int fb_width  = (int)(io.DisplaySize.x * io.DisplayFramebufferScale.x);
         int fb_height = (int)(io.DisplaySize.y * io.DisplayFramebufferScale.y);
         if (fb_width == 0 || fb_height == 0)
             return;
@@ -100,32 +91,31 @@ namespace UI
 
         // Setup viewport, orthographic projection matrix
         GL_CHECK(glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height));
-        const float ortho_projection[4][4] =
+        const mat4 ortho_projection =
         {
             {2.0f / io.DisplaySize.x, 0.0f,                     0.0f, 0.0f},
             {0.0f,                    2.0f / -io.DisplaySize.y, 0.0f, 0.0f},
             {0.0f,                    0.0f,                    -1.0f, 0.0f},
             {-1.0f,                   1.0f,                     0.0f, 1.0f},
         };
-        GL_CHECK(glUseProgram(shaderHandle));
-        GL_CHECK(glUniform1i(attribLocationTex, 0));
-        GL_CHECK(glUniformMatrix4fv(attribLocationProjMtx, 1, GL_FALSE, &ortho_projection[0][0]));
-        GL_CHECK(glBindVertexArray(vaoHandle));
+        
+        shader.use();
+        texLoc.update(0);
+        projLoc.update(ortho_projection);
+        vao.bind();
 
-        auto cmdListCount = dd->CmdListsCount;
-        for (int n = 0; n < cmdListCount; n++)
+        for (int n = 0, cmdListCount = dd->CmdListsCount; n < cmdListCount; n++)
         {
             const auto* cmd_list = dd->CmdLists[n];
             const ImDrawIdx* idx_buffer_offset = nullptr;
 
-            GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vboHandle));
-            GL_CHECK(glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), (GLvoid*)cmd_list->VtxBuffer.Data, GL_STREAM_DRAW));
+            buffer.bind();
+            buffer.data((GLsizeiptr)cmd_list->VtxBuffer.Size * sizeof(ImDrawVert), cmd_list->VtxBuffer.Data);
 
-            GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementsHandle));
-            GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW));
+            elements.bind();
+            elements.data((GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), cmd_list->IdxBuffer.Data);
 
-            auto cmdBufferSize = cmd_list->CmdBuffer.Size;
-            for (int cmd_i = 0; cmd_i < cmdBufferSize; cmd_i++)
+            for (int cmd_i = 0, cmdBufferSize = cmd_list->CmdBuffer.Size; cmd_i < cmdBufferSize; cmd_i++)
             {
                 const auto pcmd = &cmd_list->CmdBuffer[cmd_i];
                 if (pcmd->UserCallback)
@@ -162,37 +152,22 @@ namespace UI
         // Upload texture to graphics system
         GLint last_texture;
         GL_CHECK(glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture));
-        GL_CHECK(glGenTextures(1, &fontTexture));
-        if (!fontTexture) return false;
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, fontTexture));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels));
+        
+        fontTex.create(GL_TEXTURE_2D);
+        if (!fontTex()) return false;
+        
+        fontTex.bind();
+        fontTex.param(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        fontTex.param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        fontTex.set2D<GLubyte>(pixels, width, height);
 
         // Store our identifier
-        io.Fonts->TexID = (void *)(intptr_t)fontTexture;
+        io.Fonts->TexID = (void *)(intptr_t)fontTex();
 
         // Restore state
         GL_CHECK(glBindTexture(GL_TEXTURE_2D, last_texture));
 
         return true;
-    }
-
-    /**
-     * \brief The mouse button callback for GLFW.
-     */
-    static void GlfwMouseButtonCallback(GLFWwindow*, int button, int action, int /*mods*/)
-    {
-        if (action == GLFW_PRESS && button >= 0 && button < 3)
-            mouseButtons[button] = true;
-    }
-
-    /**
-     * \brief The scroll callback for GLFW.
-     */
-    static void GlfwScrollCallback(GLFWwindow*, double /*xoffset*/, double yoffset)
-    {
-        mouseWheel += (float)yoffset; // Use fractional mouse wheel, 1.0 unit 5 lines.
     }
 
     /**
@@ -231,36 +206,27 @@ namespace UI
     {
         GLsavestate glStateHelper;
 
-        GL_CHECK(shaderHandle = glCreateProgram());
-        GL_CHECK(vertHandle = glCreateShader(GL_VERTEX_SHADER));
-        GL_CHECK(fragHandle = glCreateShader(GL_FRAGMENT_SHADER));
-        GL_CHECK(glShaderSource(vertHandle, 1, &ImGuiVertexShader, 0));
-        GL_CHECK(glShaderSource(fragHandle, 1, &ImGuiFragmentShader, 0));
-        GL_CHECK(glCompileShader(vertHandle));
-        GL_CHECK(glCompileShader(fragHandle));
-        GL_CHECK(glAttachShader(shaderHandle, vertHandle));
-        GL_CHECK(glAttachShader(shaderHandle, fragHandle));
-        GL_CHECK(glLinkProgram(shaderHandle));
+        shader.create();
+        shader.vertex.create(ImGuiVertexShader, GL_VERTEX_SHADER);
+        shader.fragment.create(ImGuiFragmentShader, GL_FRAGMENT_SHADER);
+        shader.link();
 
-        GL_CHECK(attribLocationTex = glGetUniformLocation(shaderHandle, "Texture"));
-        GL_CHECK(attribLocationProjMtx = glGetUniformLocation(shaderHandle, "ProjMtx"));
-        GL_CHECK(attribLocationPosition = glGetAttribLocation(shaderHandle, "Position"));
-        GL_CHECK(attribLocationUV = glGetAttribLocation(shaderHandle, "UV"));
-        GL_CHECK(attribLocationColor = glGetAttribLocation(shaderHandle, "Color"));
+        texLoc  = shader.getUniform<GLsampler>("Texture");
+        projLoc = shader.getUniform<mat4>("ProjMtx");
 
-        GL_CHECK(glGenBuffers(1, &vboHandle));
-        GL_CHECK(glGenBuffers(1, &elementsHandle));
+        vao.create();
+        vao.bind();
 
-        GL_CHECK(glGenVertexArrays(1, &vaoHandle));
-        GL_CHECK(glBindVertexArray(vaoHandle));
-        GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, vboHandle));
-        GL_CHECK(glEnableVertexAttribArray(attribLocationPosition));
-        GL_CHECK(glEnableVertexAttribArray(attribLocationUV));
-        GL_CHECK(glEnableVertexAttribArray(attribLocationColor));
+        buffer.create(GL_ARRAY_BUFFER, GL_STREAM_DRAW);
+        elements.create(GL_ELEMENT_ARRAY_BUFFER, GL_STREAM_DRAW);
 
-        GL_CHECK(glVertexAttribPointer(attribLocationPosition, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, pos)));
-        GL_CHECK(glVertexAttribPointer(attribLocationUV, 2, GL_FLOAT, GL_FALSE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, uv)));
-        GL_CHECK(glVertexAttribPointer(attribLocationColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(ImDrawVert), (GLvoid*)offsetof(ImDrawVert, col)));
+        GLattrarr attrSetup;
+
+        buffer.bind();
+        attrSetup.add<GLfloat>(2);
+        attrSetup.add<GLfloat>(2);
+        attrSetup.add<GLubyte>(4, 0, GL_TRUE);
+        attrSetup.apply();
 
         return ImGuiCreateFontTexture();
     }
@@ -303,8 +269,6 @@ namespace UI
         io.ImeWindowHandle = glfwGetWin32Window(Window::window);
 #endif
 
-        glfwSetMouseButtonCallback(Window::window, GlfwMouseButtonCallback);
-        glfwSetScrollCallback(Window::window, GlfwScrollCallback);
         glfwSetKeyCallback(Window::window, GlfwKeyCallback);
         glfwSetCharCallback(Window::window, GlfwCharCallback);
 
@@ -357,7 +321,7 @@ namespace UI
         if (glfwGetWindowAttrib(Window::window, GLFW_FOCUSED))
         {
             // Mouse position in screen coordinates
-            io.MousePos = ImVec2((float)Mouse::info.curr.x * 0.5f, -(float)Mouse::info.curr.y * 0.5f);
+            io.MousePos = ImVec2((float)Mouse::info.currPixel.x, (float)Mouse::info.currPixel.y);
         }
         else
         {
@@ -368,12 +332,10 @@ namespace UI
         {
             // If a mouse press event came, always pass it as "mouse held this frame", so we don't
             // miss click-release events that are shorter than 1 frame.
-            io.MouseDown[i] = mouseButtons[i] || glfwGetMouseButton(Window::window, i) != 0;
-            mouseButtons[i] = false;
+            io.MouseDown[i] = Mouse::info.getButtonState(i);
         }
 
-        io.MouseWheel = mouseWheel;
-        mouseWheel = 0.0f;
+        io.MouseWheel = Mouse::info.wheel;
 
         // Hide OS mouse cursor if ImGui is drawing it
         glfwSetInputMode(Window::window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : Window::cursorMode);
