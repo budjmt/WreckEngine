@@ -9,9 +9,6 @@
 #define ADD_EVENT(event_name) auto event_name ## _event = Event::Message::add(#event_name) 
 
 // Issues:
-//  - Handlers use std::function
-//      - use of std::function creates a bit of performance degradation at the expense of more flexibility
-//      - realistically, this should be a plain old function pointer
 //  - owner pointers
 //		- if the owning object gets copied and the handler/trigger is a member, the copied handler/trigger is ALSO owned by the original object
 //		- assignment is already invalid because of the const data members, but copy or move CONSTRUCTION is fine.
@@ -20,9 +17,9 @@
 namespace Event {
 
     // data about a event endpoint, (i.e. trigger or handler) including its type and id
-    // [type] = unique_type::index<T>::id
-    // [id] = e.g. EventTrigger::get("bomb")
-    // [originator] would be the "this" pointer of the Event[Thing] object
+    // [type] = UNIQUE_TYPE_ID(T)
+    // [id] = e.g. Trigger::get("bomb")
+    // [originator] would be the "this" pointer of the Event::[Thing] containing object, or whatever "caused" the event
     struct EndpointData {
         uint32_t id = 0, type = 0;
         void* originator = nullptr;
@@ -41,13 +38,13 @@ namespace Event {
         Message(const uint32_t _id, const EndpointData triggerData, const size_t _members = 0) : id(_id), trigger(triggerData), data(void_array(_members)) {}
 
         // the actual id of the event, indicates what data should be extracted
-        // e.g. id == Event::get("explode")
+        // e.g. id == Message::get("explode")
         const uint32_t id;
 
         // data associated with the trigger
         const EndpointData trigger;
 
-        // the data passed with this Event; the trigger populates and the handler interprets
+        // the data passed with this Message; the Trigger populates and the Handler interprets
         void_array data;
 
         UNIQUE_NAMES(private, Message);
@@ -62,7 +59,7 @@ namespace Event {
 
     public:
         static void sendToHandler(const uint32_t handler_id, Message e);
-        // for standard dispatch, nothing special is required, just pass unique_type::index<T>::id
+        // for standard dispatch, nothing special is required, just pass UNIQUE_TYPE_ID(T)
         // for polymorphic dispatch, either add the PARENT_TYPE macro below the child definition or the CHILD_TYPE macro below the parent definition
         // this will enable the association at runtime
         static void sendToType(const uint32_t type_id, Message e);
@@ -73,7 +70,7 @@ namespace Event {
         friend class Handler;
     };
 
-    // Sends Events to the Dispatcher; member of class Owner
+    // Sends Messages to the Dispatcher; member of class Owner
     class Trigger {
     public:
         const EndpointData info;
@@ -87,7 +84,7 @@ namespace Event {
         void sendEvent(const uint32_t handler_id, const uint32_t event_id, Args&&... messageConstructArgs) {
             Message e(event_id, info, sizeof...(Args));
             e.data.construct(std::forward<Args>(messageConstructArgs)...);
-            Event::Dispatcher::sendToHandler(handler_id, std::move(e));
+            Dispatcher::sendToHandler(handler_id, std::move(e));
         }
 
         // sends an event to a group of handlers registered with the same type
@@ -95,13 +92,13 @@ namespace Event {
         void sendBulkEvent(const uint32_t event_id, Args&&... messageConstructArgs) {
             Message e(event_id, info, sizeof...(Args));
             e.data.construct(std::forward<Args>(messageConstructArgs)...);
-            Event::Dispatcher::sendToType(UNIQUE_TYPE_ID(handler_t), std::move(e));
+            Dispatcher::sendToType(UNIQUE_TYPE_ID(handler_t), std::move(e));
         }
 
         UNIQUE_NAMES(private, Trigger);
     };
 
-    // Handles Events received from the Dispatcher; member of class Owner
+    // Handles Messages received from the Dispatcher; member of class Owner
     class Handler {
     public:
         typedef const Message& param;
@@ -119,7 +116,7 @@ namespace Event {
 
         func handler;
         
-        // note that this handler WILL be bound to a specific object, which won't be updated on delete or copy
+        // note that this function WILL be bound to a specific object, which won't be updated on delete or copy
         // take that into account when assigning an object to handle it
         template<class Owner> 
         static func wrap_member_func(Owner* _this, void (Owner::*member_handler)(param)) { 
@@ -128,7 +125,7 @@ namespace Event {
             }; 
         }
 
-        // processes an Event received from the dispatcher through the handler function
+        // processes a Message received from the Dispatcher through the handler function
         inline void process(const Message& e) { handler(e); }
 
 

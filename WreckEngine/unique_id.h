@@ -43,6 +43,7 @@ private:
 
 template<typename T> std::unordered_map<std::string, const uint32_t> unique_name<T>::ids;
 
+// use this macro instead of the body, since it's subject to change
 #define UNIQUE_TYPE_ID(type) unique_type::id<type>()
 
 #define PARENT_TYPE(child_t, parent_t) template class unique_type::parent_index<parent_t, child_t>

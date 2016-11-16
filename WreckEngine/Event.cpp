@@ -22,6 +22,6 @@ void Dispatcher::sendToType(const uint32_t type_id, Message e) {
             handler->process(e);
         }
     }
-	for (const auto child_type : unique_type::get_data(type_id).child_ids)
-		sendToType(child_type, std::move(e));
+    for (const auto child_type : unique_type::get_data(type_id).child_ids)
+        sendToType(child_type, std::move(e));
 }
