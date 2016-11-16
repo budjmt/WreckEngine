@@ -1,6 +1,8 @@
 #include "gl_structs.h"
 #include "GLError.h"
 
+GLint GLtexture::MAX_TEXTURES = -1;
+
 #pragma region GLstate Definition
 
 std::vector<GLstate> GLstate::states;

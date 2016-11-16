@@ -1,11 +1,9 @@
 #pragma region Local Globals
 
+#include "GLmanager.h"
 #include "smart_ptr.h"
 
 // We do these things not because we hate ourselves, but because C++ hates everyone
-
-struct GLFWmanager;
-struct GLEWmanager;
 
 unique<GLFWmanager> glfw;
 unique<GLEWmanager> glew;
@@ -28,8 +26,6 @@ unique<GLEWmanager> glew;
 #include "UiTest.h"
 #include "UI.h"
 
-class Game;
-
 void initGraphics();
 
 double FPS = 60;
@@ -41,62 +37,6 @@ double prevFrame;
 unique<Game> game;
 
 using namespace std;
-
-struct GLFWmanager { 
-    bool initialized = false; 
-    ~GLFWmanager() {
-        Drawable::unloadTextures();
-        if(initialized)
-            glfwTerminate();
-    }
-    GLFWmanager(const size_t width, const size_t height) { 
-        auto val = glfwInit(); 
-        initialized = val != 0; 
-        if (!initialized) exit(val);
-
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-
-        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-
-        /*const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
-        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
-        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
-        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);*/
-
-        if (DEBUG) glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
-
-        Window::window = glfwCreateWindow(width, height, "Wreck Engine", nullptr, nullptr);
-        if (!Window::window) exit('w');
-        glfwMakeContextCurrent(Window::window);
-        Window::default_resize(Window::window, width, height);
-
-        // Center the window
-        const GLFWvidmode* vm = glfwGetVideoMode(glfwGetPrimaryMonitor());
-        glfwSetWindowPos(Window::window, (vm->width - width) / 2, (vm->height - height) / 2);
-
-        Window::resize_callback(Window::default_resize);
-        Mouse::button_callback(Mouse::default_button);
-        Mouse::move_callback(Mouse::default_move);
-
-        Window::cursorMode = GLFW_CURSOR_NORMAL;
-        glfwSetInputMode(Window::window, GLFW_CURSOR, Window::cursorMode);
-
-        GLtexture::setMaxTextures();
-    };
-};
-
-struct GLEWmanager {
-    bool initialized = false;
-    GLEWmanager() {
-        glewExperimental = GL_TRUE;
-        auto initValue = glewInit();
-        initialized = initValue == GLEW_OK;
-        if (!initialized) exit(initValue);
-    }
-};
 
 void init() {
     shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
@@ -113,7 +53,8 @@ void init() {
     UI::Initialize();
     Text::init();
 
-    //game = make_unique<TriPlay>(shaderProg);// this won't be initialized until after GLFW/GLEW are
+    // this won't be initialized until after GLFW/GLEW are
+    //game = make_unique<TriPlay>(shaderProg);
     game = make_unique<UiTest>();
 }
 
@@ -200,6 +141,5 @@ int main(int argc, char** argv) {
         glfwSwapBuffers(Window::window);
     }
 
-    game.reset(); // Destroys current game
     return 0;
 }

@@ -4,7 +4,7 @@
 #include "property.h"
 
 const float MIN_VEL = .001f;
-const float MAX_VEL = 40.f;
+const float MAX_VEL = 1000.f;
 
 class RigidBody {
 public:
@@ -24,7 +24,7 @@ private:
 	ACCS_GS_C (private, float, mass, { return _mass; }, { _mass = value; _invMass = value ? 1.f / value : 0; }) = 1; // infinite mass is represented by 0; this means gravity won't work
 	ACCS_G    (private, float, invMass) = 1;
 	// 0 is perfectly inelastic, i.e. objects stick together, 1 is perfectly elastic, i.e. objects bounce apart entirely
-	ACCS_GS   (private, float, restitution) = 1;
+	ACCS_GS   (private, float, restitution) = 0.8f;
 	
 	float _speed = 0, _angSpeed = 0;
 	PROP_GS (private, RigidBody, vec3, vel,    { return _vel;    }, { _speed = glm::length(value);    return _vel = value; });

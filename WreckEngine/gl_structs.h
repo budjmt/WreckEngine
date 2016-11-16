@@ -2,6 +2,7 @@
 
 #include "GL/glew.h"
 
+#include "GLmanager.h"
 #include "GLError.h"
 
 #include <vector>
@@ -19,11 +20,11 @@ namespace {
 
     GLint local(getMaxNumTextures)() { GLint val; GL_CHECK(glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &val)); return val; }
 
-    void local(delTexture)   (GLuint* t) { if (*t != def) GL_CHECK(glDeleteTextures(1, t));     delete t; }
-    void local(delBuffer)    (GLuint* b) { if (*b != def) GL_CHECK(glDeleteBuffers(1, b));      delete b; }
-    void local(delVAO)       (GLuint* a) { if (*a != def) GL_CHECK(glDeleteVertexArrays(1, a)); delete a; }
-    void local(delShader)    (GLuint* s) { if (*s != def) GL_CHECK(glDeleteShader(*s));         delete s; }
-    void local(delShaderProg)(GLuint* p) { if (*p != def) GL_CHECK(glDeleteProgram(*p));        delete p; }
+    void local(delTexture)   (GLuint* t) { if (GLFWmanager::initialized && *t != def) GL_CHECK(glDeleteTextures(1, t));     delete t; }
+    void local(delBuffer)    (GLuint* b) { if (GLFWmanager::initialized && *b != def) GL_CHECK(glDeleteBuffers(1, b));      delete b; }
+    void local(delVAO)       (GLuint* a) { if (GLFWmanager::initialized && *a != def) GL_CHECK(glDeleteVertexArrays(1, a)); delete a; }
+    void local(delShader)    (GLuint* s) { if (GLFWmanager::initialized && *s != def) GL_CHECK(glDeleteShader(*s));         delete s; }
+    void local(delShaderProg)(GLuint* p) { if (GLFWmanager::initialized && *p != def) GL_CHECK(glDeleteProgram(*p));        delete p; }
 }
 
 struct GLtexture;
