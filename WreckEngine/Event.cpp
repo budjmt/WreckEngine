@@ -2,21 +2,26 @@
 
 #include <string>
 
-unique_name<Event> Event::names;
-unique_name<EventTrigger> EventTrigger::names;
-unique_name<EventHandler> EventHandler::names;
+using namespace Event;
 
-std::unordered_map<uint32_t, EventHandler*> EventDispatcher::handlers;
-std::unordered_map<uint32_t, std::vector<EventHandler*>> EventDispatcher::handlerTypes;
+unique_name<Message> Message::names;
+unique_name<Trigger> Trigger::names;
+unique_name<Handler> Handler::names;
 
-void EventDispatcher::sendToHandler(const uint32_t handler_id, Event e) {
-	handlers.at(handler_id)->process(std::move(e));
+std::unordered_map<uint32_t, Handler*> Dispatcher::handlers;
+std::unordered_map<uint32_t, std::vector<Handler*>> Dispatcher::handlerTypes;
+Trigger Dispatcher::central_trigger = make_trigger<Dispatcher>(0);
+
+void Dispatcher::sendToHandler(const uint32_t handler_id, Message e) {
+	handlers.at(handler_id)->process(e);
 }
 
-void EventDispatcher::sendToType(const uint32_t type_id, Event e) {
-	for (const auto handler : handlerTypes.at(type_id)) {
-		handler->process(std::move(e));
-	}
+void Dispatcher::sendToType(const uint32_t type_id, Message e) {
+    if (handlerTypes.count(type_id)) {
+        for (const auto handler : handlerTypes.at(type_id)) {
+            handler->process(e);
+        }
+    }
 	for (const auto child_type : unique_type::get_data(type_id).child_ids)
 		sendToType(child_type, std::move(e));
 }
