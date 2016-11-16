@@ -1,7 +1,6 @@
 #include "Transform.h"
 
 Transform::Transform() { updateRot(); }
-Transform* Transform::clone() const { return new Transform(*this); }
 
 void Transform::makeDirty() const {
 	dirtyComp = dirtyMats = true;
