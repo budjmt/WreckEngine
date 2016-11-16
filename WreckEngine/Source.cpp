@@ -124,8 +124,8 @@ void update() {
 }
 
 void draw() {
-        GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
-        game->draw();
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
+    game->draw();
 }
 
 int main(int argc, char** argv) {

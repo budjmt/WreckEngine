@@ -28,14 +28,26 @@ template<class T> using weak = std::weak_ptr<T>;
 
 template<class T> using alloc = alloc_ptr<T>;
 
-// this is reserved on the heap and can hold anything, while cleaning up after itself as needed
-// intended to function as a basic, constant-size stack, internally referred to as "the structure"
-// the structure itself provides no semantic information about the data it manages; 
-// any code that accesses this data should "know" at the time of access as to what is contained
-struct void_array {
-	const size_t members;
+/*--------------------------------------------------------------------------------------------------
+  - Reserved on the heap and can hold anything, with automatic memory management
+  
+  - Intended to function as a simple, constant-size stack, referred to here as "the structure"
+    - The structure itself provides no semantic information about the data it manages 
+    - Any code that accesses this data should "know" at the time of access what is contained
+    - All stored "members" are values (references will just get copied)
+      - This means pointers are the only way to pass by reference
 
-	void_array(const size_t _members) : members(_members), data(make_unique<shared<void>[]>(_members)) {}
+  - In most use cases, this should function analogously to a lambda capture by value, but it will ALWAYS be reserved on the heap
+    - While analogous, performance will be significantly worse
+    - Only use this when requirements dictate "capture" without lambdas at the caller
+
+  - Another valid analogue would be a type-erased std::tuple
+    - Similarly, do not expect comparable performance
+--------------------------------------------------------------------------------------------------*/
+struct void_array {
+	const size_t capacity;
+
+	void_array(const size_t _capacity) : capacity(_capacity), data(make_unique<shared<void>[]>(_capacity)) {}
 
 	// peeks at/gets the data [index] elements into the structure and puts it on the stack as a variable of type T
 	template<typename T> inline T peek(const size_t index) const { return *(T*)data[index].get(); }
