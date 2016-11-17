@@ -38,6 +38,17 @@ namespace UI
 
     static constexpr GLenum ImGuiDrawType = (sizeof(ImDrawIdx) == 2) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
 
+    static double time = 0.0;
+
+    static GLtexture fontTex;
+    static GLprogram shader;
+
+    static GLuniform<GLsampler> texLoc;
+    static GLuniform<mat4> projLoc;
+
+    static GLbuffer buffer, elements;
+    static GLVAO vao;
+
     /**
      * \brief The implementation for retrieving the clipboard's text for ImGui.
      *
