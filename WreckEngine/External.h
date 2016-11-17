@@ -18,9 +18,9 @@ struct Window {
 
     static inline int getKey(const int keyCode) { return glfwGetKey(window, keyCode); }
 
-    static inline void resize_callback(GLFWwindowsizefun f) { glfwSetWindowSizeCallback(window, f); }
+    static inline void resizeCallback(GLFWwindowsizefun f) { glfwSetWindowSizeCallback(window, f); }
 
-    static void default_resize(GLFWwindow* window, int width, int height);
+    static void defaultResize(GLFWwindow* window, int width, int height);
 
     class ResizeHandler {}; // inherit or create handler of type to handle window resize events
 };
@@ -45,13 +45,13 @@ struct Mouse {
 
     static void update();
 
-    static inline void button_callback (GLFWmousebuttonfun f) { glfwSetMouseButtonCallback (Window::window, f); }
-    static inline void move_callback   (GLFWcursorposfun f)   { glfwSetCursorPosCallback   (Window::window, f); }
+    static inline void buttonCallback (GLFWmousebuttonfun f) { glfwSetMouseButtonCallback (Window::window, f); }
+    static inline void moveCallback   (GLFWcursorposfun f)   { glfwSetCursorPosCallback   (Window::window, f); }
     static inline void scroll_callback (GLFWscrollfun f)      { glfwSetScrollCallback      (Window::window, f); }
 
-    static void default_button(GLFWwindow* window, int button, int action, int mods);
-    static void default_move(GLFWwindow* window, double x, double y);
-    static void default_scroll(GLFWwindow* window, double xoffset, double yoffset);
+    static void defaultButton(GLFWwindow* window, int button, int action, int mods);
+    static void defaultMove(GLFWwindow* window, double x, double y);
+    static void defaultScroll(GLFWwindow* window, double xoffset, double yoffset);
 
     class ButtonHandler {}; // inherit or create handler of type to handle mouse button events
     class MoveHandler   {}; // inherit or create handler of type to handle mouse move events

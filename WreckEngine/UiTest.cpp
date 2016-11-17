@@ -2,7 +2,7 @@
 #include "UI.h"
 
 namespace {
-    void glob(Event::Handler::param e) {
+    void glob(Event::Handler::param_t e) {
         static uint32_t mouse_button = Event::Message::get("mouse_button");
         if (e.id == mouse_button) {
             printf("Global: Mods %d\n", e.data.peek<int>(2));
@@ -56,7 +56,7 @@ struct UiTestEntity : public Entity
         GL_CHECK(glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w));
     }
 
-    void testHandler(Event::Handler::param e) {
+    void testHandler(Event::Handler::param_t e) {
         static uint32_t mouse_button = Event::Message::get("mouse_button");
         if (e.id == mouse_button) {
             printf("UiTestEntity: Action %d\n", e.data.peek<int>(1));
@@ -86,7 +86,7 @@ UiTest::~UiTest()
     ImGui::Shutdown();
 }
 
-void UiTest::testHandler(Event::Handler::param e) {
+void UiTest::testHandler(Event::Handler::param_t e) {
     static uint32_t mouse_button = Event::Message::get("mouse_button");
     if (e.id == mouse_button) {
         printf("UiTest: Button %d\n", e.data.peek<int>(0));

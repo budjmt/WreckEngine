@@ -101,35 +101,34 @@ namespace Event {
     // Handles Messages received from the Dispatcher; member of class Owner
     class Handler {
     public:
-        typedef const Message& param;
-        typedef std::function<void(param)> func;
+        typedef const Message& param_t;
+        typedef std::function<void(param_t)> func_t;
 
         const EndpointData info;
 
-        template<class Owner> Handler(Owner* _this, const func f) : Handler(_this, Random::get(), f) {}
-        template<class Owner> Handler(Owner* _this, const std::string name, const func f) : Handler(_this, get(name), f) {}
-        template<class Owner> Handler(Owner* _this, const uint32_t _id, const func f) : info(EndpointData(_id, _this)), handler(f) { register_self(); }
+        template<class Owner> Handler(Owner* _this, const func_t f) : Handler(_this, Random::get(), f) {}
+        template<class Owner> Handler(Owner* _this, const std::string name, const func_t f) : Handler(_this, get(name), f) {}
+        template<class Owner> Handler(Owner* _this, const uint32_t _id, const func_t f) : info(EndpointData(_id, _this)), handler(f) { register_self(); }
 
         Handler(const Handler& other) : info(other.info), handler(other.handler) { register_self(); }
         Handler(Handler&& other) : info(other.info), handler(other.handler) { register_self(); }
         ~Handler() { unregister_self(); }
 
-        func handler;
-        
-        // note that this function WILL be bound to a specific object, which won't be updated on delete or copy
-        // take that into account when assigning an object to handle it
-        template<class Owner> 
-        static func wrap_member_func(Owner* _this, void (Owner::*member_handler)(param)) { 
-            return [_this, member_handler](param e) { 
-                (_this->*member_handler)(e); 
-            }; 
-        }
+        func_t handler;
 
         // processes a Message received from the Dispatcher through the handler function
         inline void process(const Message& e) { handler(e); }
 
-
         UNIQUE_NAMES(private, Handler);
+
+        // note that this function WILL be bound to a specific object, which won't be updated on delete or copy
+        // take that into account when assigning an object to handle it
+        template<class T>
+        static func_t wrap_member_func(T* _this, void (T::*member_handler)(param_t)) {
+            return [_this, member_handler](param_t e) {
+                (_this->*member_handler)(e);
+            };
+        }
 
     private:
 

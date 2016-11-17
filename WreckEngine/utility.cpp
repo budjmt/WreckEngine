@@ -38,16 +38,16 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     Window::window = glfwCreateWindow(width, height, "Wreck Engine", nullptr, nullptr);
     if (!Window::window) exit('w');
     glfwMakeContextCurrent(Window::window);
-    Window::default_resize(Window::window, width, height);
+    Window::defaultResize(Window::window, width, height);
 
     // Center the window
     const GLFWvidmode* vm = glfwGetVideoMode(glfwGetPrimaryMonitor());
     glfwSetWindowPos(Window::window, (vm->width - width) / 2, (vm->height - height) / 2);
 
-    Window::resize_callback(Window::default_resize);
-    Mouse::button_callback(Mouse::default_button);
-    Mouse::move_callback(Mouse::default_move);
-    Mouse::scroll_callback(Mouse::default_scroll);
+    Window::resizeCallback(Window::defaultResize);
+    Mouse::buttonCallback(Mouse::defaultButton);
+    Mouse::moveCallback(Mouse::defaultMove);
+    Mouse::scroll_callback(Mouse::defaultScroll);
 
     Window::cursorMode = GLFW_CURSOR_NORMAL;
     glfwSetInputMode(Window::window, GLFW_CURSOR, Window::cursorMode);
@@ -67,7 +67,7 @@ int Window::cursorMode = GLFW_CURSOR_NORMAL;
 
 Mouse::Info Mouse::info;
 
-void Window::default_resize(GLFWwindow* window, int w, int h) {
+void Window::defaultResize(GLFWwindow* window, int w, int h) {
     width = w;
     height = h;
     aspect = (float) width / height;
@@ -90,7 +90,7 @@ void Mouse::update() {
     info.wheel = 0.f;
 }
 
-void Mouse::default_button(GLFWwindow* window, int button, int action, int mods) {
+void Mouse::defaultButton(GLFWwindow* window, int button, int action, int mods) {
     if (action == GLFW_PRESS) {
         info.setButtonDown(button);
         
@@ -107,7 +107,7 @@ void Mouse::default_button(GLFWwindow* window, int button, int action, int mods)
     Dispatcher::central_trigger.sendBulkEvent<ButtonHandler>(button_id, button, action, mods);
 }
 
-void Mouse::default_move(GLFWwindow* window, double x, double y) {
+void Mouse::defaultMove(GLFWwindow* window, double x, double y) {
     // retrieves the mouse coordinates in screen-space, relative to top-left corner
     info.prev = info.curr;
     info.curr.x =   2 * x / Window::width  - 1;
@@ -120,7 +120,7 @@ void Mouse::default_move(GLFWwindow* window, double x, double y) {
     Dispatcher::central_trigger.sendBulkEvent<MoveHandler>(move_id);
 }
 
-void Mouse::default_scroll(GLFWwindow* window, double xoffset, double yoffset) {
+void Mouse::defaultScroll(GLFWwindow* window, double xoffset, double yoffset) {
     info.wheel += (float) yoffset;
 
     static uint32_t scroll_id = Message::add("mouse_scroll");

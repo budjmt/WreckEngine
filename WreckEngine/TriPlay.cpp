@@ -21,7 +21,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(prog)
 	auto mainsp = mainState.get();
 
 	ADD_EVENT(start_game);
-	menuState->handler_func = [this, mainsp, start_game_event](Event::Handler::param e) {
+	menuState->handler_func = [this, mainsp, start_game_event](Event::Handler::param_t e) {
 		if (e.id == start_game_event) {
 			currState = mainsp;
 			glClearColor(0, 0, 0, 1);
@@ -38,7 +38,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(prog)
 
 	glClearColor(0, 0.5f, 0.2f, 1);
 
-	mainState->handler_func = [](Event::Handler::param e) {
+	mainState->handler_func = [](Event::Handler::param_t e) {
 		//nothing right now
 	};
 	addState(mainState);

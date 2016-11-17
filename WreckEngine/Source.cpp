@@ -46,7 +46,7 @@ void init() {
     }
 
     prevFrame = glfwGetTime();
-    Mouse::default_move(Window::window, 0, 0);//this is cheating but it works for initializing the mouse
+    Mouse::defaultMove(Window::window, 0, 0);//this is cheating but it works for initializing the mouse
 
     initGraphics();
 

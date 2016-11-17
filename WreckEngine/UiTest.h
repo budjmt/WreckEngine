@@ -20,7 +20,7 @@ public:
      */
     ~UiTest();
 
-    void testHandler(Event::Handler::param e);
+    void testHandler(Event::Handler::param_t e);
 
     Event::Handler button_handler = Event::make_handler<Mouse::ButtonHandler>(Event::Handler::wrap_member_func(this, &UiTest::testHandler));
 };
