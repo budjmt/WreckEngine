@@ -18,17 +18,17 @@
 //-----------------------------------------
 class State {
 public:
-	State(const std::string _name) 
-		: name(_name), handler(EventHandler(this, EventHandler::add(name + "_state"), nullptr)) {}
+    State(const std::string _name) 
+        : name(_name), handler(Event::Handler(this, Event::Handler::add(name + "_state"), nullptr)) {}
 
-	std::function<void(Event)>& handler_func = handler.handler;
+    Event::Handler::func_t& handler_func = handler.handler;
 
-	void addEntity(shared<Entity> e);
+    void addEntity(shared<Entity> e);
 
-	void update(double dt);
-	void draw();
+    void update(double dt);
+    void draw();
 private:
-	const std::string name;
-	std::vector<shared<Entity>> entities;
-	EventHandler handler;
+    const std::string name;
+    std::vector<shared<Entity>> entities;
+    Event::Handler handler;
 };

@@ -11,11 +11,9 @@ class Transform
 {
 public:
 	Transform();
-	Transform* clone() const;
 
 	struct alignas(16) mat_cache {
 		mat4 translate, rotate, scale, world;
-		mat_cache* clone() { return new mat_cache(*this); }
 		virtual ~mat_cache() = default;
 		void* operator new(size_t i) { return _aligned_malloc(i, 16); }
 		void operator delete(void* p) { _aligned_free(p); }

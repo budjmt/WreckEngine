@@ -1,6 +1,15 @@
 #include "UiTest.h"
 #include "UI.h"
 
+namespace {
+    void glob(Event::Handler::param_t e) {
+        static uint32_t mouse_button = Event::Message::get("mouse_button");
+        if (e.id == mouse_button) {
+            printf("Global: Mods %d\n", e.data.peek<int>(2));
+        }
+    }
+}
+
 struct UiTestEntity : public Entity
 {
     ImVec4 clear_color = ImColor(100, 149, 237);
@@ -46,15 +55,16 @@ struct UiTestEntity : public Entity
         UI::Draw();
         GL_CHECK(glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w));
     }
-};
 
-struct UiTestState : public State
-{
-    UiTestState()
-        : State("UiTestState")
-    {
-        addEntity(make_shared<UiTestEntity>());
+    void testHandler(Event::Handler::param_t e) {
+        static uint32_t mouse_button = Event::Message::get("mouse_button");
+        if (e.id == mouse_button) {
+            printf("UiTestEntity: Action %d\n", e.data.peek<int>(1));
+        }
     }
+
+    Event::Handler button_handler = Event::make_handler<Mouse::ButtonHandler>(Event::Handler::wrap_member_func(this, &UiTestEntity::testHandler));
+    Event::Handler glob_button_handler = Event::make_handler<Mouse::ButtonHandler>(&glob);
 };
 
 /**
@@ -63,7 +73,9 @@ struct UiTestState : public State
 UiTest::UiTest()
 {
     drawDebug = false;
-    addState(make_shared<UiTestState>());
+    auto s = make_shared<State>("UiTestState");
+    s->addEntity(make_shared<UiTestEntity>());
+    addState(s);
 }
 
 /**
@@ -72,4 +84,11 @@ UiTest::UiTest()
 UiTest::~UiTest()
 {
     ImGui::Shutdown();
+}
+
+void UiTest::testHandler(Event::Handler::param_t e) {
+    static uint32_t mouse_button = Event::Message::get("mouse_button");
+    if (e.id == mouse_button) {
+        printf("UiTest: Button %d\n", e.data.peek<int>(0));
+    }
 }

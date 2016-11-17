@@ -2,6 +2,8 @@
 
 #include <imgui.h>
 
+#include "gl_structs.h"
+
 namespace UI
 {
     /**

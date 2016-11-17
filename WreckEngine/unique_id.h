@@ -43,12 +43,10 @@ private:
 
 template<typename T> std::unordered_map<std::string, const uint32_t> unique_name<T>::ids;
 
-#define UNIQUE_TYPE_ID(type) unique_type::index<type>::id
+// use this macro instead of the body, since it's subject to change
+#define UNIQUE_TYPE_ID(type) unique_type::id<type>()
 
-#define PARENT_TYPE(child_t, parent_t) \
-template class unique_type::index<parent_t>; \
-template class unique_type::index<child_t>; \
-template class unique_type::parent_index<parent_t, child_t>
+#define PARENT_TYPE(child_t, parent_t) template class unique_type::parent_index<parent_t, child_t>
 
 #define CHILD_TYPE(parent_t, child_t) PARENT_TYPE(child_t, parent_t)
 
@@ -59,19 +57,12 @@ public:
 	};
 
 	template<typename T>
-	class index {
-	public:
-		static const uint32_t id;
-		operator uint32_t() { return id; }
-		friend unique_type;
-	};
+    static uint32_t id() { static const uint32_t _id = unique_type::register_type(); return _id; }
 
-	// do not use this, it's just used to create parent-child relationships in the macro
-	// an exceptions based approach: http://stackoverflow.com/questions/15832679/how-to-get-a-type-from-type-info-for-template-parameters
+	// do not use this in any code, it's just used to create parent-child relationships in the macro
+	// a slower, more flexible exceptions-based approach: http://stackoverflow.com/questions/15832679/how-to-get-a-type-from-type-info-for-template-parameters
 	template<typename P, typename C>
 	class parent_index {
-		using parent = index<P>;
-		using child  = index<C>;
 		static const int add_result;
 	};
 
@@ -90,6 +81,4 @@ private:
 	static inline int add_child(const uint32_t parent, const uint32_t child) { registry().at(parent).child_ids.insert(child); return 0; }
 };
 
-template<typename T> const uint32_t unique_type::index<T>::id = unique_type::register_type();
-
-template<typename P, typename C> const int unique_type::parent_index<P, C>::add_result = unique_type::add_child(parent::id, child::id);
+template<typename P, typename C> const int unique_type::parent_index<P, C>::add_result = unique_type::add_child(id<P>(), id<C>());

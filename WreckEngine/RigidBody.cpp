@@ -10,8 +10,7 @@ void RigidBody::update(double dt) {
 }
 
 void RigidBody::updateVel(double dt) {
-	_vel += _invMass * (float)dt * netForce;
-	_speed = glm::length(_vel);
+	vel += _invMass * (float)dt * netForce;
 
 	if (_speed < MIN_VEL) {
 		_vel = vec3();
@@ -29,8 +28,7 @@ void RigidBody::updateVel(double dt) {
 }
 
 void RigidBody::updateAngVel(double dt) {
-	_angVel += (float)dt * netAngAccel;
-	_angSpeed = glm::length(_angVel);
+	angVel += (float)dt * netAngAccel;
 
 	if (_angSpeed < MIN_VEL) {
 		_angVel = vec3();
@@ -50,9 +48,9 @@ void RigidBody::applyGravity() {
 	netForce += vec3(0, _mass * -g * (1 - _floating), 0);
 }
 
-//the coefficient here is equivalent to 0.5 * density of fluid (here just air) * C_d (drag coeff), which we boil down to C_d
-//C_d is dependent on the object's shape and the Reynolds Number, R_e = internal forces / viscous forces = mag(v) * D / visc, 
-//where D is some characteristic diameter or linear dimension and visc is the kinematic viscosity = viscosity / density
+//the coefficient here is equivalent to 0.5 * density of fluid (here just air) * C_d (drag coefficient), which we boil down to C_d
+//C_d is dependent on the object's shape and the Reynolds Number, R_e = internal forces / viscous forces = mag(v) * D / viscosity, 
+//where D is some characteristic diameter or linear dimension and viscosity is the kinematic viscosity = viscosity / density
 vec3 RigidBody::quadDrag(float c_d, vec3 v, vec3 h)
 {
 	return c_d * glm::dot(v, v) * h;

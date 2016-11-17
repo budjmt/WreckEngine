@@ -22,11 +22,14 @@
     <Filter Include="Utilities">
       <UniqueIdentifier>{a992f258-3045-47b8-8658-66bcce393788}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Debug">
+      <UniqueIdentifier>{70d161f0-d047-43c8-ade9-036bfe428dc5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Render">
+      <UniqueIdentifier>{39cc6575-67eb-4652-a78d-4a1c30752488}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Drawable.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Event.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -40,9 +43,6 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="State.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="Text.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="ColliderEntity.cpp">
@@ -60,9 +60,6 @@
     <ClCompile Include="UiTest.cpp">
       <Filter>Games</Filter>
     </ClCompile>
-    <ClCompile Include="DrawDebug.cpp">
-      <Filter>Misc</Filter>
-    </ClCompile>
     <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp">
       <Filter>ThirdParty\imgui</Filter>
     </ClCompile>
@@ -72,12 +69,6 @@
     <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp">
       <Filter>ThirdParty\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="gl_structs.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="GLDebug.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
     <ClCompile Include="MarchMath.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
@@ -85,9 +76,6 @@
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="ShaderHelper.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="UI.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="utility.cpp">
@@ -108,11 +96,29 @@
     <ClCompile Include="CollisionManager.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
-    <ClCompile Include="DrawMesh.cpp">
-      <Filter>Misc</Filter>
-    </ClCompile>
     <ClCompile Include="RigidBody.cpp">
       <Filter>Misc</Filter>
+    </ClCompile>
+    <ClCompile Include="GLDebug.cpp">
+      <Filter>Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawDebug.cpp">
+      <Filter>Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="Text.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Drawable.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawMesh.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="gl_structs.cpp">
+      <Filter>Utilities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -134,12 +140,6 @@
     <ClInclude Include="gl_structs.h">
       <Filter>Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="GLError.h">
-      <Filter>Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="GLDebug.h">
-      <Filter>Utilities</Filter>
-    </ClInclude>
     <ClInclude Include="ModelHelper.h">
       <Filter>Utilities</Filter>
     </ClInclude>
@@ -152,26 +152,14 @@
     <ClInclude Include="Mesh.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Drawable.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="State.h">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="DrawDebug.h">
-      <Filter>Misc</Filter>
-    </ClInclude>
-    <ClInclude Include="DebugBenchmark.h">
-      <Filter>Misc</Filter>
     </ClInclude>
     <ClInclude Include="MarchMath.h">
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="External.h">
       <Filter>Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="Text.h">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Entity.h">
       <Filter>Entities</Filter>
@@ -188,9 +176,6 @@
     <ClInclude Include="ThirdParty\Include\imconfig.h">
       <Filter>ThirdParty\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="UI.h">
-      <Filter>Utilities</Filter>
-    </ClInclude>
     <ClInclude Include="TriPlay.h">
       <Filter>Games</Filter>
     </ClInclude>
@@ -206,14 +191,38 @@
     <ClInclude Include="CollisionManager.h">
       <Filter>Misc</Filter>
     </ClInclude>
-    <ClInclude Include="DrawMesh.h">
-      <Filter>Misc</Filter>
-    </ClInclude>
     <ClInclude Include="RigidBody.h">
       <Filter>Misc</Filter>
     </ClInclude>
     <ClInclude Include="Transform.h">
       <Filter>Misc</Filter>
+    </ClInclude>
+    <ClInclude Include="GLError.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="GLDebug.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugBenchmark.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawDebug.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="Text.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Drawable.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawMesh.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="GLmanager.h">
+      <Filter>Utilities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
