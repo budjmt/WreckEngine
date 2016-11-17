@@ -47,7 +47,7 @@ struct Mouse {
 
     static inline void buttonCallback (GLFWmousebuttonfun f) { glfwSetMouseButtonCallback (Window::window, f); }
     static inline void moveCallback   (GLFWcursorposfun f)   { glfwSetCursorPosCallback   (Window::window, f); }
-    static inline void scroll_callback (GLFWscrollfun f)      { glfwSetScrollCallback      (Window::window, f); }
+    static inline void scrollCallback (GLFWscrollfun f)      { glfwSetScrollCallback      (Window::window, f); }
 
     static void defaultButton(GLFWwindow* window, int button, int action, int mods);
     static void defaultMove(GLFWwindow* window, double x, double y);

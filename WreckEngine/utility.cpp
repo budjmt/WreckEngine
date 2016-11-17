@@ -47,7 +47,7 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     Window::resizeCallback(Window::defaultResize);
     Mouse::buttonCallback(Mouse::defaultButton);
     Mouse::moveCallback(Mouse::defaultMove);
-    Mouse::scroll_callback(Mouse::defaultScroll);
+    Mouse::scrollCallback(Mouse::defaultScroll);
 
     Window::cursorMode = GLFW_CURSOR_NORMAL;
     glfwSetInputMode(Window::window, GLFW_CURSOR, Window::cursorMode);
