@@ -43,6 +43,7 @@ template<class T> using alloc = alloc_ptr<T>;
 
   - Another valid analogue would be a type-erased std::tuple
     - Similarly, do not expect comparable performance
+    - That being said, this is still pretty fast
 --------------------------------------------------------------------------------------------------*/
 struct void_array {
 	const size_t capacity;
@@ -61,12 +62,12 @@ struct void_array {
 
 	// extracts the contents of the structure in the form of a tuple on the stack, according to the explicit types passed
 	template<typename T1, typename T2, typename... Args>
-	std::tuple<T1, T2, Args...> extract() const { return std::tuple_cat(peekTuple<T1>(members - sizeof...(Args) - 2), extractData<T2, Args...>()); }
+	auto extract() const { return std::tuple_cat(peekTuple<T1>(capacity - sizeof...(Args) - 2), extract<T2, Args...>()); }
 	// extracts the contents of the structure in the form of a tuple on the stack, according to the explicit types passed
-	template<typename T> std::tuple<T> extract() const { return peekTuple<T>(members - 1); }
+	template<typename T> auto extract() const { return peekTuple<T>(capacity - 1); }
 
 private:
 	unique<shared<void>[]> data;
 	size_t size = 0;
-	template<typename T> inline std::tuple<T> peekTuple(const size_t index) const { return std::tuple<T>(peek(index)); }
+	template<typename T> inline auto peekTuple(const size_t index) const { return std::tuple<T>(peek<T>(index)); }
 };
