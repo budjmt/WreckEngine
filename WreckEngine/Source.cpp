@@ -22,6 +22,7 @@ unique<GLEWmanager> glew;
 #include "ShaderHelper.h"
 #include "ModelHelper.h"
 #include "External.h"
+#include "Render.h"
 #include "TriPlay.h"
 #include "UiTest.h"
 #include "UI.h"
@@ -52,10 +53,12 @@ void init() {
 
     UI::Initialize();
     Text::init();
+    Render::MaterialRenderer::init(4);
+    Render::PostProcessRenderer::init();
 
     // this won't be initialized until after GLFW/GLEW are
-    //game = make_unique<TriPlay>(shaderProg);
-    game = make_unique<UiTest>();
+    game = make_unique<TriPlay>(shaderProg);
+    //game = make_unique<UiTest>();
 }
 
 void initGraphics() {

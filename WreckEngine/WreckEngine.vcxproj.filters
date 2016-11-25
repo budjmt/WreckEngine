@@ -120,6 +120,15 @@
     <ClCompile Include="gl_structs.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="Render.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcess.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="unique_id.h">
@@ -223,6 +232,15 @@
     </ClInclude>
     <ClInclude Include="GLmanager.h">
       <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Render.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcess.h">
+      <Filter>Render</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

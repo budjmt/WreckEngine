@@ -93,6 +93,8 @@
     <LibraryPath>$(ProjectDir)ThirdParty\Lib\Win$(PlatformArchitecture);$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)Build\Win$(PlatformArchitecture)\$(Configuration)\</OutDir>
     <IntDir>$(OutDir)obj\</IntDir>
+    <CodeAnalysisRuleSet>C:\Program Files (x86)\Microsoft Visual Studio 14.0\Team Tools\Static Analysis Tools\Rule Sets\NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -140,6 +142,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -180,6 +183,9 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GLDebug.cpp" />
     <ClCompile Include="gl_structs.cpp" />
+    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="PostProcess.cpp" />
+    <ClCompile Include="Render.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui_demo.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp" />
@@ -217,10 +223,13 @@
     <ClInclude Include="GLmanager.h" />
     <ClInclude Include="gl_structs.h" />
     <ClInclude Include="MarchMath.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="ModelHelper.h" />
+    <ClInclude Include="PostProcess.h" />
     <ClInclude Include="property.h" />
     <ClInclude Include="Random.h" />
+    <ClInclude Include="Render.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ShaderHelper.h" />
     <ClInclude Include="smart_ptr.h" />

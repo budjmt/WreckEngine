@@ -234,8 +234,7 @@ namespace UI
         GLattrarr attrSetup;
 
         buffer.bind();
-        attrSetup.add<GLfloat>(2);
-        attrSetup.add<GLfloat>(2);
+        attrSetup.add<vec2>(2);
         attrSetup.add<GLubyte>(4, 0, GL_TRUE);
         attrSetup.apply();
 

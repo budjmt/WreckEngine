@@ -63,7 +63,7 @@ struct InstMesh {
 		insts.data(&instances[0]);
 	}
 	inline void draw() const {
-		glDrawElementsInstanced(GL_TRIANGLES, numVerts, GL_UNSIGNED_INT, nullptr, instances.size());
+		glDrawElementsInstanced(GL_TRIANGLES, numVerts, GLtype<uint32_t>(), nullptr, instances.size());
 	}
 
 private:
