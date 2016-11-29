@@ -9,13 +9,13 @@
 #include "smart_ptr.h"
 
 #include "State.h"
+#include "Render.h"
 #include "DrawDebug.h"
 
 class Game
 {
 public:
-    Game() = default;
-    Game(GLprogram prog);
+    Game(const size_t gBufferSize) : renderer(Render::FullRenderer(gBufferSize)) {}
     virtual ~Game() = default;
 
     void addState(shared<State> s);
@@ -23,9 +23,9 @@ public:
     virtual void update(double dt);
     virtual void draw();
 protected:
-    GLprogram shader;
+    Render::FullRenderer renderer;
     std::vector<shared<State>> states;
-    State* currState { nullptr };
-    bool drawDebug { true };
+    State* currState = nullptr;
+    bool drawDebug = true;
 };
 

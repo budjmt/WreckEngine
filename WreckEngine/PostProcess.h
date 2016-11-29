@@ -13,6 +13,8 @@ namespace Render {
         GLframebuffer fbo;
         PostProcessRenderer* renderer;
 
+        virtual ~PostProcess() = default;
+
         static void init();
 
         static GLprogram make_program(const GLshader& fragment) {
@@ -53,6 +55,8 @@ namespace Render {
             this->chainsTo(p);
         }
 
+        bool endsChain() { return chain.empty(); }
+
     protected:
         std::vector<PostProcess*> chain;
         friend class PostProcessRenderer;
@@ -66,7 +70,7 @@ namespace Render {
 
         bool ready() { return numReady == dependencies.size(); }
         void apply(PostProcess* prev) override {
-            ++numReady; // don't need validity check; only prev ptrs are dependencies
+            ++numReady; // don't need validity check; only dependencies should show up as prev ptrs
             if (ready())
                 PostProcess::apply(this);
         }

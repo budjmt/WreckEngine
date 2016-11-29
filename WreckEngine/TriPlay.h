@@ -16,12 +16,10 @@
 class TriPlay : public Game
 {
 public:
-	TriPlay() = default;
 	TriPlay(GLprogram prog);
 	void update(double dt);
 	void draw();
 private:
-	GLprogram program;
 	shared<Entity> me;
 };
 

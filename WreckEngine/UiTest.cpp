@@ -70,7 +70,7 @@ struct UiTestEntity : public Entity
 /**
  * \brief Creates a new UI test game.
  */
-UiTest::UiTest()
+UiTest::UiTest() : Game(1)
 {
     drawDebug = false;
     auto s = make_shared<State>("UiTestState");

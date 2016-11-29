@@ -16,16 +16,14 @@ public:
 	
 	static Camera* main;
 
-	void updateCamMat(GLuniform<mat4>& camLoc);
+	mat4 getCamMat();
 	void update(double dt);
 	void draw();
 
-	GLuniform<mat4> cameraMatrix;
-
 	float zoom;
-	vec3 getForward();
-	vec3 getUp();
-	vec3 getRight();
+	vec3 forward();
+	vec3 up();
+	vec3 right();
 	void turn(float dx,float dy);
 	vec3 getLookAt(float units = 1.f);
 	void updateProjection();

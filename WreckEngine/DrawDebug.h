@@ -15,11 +15,11 @@
 
 #include <functional>
 
-#if defined(_DEBUG) && !defined(NDEBUG)
+//#if defined(_DEBUG) && !defined(NDEBUG)
 #define DEBUG true
-#else
-#define DEBUG false
-#endif
+//#else
+//#define DEBUG false
+//#endif
 
 constexpr size_t MAX_VECTORS = 2500;
 constexpr size_t MAX_SPHERES = 1000;
@@ -57,13 +57,14 @@ struct InstMesh {
 		attrSetup.apply(baseIndex);
 	}
 	
-	inline void bind() const { vao.bind(); }
 	inline void update() const {
+        vao.bind();
 		insts.bind();
 		insts.data(&instances[0]);
 	}
-	inline void draw() const {
-		glDrawElementsInstanced(GL_TRIANGLES, numVerts, GLtype<uint32_t>(), nullptr, instances.size());
+    inline void draw(Render::MaterialRenderer* renderer, Render::Info* mat, const size_t group) const {
+		//glDrawElementsInstanced(GL_TRIANGLES, numVerts, GLtype<uint32_t>(), nullptr, instances.size());
+        renderer->scheduleDrawElements(group, &vao, mat, GL_TRIANGLES, numVerts, GLtype<uint32_t>(), instances.size());
 	}
 
 private:
@@ -72,37 +73,40 @@ private:
 	GLbuffer verts, elems, insts;
 };
 
-class DrawDebug
-{
+class DrawDebug {
 public:
 	static DrawDebug& getInstance();
 	void camera(Camera* c);
 
 	//this is the actual draw call
-	void draw();
+	void draw(Render::MaterialRenderer* r);
 
 	//these are called externally for drawing stuff
 	void drawDebugVector(vec3 start, vec3 end, vec3 color = vec3(0.7f, 1, 0));
 	void drawDebugSphere(vec3 pos, float rad, vec3 color = vec3(0.8f, 0.7f, 1.f), float opacity = 0.3f);
 	void drawDebugBox(vec3 pos, float l, vec3 color = vec3(1.f), float opacity = 1.f) { drawDebugBox(pos, l, l, l, color, opacity); };
 	void drawDebugBox(vec3 pos, float w, float h, float d, vec3 color = vec3(1.f), float opacity = 1.f);
+
+    uint32_t wireframeIndex;
 private:
 	DrawDebug();
 	DrawDebug(const DrawDebug&) = delete;
 	void operator=(const DrawDebug&) = delete;
 
-	//these are to separate the individual processes
-	void drawVectors();
-	void drawSpheres();
-	void drawBoxes();
+    //these are to separate the individual processes
+    void drawVectors();
+    void drawSpheres();
+    void drawBoxes();
 
-	Camera* cam = nullptr;
-	GLuniform<mat4> vecCamLoc, meshCamLoc;
+    Camera* cam = nullptr;
+    GLresource<mat4> vecCam, meshCam;
 
-	shared<Mesh> arrow, sphere, box;
+    shared<Mesh> arrow, sphere, box;
 	size_t numArrowVerts, numSphereVerts, numBoxVerts;
 
-	GLprogram vecShader, meshShader;
+    void setRenderer(Render::MaterialRenderer* r);
+    Render::MaterialRenderer* renderer;
+    Render::Info vecMat, meshMat;
 	
 	struct m_MeshData { vec4 color; mat4 transform; };
 

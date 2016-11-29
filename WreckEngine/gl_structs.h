@@ -40,6 +40,8 @@ struct GLVAO;
 struct GLshader;
 struct GLprogram;
 
+struct GLdepthstencil;
+
 // maps primitive types to their matching GLenum values, (if applicable) or returns GL_FALSE.
 template<typename T> inline constexpr GLenum GLtype()  { return GL_FALSE; }
 template<> inline constexpr GLenum GLtype<GLbyte>()    { return GL_BYTE; }
@@ -50,6 +52,9 @@ template<> inline constexpr GLenum GLtype<GLint>()     { return GL_INT; }
 template<> inline constexpr GLenum GLtype<GLuint>()    { return GL_UNSIGNED_INT; }
 template<> inline constexpr GLenum GLtype<GLfloat>()   { return GL_FLOAT; }
 template<> inline constexpr GLenum GLtype<GLdouble>()  { return GL_DOUBLE; }
+
+template<> inline constexpr GLenum GLtype<GLdepthstencil>() { return GL_UNSIGNED_INT_24_8; }
+
 template<> inline constexpr GLenum GLtype<GLtexture>() { return GL_TEXTURE; }
 template<> inline constexpr GLenum GLtype<GLbuffer>()  { return GL_BUFFER; }
 template<> inline constexpr GLenum GLtype<GLVAO>()     { return GL_VERTEX_ARRAY; }
@@ -251,6 +256,7 @@ struct GLprogram {
     inline void use() const {
         GL_CHECK(glUseProgram(*program));
     }
+    
     // used for retrieving uniform variables (of type T)
     template<typename T> 
     inline GLuniform<T> getUniform(const char* name) const {
@@ -261,7 +267,7 @@ struct GLprogram {
 
     // convenience function for setting a one time uniform value, e.g. a GLsampler 
     template<typename T> 
-    inline void setOnce(const char* name, const T value) const { getUniform<T>(name).update(value); }
+    inline void setOnce(const char* name, const T& value) const { getUniform<T>(name).update(value); }
 };
 
 // allows access to frame buffers
@@ -277,7 +283,7 @@ struct GLframebuffer {
 
     inline bool valid() const { return *framebuffer != def; }
 
-    inline GLenum check() { auto res = GL_CHECK(glCheckFramebufferStatus(type)); return res; }
+    inline GLenum check() { GLenum res; GL_CHECK(res = glCheckFramebufferStatus(type)); return res; }
     inline bool checkComplete() { return check() == GL_FRAMEBUFFER_COMPLETE; }
     inline bool isBound() { return *framebuffer == boundFBO; }
 
@@ -310,7 +316,7 @@ struct GLframebuffer {
     // attaches a texture to the frame buffer for the specified output.
     // note that textures attached to depth and/or stencil should use the correct internal format, e.g. GL_DEPTH24_STENCIL8
     void attachTexture(const GLtexture& tex, Attachment attachment) {
-        assert(colorBuffers.size() + 1 < MAX_COLOR_ATTACHMENTS);
+        assert((GLint)(colorBuffers.size() + 1) < MAX_COLOR_ATTACHMENTS);
 
         if (attachment == Attachment::Color) {
             GL_CHECK(glFramebufferTexture2D(type, attachment + colorBuffers.size(), tex.type, tex(), 0));
@@ -327,7 +333,8 @@ struct GLframebuffer {
         GL_CHECK(glFramebufferTexture2D(type, attachment + index, tex.type, tex(), 0));
     }
 
-    void unbind() const { boundFBO = 0; GL_CHECK(glBindFramebuffer(type, 0)); }
+    void unbind() const { unbind(type); }
+    static void unbind(GLenum type) { boundFBO = 0; GL_CHECK(glBindFramebuffer(type, 0)); }
 
     // reads [width] x [height] pixels from the frame buffer starting from [x],[y] (lower-left corner) into [dest]
     // relevant to this function: GL_PIXEL_PACK_BUFFER and glPixelStore
@@ -339,14 +346,15 @@ struct GLframebuffer {
         GL_CHECK(glReadPixels(x, y, width, height, texFormat, unpackType, dest));
     }
 
+    // creates a render target. If this is for depth and/or stencil, [from] must be GL_DEPTH_COMPONENT, GL_STENCIL_INDEX, or GL_DEPTH_STENCIL
     template<typename T>
-    static GLtexture createRenderTarget(GLenum format = GL_RGBA) {
+    static GLtexture createRenderTarget(GLenum to = GL_RGBA, GLenum from = GL_RGBA) {
         GLtexture tex;
         tex.create();
         tex.bind();
-        tex.param(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        tex.param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        tex.set2D<T>(nullptr, Window::width, Window::height, format, format);
+        tex.param(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        tex.param(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        tex.set2D<T>(nullptr, Window::width, Window::height, from, to);
         return tex;
     }
 
@@ -462,8 +470,8 @@ struct GLres { virtual void update() const = 0; };
 
 template<typename T>
 class GLresource : public GLres {
-    static_assert(GLuniform<T>::update, "Invalid GLuniform type");
 public:
+    GLresource() = default;
     GLresource(const GLuniform<T> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : location(p.getUniform<T>(name)) {}
     

@@ -3,8 +3,8 @@
 
 DrawDebug::DrawDebug() {
 #if DEBUG
-	vecShader  = loadProgram("Shaders/_debug/vecvertexShader.glsl", "Shaders/_debug/vecfragmentShader.glsl");
-	meshShader = loadProgram("Shaders/_debug/meshvertexShader.glsl", "Shaders/_debug/meshfragmentShader.glsl");
+	auto vecShader  = loadProgram("Shaders/_debug/vecvertexShader.glsl", "Shaders/_debug/vecfragmentShader.glsl");
+	auto meshShader = loadProgram("Shaders/_debug/meshvertexShader.glsl", "Shaders/_debug/meshfragmentShader.glsl");
 	
 	arrow = loadOBJ("Assets/_debug/arrow.obj");
 	if (!arrow) {
@@ -49,8 +49,14 @@ DrawDebug::DrawDebug() {
 
 	vecVAO.unbind();
 
-	vecCamLoc  = vecShader.getUniform<mat4>("cameraMatrix");
-	meshCamLoc = meshShader.getUniform<mat4>("cameraMatrix");
+	vecCam  = GLresource<mat4>(vecShader,  "cameraMatrix");
+	meshCam = GLresource<mat4>(meshShader, "cameraMatrix");
+
+    vecMat.setShaders(vecShader, &vecCam);
+    vecMat.setTextures();
+
+    meshMat.setShaders(meshShader, &meshCam);
+    meshMat.setTextures();
 #endif
 }
 
@@ -61,10 +67,24 @@ DrawDebug& DrawDebug::getInstance() {
 
 void DrawDebug::camera(Camera* c) { cam = c; }
 
-void DrawDebug::draw() {
+void DrawDebug::setRenderer(Render::MaterialRenderer* r) {
+    struct X { 
+        X(DrawDebug* d, Render::MaterialRenderer* r) { 
+            d->wireframeIndex = r->addGroup([]() { glPolygonMode(GL_FRONT_AND_BACK, GL_LINES); }, []() { glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); });
+        }
+    };
+
+    static X addWireframe(this, r);
+    renderer = r;
+}
+
+void DrawDebug::draw(Render::MaterialRenderer* r) {
 #if DEBUG
+    setRenderer(r);
+
 	glEnable(GL_CULL_FACE);
 	
+    if (cam) meshCam.value = vecCam.value = cam->getCamMat();
 	drawVectors();
 	drawSpheres();
 	drawBoxes();
@@ -94,24 +114,17 @@ void DrawDebug::drawVectors() {
 		arrows.instances.push_back({ vec4(c2, 1), translate * rotate * scale });
 	}
 
-	vecShader.use();
-	if (cam) cam->updateCamMat(vecCamLoc);
-
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	vecVAO.bind();
+    vecVAO.bind();
 	vecBuffer.bind();
 	vecBuffer.data(&debugVectors[0]);
-	glDrawArrays(GL_LINES, 0, numVecs / 2);
-
-	meshShader.use();
-	if (cam) cam->updateCamMat(meshCamLoc);
+    renderer->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, numVecs / 2);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	arrows.bind();
 	arrows.update();
-	arrows.draw();
+	arrows.draw(renderer, &meshMat, 0);
 
 	debugVectors.clear();
 	arrows.instances.clear();
@@ -126,16 +139,10 @@ void DrawDebug::drawSpheres() {
 		spheres.instances.push_back({ s.color, translate * scale });
 	}
 
-	meshShader.use();
-	if (cam) cam->updateCamMat(meshCamLoc);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	spheres.bind();
 	spheres.update();
-	spheres.draw();
+	spheres.draw(renderer, &meshMat, 0);
 
-	debugSpheres = std::vector<Sphere>();
+	debugSpheres.clear();
 	spheres.instances.clear();
 }
 
@@ -148,16 +155,12 @@ void DrawDebug::drawBoxes() {
 		boxes.instances.push_back({ debugBoxes[i + 2], translate * scale });
 	}
 
-	meshShader.use();
-	if (cam) cam->updateCamMat(meshCamLoc);
-
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	boxes.bind();
 	boxes.update();
-	boxes.draw();
+	boxes.draw(renderer, &meshMat, wireframeIndex);
 
-	debugBoxes = std::vector<vec4>();
+	debugBoxes.clear();
 	boxes.instances.clear();
 }
 

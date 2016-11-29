@@ -1,11 +1,10 @@
 #include "DrawMesh.h"
 
-DrawMesh::DrawMesh(shared<Mesh> m, const char* texFile, GLprogram shader) : _mesh(m) { setup(texFile, shader); }
+DrawMesh::DrawMesh(Render::MaterialRenderer* r, shared<Mesh> m, const char* texFile, GLprogram shader) : _mesh(m) { renderer = r; setup(texFile, shader); }
 
-DrawMesh::DrawMesh(Mesh::FaceData& fd, Mesh::FaceIndex& fi, const char* texFile, GLprogram shader) : DrawMesh(make_shared<Mesh>(fd, fi), texFile, shader) {}
+DrawMesh::DrawMesh(Render::MaterialRenderer* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, const char* texFile, GLprogram shader) : DrawMesh(r, make_shared<Mesh>(fd, fi), texFile, shader) {}
 
 void DrawMesh::setup(const char* texFile, GLprogram shader) {
-	shaderProg = shader;
 	
 	auto renderData = _mesh->getRenderData();
 
@@ -30,21 +29,19 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 
 	vArray.unbind();
 
-	textures.push_back(genTexture2D(texFile));
-	textures[0].bind();
-
 	// this needs to be refined at some point when multiple samplers come into the picture, probably with the material system
-	shaderProg.use();
-	textureLoc = _shaderProg.getUniform<GLsampler>("uniformTex");
-	textureLoc.update(0);
+	shader.use();
+	shader.setOnce<GLsampler>("uniformTex", 0);
 
-	worldMatrix   = _shaderProg.getUniform<mat4>("worldMatrix");
-	iTworldMatrix = _shaderProg.getUniform<mat4>("iTworldMatrix");
-	colorLoc = _shaderProg.getUniform<vec4>("tint");
+	worldMatrix   = GLresource<mat4>(shader, "worldMatrix");
+	iTworldMatrix = GLresource<mat4>(shader, "iTworldMatrix");;
+	_color = GLresource<vec4>(shader, "tint");
+
+    material.setShaders(shader, &worldMatrix, &iTworldMatrix, &_color);
+    material.setTextures(genTexture2D(texFile));
 }
 
 void DrawMesh::draw(const mat4& world) {
 	Drawable::draw(world);
-	textures[0].bind();
-	GL_CHECK(glDrawElements(GL_TRIANGLES, _mesh->getRenderData()->ebuffer.size(), GLtype<uint32_t>(), nullptr));
+    renderer->scheduleDrawElements(0, &vArray, &material, GL_TRIANGLES, _mesh->getRenderData()->ebuffer.size(), GLtype<uint32_t>());
 }

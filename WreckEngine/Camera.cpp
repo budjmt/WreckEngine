@@ -6,21 +6,20 @@ Camera::Camera(GLprogram shaderProg)
 {
 	if (!main) main = this;
 	updateProjection();
-	cameraMatrix = shaderProg.getUniform<mat4>("cameraMatrix");
 }
 
-void Camera::updateCamMat(GLuniform<mat4>& camLoc) { camLoc.update(projection * view); }
+mat4 Camera::getCamMat() { return projection * view; }
 
 void Camera::update(double dt) {
-	view = glm::lookAt(transform.position(), getLookAt(), getUp());
-	//update projection
-	//updateProjection();
+	view = glm::lookAt(transform.position(), getLookAt(), up());
+	// update projection
+	// updateProjection();
 }
 
 void Camera::draw() {
-	//does NOTHING because it's a CAMERA
-	//or maybe there's debug here
-	//who knows
+	// does NOTHING because it's a CAMERA
+	// or maybe there's debug here
+	// who knows
 }
 
 void Camera::turn(float dx, float dy) {
@@ -28,7 +27,7 @@ void Camera::turn(float dx, float dy) {
 }
 
 vec3 Camera::getLookAt(float units) {
-	return transform.position() + getForward() * units;
+	return transform.position() + forward() * units;
 }
 
 void Camera::updateProjection() {
@@ -37,9 +36,9 @@ void Camera::updateProjection() {
 	projection = glm::perspective(CAM_FOV, Window::aspect, znear, zfar);
 }
 
-vec3 Camera::getForward() { return transform.forward(); }
-vec3 Camera::getUp() {	return transform.up(); }
-vec3 Camera::getRight() { return transform.right(); }
+vec3 Camera::forward() { return transform.forward(); }
+vec3 Camera::up() {	return transform.up(); }
+vec3 Camera::right() { return transform.right(); }
 
 void Camera::mayaCam(Camera* camera, double delta) {
 	
@@ -48,11 +47,11 @@ void Camera::mayaCam(Camera* camera, double delta) {
 	auto mouse = Mouse::info;
 	if (mouse.down) {
 		// mouse coords are represented in screen coords
-		auto dx = (float)(mouse.curr.x - mouse.prev.x) * dt;
-		auto dy = (float)(mouse.curr.y - mouse.prev.y) * dt;
+		auto dx = (float)(mouse.curr.x - mouse.prev.x);
+		auto dy = (float)(mouse.curr.y - mouse.prev.y);
 
 		if (mouse.getButtonState(GLFW_MOUSE_BUTTON_LEFT)) {
-			auto rot = PI * dt;
+			auto rot = PI;
 
 			dx = signf(dx) * dx * dx * rot;
 			dy = signf(dy) * dy * dy * rot;
@@ -62,21 +61,21 @@ void Camera::mayaCam(Camera* camera, double delta) {
 
 			auto look = camera->getLookAt();
 			camera->turn(dx, dy);
-			camera->transform.position = look - camera->getForward();
+			camera->transform.position = look - camera->forward();
 		}
 		else if (mouse.getButtonState(GLFW_MOUSE_BUTTON_RIGHT)) {
-			camera->transform.position += (dx + dy) * 0.5f * camera->getForward();
+			camera->transform.position += (dx + dy) * 0.5f * camera->forward();
 		}
 		else if (mouse.getButtonState(GLFW_MOUSE_BUTTON_MIDDLE)) {
-			camera->transform.position += camera->getRight() * -dx + camera->getUp() * dy;
+			camera->transform.position += camera->right() * -dx + camera->up() * dy;
 		}
 	}
 
 	constexpr auto u = 5.f;
-	if      (Window::getKey(GLFW_KEY_W) == GLFW_PRESS) camera->transform.position += camera->getForward() *  (u * dt);
-	else if (Window::getKey(GLFW_KEY_S) == GLFW_PRESS) camera->transform.position += camera->getForward() * -(u * dt);
-	if      (Window::getKey(GLFW_KEY_D) == GLFW_PRESS) camera->transform.position += camera->getRight()   * -(u * dt);
-	else if (Window::getKey(GLFW_KEY_A) == GLFW_PRESS) camera->transform.position += camera->getRight()   *  (u * dt);
+	if      (Window::getKey(GLFW_KEY_W) == GLFW_PRESS) camera->transform.position += camera->forward() *  (u * dt);
+	else if (Window::getKey(GLFW_KEY_S) == GLFW_PRESS) camera->transform.position += camera->forward() * -(u * dt);
+	if      (Window::getKey(GLFW_KEY_D) == GLFW_PRESS) camera->transform.position += camera->right()   * -(u * dt);
+	else if (Window::getKey(GLFW_KEY_A) == GLFW_PRESS) camera->transform.position += camera->right()   *  (u * dt);
 
 	if      (Window::getKey(GLFW_KEY_UP)    == GLFW_PRESS) camera->transform.position += vec3(0, 1, 0) *  (u * dt);
 	else if (Window::getKey(GLFW_KEY_DOWN)  == GLFW_PRESS) camera->transform.position += vec3(0, 1, 0) * -(u * dt);

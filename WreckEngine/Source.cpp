@@ -41,9 +41,9 @@ using namespace std;
 
 void init() {
     shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
-    if(shaderProg()) {
+    if(shaderProg.valid()) {
         shaderProg.use();
-        shaderProg.getUniform<vec4>("tint").update(vec4(1));
+        shaderProg.setOnce<vec4>("tint", vec4(1));
     }
 
     prevFrame = glfwGetTime();
