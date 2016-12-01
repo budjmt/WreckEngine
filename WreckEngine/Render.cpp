@@ -47,7 +47,7 @@ GLprogram PostProcessRenderer::finalize;
 
 void PostProcessRenderer::init() {
     PostProcess::init();
-    finalize = PostProcess::make_program(loadShader("Shaders/postprocess_final_f.glsl", GL_FRAGMENT_SHADER));
+    finalize = PostProcess::make_program(loadShader("Shaders/postprocess/res_final_f.glsl", GL_FRAGMENT_SHADER));
     finalize.use();
     finalize.setOnce<GLsampler>("render", 0);
 
@@ -109,11 +109,10 @@ void MaterialRenderer::scheduleDrawElements(const size_t group, const GLVAO* vao
 }
 
 void MaterialRenderer::clearOutput() const {
-    //constexpr GLuint clearColor[4] = { 0, 0, 0, 0 };
-    //for (size_t i = 0, gSize = frameBuffer.numOutputs(); i < gSize; ++i)
-    //    GL_CHECK(glClearBufferuiv(GL_COLOR, i, clearColor));
-    //GL_CHECK(glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0));
+    auto color = GLframebuffer::getClearColor();
+    GLframebuffer::setClearColor(0.f, 0.f, 0.f, 0.f);
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
+    GLframebuffer::setClearColor(color.r, color.g, color.b, color.a);
 }
 
 void MaterialRenderer::render() {

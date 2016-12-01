@@ -52,7 +52,6 @@ struct UiTestEntity : public Entity
             ImGui::ShowTestWindow(&show_test_window);
         }
 
-        UI::Draw();
         GL_CHECK(glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w));
     }
 
@@ -84,6 +83,11 @@ UiTest::UiTest() : Game(1)
 UiTest::~UiTest()
 {
     ImGui::Shutdown();
+}
+
+void UiTest::draw() {
+    Game::draw();
+    UI::Draw();
 }
 
 void UiTest::testHandler(Event::Handler::param_t e) {

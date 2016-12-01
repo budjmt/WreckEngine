@@ -296,6 +296,14 @@ struct GLframebuffer {
     inline bool isBound() const { return *framebuffer == boundFBO; }
     inline size_t numOutputs() const { return colorBuffers.size(); }
 
+    static inline vec4 getClearColor() {
+        vec4 color;
+        GL_CHECK(glGetFloatv(GL_COLOR_CLEAR_VALUE, &color.r));
+        return color;
+    }
+
+    static inline void setClearColor(GLclampf r, GLclampf g, GLclampf b, GLclampf a) { GL_CHECK(glClearColor(r, g, b, a)); }
+
     inline void create(const GLenum target = GL_FRAMEBUFFER) {
         if (valid()) return;
         GL_CHECK(glGenFramebuffers(1, framebuffer.get()));
