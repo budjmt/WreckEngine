@@ -145,7 +145,7 @@ private:
 
 // wraps a buffer object on the GPU.
 struct GLbuffer {
-    unique<GLuint, void(*)(GLuint*)> buffer {new GLuint(def), local(delBuffer)};// unique because sharing could cause conflicts
+    shared<GLuint> buffer {new GLuint(def), local(delBuffer)};
     GLenum target, usage;
     size_t size;
     inline WR_GL_OP_PARENS(GLuint, buffer);
@@ -173,6 +173,11 @@ struct GLbuffer {
         GL_CHECK(glBindBuffer(target, 0));
     }
 
+    // invalidates the buffer; used for streaming
+    inline void invalidate() const {
+        GL_CHECK(glBufferData(target, size, nullptr, usage));
+    }
+
     // allocate the buffer after binding to contain [size] bytes from [_data].
     // IMPORTANT: the size of the array [_data] points to must match [size], or there will be access exceptions
     // calling these methods from an unbound buffer is allowed, but will have undefined results
@@ -184,7 +189,7 @@ struct GLbuffer {
     // this version is intended for updates, (for streams) not instantiations
     inline void data(const GLvoid* _data) const {
         assert(usage != GL_STATIC_DRAW && size); // a buffer allocated with static draw should not be updated / a buffer of 0 size should not need updates
-        GL_CHECK(glBufferData(target, size, nullptr, usage));
+        invalidate();
         GL_CHECK(glBufferData(target, size, _data, usage));
     }
 

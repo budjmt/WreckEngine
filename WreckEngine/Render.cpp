@@ -36,8 +36,6 @@ void MaterialRenderer::init(const size_t max_gBufferSize) {
     for (size_t i = 0; i < max_gBufferSize; ++i) {
         gBuffer.push_back(GLframebuffer::createRenderTarget<GLubyte>());
     }
-
-    Group::paramBuffer.create(GL_DRAW_INDIRECT_BUFFER);
 }
 
 PostProcessRenderer::PostProcessRenderer() {
@@ -73,8 +71,6 @@ void PostProcessRenderer::init() {
 
     triangle.unbind();
 }
-
-GLbuffer MaterialRenderer::Group::paramBuffer;
 
 void MaterialRenderer::scheduleDraw(const size_t group, const DrawCall d, const DrawCall::Params p) { 
     assert(renderGroups.size() > group);
@@ -123,7 +119,7 @@ void MaterialRenderer::clearOutput() const {
 void MaterialRenderer::render() {
     frameBuffer.bind();
     clearOutput();
-    assert(frameBuffer.checkComplete());
+
     for (auto& renderGroup : renderGroups) {
         Group::Helper(renderGroup).draw();
     }
@@ -131,11 +127,15 @@ void MaterialRenderer::render() {
 
 void MaterialRenderer::Group::Helper::draw() {
     auto& drawCalls = group.drawCalls;
-    auto& params = group.params;
+    if (drawCalls.empty())
+        return;
 
+    auto& params = group.params;
     assert(drawCalls.size() == params.size());
 
+    auto& paramBuffer = group.paramBuffer;
     paramBuffer.bind();
+    paramBuffer.invalidate();
     paramBuffer.data(group.params.size() * sizeof(DrawCall::Params), &params[0]);
 
     DrawCall::Params* offset = nullptr;

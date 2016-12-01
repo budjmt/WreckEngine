@@ -25,16 +25,24 @@ namespace Render {
         void render();
 
         // returns the index of the added group
-        uint32_t addGroup(std::function<void()> setup, std::function<void()> cleanup) { renderGroups.push_back({ setup, cleanup }); return renderGroups.size() - 1;
-    }
+        uint32_t addGroup(std::function<void()> setup, std::function<void()> cleanup) { 
+            renderGroups.push_back(Group(setup, cleanup)); 
+            return renderGroups.size() - 1;
+        }
     private:
 
         struct Group {
             std::function<void()> setup, cleanup;
+            GLbuffer paramBuffer;
+
             std::vector<DrawCall> drawCalls;
             std::vector<DrawCall::Params> params;
 
-            static GLbuffer paramBuffer;
+            Group(std::function<void()> s, std::function<void()> c) : setup(s), cleanup(c) {
+                paramBuffer.create(GL_DRAW_INDIRECT_BUFFER, GL_STREAM_DRAW);
+                paramBuffer.bind();
+                paramBuffer.data(0, nullptr);
+            };
 
             // RAII helper
             struct Helper {
@@ -46,7 +54,7 @@ namespace Render {
             };
         };
 
-        std::vector<Group> renderGroups = { { []() {}, []() {} } };
+        std::vector<Group> renderGroups = { Group([]() {}, []() {}) };
         GLframebuffer frameBuffer;
     };
 

@@ -27,71 +27,71 @@ constexpr size_t MAX_BOXES = 1000;
 
 template<class T>
 struct InstMesh { 
-	std::vector<T> instances;
+    std::vector<T> instances;
 
-	InstMesh() = default;
-	InstMesh(const Mesh* mesh, const size_t numInsts, const size_t baseIndex, const std::function<void(GLattrarr&)> attrs) {
-		GLattrarr attrSetup;
+    InstMesh() = default;
+    InstMesh(const Mesh* mesh, const size_t numInsts, const size_t baseIndex, const std::function<void(GLattrarr&)> attrs) {
+        GLattrarr attrSetup;
 
-		vao.create();
-		vao.bind();
-		verts.create(GL_ARRAY_BUFFER);
-		insts.create(GL_ARRAY_BUFFER, GL_STREAM_DRAW);
-		elems.create(GL_ELEMENT_ARRAY_BUFFER);
-
-		elems.bind();
-		numVerts = mesh->indices().verts.size();
-		elems.data(sizeof(GLuint) * numVerts, &mesh->indices().verts[0]);
-
-		verts.bind();
-		verts.data(sizeof(vec3) * mesh->data().verts.size(), &mesh->data().verts[0]);
-
-		attrSetup.add<vec3>(1);
-		attrSetup.apply();
-
-		insts.bind();
-		insts.data(sizeof(T) * numInsts, nullptr);
-		instances.reserve(numInsts);
-
-		attrs(attrSetup);
-		attrSetup.apply(baseIndex);
-	}
-	
-	inline void update() const {
+        vao.create();
         vao.bind();
-		insts.bind();
-		insts.data(&instances[0]);
-	}
+        verts.create(GL_ARRAY_BUFFER);
+        insts.create(GL_ARRAY_BUFFER, GL_STREAM_DRAW);
+        elems.create(GL_ELEMENT_ARRAY_BUFFER);
+
+        elems.bind();
+        numVerts = mesh->indices().verts.size();
+        elems.data(sizeof(GLuint) * numVerts, &mesh->indices().verts[0]);
+
+        verts.bind();
+        verts.data(sizeof(vec3) * mesh->data().verts.size(), &mesh->data().verts[0]);
+
+        attrSetup.add<vec3>(1);
+        attrSetup.apply();
+
+        insts.bind();
+        insts.data(sizeof(T) * numInsts, nullptr);
+        instances.reserve(numInsts);
+
+        attrs(attrSetup);
+        attrSetup.apply(baseIndex);
+    }
+    
+    inline void update() const {
+        vao.bind();
+        insts.bind();
+        insts.data(&instances[0]);
+    }
     inline void draw(Render::MaterialRenderer* renderer, Render::Info* mat, const size_t group) const {
-		//glDrawElementsInstanced(GL_TRIANGLES, numVerts, GLtype<uint32_t>(), nullptr, instances.size());
+        //glDrawElementsInstanced(GL_TRIANGLES, numVerts, GLtype<uint32_t>(), nullptr, instances.size());
         renderer->scheduleDrawElements(group, &vao, mat, GL_TRIANGLES, numVerts, GLtype<uint32_t>(), instances.size());
-	}
+    }
 
 private:
-	size_t numVerts;
-	GLVAO vao;
-	GLbuffer verts, elems, insts;
+    size_t numVerts;
+    GLVAO vao;
+    GLbuffer verts, elems, insts;
 };
 
 class DrawDebug {
 public:
-	static DrawDebug& getInstance();
-	void camera(Camera* c);
+    static DrawDebug& getInstance();
+    void camera(Camera* c);
 
-	//this is the actual draw call
-	void draw(Render::MaterialRenderer* r);
+    //this is the actual draw call
+    void draw(Render::MaterialRenderer* r);
 
-	//these are called externally for drawing stuff
-	void drawDebugVector(vec3 start, vec3 end, vec3 color = vec3(0.7f, 1, 0));
-	void drawDebugSphere(vec3 pos, float rad, vec3 color = vec3(0.8f, 0.7f, 1.f), float opacity = 0.3f);
-	void drawDebugBox(vec3 pos, float l, vec3 color = vec3(1.f), float opacity = 1.f) { drawDebugBox(pos, l, l, l, color, opacity); };
-	void drawDebugBox(vec3 pos, float w, float h, float d, vec3 color = vec3(1.f), float opacity = 1.f);
+    //these are called externally for drawing stuff
+    void drawDebugVector(vec3 start, vec3 end, vec3 color = vec3(0.7f, 1, 0));
+    void drawDebugSphere(vec3 pos, float rad, vec3 color = vec3(0.8f, 0.7f, 1.f), float opacity = 0.3f);
+    void drawDebugBox(vec3 pos, float l, vec3 color = vec3(1.f), float opacity = 1.f) { drawDebugBox(pos, l, l, l, color, opacity); };
+    void drawDebugBox(vec3 pos, float w, float h, float d, vec3 color = vec3(1.f), float opacity = 1.f);
 
     uint32_t wireframeIndex;
 private:
-	DrawDebug();
-	DrawDebug(const DrawDebug&) = delete;
-	void operator=(const DrawDebug&) = delete;
+    DrawDebug();
+    DrawDebug(const DrawDebug&) = delete;
+    void operator=(const DrawDebug&) = delete;
 
     //these are to separate the individual processes
     void drawVectors();
@@ -99,23 +99,23 @@ private:
     void drawBoxes();
 
     Camera* cam = nullptr;
-    GLresource<mat4> vecCam, meshCam;
+    GLuniform<mat4> vecCam, meshCam;
 
     shared<Mesh> arrow, sphere, box;
 
     void setRenderer(Render::MaterialRenderer* r);
     Render::MaterialRenderer* renderer;
     Render::Info vecMat, meshMat;
-	
-	struct m_MeshData { vec4 color; mat4 transform; };
+    
+    struct m_MeshData { vec4 color; mat4 transform; };
 
-	GLVAO vecVAO;
-	GLbuffer vecBuffer;
-	InstMesh<m_MeshData> arrows, spheres, boxes;
-	
-	struct Sphere { vec4 color; vec3 center; float rad; };
+    GLVAO vecVAO;
+    GLbuffer vecBuffer;
+    InstMesh<m_MeshData> arrows, spheres, boxes;
+    
+    struct Sphere { vec4 color; vec3 center; float rad; };
 
-	std::vector<vec3> debugVectors;
-	std::vector<vec4> debugBoxes;
-	std::vector<Sphere> debugSpheres;
+    std::vector<vec3> debugVectors;
+    std::vector<vec4> debugBoxes;
+    std::vector<Sphere> debugSpheres;
 };
