@@ -78,7 +78,7 @@ void initGraphics() {
 
     // depth buffering
     GL_CHECK(glEnable(GL_DEPTH_TEST));
-    GL_CHECK(glDepthFunc(GL_LESS));
+    GL_CHECK(glDepthFunc(GL_LEQUAL));
 
     // back-face culling
     if (!DEBUG) { GL_CHECK(glEnable(GL_CULL_FACE)); }

@@ -161,8 +161,7 @@ namespace UI
         io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
         // Upload texture to graphics system
-        GLint last_texture;
-        GL_CHECK(glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture));
+        auto last_texture = getGLVal(GL_TEXTURE_BINDING_2D);
         
         fontTex.create(GL_TEXTURE_2D);
         if (!fontTex()) return false;

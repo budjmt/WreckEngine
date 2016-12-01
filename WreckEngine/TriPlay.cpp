@@ -107,6 +107,9 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
 	camera->transform.rotate(0, PI, 0);
 	mainState->addEntity(camera);
 
+    objectProgram = prog;
+    objectCamera = prog.getUniform<mat4>("cameraMatrix");
+
 	if(DEBUG) DrawDebug::getInstance().camera(camera.get());
 }
 
@@ -159,6 +162,8 @@ void TriPlay::update(double delta) {
 	}
 
 	Camera::mayaCam(Camera::main, dt);
+    objectProgram.use();
+    objectCamera.update(Camera::main->getCamMat());
 
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));

@@ -36,6 +36,8 @@ void MaterialRenderer::init(const size_t max_gBufferSize) {
     for (size_t i = 0; i < max_gBufferSize; ++i) {
         gBuffer.push_back(GLframebuffer::createRenderTarget<GLubyte>());
     }
+
+    Group::paramBuffer.create(GL_DRAW_INDIRECT_BUFFER);
 }
 
 PostProcessRenderer::PostProcessRenderer() {
@@ -47,10 +49,7 @@ GLprogram PostProcessRenderer::finalize;
 
 void PostProcessRenderer::init() {
     PostProcess::init();
-    finalize.create();
-    finalize.vertex = PostProcess::defaultVertex;
-    finalize.fragment = loadShader("Shaders/postprocess_final_f.glsl", GL_FRAGMENT_SHADER);
-    finalize.link();
+    finalize = PostProcess::make_program(loadShader("Shaders/postprocess_final_f.glsl", GL_FRAGMENT_SHADER));
     finalize.use();
     finalize.setOnce<GLsampler>("render", 0);
 
@@ -61,7 +60,7 @@ void PostProcessRenderer::init() {
     buffer.create(GL_ARRAY_BUFFER);
     buffer.bind();
 
-    const float verts[] = {
+    constexpr float verts[] = {
         0.f, 0.f,
         2.f, 0.f,
         0.f, 2.f
@@ -75,9 +74,13 @@ void PostProcessRenderer::init() {
     triangle.unbind();
 }
 
-void MaterialRenderer::scheduleDraw(const size_t group, const DrawCall d) { 
+GLbuffer MaterialRenderer::Group::paramBuffer;
+
+void MaterialRenderer::scheduleDraw(const size_t group, const DrawCall d, const DrawCall::Params p) { 
     assert(renderGroups.size() > group);
-    renderGroups[group].drawCalls.push_back(d); 
+    auto& renderGroup = renderGroups[group];
+    renderGroup.drawCalls.push_back(d); 
+    renderGroup.params.push_back(p);
 }
 
 void MaterialRenderer::scheduleDrawArrays(const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const uint32_t instances) {
@@ -86,9 +89,12 @@ void MaterialRenderer::scheduleDrawArrays(const size_t group, const GLVAO* vao, 
     d.material = mat;
     d.call = DrawCall::Type::Arrays;
     d.tesselPrim = tesselPrim;
-    d.params.count = count;
-    d.params.instances = instances;
-    scheduleDraw(group, d);
+    
+    DrawCall::Params params{};
+    params.count = count;
+    params.instances = instances;
+    
+    scheduleDraw(group, d, params);
 }
 
 void MaterialRenderer::scheduleDrawElements(const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const GLenum element_t, const uint32_t instances) {
@@ -98,16 +104,48 @@ void MaterialRenderer::scheduleDrawElements(const size_t group, const GLVAO* vao
     d.call = DrawCall::Type::Elements;
     d.tesselPrim = tesselPrim;
     d.element_t = element_t;
-    d.params.count = count;
-    d.params.instances = instances;
-    scheduleDraw(group, d);
+
+    DrawCall::Params params{};
+    params.count = count;
+    params.instances = instances;
+    
+    scheduleDraw(group, d, params);
+}
+
+void MaterialRenderer::clearOutput() const {
+    //constexpr GLuint clearColor[4] = { 0, 0, 0, 0 };
+    //for (size_t i = 0, gSize = frameBuffer.numOutputs(); i < gSize; ++i)
+    //    GL_CHECK(glClearBufferuiv(GL_COLOR, i, clearColor));
+    //GL_CHECK(glClearBufferfi(GL_DEPTH_STENCIL, 0, 1, 0));
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 }
 
 void MaterialRenderer::render() {
     frameBuffer.bind();
+    clearOutput();
+    assert(frameBuffer.checkComplete());
     for (auto& renderGroup : renderGroups) {
         Group::Helper(renderGroup).draw();
     }
+}
+
+void MaterialRenderer::Group::Helper::draw() {
+    auto& drawCalls = group.drawCalls;
+    auto& params = group.params;
+
+    assert(drawCalls.size() == params.size());
+
+    paramBuffer.bind();
+    paramBuffer.data(group.params.size() * sizeof(DrawCall::Params), &params[0]);
+
+    DrawCall::Params* offset = nullptr;
+    for (const auto& drawCall : drawCalls) {
+        drawCall.render(offset);
+        ++offset;
+    }
+
+    group.drawCalls.clear();
+    group.params.clear();
 }
 
 void PostProcessRenderer::apply() {
@@ -127,6 +165,6 @@ void PostProcessRenderer::finish(PostProcess* curr) {
 void PostProcessRenderer::render() const {
     GLframebuffer::unbind(GL_FRAMEBUFFER);
     finalize.use();
-    output.bind();
+    (entry.endsChain() ? MaterialRenderer::gBuffer[0] : output).bind();
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 }

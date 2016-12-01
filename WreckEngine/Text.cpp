@@ -70,7 +70,7 @@ void Text::FontFace::setSize(const uint32_t _height, const uint32_t _width) {
 }
 
 void Text::FontFace::loadGlyphs() {
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
 	for (unsigned char c = 0; c < 128; ++c) {
 		if (FT_Load_Char(fontFace, c, FT_LOAD_RENDER)) { std::cout << "Could not load glyph: " << c << std::endl; continue; }
 		auto& glyph = fontFace->glyph;
@@ -83,7 +83,7 @@ void Text::FontFace::loadGlyphs() {
 		t.param(GL_TEXTURE_MIN_FILTER, GL_LINEAR); t.param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glyphs[c] = { t, vec2(bitmap.width, bitmap.rows), vec2(glyph->bitmap_left, glyph->bitmap_top), (uint32_t) glyph->advance.x };
 	}
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
 }
 
 #include "ShaderHelper.h"
@@ -191,7 +191,7 @@ void Text::Renderer::draw(Text::Instance& instance) {
 
 		glyph.tex.bind();
 		buffer.subdata(verts, sizeof(verts));
-		glDrawArrays(GL_TRIANGLES, 0, 6); // this works, but ignores the rendering pipeline; BAD
+        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6)); // this works, but ignores the rendering pipeline; BAD
 
 		instance.x += (glyph.advance >> 6) * instance.scale;// the advance is measured in 1/64 pixels, i.e. 1/2^6
 	}

@@ -13,16 +13,16 @@ void Info::TextureBinding::bind() const {
         bindings[i].bind(i);
 }
 
-void DrawCall::render() const {
+void DrawCall::render(const void* offset) const {
     vao->bind();
     material->apply();
 
     switch (call) {
     case Type::Arrays:
-        glDrawArraysIndirect(tesselPrim, &params);
+        GL_CHECK(glDrawArraysIndirect(tesselPrim, offset));
         break;
     case Type::Elements:
-        glDrawElementsIndirect(tesselPrim, element_t, &params);
+        GL_CHECK(glDrawElementsIndirect(tesselPrim, element_t, offset));
         break;
     }
 }

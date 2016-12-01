@@ -17,11 +17,13 @@ typedef GLint GLsampler;
 #define WR_GL_OP_PARENS(propType, propName) propType& operator()() const { return *propName; }
 #define WR_GL_OP_EQEQ(type, propName) bool operator==(const type& other) const { return *propName == *other.propName; }
 
+inline GLint getGLVal(GLenum value) { GLint val; GL_CHECK(glGetIntegerv(value, &val)); return val; }
+
 namespace {
     // default value used to represent "uninitialized" resources
     constexpr GLuint def = (GLuint)-1;
 
-#define GET_GL_CONSTANT_FUNC(name, enumVal) GLint local(name)() { GLint val; GL_CHECK(glGetIntegerv(enumVal, &val)); return val; }
+#define GET_GL_CONSTANT_FUNC(name, enumVal) GLint local(name)() { return getGLVal(enumVal); }
 
     GET_GL_CONSTANT_FUNC(getMaxNumTextures, GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     GET_GL_CONSTANT_FUNC(getMaxColorAttachments, GL_MAX_COLOR_ATTACHMENTS);
@@ -186,6 +188,7 @@ struct GLbuffer {
         GL_CHECK(glBufferData(target, size, _data, usage));
     }
 
+    // updates a subset of a buffer's data
     inline void subdata(const GLvoid* data, const GLuint _size, const GLuint offset = 0) const {
         assert(usage != GL_STATIC_DRAW && size); // a buffer allocated with static draw should not be updated / a buffer of 0 size should not need updates
         GL_CHECK(glBufferSubData(target, offset, _size, data));
@@ -283,9 +286,10 @@ struct GLframebuffer {
 
     inline bool valid() const { return *framebuffer != def; }
 
-    inline GLenum check() { GLenum res; GL_CHECK(res = glCheckFramebufferStatus(type)); return res; }
-    inline bool checkComplete() { return check() == GL_FRAMEBUFFER_COMPLETE; }
-    inline bool isBound() { return *framebuffer == boundFBO; }
+    inline GLenum check() const { GLenum res; GL_CHECK(res = glCheckFramebufferStatus(type)); return res; }
+    inline bool checkComplete() const { return check() == GL_FRAMEBUFFER_COMPLETE; }
+    inline bool isBound() const { return *framebuffer == boundFBO; }
+    inline size_t numOutputs() const { return colorBuffers.size(); }
 
     inline void create(const GLenum target = GL_FRAMEBUFFER) {
         if (valid()) return;
@@ -406,10 +410,11 @@ public:
 private:
     static std::vector<GLstate> states;
     
-    struct GLdims { int x, y; GLsizei width, height; }; 
+    struct dims { GLint x, y; GLsizei width, height; }; 
+    struct comp { GLint rgb, alpha; };
     
-    GLdims viewport;
-    GLdims scissorBox;
+    dims viewport;
+    dims scissorBox;
     
     struct {
         GLint program;
@@ -421,12 +426,9 @@ private:
     } bound;
     
     struct {
-        GLint src;
-        GLint dst;
-        struct {
-            GLint rgb;
-            GLint alpha;
-        } equation;
+        comp src;
+        comp dst;
+        comp equation;
     } blend;
 
     struct {

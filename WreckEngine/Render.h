@@ -17,9 +17,11 @@ namespace Render {
         static GLtexture depth, stencil;
         static GLtexture prevOutput;
 
-        void scheduleDraw(const size_t group, const DrawCall d);
+        void scheduleDraw(const size_t group, const DrawCall d, const DrawCall::Params p);
         void scheduleDrawArrays  (const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const uint32_t instances = 1);
         void scheduleDrawElements(const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const GLenum element_t, const uint32_t instances = 1);
+        
+        void clearOutput() const;
         void render();
 
         // returns the index of the added group
@@ -30,15 +32,15 @@ namespace Render {
         struct Group {
             std::function<void()> setup, cleanup;
             std::vector<DrawCall> drawCalls;
+            std::vector<DrawCall::Params> params;
+
+            static GLbuffer paramBuffer;
 
             // RAII helper
             struct Helper {
                 Helper(Group& g) : group(g) { group.setup(); }
                 ~Helper() { group.cleanup(); }
-                void draw() {
-                    for (const auto& drawCall : group.drawCalls) drawCall.render();
-                    group.drawCalls.clear();
-                }
+                void draw();
             private:
                 Group& group;
             };

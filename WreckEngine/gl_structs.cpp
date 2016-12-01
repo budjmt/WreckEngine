@@ -30,7 +30,7 @@ void GLstate::apply()
     GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, bound.arrayBuffer));
     GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bound.elementArrayBuffer));
     GL_CHECK(glBlendEquationSeparate(blend.equation.rgb, blend.equation.alpha));
-    GL_CHECK(glBlendFunc(blend.src, blend.dst));
+    GL_CHECK(glBlendFuncSeparate(blend.src.rgb, blend.dst.rgb, blend.src.alpha, blend.dst.alpha));
     if (enable.blend)       { GL_CHECK(glEnable(GL_BLEND));        } else { GL_CHECK(glDisable(GL_BLEND)); };
     if (enable.cullFace)    { GL_CHECK(glEnable(GL_CULL_FACE));    } else { GL_CHECK(glDisable(GL_CULL_FACE)); };
     if (enable.depthTest)   { GL_CHECK(glEnable(GL_DEPTH_TEST));   } else { GL_CHECK(glDisable(GL_DEPTH_TEST)); };
@@ -44,16 +44,20 @@ void GLstate::apply()
 /// </summary>
 void GLstate::capture()
 {
-    GL_CHECK(glGetIntegerv(GL_CURRENT_PROGRAM, &bound.program));
-    GL_CHECK(glGetIntegerv(GL_TEXTURE_BINDING_2D, &bound.texture));
-    GL_CHECK(glGetIntegerv(GL_ACTIVE_TEXTURE, &bound.activeTexture));
-    GL_CHECK(glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &bound.arrayBuffer));
-    GL_CHECK(glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &bound.elementArrayBuffer));
-    GL_CHECK(glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &bound.vertexArray));
-    GL_CHECK(glGetIntegerv(GL_BLEND_SRC, &blend.src));
-    GL_CHECK(glGetIntegerv(GL_BLEND_DST, &blend.dst));
-    GL_CHECK(glGetIntegerv(GL_BLEND_EQUATION_RGB, &blend.equation.rgb));
-    GL_CHECK(glGetIntegerv(GL_BLEND_EQUATION_ALPHA, &blend.equation.alpha));
+    bound.program            = getGLVal(GL_CURRENT_PROGRAM);
+    bound.texture            = getGLVal(GL_TEXTURE_BINDING_2D);
+    bound.activeTexture      = getGLVal(GL_ACTIVE_TEXTURE);
+    bound.arrayBuffer        = getGLVal(GL_ARRAY_BUFFER_BINDING);
+    bound.elementArrayBuffer = getGLVal(GL_ELEMENT_ARRAY_BUFFER_BINDING);
+    bound.vertexArray        = getGLVal(GL_VERTEX_ARRAY_BINDING);
+    
+    blend.src.rgb        = getGLVal(GL_BLEND_SRC_RGB);
+    blend.src.alpha      = getGLVal(GL_BLEND_SRC_ALPHA);
+    blend.dst.rgb        = getGLVal(GL_BLEND_DST_RGB);
+    blend.dst.alpha      = getGLVal(GL_BLEND_DST_ALPHA);
+    blend.equation.rgb   = getGLVal(GL_BLEND_EQUATION_RGB);
+    blend.equation.alpha = getGLVal(GL_BLEND_EQUATION_ALPHA);
+
     GL_CHECK(glGetIntegerv(GL_VIEWPORT, &viewport.x));
     GL_CHECK(glGetIntegerv(GL_SCISSOR_BOX, &scissorBox.x));
 

@@ -102,7 +102,6 @@ private:
     GLresource<mat4> vecCam, meshCam;
 
     shared<Mesh> arrow, sphere, box;
-	size_t numArrowVerts, numSphereVerts, numBoxVerts;
 
     void setRenderer(Render::MaterialRenderer* r);
     Render::MaterialRenderer* renderer;

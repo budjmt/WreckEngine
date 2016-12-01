@@ -55,7 +55,7 @@ namespace Render {
             this->chainsTo(p);
         }
 
-        bool endsChain() { return chain.empty(); }
+        bool endsChain() const { return chain.empty(); }
 
     protected:
         std::vector<PostProcess*> chain;
@@ -68,7 +68,7 @@ namespace Render {
     public:
         void reset() override { PostProcess::reset(); numReady = 0; }
 
-        bool ready() { return numReady == dependencies.size(); }
+        bool ready() const { return numReady == dependencies.size(); }
         void apply(PostProcess* prev) override {
             ++numReady; // don't need validity check; only dependencies should show up as prev ptrs
             if (ready())

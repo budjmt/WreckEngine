@@ -21,5 +21,7 @@ public:
 	void draw();
 private:
 	shared<Entity> me;
+    GLprogram objectProgram;
+    GLuniform<mat4> objectCamera;
 };
 

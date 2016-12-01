@@ -3,6 +3,8 @@
 uniform vec4 tint;
 in vec4 vertColor;
 
+layout (location = 0) out vec4 fragColor;
+
 void main() {
-	gl_FragColor = tint * vertColor;
+	fragColor = tint * vertColor;
 }

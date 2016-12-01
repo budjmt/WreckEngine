@@ -70,7 +70,13 @@ void DrawDebug::camera(Camera* c) { cam = c; }
 void DrawDebug::setRenderer(Render::MaterialRenderer* r) {
     struct X { 
         X(DrawDebug* d, Render::MaterialRenderer* r) { 
-            d->wireframeIndex = r->addGroup([]() { glPolygonMode(GL_FRONT_AND_BACK, GL_LINES); }, []() { glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); });
+            d->wireframeIndex = r->addGroup([]() { 
+                GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)); 
+                GL_CHECK(glEnable(GL_CULL_FACE));
+            }, []() { 
+                GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)); 
+                GL_CHECK(glDisable(GL_CULL_FACE));
+            });
         }
     };
 
@@ -81,16 +87,12 @@ void DrawDebug::setRenderer(Render::MaterialRenderer* r) {
 void DrawDebug::draw(Render::MaterialRenderer* r) {
 #if DEBUG
     setRenderer(r);
-
-	glEnable(GL_CULL_FACE);
 	
     if (cam) meshCam.value = vecCam.value = cam->getCamMat();
+
 	drawVectors();
 	drawSpheres();
 	drawBoxes();
-	
-	glDisable(GL_CULL_FACE);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 #endif
 }
 
@@ -114,14 +116,10 @@ void DrawDebug::drawVectors() {
 		arrows.instances.push_back({ vec4(c2, 1), translate * rotate * scale });
 	}
 
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
     vecVAO.bind();
 	vecBuffer.bind();
 	vecBuffer.data(&debugVectors[0]);
     renderer->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, numVecs / 2);
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	arrows.update();
 	arrows.draw(renderer, &meshMat, 0);
@@ -154,8 +152,6 @@ void DrawDebug::drawBoxes() {
 		const auto scale = glm::scale(vec3(debugBoxes[i + 1]));
 		boxes.instances.push_back({ debugBoxes[i + 2], translate * scale });
 	}
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	boxes.update();
 	boxes.draw(renderer, &meshMat, wireframeIndex);

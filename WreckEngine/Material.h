@@ -70,7 +70,7 @@ namespace Render {
         enum Type { Arrays, Elements } call;
         GLenum tesselPrim, element_t;
 
-        struct {
+        struct Params {
             uint32_t count; // number of vertices to be rendered
             uint32_t instances; // should be set to at least 1
             union {
@@ -80,10 +80,10 @@ namespace Render {
                 struct { uint32_t first, baseInstanceArr; }; // For DrawArrays
                 struct { uint32_t firstIndex, baseVertex, baseInstanceElem; }; // For DrawElements
             };
-        } params = {};
+        };
 
     private:
-        void render() const;
+        void render(const void* offset) const;
         friend class MaterialRenderer;
     };
 
