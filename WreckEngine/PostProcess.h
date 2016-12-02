@@ -13,26 +13,29 @@ namespace Render {
         GLframebuffer fbo;
         PostProcessRenderer* renderer;
 
+        PostProcess();
         virtual ~PostProcess() = default;
 
         static void init();
 
-        static GLprogram make_program(const GLshader& fragment) {
-            assert(fragment.type == GL_FRAGMENT_SHADER);
-            GLprogram p;
-            p.vertex = defaultVertex;
-            p.fragment = fragment;
-            p.create();
-            p.link();
-            return p;
+        static GLprogram make_program(const char* shaderFile);
+        static GLprogram make_program(const GLshader& fragment);
+
+        template<typename... GLTextures>
+        void renderToTextures(GLTextures... tex) {
+            GLtexture textures[] = { tex... };
+            fbo.bindPartial();
+            for (size_t i = 0; i < sizeof...(tex); ++i)
+                fbo.attachTexture(textures[i], GLframebuffer::Attachment::Color);
+            fbo.unbind();
         }
 
-        virtual void reset() { for (auto p : chain) p->reset(); }
+        virtual void reset() { for (auto& p : chain) p.reset(); }
         virtual void apply(PostProcess* prev);
 
         // might want parameter pack version
-        void chainsTo(PostProcess* p);
-        void chainsTo(Composite* p);
+        void chainsTo(PostProcess p);
+        void chainsTo(Composite p);
 
         // Given some set of output textures T ([io])
         // a *continuation* consists of two PP, A ([this]) then B ([p]) where:
@@ -43,7 +46,7 @@ namespace Render {
         //   - B takes ALL of the outputs provided; any outputs that need to be added/removed must be bound/unbound elsewhere
         //   - All textures provided are color buffers for A's frame buffer
         template<typename... Textures>
-        void continuesWith(PostProcess* p, Textures... io) {
+        void continuesWith(shared<PostProcess> p, Textures... io) {
             GLtexture textures[sizeof...(io)] = { io... };
 
             for (int i = 0; i < sizeof...(io); ++i)
@@ -58,7 +61,7 @@ namespace Render {
         bool endsChain() const { return chain.empty(); }
 
     protected:
-        std::vector<PostProcess*> chain;
+        std::vector<PostProcess> chain;
         friend class PostProcessRenderer;
         
         static GLshader defaultVertex;

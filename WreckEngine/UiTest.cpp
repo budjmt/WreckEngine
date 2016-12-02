@@ -52,7 +52,7 @@ struct UiTestEntity : public Entity
             ImGui::ShowTestWindow(&show_test_window);
         }
 
-        GL_CHECK(glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w));
+        GLframebuffer::setClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     }
 
     void testHandler(Event::Handler::param_t e) {

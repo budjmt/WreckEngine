@@ -22,7 +22,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
 	menuState->handler_func = [this, mainsp, start_game_event](Event::Handler::param_t e) {
 		if (e.id == start_game_event) {
 			currState = mainsp;
-			glClearColor(0, 0, 0, 1);
+			GLframebuffer::setClearColor(0, 0, 0, 1);
 		}
 	};
 	addState(menuState);
@@ -34,7 +34,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
 	menuState->addEntity(menuText);
 	//Text::active = false;
 
-	glClearColor(0, 0.5f, 0.2f, 1);
+	GLframebuffer::setClearColor(0, 0.5f, 0.2f, 1);
 
 	mainState->handler_func = [](Event::Handler::param_t e) {
 		//nothing right now
@@ -111,6 +111,24 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
     objectCamera = prog.getUniform<mat4>("cameraMatrix");
 
 	if(DEBUG) DrawDebug::getInstance().camera(camera.get());
+
+    setupPostProcess();
+}
+
+void TriPlay::setupPostProcess() {
+    using namespace Render;
+
+    renderer.postProcess.output = GLframebuffer::createRenderTarget<GLubyte>();
+
+    PostProcess chromaticAberration;
+    chromaticAberration.data.setShaders(PostProcess::make_program("Shaders/postProcess/CA.glsl"));
+    chromaticAberration.data.setTextures(MaterialRenderer::gBuffer[0]);
+    chromaticAberration.renderToTextures(renderer.postProcess.output);
+
+    //PostProcess blurH, blurV;
+    //blurH.data.setShaders(PostProcess::make_program("Shaders/postProcess/blur"));
+
+    renderer.postProcess.entry.chainsTo(chromaticAberration);
 }
 
 #include "CollisionManager.h"

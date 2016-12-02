@@ -304,6 +304,8 @@ struct GLframebuffer {
 
     static inline void setClearColor(GLclampf r, GLclampf g, GLclampf b, GLclampf a) { GL_CHECK(glClearColor(r, g, b, a)); }
 
+    static inline void clear() { GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)); }
+
     inline void create(const GLenum target = GL_FRAMEBUFFER) {
         if (valid()) return;
         GL_CHECK(glGenFramebuffers(1, framebuffer.get()));

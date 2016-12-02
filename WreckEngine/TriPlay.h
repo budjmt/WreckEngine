@@ -23,5 +23,7 @@ private:
 	shared<Entity> me;
     GLprogram objectProgram;
     GLuniform<mat4> objectCamera;
+
+    void setupPostProcess();
 };
 

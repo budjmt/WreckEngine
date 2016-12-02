@@ -47,7 +47,7 @@ GLprogram PostProcessRenderer::finalize;
 
 void PostProcessRenderer::init() {
     PostProcess::init();
-    finalize = PostProcess::make_program(loadShader("Shaders/postprocess/res_final_f.glsl", GL_FRAGMENT_SHADER));
+    finalize = PostProcess::make_program(loadShader("Shaders/postProcess/res_final_f.glsl", GL_FRAGMENT_SHADER));
     finalize.use();
     finalize.setOnce<GLsampler>("render", 0);
 
@@ -59,14 +59,14 @@ void PostProcessRenderer::init() {
     buffer.bind();
 
     constexpr float verts[] = {
-        0.f, 0.f,
-        2.f, 0.f,
-        0.f, 2.f
+        -1.f, -1.f, 0.f, 0.f,
+         3.f, -1.f, 2.f, 0.f,
+        -1.f,  3.f, 0.f, 2.f
     };
     buffer.data(sizeof(verts), &verts);
 
     GLattrarr attr;
-    attr.add<vec2>(1);
+    attr.add<vec2>(2);
     attr.apply();
 
     triangle.unbind();
@@ -108,16 +108,9 @@ void MaterialRenderer::scheduleDrawElements(const size_t group, const GLVAO* vao
     scheduleDraw(group, d, params);
 }
 
-void MaterialRenderer::clearOutput() const {
-    auto color = GLframebuffer::getClearColor();
-    GLframebuffer::setClearColor(0.f, 0.f, 0.f, 0.f);
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
-    GLframebuffer::setClearColor(color.r, color.g, color.b, color.a);
-}
-
 void MaterialRenderer::render() {
     frameBuffer.bind();
-    clearOutput();
+    GLframebuffer::clear();
 
     for (auto& renderGroup : renderGroups) {
         Group::Helper(renderGroup).draw();
@@ -156,7 +149,7 @@ void PostProcessRenderer::apply() {
 // performs necessary steps after a post-process completes
 void PostProcessRenderer::finish(PostProcess* curr) {
     if (!curr->endsChain()) {
-        for (auto p : curr->chain) p->apply(curr);
+        for (auto& p : curr->chain) p.apply(curr);
     }
 }
 
