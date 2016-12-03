@@ -120,15 +120,42 @@ void TriPlay::setupPostProcess() {
 
     renderer.postProcess.output = GLframebuffer::createRenderTarget<GLubyte>();
 
-    PostProcess chromaticAberration;
-    chromaticAberration.data.setShaders(PostProcess::make_program("Shaders/postProcess/CA.glsl"));
-    chromaticAberration.data.setTextures(MaterialRenderer::gBuffer[0]);
-    chromaticAberration.renderToTextures(renderer.postProcess.output);
+    auto& colorRender  = gBuffer[0], 
+        & brightRender = gBuffer[1];
 
-    //PostProcess blurH, blurV;
-    //blurH.data.setShaders(PostProcess::make_program("Shaders/postProcess/blur"));
+    // blur
+    auto blurH = make_shared<PostProcess>(), blurV = make_shared<PostProcess>();
+    auto blurTarget = GLframebuffer::createRenderTarget<GLubyte>();
+    auto blurF = loadShader("Shaders/postProcess/blur.glsl", GL_FRAGMENT_SHADER);
+    
+    blurH->data.setShaders(PostProcess::make_program(blurF));
+    blurH->data.setTextures(brightRender);
+    blurH->renderToTextures(blurTarget);
+    blurH->data.shaders->program.use();
+    blurH->data.shaders->program.setOnce<GLboolean>("horizontal", true);
 
-    renderer.postProcess.entry.chainsTo(chromaticAberration);
+    blurV->data.setShaders(PostProcess::make_program(blurF));
+    blurV->data.setTextures(blurTarget);
+    blurV->renderToTextures(brightRender);
+    blurV->data.shaders->program.use();
+    blurV->data.shaders->program.setOnce<GLboolean>("horizontal", false);
+
+    // bloom
+    auto bloom = make_shared<PostProcess>();
+    bloom->data.setShaders(PostProcess::make_program("Shaders/postProcess/bloom.glsl"));
+    bloom->data.setTextures(colorRender, brightRender);
+    bloom->renderToTextures(blurTarget);
+    bloom->data.shaders->program.use();
+    bloom->data.shaders->program.setOnce<GLsampler>("brightBlur", 1);
+    //bloom->renderToTextures(renderer.postProcess.output);
+
+    // CA
+    auto chromaticAberration = make_shared<PostProcess>();
+    chromaticAberration->data.setShaders(PostProcess::make_program("Shaders/postProcess/CA.glsl"));
+    chromaticAberration->data.setTextures(blurTarget);
+    chromaticAberration->renderToTextures(renderer.postProcess.output);
+
+    renderer.postProcess.entry.chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration);
 }
 
 #include "CollisionManager.h"

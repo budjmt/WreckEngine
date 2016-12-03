@@ -53,8 +53,7 @@ void init() {
 
     UI::Initialize();
     Text::init();
-    Render::MaterialRenderer::init(4);
-    Render::PostProcessRenderer::init();
+    Render::FullRenderer::init(4);
 
     // this won't be initialized until after GLFW/GLEW are
     game = make_unique<TriPlay>(shaderProg);

@@ -7,15 +7,13 @@
 
 namespace Render {
 
+    extern std::vector<GLtexture> gBuffer;
+    extern GLtexture depth, stencil;
+    extern GLtexture prevOutput;
+
     class MaterialRenderer {
     public:
         MaterialRenderer(const size_t gBufferSize);
-
-        static void init(const size_t max_gBufferSize);
-
-        static std::vector<GLtexture> gBuffer;
-        static GLtexture depth, stencil;
-        static GLtexture prevOutput;
 
         void scheduleDraw(const size_t group, const DrawCall d, const DrawCall::Params p);
         void scheduleDrawArrays  (const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const uint32_t instances = 1);
@@ -80,6 +78,8 @@ namespace Render {
         PostProcessRenderer postProcess;
         FullRenderer* next = nullptr;
 
+        static void init(const size_t max_gBufferSize);
+
         FullRenderer(const size_t gBufferSize) : objects(gBufferSize) {}
 
         void render() {
@@ -94,7 +94,7 @@ namespace Render {
             postProcess.apply();
             if (next) {
                 // if there's no post process chain, the output is from the mat renderer
-                MaterialRenderer::prevOutput = postProcess.entry.endsChain() ? MaterialRenderer::gBuffer[0] : postProcess.output;
+                prevOutput = postProcess.entry.endsChain() ? gBuffer[0] : postProcess.output;
                 next->renderChildren();
             }
             else postProcess.render();

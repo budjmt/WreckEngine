@@ -6,6 +6,25 @@
 
 using namespace Render;
 
+std::vector<GLtexture> Render::gBuffer;
+GLtexture Render::depth, Render::stencil;
+GLtexture Render::prevOutput;
+
+void FullRenderer::init(const size_t max_gBufferSize) {
+    // these can be optimized in 4.3+ using texture views
+    depth = GLframebuffer::createRenderTarget<GLdepthstencil>(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL);
+    // this is more labor intensive than expected
+    //stencil = GLframebuffer::createRenderTarget<GLdepthstencil>(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL);
+    //stencil.param(GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
+
+    gBuffer.reserve(max_gBufferSize);
+    for (size_t i = 0; i < max_gBufferSize; ++i) {
+        gBuffer.push_back(GLframebuffer::createRenderTarget<GLubyte>());
+    }
+
+    PostProcessRenderer::init();
+}
+
 MaterialRenderer::MaterialRenderer(const size_t gBufferSize) {
     frameBuffer.create();
     frameBuffer.bindPartial();
@@ -18,24 +37,6 @@ MaterialRenderer::MaterialRenderer(const size_t gBufferSize) {
         frameBuffer.attachTexture(gBuffer[i], GLframebuffer::Attachment::Color);
 
     frameBuffer.unbind();
-}
-
-std::vector<GLtexture> MaterialRenderer::gBuffer;
-GLtexture MaterialRenderer::depth;
-GLtexture MaterialRenderer::stencil;
-GLtexture MaterialRenderer::prevOutput;
-
-void MaterialRenderer::init(const size_t max_gBufferSize) {
-    // these can be optimized in 4.3+ using texture views
-    depth = GLframebuffer::createRenderTarget<GLdepthstencil>(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL);
-    // this is more labor intensive than expected
-    //stencil = GLframebuffer::createRenderTarget<GLdepthstencil>(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL);
-    //stencil.param(GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
-    
-    gBuffer.reserve(max_gBufferSize);
-    for (size_t i = 0; i < max_gBufferSize; ++i) {
-        gBuffer.push_back(GLframebuffer::createRenderTarget<GLubyte>());
-    }
 }
 
 PostProcessRenderer::PostProcessRenderer() {
@@ -143,13 +144,13 @@ void MaterialRenderer::Group::Helper::draw() {
 void PostProcessRenderer::apply() {
     triangle.bind();
     finish(&entry);
-    entry.reset(); // resets the whole chain
+    entry.refresh(); // resets the whole chain
 }
 
 // performs necessary steps after a post-process completes
 void PostProcessRenderer::finish(PostProcess* curr) {
     if (!curr->endsChain()) {
-        for (auto& p : curr->chain) p.apply(curr);
+        for (auto& p : curr->chain) p->apply(curr);
     }
 }
 
@@ -157,6 +158,6 @@ void PostProcessRenderer::finish(PostProcess* curr) {
 void PostProcessRenderer::render() const {
     GLframebuffer::unbind(GL_FRAMEBUFFER);
     finalize.use();
-    (entry.endsChain() ? MaterialRenderer::gBuffer[0] : output).bind();
+    (entry.endsChain() ? gBuffer[0] : output).bind();
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 }

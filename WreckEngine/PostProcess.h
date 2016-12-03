@@ -30,12 +30,15 @@ namespace Render {
             fbo.unbind();
         }
 
-        virtual void reset() { for (auto& p : chain) p.reset(); }
+        virtual void refresh() { for (auto& p : chain) p->refresh(); }
         virtual void apply(PostProcess* prev);
 
         // might want parameter pack version
-        void chainsTo(PostProcess p);
-        void chainsTo(Composite p);
+        PostProcess* chainsTo(shared<PostProcess> p);
+        PostProcess* chainsTo(shared<Composite> p);
+
+        // returns the end of the cycle (a reference to a copy of b)
+        PostProcess* cyclesWith(size_t numCycles, shared<PostProcess> p);
 
         // Given some set of output textures T ([io])
         // a *continuation* consists of two PP, A ([this]) then B ([p]) where:
@@ -46,22 +49,22 @@ namespace Render {
         //   - B takes ALL of the outputs provided; any outputs that need to be added/removed must be bound/unbound elsewhere
         //   - All textures provided are color buffers for A's frame buffer
         template<typename... Textures>
-        void continuesWith(shared<PostProcess> p, Textures... io) {
+        PostProcess* continuesWith(shared<PostProcess> p, Textures... io) {
             GLtexture textures[sizeof...(io)] = { io... };
 
             for (int i = 0; i < sizeof...(io); ++i)
-                fbo.attachTexture(tex, GLframebuffer::Attachment::Color);
+                fbo.attachTexture(textures[i], GLframebuffer::Attachment::Color);
 
             const auto& inputs = p->textures->bindings;
             inputs.insert(inputs.end(), textures.begin(), textures.end());
 
-            this->chainsTo(p);
+            return this->chainsTo(p);
         }
 
         bool endsChain() const { return chain.empty(); }
 
     protected:
-        std::vector<PostProcess> chain;
+        std::vector<shared<PostProcess>> chain;
         friend class PostProcessRenderer;
         
         static GLshader defaultVertex;
@@ -69,7 +72,7 @@ namespace Render {
 
     class Composite : public PostProcess {
     public:
-        void reset() override { PostProcess::reset(); numReady = 0; }
+        void refresh() override { PostProcess::refresh(); numReady = 0; }
 
         bool ready() const { return numReady == dependencies.size(); }
         void apply(PostProcess* prev) override {
