@@ -134,7 +134,7 @@ void Text::draw(const std::string& text, const FontFace* font, Justify vertical,
 	instances.push_back(i);
 }
 
-void Text::render(Render::MaterialRenderer* matRenderer) {
+void Text::render(Render::MaterialPass* matRenderer) {
     renderer.renderer = matRenderer;
 	if (Text::active) { for (auto& instance : instances) renderer.draw(instance); }
 	instances.clear();

@@ -11,9 +11,9 @@ namespace Render {
     extern GLtexture depth, stencil;
     extern GLtexture prevOutput;
 
-    class MaterialRenderer {
+    class MaterialPass {
     public:
-        MaterialRenderer(const size_t gBufferSize);
+        MaterialPass(const size_t gBufferSize);
 
         void scheduleDraw(const size_t group, const DrawCall d, const DrawCall::Params p);
         void scheduleDrawArrays  (const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const uint32_t instances = 1);
@@ -55,9 +55,9 @@ namespace Render {
         GLframebuffer frameBuffer;
     };
 
-    class PostProcessRenderer {
+    class PostProcessChain {
     public:
-        PostProcessRenderer();
+        PostProcessChain();
         PostProcess entry; // chain post processes to this
         GLtexture output;  // bind a color buffer of the final post process to this
 
@@ -72,32 +72,17 @@ namespace Render {
         static GLprogram finalize;
     };
 
-    class FullRenderer {
+    class Renderer {
     public:
-        MaterialRenderer objects;
-        PostProcessRenderer postProcess;
-        FullRenderer* next = nullptr;
+        MaterialPass objects;
+        PostProcessChain postProcess;
+        Renderer* next = nullptr;
 
         static void init(const size_t max_gBufferSize);
 
-        FullRenderer(const size_t gBufferSize) : objects(gBufferSize) {}
+        Renderer(const size_t gBufferSize) : objects(gBufferSize) {}
 
-        void render() {
-            auto color = GLframebuffer::getClearColor();
-            GLframebuffer::setClearColor(0.f, 0.f, 0.f, 0.f);
-            renderChildren();
-            GLframebuffer::setClearColor(color.r, color.g, color.b, color.a);
-        }
-
-        void renderChildren() {
-            objects.render();
-            postProcess.apply();
-            if (next) {
-                // if there's no post process chain, the output is from the mat renderer
-                prevOutput = postProcess.entry.endsChain() ? gBuffer[0] : postProcess.output;
-                next->renderChildren();
-            }
-            else postProcess.render();
-        }
+        void render();
+        void renderChildren();
     };
 }

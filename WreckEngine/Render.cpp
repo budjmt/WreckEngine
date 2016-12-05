@@ -10,7 +10,7 @@ std::vector<GLtexture> Render::gBuffer;
 GLtexture Render::depth, Render::stencil;
 GLtexture Render::prevOutput;
 
-void FullRenderer::init(const size_t max_gBufferSize) {
+void Renderer::init(const size_t max_gBufferSize) {
     // these can be optimized in 4.3+ using texture views
     depth = GLframebuffer::createRenderTarget<GLdepthstencil>(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL);
     // this is more labor intensive than expected
@@ -22,10 +22,10 @@ void FullRenderer::init(const size_t max_gBufferSize) {
         gBuffer.push_back(GLframebuffer::createRenderTarget<GLubyte>());
     }
 
-    PostProcessRenderer::init();
+    PostProcessChain::init();
 }
 
-MaterialRenderer::MaterialRenderer(const size_t gBufferSize) {
+MaterialPass::MaterialPass(const size_t gBufferSize) {
     frameBuffer.create();
     frameBuffer.bindPartial();
     frameBuffer.attachTexture(depth, GLframebuffer::Attachment::DepthStencil);
@@ -39,14 +39,14 @@ MaterialRenderer::MaterialRenderer(const size_t gBufferSize) {
     frameBuffer.unbind();
 }
 
-PostProcessRenderer::PostProcessRenderer() {
+PostProcessChain::PostProcessChain() {
     output = GLframebuffer::createRenderTarget<GLubyte>();
 }
 
-GLVAO PostProcessRenderer::triangle;
-GLprogram PostProcessRenderer::finalize;
+GLVAO PostProcessChain::triangle;
+GLprogram PostProcessChain::finalize;
 
-void PostProcessRenderer::init() {
+void PostProcessChain::init() {
     PostProcess::init();
     finalize = PostProcess::make_program(loadShader("Shaders/postProcess/res_final_f.glsl", GL_FRAGMENT_SHADER));
     finalize.use();
@@ -73,14 +73,14 @@ void PostProcessRenderer::init() {
     triangle.unbind();
 }
 
-void MaterialRenderer::scheduleDraw(const size_t group, const DrawCall d, const DrawCall::Params p) { 
+void MaterialPass::scheduleDraw(const size_t group, const DrawCall d, const DrawCall::Params p) { 
     assert(renderGroups.size() > group);
     auto& renderGroup = renderGroups[group];
     renderGroup.drawCalls.push_back(d); 
     renderGroup.params.push_back(p);
 }
 
-void MaterialRenderer::scheduleDrawArrays(const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const uint32_t instances) {
+void MaterialPass::scheduleDrawArrays(const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const uint32_t instances) {
     DrawCall d;
     d.vao = vao;
     d.material = mat;
@@ -94,7 +94,7 @@ void MaterialRenderer::scheduleDrawArrays(const size_t group, const GLVAO* vao, 
     scheduleDraw(group, d, params);
 }
 
-void MaterialRenderer::scheduleDrawElements(const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const GLenum element_t, const uint32_t instances) {
+void MaterialPass::scheduleDrawElements(const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const GLenum element_t, const uint32_t instances) {
     DrawCall d;
     d.vao = vao;
     d.material = mat;
@@ -109,7 +109,7 @@ void MaterialRenderer::scheduleDrawElements(const size_t group, const GLVAO* vao
     scheduleDraw(group, d, params);
 }
 
-void MaterialRenderer::render() {
+void MaterialPass::render() {
     frameBuffer.bind();
     GLframebuffer::clear();
 
@@ -118,7 +118,7 @@ void MaterialRenderer::render() {
     }
 }
 
-void MaterialRenderer::Group::Helper::draw() {
+void MaterialPass::Group::Helper::draw() {
     auto& drawCalls = group.drawCalls;
     if (drawCalls.empty())
         return;
@@ -141,23 +141,42 @@ void MaterialRenderer::Group::Helper::draw() {
     group.params.clear();
 }
 
-void PostProcessRenderer::apply() {
+void PostProcessChain::apply() {
     triangle.bind();
     finish(&entry);
     entry.refresh(); // resets the whole chain
 }
 
 // performs necessary steps after a post-process completes
-void PostProcessRenderer::finish(PostProcess* curr) {
+void PostProcessChain::finish(PostProcess* curr) {
     if (!curr->endsChain()) {
-        for (auto& p : curr->chain) p->apply(curr);
+        for (auto& p : curr->chain) 
+            p->apply(curr);
     }
 }
 
 // output the final texture to the screen
-void PostProcessRenderer::render() const {
+void PostProcessChain::render() const {
     GLframebuffer::unbind(GL_FRAMEBUFFER);
     finalize.use();
     (entry.endsChain() ? gBuffer[0] : output).bind();
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
+}
+
+void Renderer::render() {
+    auto color = GLframebuffer::getClearColor();
+    GLframebuffer::setClearColor(0.f, 0.f, 0.f, 0.f);
+    renderChildren();
+    GLframebuffer::setClearColor(color.r, color.g, color.b, color.a);
+}
+
+void Renderer::renderChildren() {
+    objects.render();
+    postProcess.apply();
+    if (next) {
+        // if there's no post process chain, the output is from the mat renderer
+        prevOutput = postProcess.entry.endsChain() ? gBuffer[0] : postProcess.output;
+        next->renderChildren();
+    }
+    else postProcess.render();
 }

@@ -15,7 +15,7 @@
 class Game
 {
 public:
-    Game(const size_t gBufferSize) : renderer(Render::FullRenderer(gBufferSize)) {}
+    Game(const size_t gBufferSize) : renderer(Render::Renderer(gBufferSize)) {}
     virtual ~Game() = default;
 
     void addState(shared<State> s);
@@ -23,7 +23,7 @@ public:
     virtual void update(double dt);
     virtual void draw();
 protected:
-    Render::FullRenderer renderer;
+    Render::Renderer renderer;
     std::vector<shared<State>> states;
     State* currState = nullptr;
     bool drawDebug = true;

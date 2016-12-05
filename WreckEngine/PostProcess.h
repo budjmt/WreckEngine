@@ -5,13 +5,13 @@
 namespace Render {
 
     class Composite;
-    class PostProcessRenderer;
+    class PostProcessChain;
 
     class PostProcess {
     public:
         Info data;
         GLframebuffer fbo;
-        PostProcessRenderer* renderer;
+        PostProcessChain* renderer;
 
         PostProcess();
         virtual ~PostProcess() = default;
@@ -38,13 +38,11 @@ namespace Render {
         PostProcess* chainsTo(shared<Composite> p);
 
         // returns the end of the cycle (a reference to a copy of b)
+        // this pointer MUST be used to continue the chain, or it will be malformed
         PostProcess* cyclesWith(size_t numCycles, shared<PostProcess> p);
 
-        // Given some set of output textures T ([io])
-        // a *continuation* consists of two PP, A ([this]) then B ([p]) where:
-        //   - A's frame buffer outputs to all textures in T
-        //   - B's texture binding input is a super set of T
-        // This convenience function assumes:
+        // Chains from the caller to p and binds a set of textures to the caller's frame buffer as well as p's texture bindings
+        // Assumes:
         //   - Any additional inputs in B will come before or after the frame buffer outputs, i.e. not interleaved
         //   - B takes ALL of the outputs provided; any outputs that need to be added/removed must be bound/unbound elsewhere
         //   - All textures provided are color buffers for A's frame buffer
@@ -55,8 +53,14 @@ namespace Render {
             for (int i = 0; i < sizeof...(io); ++i)
                 fbo.attachTexture(textures[i], GLframebuffer::Attachment::Color);
 
-            const auto& inputs = p->textures->bindings;
-            inputs.insert(inputs.end(), textures.begin(), textures.end());
+            auto& data = p->data;
+            if (data.textures) {
+                auto& inputs = data.textures->bindings;
+                inputs.insert(inputs.end(), textures.begin(), textures.end());
+            }
+            else {
+                data.setTextures(std::forward<Textures>(io)...);
+            }
 
             return this->chainsTo(p);
         }
@@ -65,7 +69,7 @@ namespace Render {
 
     protected:
         std::vector<shared<PostProcess>> chain;
-        friend class PostProcessRenderer;
+        friend class PostProcessChain;
         
         static GLshader defaultVertex;
     };

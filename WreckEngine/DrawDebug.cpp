@@ -67,9 +67,9 @@ DrawDebug& DrawDebug::getInstance() {
 
 void DrawDebug::camera(Camera* c) { cam = c; }
 
-void DrawDebug::setRenderer(Render::MaterialRenderer* r) {
+void DrawDebug::setRenderer(Render::MaterialPass* r) {
     struct X { 
-        X(DrawDebug* d, Render::MaterialRenderer* r) { 
+        X(DrawDebug* d, Render::MaterialPass* r) { 
             d->wireframeIndex = r->addGroup([]() { 
                 GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)); 
                 GL_CHECK(glEnable(GL_CULL_FACE));
@@ -84,7 +84,7 @@ void DrawDebug::setRenderer(Render::MaterialRenderer* r) {
     renderer = r;
 }
 
-void DrawDebug::draw(Render::MaterialRenderer* r) {
+void DrawDebug::draw(Render::MaterialPass* r) {
 #if DEBUG
     setRenderer(r);
     

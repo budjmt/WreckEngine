@@ -1,8 +1,8 @@
 #include "DrawMesh.h"
 
-DrawMesh::DrawMesh(Render::MaterialRenderer* r, shared<Mesh> m, const char* texFile, GLprogram shader) : _mesh(m) { renderer = r; setup(texFile, shader); }
+DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, const char* texFile, GLprogram shader) : _mesh(m) { renderer = r; setup(texFile, shader); }
 
-DrawMesh::DrawMesh(Render::MaterialRenderer* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, const char* texFile, GLprogram shader) : DrawMesh(r, make_shared<Mesh>(fd, fi), texFile, shader) {}
+DrawMesh::DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, const char* texFile, GLprogram shader) : DrawMesh(r, make_shared<Mesh>(fd, fi), texFile, shader) {}
 
 void DrawMesh::setup(const char* texFile, GLprogram shader) {
 	

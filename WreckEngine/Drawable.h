@@ -18,7 +18,7 @@ constexpr size_t FLOATS_PER_UV = 2;
 
 class Drawable {
 public:
-    Render::MaterialRenderer* renderer;
+    Render::MaterialPass* renderer;
     Render::Info material;
     vec4& color = _color.value;
 

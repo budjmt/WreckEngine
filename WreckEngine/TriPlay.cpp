@@ -145,9 +145,9 @@ void TriPlay::setupPostProcess() {
     bloom->data.setShaders(PostProcess::make_program("Shaders/postProcess/bloom.glsl"));
     bloom->data.setTextures(colorRender, brightRender);
     bloom->renderToTextures(blurTarget);
-    bloom->data.shaders->program.use();
-    bloom->data.shaders->program.setOnce<GLsampler>("brightBlur", 1);
     //bloom->renderToTextures(renderer.postProcess.output);
+    bloom->data.shaders->program.use();
+    bloom->data.setSamplers(1, "brightBlur");
 
     // CA
     auto chromaticAberration = make_shared<PostProcess>();

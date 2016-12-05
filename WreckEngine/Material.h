@@ -57,6 +57,11 @@ namespace Render {
             bindings.erase(std::find(bindings.begin(), bindings.end(), resource));
         }
 
+        template<typename... Names>
+        void setSamplers(int baseIndex, Names&&... _names) {
+            textures->setSamplers(shaders->program, baseIndex, std::forward<Names>(_names)...);
+        }
+
         void apply() const {
             shaders->update();
             textures->bind();
@@ -84,7 +89,7 @@ namespace Render {
 
     private:
         void render(const void* offset) const;
-        friend class MaterialRenderer;
+        friend class MaterialPass;
     };
 
 };

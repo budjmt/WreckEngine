@@ -25,8 +25,16 @@ GLprogram PostProcess::make_program(const GLshader& fragment) {
     return p;
 }
 
-PostProcess* PostProcess::chainsTo(shared<PostProcess> p) { chain.push_back(p); return p.get(); }
-PostProcess* PostProcess::chainsTo(shared<Composite> p) { chain.push_back(p); p->dependencies.push_back(this); return p.get(); }
+PostProcess* PostProcess::chainsTo(shared<PostProcess> p) { 
+    chain.push_back(p); 
+    return p.get(); 
+}
+
+PostProcess* PostProcess::chainsTo(shared<Composite> p) { 
+    chain.push_back(p); 
+    p->dependencies.push_back(this); 
+    return p.get(); 
+}
 
 void PostProcess::apply(PostProcess* prev) {
     if (!fbo.isBound()) fbo.bind();
