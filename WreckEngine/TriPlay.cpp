@@ -153,9 +153,18 @@ void TriPlay::setupPostProcess() {
     auto chromaticAberration = make_shared<PostProcess>();
     chromaticAberration->data.setShaders(PostProcess::make_program("Shaders/postProcess/CA.glsl"));
     chromaticAberration->data.setTextures(blurTarget);
-    chromaticAberration->renderToTextures(renderer.postProcess.output);
+    chromaticAberration->renderToTextures(colorRender);
 
-    renderer.postProcess.entry.chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration);
+    // CRT
+    auto crt = make_shared<PostProcess>();
+    crt->data.setShaders(PostProcess::make_program("Shaders/postProcess/crt.glsl"), &crtTime, &crtRes);
+    crt->data.setTextures(colorRender);
+    crt->renderToTextures(renderer.postProcess.output);
+    crtTime = GLresource<float>(crt->data.shaders->program, "time");
+    crtTime.value = 0.f;
+    crtRes  = GLresource<vec2>(crt->data.shaders->program, "resolution");
+
+    renderer.postProcess.entry.chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration)->chainsTo(crt);
 }
 
 #include "CollisionManager.h"
@@ -209,6 +218,9 @@ void TriPlay::update(double delta) {
 	Camera::mayaCam(Camera::main, dt);
     objectProgram.use();
     objectCamera.update(Camera::main->getCamMat());
+
+    crtTime.value = fmod(crtTime.value + dt, PI * 5);
+    crtRes.value = vec2(Window::width, Window::height);
 
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
 	DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));

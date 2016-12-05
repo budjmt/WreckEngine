@@ -25,5 +25,7 @@ private:
     GLuniform<mat4> objectCamera;
 
     void setupPostProcess();
+    GLresource<float> crtTime;
+    GLresource<vec2> crtRes;
 };
 
