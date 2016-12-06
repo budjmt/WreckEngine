@@ -16,16 +16,16 @@
 class TriPlay : public Game
 {
 public:
-	TriPlay(GLprogram prog);
-	void update(double dt);
-	void draw();
+    TriPlay(GLprogram prog);
+    void update(double dt);
+    void draw();
 private:
-	shared<Entity> me;
+    shared<Entity> me;
     GLprogram objectProgram;
     GLuniform<mat4> objectCamera;
 
     void setupPostProcess();
     GLresource<float> crtTime;
-    GLresource<vec2> crtRes;
+    GLresource<GLresolution> crtRes;
 };
 

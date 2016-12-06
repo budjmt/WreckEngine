@@ -31,7 +31,7 @@ namespace Render {
         }
 
         virtual void refresh() { for (auto& p : chain) p->refresh(); }
-        virtual void apply(PostProcess* prev);
+        virtual void apply();
 
         // might want parameter pack version
         PostProcess* chainsTo(shared<PostProcess> p);
@@ -79,10 +79,10 @@ namespace Render {
         void refresh() override { PostProcess::refresh(); numReady = 0; }
 
         bool ready() const { return numReady == dependencies.size(); }
-        void apply(PostProcess* prev) override {
+        void apply() override {
             ++numReady; // don't need validity check; only dependencies should show up as prev ptrs
             if (ready())
-                PostProcess::apply(this);
+                PostProcess::apply();
         }
 
     private:

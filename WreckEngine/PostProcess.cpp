@@ -36,7 +36,7 @@ PostProcess* PostProcess::chainsTo(shared<Composite> p) {
     return p.get(); 
 }
 
-void PostProcess::apply(PostProcess* prev) {
+void PostProcess::apply() {
     if (!fbo.isBound()) fbo.bind();
     GLframebuffer::clear();
     data.apply();

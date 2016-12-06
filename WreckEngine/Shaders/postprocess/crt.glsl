@@ -48,21 +48,21 @@ vec3 ToSrgb(in vec3 c) { return vec3(ToSrgb1(c.r), ToSrgb1(c.g), ToSrgb1(c.b)); 
 // Also zero's off screen.
 vec3 Fetch(in vec2 pos, in vec2 off, in vec2 res) {
 	pos = floor(pos * res + off) / res;
-	if (max(abs(pos.x - 0.5), abs(pos.y - 0.5)) > 0.5)
+	vec2 a = abs(pos - vec2(0.5));
+	if (max(a.x, a.y) > 0.5)
 		return vec3(0.);
 	else // shut up compiler
-		return ToLinear(texture2D(pixels, pos.xy).rgb);
+		return ToLinear(texture(pixels, pos.xy).rgb);
 }
 
 // Distance in emulated pixels to nearest texel.
 vec2 Dist(in vec2 pos, in vec2 res) { 
-	pos = pos*res; 
-	return -((pos - floor(pos)) - vec2(0.5)); 
+	return vec2(0.5) - fract(pos * res); 
 }
 
 // 1D Gaussian.
 float Gaus(in float pos, in float scale) { 
-	return exp2(scale*pos*pos); 
+	return exp2(scale * pos * pos); 
 }
 
 // 3-tap Gaussian filter along horz line.
@@ -123,14 +123,14 @@ vec2 warp = vec2(1.0 / 32.0, 1.0 / 24.0);
 // Distortion of scanlines, and end of screen alpha.
 vec2 Warp(in vec2 pos) {
 	pos = (pos * 2.0) - 1.0;
-	pos *= vec2(1.05 + (pos.y * pos.y) * warp.x, 1.05 + (pos.x * pos.x) * warp.y);
+	pos *= vec2(1.05) + (pos * pos).yx * warp;
 	return (pos * 0.5) + 0.5;
 }
 
 // Shadow mask.
 vec3 Mask(in vec2 pos, in float maskDark, in float maskLight) {
 	pos.x += pos.y * 2.0; // change the const value to change the pixels a bit
-	vec3 mask = vec3(maskDark, maskDark, maskDark);
+	vec3 mask = vec3(maskDark);
 	pos.x = fract(pos.x / 6.0);
 	if (pos.x < 0.333)
 		mask.r = maskLight;
@@ -147,19 +147,18 @@ vec3 ScanMask(in float posY, in float maskDark, in float maskLight) {
 	float p = 0.75 * (modf(time * 0.3, 2.0) - 1) + 0.5;
 	float r = 0.035;
 	float d = abs(posY - p) - r;
-	if (d <= 0)
-		return vec3(maskLight) * (1.5 - clamp(5 * exp2(d), 0, 1.5));
-	else
+	if (d > 0)
 		return vec3(maskDark);
+	else
+		return vec3(maskLight * (1.5 - clamp(5 * exp2(d), 0, 1.5)));
 }
 
-// Entry.
 //credit to https://www.shadertoy.com/view/XsjSzR#
 void main() {
 	
 	vec2 res = resolution / 2.0;
 
-	vec2 fragCoord = uv * resolution;//the coordinate in pixels
+	vec2 fragCoord = uv * resolution; // the coordinate in pixels
 	
 	// Hardness of scanline.
 	//  -8.0 = soft
@@ -173,12 +172,12 @@ void main() {
 	// Unmodified.
 	vec2 pos = Warp(uv);
 	//vec2 pos = uv;
-	//return texture2D(pixels, pos) - texture2D(pixels, uv);
+	//return texture(pixels, pos) - texture(pixels, uv);
 	//return vec4(pos,0,1);
 	fragColor.rgb = Tri(pos, res, hardScan) 
 				* Mask(fragCoord.xy, maskDark, maskLight) 
 				+ ScanMask(uv.y, -maskDark * 0.05, maskLight * 0.05);
 	
 	fragColor.rgb = ToSrgb(fragColor.rgb);
-	fragColor.a = texture2D(pixels, uv).a;
+	fragColor.a = texture(pixels, uv).a;
 }

@@ -16,19 +16,16 @@ layout (location = 1) out vec4 brightColor;
 
 void main() {
 	vec3 lightPos = vec3(3,2,0);
-	vec3 lightDir = fragPos - lightPos;
-	float dist = length(lightDir);
-	lightDir /= dist;
-	dist *= dist;
+	vec3 lightDir = normalize(fragPos - lightPos);
 	
 	float lamb = max(dot(fragNormal, -lightDir), 0);
 	float spec = 0.;
 	if(lamb > 0) {
 		vec3 viewDir = camDir;
 		vec3 halfDir = normalize(lightDir + viewDir);
-		float specAngle = max(dot(fragNormal, halfDir),0);
+		float specAngle = max(dot(fragNormal, halfDir), 0);
 		float specularity = 16.;
-		spec = pow(specAngle,specularity);
+		spec = pow(specAngle, specularity);
 	}
 
 	vec4 color = texture(uniformTex, fragTexUV);

@@ -9,6 +9,7 @@
 
 #include "MarchMath.h"
 #include "smart_ptr.h"
+#include "External.h"
 
 #define local(name) __local__ ## name
 
@@ -499,6 +500,35 @@ public:
 
 private:
     GLuniform<T> location;
+};
+
+struct GLtime;
+struct GLresolution;
+
+template<>
+class GLresource<GLtime> : public GLres {
+public:
+    GLresource() = default;
+    GLresource(const GLuniform<float> loc) : location(loc) {}
+    GLresource(const GLprogram& p, const char* name) : location(p.getUniform<float>(name)) {}
+
+    void update() const override { location.update(0); } // place holder, need Time class
+
+private:
+    GLuniform<float> location;
+};
+
+template<>
+class GLresource<GLresolution> : public GLres {
+public:
+    GLresource() = default;
+    GLresource(const GLuniform<vec2> loc) : location(loc) {}
+    GLresource(const GLprogram& p, const char* name) : location(p.getUniform<vec2>(name)) {}
+
+    void update() const override { location.update(vec2(Window::width, Window::height)); }
+
+private:
+    GLuniform<vec2> location;
 };
 
 // helper class, used to assist in creating vertex array attribute bindings (create and use locally, DO NOT STORE!)

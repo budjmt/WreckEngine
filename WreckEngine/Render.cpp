@@ -151,7 +151,7 @@ void PostProcessChain::apply() {
 void PostProcessChain::finish(PostProcess* curr) {
     if (!curr->endsChain()) {
         for (auto& p : curr->chain) 
-            p->apply(curr);
+            p->apply();
     }
 }
 
