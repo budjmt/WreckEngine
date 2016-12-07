@@ -129,6 +129,9 @@
     <ClCompile Include="PostProcess.cpp">
       <Filter>Render</Filter>
     </ClCompile>
+    <ClCompile Include="Random.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="unique_id.h">
@@ -241,8 +244,8 @@
     </ClInclude>
     <ClInclude Include="PostProcess.h">
       <Filter>Render</Filter>
-	</ClInclude>
-	<ClInclude Include="Time.h">
+    </ClInclude>
+    <ClInclude Include="Time.h">
       <Filter>Utilities</Filter>
     </ClInclude>
   </ItemGroup>
