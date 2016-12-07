@@ -72,10 +72,10 @@ void Camera::mayaCam(Camera* camera, double delta) {
 	}
 
 	constexpr auto u = 5.f;
-    if      (Keyboard::keyDown(Keyboard::Key::W)) camera->transform.position += camera->getForward() *  (u * dt);
-	else if (Keyboard::keyDown(Keyboard::Key::S)) camera->transform.position += camera->getForward() * -(u * dt);
-	if      (Keyboard::keyDown(Keyboard::Key::D)) camera->transform.position += camera->getRight()   * -(u * dt);
-	else if (Keyboard::keyDown(Keyboard::Key::A)) camera->transform.position += camera->getRight()   *  (u * dt);
+    if      (Keyboard::keyDown(Keyboard::Key::W)) camera->transform.position += camera->forward() *  (u * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::S)) camera->transform.position += camera->forward() * -(u * dt);
+	if      (Keyboard::keyDown(Keyboard::Key::D)) camera->transform.position += camera->right()   * -(u * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::A)) camera->transform.position += camera->right()   *  (u * dt);
 
 	if      (Keyboard::keyDown(Keyboard::Key::Up))    camera->transform.position += vec3(0, 1, 0) *  (u * dt);
 	else if (Keyboard::keyDown(Keyboard::Key::Down))  camera->transform.position += vec3(0, 1, 0) * -(u * dt);

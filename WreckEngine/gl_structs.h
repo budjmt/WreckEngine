@@ -510,12 +510,16 @@ class GLresource<GLtime> : public GLres {
 public:
     GLresource() = default;
     GLresource(const GLuniform<float> loc) : location(loc) {}
-    GLresource(const GLprogram& p, const char* name) : location(p.getUniform<float>(name)) {}
+    GLresource(const GLprogram& p, const char* name) : GLresource(p.getUniform<float>(name)) {}
 
-    void update() const override { location.update(0); } // place holder, need Time class
+    void update() const override { 
+        value += (float) Time::delta;
+        location.update(value); 
+    }
 
 private:
     GLuniform<float> location;
+    mutable float value = 0;
 };
 
 template<>
