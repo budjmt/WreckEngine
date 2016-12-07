@@ -30,31 +30,32 @@ shared<Mesh> loadOBJ(const char* file) {
 	std::string line;
 	while (getline(infile, line)) {
 		auto tokens = tokenize(line, " ");
-		if (line[0] == 'v') {
-			//vertices
-			if (line[1] == ' ') {
-				data.verts.push_back(vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
-			}
-			//normals
-			else if (line[1] == 'n') {
-				data.normals.push_back(vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
-			}
-			//UVs
-			else if (line[1] == 't') {
-				data.uvs.push_back(vec3(stof(tokens[1]), stof(tokens[2]), 0));
-			}
-		}
-		else if (line[0] == 'f') {
-			for (size_t i = 1, numTokens = tokens.size(); i < numTokens; i++) {
-				auto faceTokens = tokenize(tokens[i], "/");
-				GLuint v = (GLuint)stoi(faceTokens[0]) - 1
-					 , u = (GLuint)stoi(faceTokens[1]) - 1
-					 , n = (GLuint)stoi(faceTokens[2]) - 1;
-				indices.verts.push_back(v);
-				indices.uvs.push_back(u);
-				indices.normals.push_back(n);
-			}
-		}
+        switch (line[0]) {
+        case 'v':
+            switch (line[1]) {
+            case ' ': // vertices
+                data.verts.push_back(vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
+                break;
+            case 'n': // normals
+                data.normals.push_back(vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
+                break;
+            case 't': // UVs
+                data.uvs.push_back(vec3(stof(tokens[1]), stof(tokens[2]), 0));
+                break;
+            }
+            break;
+        case 'f': // faces
+            for (size_t i = 1, numTokens = tokens.size(); i < numTokens; i++) {
+                auto faceTokens = tokenize(tokens[i], "/");
+                auto v = (GLuint) stoi(faceTokens[0]) - 1
+                   , u = (GLuint) stoi(faceTokens[1]) - 1
+                   , n = (GLuint) stoi(faceTokens[2]) - 1;
+                indices.verts.push_back(v);
+                indices.uvs.push_back(u);
+                indices.normals.push_back(n);
+            }
+            break;
+        }
 	}
 	
 	cout << "Complete!" << endl;
@@ -66,17 +67,17 @@ void genOBJ(const char* file, Mesh::FaceData& data, Mesh::FaceIndex& indices) {
 	//cout << "Generating " << file << endl;
 
 	string fileContents = "";
-	for (const auto& vert : data.verts) {
+	for (const auto vert : data.verts) {
 		fileContents += "v " + to_string(vert.x) + " " + to_string(vert.y) + " " + to_string(vert.z) + "\n";
 	}
 	fileContents += "# " + to_string(data.verts.size()) + " vertices\n\n";
 
-	for (const auto& uv : data.uvs) {
+	for (const auto uv : data.uvs) {
 		fileContents += "vt " + to_string(uv.x) + " " + to_string(uv.y) + " " + to_string(uv.z) + "\n";
 	}
 	fileContents += "# " + to_string(data.verts.size()) + " UVs\n\n";
 
-	for (const auto& normal : data.normals) {
+	for (const auto normal : data.normals) {
 		fileContents += "vn " + to_string(normal.x) + " " + to_string(normal.y) + " " + to_string(normal.z) + "\n";
 	}
 	fileContents += "# " + to_string(data.verts.size()) + " normals\n\n";

@@ -14,7 +14,6 @@
 class ColliderEntity : public Entity
 {
 public:
-	//ColliderEntity(Mesh* mesh, Material* material);
 	ColliderEntity(shared<DrawMesh> s);
 	ColliderEntity(vec3 p, vec3 dims, vec3 sc, vec3 rA, float r, shared<DrawMesh> s);
 

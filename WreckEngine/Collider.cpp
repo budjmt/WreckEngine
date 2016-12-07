@@ -42,7 +42,7 @@ void Collider::update() {
 	updateEdges();
 	
 	//DrawDebug::getInstance().drawDebugSphere(_framePos, _radius);
-	//DrawDebug::getInstance().drawDebugBox(transformed_aabb.center, transformed_aabb.halfDims.x * 2.f, transformed_aabb.halfDims.y * 2.f, transformed_aabb.halfDims.z * 2.f);
+	DrawDebug::getInstance().drawDebugBox(transformed_aabb.center, transformed_aabb.halfDims.x * 2.f, transformed_aabb.halfDims.y * 2.f, transformed_aabb.halfDims.z * 2.f);
 }
 
 //gets the vertex of the collider furthest in the direction of dir
@@ -284,7 +284,7 @@ Manifold Collider::intersects(Collider* other) {
 		
 		//find the possible incident faces; the axis is the reference normal
 		const auto incidents = minFace.other->getIncidentFaces(minFace.axis);
-		assert(incidents.size());// There were no incident faces! Somehow!
+		//assert(incidents.size());// There were no incident faces! Somehow! // TODO FIX THIS!!!
 
 		//clip the incident face(s) against the reference face
 		minFace.originator->clipPolygons(minFace, incidents);

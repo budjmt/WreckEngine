@@ -70,7 +70,7 @@ void Text::FontFace::setSize(const uint32_t _height, const uint32_t _width) {
 }
 
 void Text::FontFace::loadGlyphs() {
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
 	for (unsigned char c = 0; c < 128; ++c) {
 		if (FT_Load_Char(fontFace, c, FT_LOAD_RENDER)) { std::cout << "Could not load glyph: " << c << std::endl; continue; }
 		auto& glyph = fontFace->glyph;
@@ -83,7 +83,7 @@ void Text::FontFace::loadGlyphs() {
 		t.param(GL_TEXTURE_MIN_FILTER, GL_LINEAR); t.param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glyphs[c] = { t, vec2(bitmap.width, bitmap.rows), vec2(glyph->bitmap_left, glyph->bitmap_top), (uint32_t) glyph->advance.x };
 	}
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
 }
 
 #include "ShaderHelper.h"
@@ -134,7 +134,8 @@ void Text::draw(const std::string& text, const FontFace* font, Justify vertical,
 	instances.push_back(i);
 }
 
-void Text::render() {
+void Text::render(Render::MaterialPass* matRenderer) {
+    renderer.renderer = matRenderer;
 	if (Text::active) { for (auto& instance : instances) renderer.draw(instance); }
 	instances.clear();
 }
@@ -164,12 +165,14 @@ vec2 Text::getDims(const std::string& text, const FontFace* font, float scale) {
 	return vec2(x, above + below);
 }
 
+// TODO update this to use a method that doesn't rely on sharing a buffer that changes between draw calls
 void Text::Renderer::draw(Text::Instance& instance) {
 	shader.program.use();
 	shader.color.update(instance.color);
 	shader.cam.update(glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height));
 
 	vao.bind();
+    buffer.bind();
 	for (const auto c : instance.text) {
 
 		const auto glyph = instance.font->glyphs.at(c);
@@ -187,9 +190,8 @@ void Text::Renderer::draw(Text::Instance& instance) {
 		};
 
 		glyph.tex.bind();
-		buffer.bind();
 		buffer.subdata(verts, sizeof(verts));
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6)); // this works, but ignores the rendering pipeline; BAD
 
 		instance.x += (glyph.advance >> 6) * instance.scale;// the advance is measured in 1/64 pixels, i.e. 1/2^6
 	}

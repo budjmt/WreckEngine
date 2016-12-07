@@ -1,11 +1,6 @@
 #include "Game.h"
 #include <iostream>
 
-Game::Game(GLprogram prog)
-    : shader(prog)
-{
-}
-
 void Game::addState(shared<State> s) { 
     if (!states.size()) 
         currState = s.get(); 
@@ -17,13 +12,10 @@ void Game::update(double dt) {
 }
 
 void Game::draw() {
-    if (shader) shader.use();
     currState->draw();
 #if DEBUG
     if (drawDebug)
-    {
-        DrawDebug::getInstance().draw();
-        shader.use();
-    }
+        DrawDebug::getInstance().draw(&renderer.objects);
 #endif
+    renderer.render();
 }

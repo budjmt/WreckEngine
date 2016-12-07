@@ -22,7 +22,7 @@ namespace UI
         "{\n"
         "   Frag_UV = UV;\n"
         "   Frag_Color = Color;\n"
-        "   gl_Position = ProjMtx * vec4(Position.xy,0,1);\n"
+        "   gl_Position = ProjMtx * vec4(Position.xy, 0.01, 1);\n"
         "}\n";
 
     static const char* const ImGuiFragmentShader =
@@ -30,10 +30,10 @@ namespace UI
         "uniform sampler2D Texture;\n"
         "in vec2 Frag_UV;\n"
         "in vec4 Frag_Color;\n"
-        "out vec4 Out_Color;\n"
+        "layout (location = 0) out vec4 Out_Color;\n"
         "void main()\n"
         "{\n"
-        "   Out_Color = Frag_Color * texture( Texture, Frag_UV.st);\n"
+        "   Out_Color = Frag_Color * texture(Texture, Frag_UV.st);\n"
         "}\n";
 
     static constexpr GLenum ImGuiDrawType = (sizeof(ImDrawIdx) == 2) ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
@@ -102,17 +102,10 @@ namespace UI
 
         // Setup viewport, orthographic projection matrix
         GL_CHECK(glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height));
-        const mat4 ortho_projection =
-        {
-            {2.0f / io.DisplaySize.x, 0.0f,                     0.0f, 0.0f},
-            {0.0f,                    2.0f / -io.DisplaySize.y, 0.0f, 0.0f},
-            {0.0f,                    0.0f,                    -1.0f, 0.0f},
-            {-1.0f,                   1.0f,                     0.0f, 1.0f},
-        };
         
         shader.use();
         texLoc.update(0);
-        projLoc.update(ortho_projection);
+        projLoc.update(glm::ortho(0.f, io.DisplaySize.x, io.DisplaySize.y, 0.f));
         vao.bind();
 
         for (int n = 0, cmdListCount = dd->CmdListsCount; n < cmdListCount; n++)
@@ -161,8 +154,7 @@ namespace UI
         io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
         // Upload texture to graphics system
-        GLint last_texture;
-        GL_CHECK(glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture));
+        auto last_texture = getGLVal(GL_TEXTURE_BINDING_2D);
         
         fontTex.create(GL_TEXTURE_2D);
         if (!fontTex()) return false;
@@ -234,8 +226,7 @@ namespace UI
         GLattrarr attrSetup;
 
         buffer.bind();
-        attrSetup.add<GLfloat>(2);
-        attrSetup.add<GLfloat>(2);
+        attrSetup.add<vec2>(2);
         attrSetup.add<GLubyte>(4, 0, GL_TRUE);
         attrSetup.apply();
 

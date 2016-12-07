@@ -2,12 +2,6 @@
 
 #include "CollisionManager.h"
 
-//ColliderEntity::ColliderEntity(Mesh * mesh, Material * material)
-//	: ColliderEntity(new DrawMesh(mesh, nullptr, DXInfo::getInstance().device))
-//{
-//	_shape->material(material);
-//}
-
 ColliderEntity::ColliderEntity(shared<DrawMesh> s)
 	: Entity(s), _collider(make_unique<Collider>(s.get()->mesh(), &transform))
 {

@@ -10,6 +10,8 @@
 #include "unique_id.h"
 #include "gl_structs.h"
 
+#include "Render.h"
+
 namespace Text
 {
 	void init();
@@ -48,6 +50,7 @@ namespace Text
 		void init();
 		// x and y are in pixels
 		void draw(Instance& inst);
+        Render::MaterialPass* renderer;
 	private:
 		GLVAO vao; GLbuffer buffer;
 		typedef struct {
@@ -62,7 +65,7 @@ namespace Text
 	enum Justify : GLubyte { START, MIDDLE, END };
 
 	void draw(const std::string& text, const FontFace* font, Justify vertical, Justify horizontal, float x, float y, float scale, const vec4& color = vec4(0, 0, 0, 1));
-	void render();
+	void render(Render::MaterialPass* renderer);
 
 	vec2 getDims(const std::string& text, const FontFace* font, float scale);
 }
