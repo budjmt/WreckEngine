@@ -5,8 +5,7 @@
 namespace Time {
 
     extern std::chrono::high_resolution_clock::time_point start;
-    extern thread_local std::chrono::high_resolution_clock::time_point prevFrame;
-    extern thread_local double delta;
+    extern thread_local const double& delta;
 
     std::chrono::high_resolution_clock::time_point now();
     long long ctime();

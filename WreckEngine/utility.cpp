@@ -11,8 +11,6 @@ using namespace Event;
 // this file is used to define any external stuff needed by all the various utility files
 
 std::chrono::high_resolution_clock::time_point Time::start = Time::now();
-thread_local std::chrono::high_resolution_clock::time_point Time::prevFrame = Time::start;
-thread_local double Time::delta = 0.;
 
 std::chrono::high_resolution_clock::time_point Time::now() {
     return std::chrono::high_resolution_clock::now();
@@ -28,10 +26,14 @@ double Time::elapsed() {
     return duration<double>(now() - start).count();
 }
 
+thread_local double deltaTime = 0.;
+thread_local const double& Time::delta = deltaTime;
+
 void Time::updateDelta() {
     using namespace std::chrono;
+    thread_local auto prevFrame = Time::start;
     auto currFrame = now();
-    delta = duration<double>(currFrame - prevFrame).count();
+    deltaTime = duration<double>(currFrame - prevFrame).count();
     prevFrame = currFrame;
 }
 
