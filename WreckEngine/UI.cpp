@@ -290,8 +290,7 @@ namespace UI
         io.ImeWindowHandle = glfwGetWin32Window(Window::window);
 #endif
 
-        //glfwSetKeyCallback(Window::window, GlfwKeyCallback);
-        //glfwSetCharCallback(Window::window, GlfwCharCallback);
+        Keyboard::charCallback(GlfwCharCallback);
 
         return true;
     }
@@ -333,7 +332,7 @@ namespace UI
         io.DisplayFramebufferScale = Window::frameScale;
 
         // Setup time step
-        double current_time = glfwGetTime();
+        double current_time = Time::elapsed();
         io.DeltaTime = time > 0.0 ? (float)(current_time - time) : (float)(1.0f / 60.0f);
         time = current_time;
 

@@ -228,6 +228,7 @@
     <ClInclude Include="Text.h" />
     <ClInclude Include="TextEntity.h" />
     <ClInclude Include="ThirdParty\Include\imconfig.h" />
+    <ClInclude Include="Time.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TriPlay.h" />
     <ClInclude Include="UI.h" />

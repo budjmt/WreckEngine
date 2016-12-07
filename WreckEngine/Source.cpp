@@ -33,7 +33,6 @@ double runningAvgDelta = 1.0 / FPS;
 int samples = 10;
 bool fpsMode = true;
 GLprogram shaderProg;
-double prevFrame;
 unique<Game> game;
 
 using namespace std;
@@ -45,7 +44,6 @@ void init() {
         shaderProg.getUniform<vec4>("tint").update(vec4(1));
     }
 
-    prevFrame = glfwGetTime();
     Mouse::defaultMove(Window::window, 0, 0);//this is cheating but it works for initializing the mouse
 
     initGraphics();
@@ -87,23 +85,21 @@ void initGraphics() {
 }
 
 void update() {
-    auto currFrame = glfwGetTime();
-    auto dt = currFrame - prevFrame;
-    prevFrame = currFrame;
+    Time::updateDelta();
     //need to separate drawing and update pipelines
     //double spf = 1.0 / FPS;
     //while (dt < spf) {
-    //  currFrame = glfwGetTime();
+    //  currFrame = Time::elapsed();
     //  dt += currFrame - prevFrame;
     //  prevFrame = currFrame;
     //}
 
     // game update occurs before anything else
     // this enables simpler rules for clearing events per frame
-    game->update(dt);
+    game->update(Time::delta);
 
     runningAvgDelta -= runningAvgDelta / samples;
-    runningAvgDelta += dt / samples;
+    runningAvgDelta += Time::delta / samples;
     auto title = std::to_string(fpsMode ? 1.0 / runningAvgDelta : runningAvgDelta * 1000.0);
     auto decimal = title.find('.');
     if (title.length() - decimal > 3) title = title.erase(decimal + 3);

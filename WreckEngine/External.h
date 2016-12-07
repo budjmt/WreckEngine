@@ -3,6 +3,7 @@
 #include "GLFW/glfw3.h"
 #include "glm/glm.hpp"
 
+#include "Time.h"
 #include "Random.h"
 
 namespace Window {
@@ -170,7 +171,8 @@ namespace Keyboard {
     bool altDown();
     bool superDown();
 
-    inline void keyCallback(GLFWkeyfun f) { glfwSetKeyCallback(Window::window, f); }
+    inline void keyCallback (GLFWkeyfun f)  { glfwSetKeyCallback(Window::window, f);  }
+    inline void charCallback(GLFWcharfun f) { glfwSetCharCallback(Window::window, f); }
 
     void defaultKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 

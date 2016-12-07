@@ -1,11 +1,14 @@
 #pragma once
 
-#include <cstdlib>
-#include <ctime>
+#include "Time.h"
 
 // TODO fix with actual random generator
 struct Random {
-	static auto seed() { auto s = time(NULL); srand((unsigned long)s); return s; }
+	static auto seed() { 
+        auto s = Time::ctime(); 
+        srand((unsigned long)s); 
+        return s; 
+    }
 
 	static unsigned get() { static auto do_seed = seed(); return rand(); }
 	static int getRange(int start, int end) { return get() % (end - start) + start; }

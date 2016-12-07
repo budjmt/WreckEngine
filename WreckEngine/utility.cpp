@@ -10,6 +10,31 @@ using namespace Event;
 
 // this file is used to define any external stuff needed by all the various utility files
 
+std::chrono::high_resolution_clock::time_point Time::start = Time::now();
+thread_local std::chrono::high_resolution_clock::time_point Time::prevFrame = Time::start;
+thread_local double Time::delta = 0.;
+
+std::chrono::high_resolution_clock::time_point Time::now() {
+    return std::chrono::high_resolution_clock::now();
+}
+
+long long Time::ctime() {
+    using namespace std::chrono;
+    return duration_cast<seconds>(Time::now().time_since_epoch()).count();
+}
+
+double Time::elapsed() {
+    using namespace std::chrono;
+    return duration<double>(now() - start).count();
+}
+
+void Time::updateDelta() {
+    using namespace std::chrono;
+    auto currFrame = now();
+    delta = duration<double>(currFrame - prevFrame).count();
+    prevFrame = currFrame;
+}
+
 bool GLFWmanager::initialized = false;
 bool GLEWmanager::initialized = false;
 
@@ -97,7 +122,7 @@ void Mouse::defaultButton(GLFWwindow* window, int button, int action, int mods) 
         info.setButtonDown(button);
         
         auto& b = info.buttons[button];
-        b.lastDown = glfwGetTime();
+        b.lastDown = Time::elapsed();
         b.downThisFrame = true;
     }
     else if (action == GLFW_RELEASE)
@@ -151,7 +176,7 @@ void Keyboard::defaultKey(GLFWwindow* window, int key, int scancode, int action,
     if (key == Key::Code::ScanKey) return;
 
     bool press = action != GLFW_RELEASE;
-    info.keys[getKeyIndex(key)] = { press, press, glfwGetTime() };
+    info.keys[getKeyIndex(key)] = { press, press, Time::elapsed() };
 
     static uint32_t key_id = Message::add("keyboard_key");
     Dispatcher::central_trigger.sendBulkEvent<KeyHandler>(key_id, key, scancode, action, mods);
