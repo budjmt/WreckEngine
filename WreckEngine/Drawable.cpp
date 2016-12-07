@@ -17,16 +17,12 @@ void Drawable::draw(const mat4& translate, const mat4& rotate, const mat4& scale
 void Drawable::draw(const mat4& world) {
     setWorldMatrix(world);
 
-    //now the stuff done in init happens automatically since they were done
-    //while it was active
-    vArray.bind();
-
     //actual draw call is reserved for children
 }
 
 void Drawable::setWorldMatrix(const mat4& world) {
-    worldMatrix.update(world);
-    iTworldMatrix.update(inv_tp_tf(world));
+    worldMatrix.value = world;
+    iTworldMatrix.value = inv_tp_tf(world);
 }
 
 std::unordered_map<const char*, GLtexture> Drawable::loadedTextures;

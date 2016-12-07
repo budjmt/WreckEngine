@@ -81,6 +81,7 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     glfwSetInputMode(Window::window, GLFW_CURSOR, Window::cursorMode);
 
     GLtexture::setMaxTextures();
+    GLframebuffer::setMaxColorAttachments();
 }
 
 GLFWwindow* Window::window;

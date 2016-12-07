@@ -20,9 +20,9 @@ public:
 	Entity(shared<Drawable> s);
 	Entity(vec3 p, vec3 sc, vec3 rA, float r, shared<Drawable> s);
 
-	Transform& transform = _transform;
-	bool& active = _active;
-	vec4& color = _color;
+	Transform transform;
+	bool active = true;
+	vec4 color = vec4(1);
 
 	void* id = (void*)Random::get();//meant to identify the object for debugging purposes
 
@@ -30,9 +30,6 @@ public:
 	virtual void draw();
 protected:
 	shared<Drawable> shape;
-	vec4 _color = vec4(1);
-	Transform _transform;
-	bool _active = true;
 	ACCS_G (protected, EntityType, type);
 };
 

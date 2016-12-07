@@ -22,6 +22,7 @@ unique<GLEWmanager> glew;
 #include "ShaderHelper.h"
 #include "ModelHelper.h"
 #include "External.h"
+#include "Render.h"
 #include "TriPlay.h"
 #include "UiTest.h"
 #include "UI.h"
@@ -39,9 +40,9 @@ using namespace std;
 
 void init() {
     shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
-    if(shaderProg()) {
+    if(shaderProg.valid()) {
         shaderProg.use();
-        shaderProg.getUniform<vec4>("tint").update(vec4(1));
+        shaderProg.setOnce<vec4>("tint", vec4(1));
     }
 
     Mouse::defaultMove(Window::window, 0, 0);//this is cheating but it works for initializing the mouse
@@ -50,6 +51,7 @@ void init() {
 
     UI::Initialize();
     Text::init();
+    Render::Renderer::init(4);
 
     // this won't be initialized until after GLFW/GLEW are
     game = make_unique<TriPlay>(shaderProg);
@@ -67,21 +69,18 @@ void initGraphics() {
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
-    //wraps UVs
+    // wraps UVs
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 
     // depth buffering
     GL_CHECK(glEnable(GL_DEPTH_TEST));
-    GL_CHECK(glDepthFunc(GL_LESS));
+    GL_CHECK(glDepthFunc(GL_LEQUAL));
 
     // back-face culling
     if (!DEBUG) { GL_CHECK(glEnable(GL_CULL_FACE)); }
     GL_CHECK(glCullFace(GL_BACK));
     GL_CHECK(glFrontFace(GL_CCW));
-
-    // render as wire-frame
-    //GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
 }
 
 void update() {
@@ -120,7 +119,7 @@ void update() {
 }
 
 void draw() {
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
+    GLframebuffer::clear();
     game->draw();
 }
 

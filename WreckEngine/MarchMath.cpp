@@ -3,7 +3,7 @@
 #include <intrin.h>
 
 int sign(int i) { return glm::sign(i); } 
-int bitsign(int i) { const int signbit = 1 << 31; return i & signbit; }
+int bitsign(int i) { constexpr int signbit = 1 << 31; return i & signbit; }
 float signf(float f) { return glm::sign(f); }
 //inline float maxf(float a, float b) { _mm_store_ss(&a, _mm_max_ss(_mm_set_ss(a), _mm_set_ss(b))); return a; }
 //inline float minf(float a, float b) { _mm_store_ss(&a, _mm_min_ss(_mm_set_ss(a), _mm_set_ss(b))); return a; }

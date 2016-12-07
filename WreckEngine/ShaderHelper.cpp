@@ -44,7 +44,7 @@ GLshader loadShader(const char* file, GLenum shaderType) {
 	glGetShaderiv(shader(), GL_INFO_LOG_LENGTH, &logLength);
 	auto log = std::vector<char>(logLength);
 	glGetShaderInfoLog(shader(), logLength, 0, &log[0]);
-	cout << &log[0] << endl;
+	cout << "Error in file " << file << ": " << endl <<  &log[0] << endl;
 	return GLshader();
 }
 
