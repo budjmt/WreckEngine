@@ -6,7 +6,7 @@
 
 namespace {
 	void menu_update(LogicEntity* e, double dt) {
-		if (Window::getKey(GLFW_KEY_SPACE) == GLFW_PRESS) {
+		if (Keyboard::keyPressed(Keyboard::Key::Space)) {
 			Event::Trigger(e).sendEvent(Event::Handler::get("menu_state"), Event::Message::get("start_game"));
 		}
 	}
@@ -120,14 +120,14 @@ void TriPlay::update(double delta) {
 	CollisionManager::getInstance().update(dt);
 
 	//quit the game
-	if (Window::getKey(GLFW_KEY_Q) == GLFW_PRESS) exit('q');
+	if (Keyboard::keyDown(Keyboard::Key::Code::Q)) exit('q');
 
 	constexpr auto speed = 5.f;
 
-	bool shift = Window::getKey(GLFW_KEY_RIGHT_SHIFT)   == GLFW_PRESS || Window::getKey(GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS;
-	bool ctrl  = Window::getKey(GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS || Window::getKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+	bool shift = Keyboard::shiftDown();
+	bool ctrl  = Keyboard::controlDown();
 
-	if (Window::getKey(GLFW_KEY_I) == GLFW_PRESS) {
+	if (Keyboard::keyDown(Keyboard::Key::Code::I)) {
 		if (shift)
 			me->transform.position += vec3(0, 0, -speed * dt);
 		else if (ctrl)
@@ -135,7 +135,7 @@ void TriPlay::update(double delta) {
 		else
 			me->transform.position += vec3(0, speed * dt, 0);
 	}
-	else if (Window::getKey(GLFW_KEY_K) == GLFW_PRESS) {
+	else if (Keyboard::keyDown(Keyboard::Key::Code::K)) {
 		if(shift)
 			me->transform.position += vec3(0, 0, speed * dt);
 		else if (ctrl)
@@ -143,7 +143,7 @@ void TriPlay::update(double delta) {
 		else
 			me->transform.position += vec3(0, -speed * dt, 0); 
 	}
-	if (Window::getKey(GLFW_KEY_L) == GLFW_PRESS) {
+	if (Keyboard::keyDown(Keyboard::Key::Code::L)) {
 		if (shift)
 			me->transform.rotate(0, 2 * PI * dt, 0);
 		else if (ctrl)
@@ -151,7 +151,7 @@ void TriPlay::update(double delta) {
 		else
 			me->transform.position += vec3(speed * dt, 0, 0);
 	}
-	else if (Window::getKey(GLFW_KEY_J) == GLFW_PRESS) {
+	else if (Keyboard::keyDown(Keyboard::Key::Code::J)) {
 		if (shift)
 			me->transform.rotate(0, -2 * PI * dt, 0);
 		else if (ctrl)

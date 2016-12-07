@@ -73,13 +73,13 @@ void Camera::mayaCam(Camera* camera, double delta) {
 	}
 
 	constexpr auto u = 5.f;
-	if      (Window::getKey(GLFW_KEY_W) == GLFW_PRESS) camera->transform.position += camera->getForward() *  (u * dt);
-	else if (Window::getKey(GLFW_KEY_S) == GLFW_PRESS) camera->transform.position += camera->getForward() * -(u * dt);
-	if      (Window::getKey(GLFW_KEY_D) == GLFW_PRESS) camera->transform.position += camera->getRight()   * -(u * dt);
-	else if (Window::getKey(GLFW_KEY_A) == GLFW_PRESS) camera->transform.position += camera->getRight()   *  (u * dt);
+    if      (Keyboard::keyDown(Keyboard::Key::W)) camera->transform.position += camera->getForward() *  (u * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::S)) camera->transform.position += camera->getForward() * -(u * dt);
+	if      (Keyboard::keyDown(Keyboard::Key::D)) camera->transform.position += camera->getRight()   * -(u * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::A)) camera->transform.position += camera->getRight()   *  (u * dt);
 
-	if      (Window::getKey(GLFW_KEY_UP)    == GLFW_PRESS) camera->transform.position += vec3(0, 1, 0) *  (u * dt);
-	else if (Window::getKey(GLFW_KEY_DOWN)  == GLFW_PRESS) camera->transform.position += vec3(0, 1, 0) * -(u * dt);
-	if      (Window::getKey(GLFW_KEY_RIGHT) == GLFW_PRESS) camera->transform.position += vec3(1, 0, 0) *  (u * dt);
-	else if (Window::getKey(GLFW_KEY_LEFT)  == GLFW_PRESS) camera->transform.position += vec3(1, 0, 0) * -(u * dt);
+	if      (Keyboard::keyDown(Keyboard::Key::Up))    camera->transform.position += vec3(0, 1, 0) *  (u * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::Down))  camera->transform.position += vec3(0, 1, 0) * -(u * dt);
+	if      (Keyboard::keyDown(Keyboard::Key::Left))  camera->transform.position += vec3(1, 0, 0) *  (u * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::Right)) camera->transform.position += vec3(1, 0, 0) * -(u * dt);
 }

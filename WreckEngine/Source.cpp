@@ -54,8 +54,8 @@ void init() {
     Text::init();
 
     // this won't be initialized until after GLFW/GLEW are
-    //game = make_unique<TriPlay>(shaderProg);
-    game = make_unique<UiTest>();
+    game = make_unique<TriPlay>(shaderProg);
+    //game = make_unique<UiTest>();
 }
 
 void initGraphics() {
@@ -110,17 +110,17 @@ void update() {
     title += fpsMode ? " FpS" : " MSpF";
     glfwSetWindowTitle(Window::window, title.c_str());
 
-    bool alt = Window::getKey(GLFW_KEY_RIGHT_ALT) == GLFW_PRESS || Window::getKey(GLFW_KEY_LEFT_ALT) == GLFW_PRESS;
-    if (alt) {
-        if (Window::getKey(GLFW_KEY_0) == GLFW_PRESS)
+    if (Keyboard::altDown()) {
+        if (Keyboard::keyPressed(Keyboard::Key::_0))
             fpsMode = !fpsMode;
-        if (Window::getKey(GLFW_KEY_EQUAL) == GLFW_PRESS)
+        else if (Keyboard::keyPressed(Keyboard::Key::Equal))
             FPS += (FPS < 5) ? 1 : ((FPS < 20) ? 5 : ((FPS < 60) ? 10 : 0));
-        if (Window::getKey(GLFW_KEY_MINUS) == GLFW_PRESS)
+        else if (Keyboard::keyPressed(Keyboard::Key::Minus))
             FPS -= (FPS > 20) ? 10 : ((FPS > 5) ? 5 : ((FPS > 1) ? 1 : 0));
     }
 
     Mouse::update();
+    Keyboard::update();
 }
 
 void draw() {
