@@ -127,8 +127,7 @@ void draw() {
     game->draw();
 }
 
-int main(int argc, char** argv) {
-    glfw = make_unique<GLFWmanager>(800, 600);
+int main(int argc, char** argv) {glfw = make_unique<GLFWmanager>(800, 600);
     glew = make_unique<GLEWmanager>();
 
     if (DEBUG)
