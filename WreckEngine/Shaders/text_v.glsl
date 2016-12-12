@@ -7,8 +7,8 @@ layout (location = 2) in uint vColor;
 out vec2 fUV;
 flat out uint fColor;
 
-uniform vec2 offset;
 uniform mat4 camera; // generally just projection
+uniform vec2 offset;
 
 void main() {
     fUV = vUV;

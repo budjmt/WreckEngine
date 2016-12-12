@@ -163,7 +163,7 @@ void Text::FontFace::setSize(const uint32_t _height, const uint32_t _width)
 void Text::FontFace::loadGlyphs()
 {
     // Loads all basic, printable ASCII characters
-    loadGlyphRange(' ', '~');
+    loadGlyphRange(0, 255);
 }
 
 void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
@@ -348,15 +348,48 @@ Text::Instance::~Instance() {
         instances.erase(instances.begin() + index);
 }
 
-void Text::Instance::rebuildBuffer() {
-    if (!dirty || !font) {
+void Text::Instance::updateAlignment() {
+    if (!dirtyAlign)
+        return;
+
+    auto dims = getDims(text, font, scale);
+    
+    switch (horiz)
+    {
+        case START:
+            alignOffset.x = 0;
+            break;
+        case MIDDLE:
+            alignOffset.x = -dims.x * 0.5f;
+            break;
+        case END:
+            alignOffset.x = -dims.x;
+            break;
+    }
+
+    switch (vert)
+    {
+        case START:
+            alignOffset.y = 0;
+            break;
+        case MIDDLE:
+            alignOffset.y = -dims.y * 0.5f;
+            break;
+        case END:
+            alignOffset.y = -dims.y;
+            break;
+    }
+}
+
+void Text::Instance::updateBuffer() {
+    if (!dirtyBuffer || !font) {
         return;
     }
 
     // Get some helper variables
     const uint32_t packedColor = Color::Pack(color);
-    const float xSpace = font->spaceWidth;
-    const float ySpace = font->lineHeight;
+    const float xSpace = font->spaceWidth * scale;
+    const float ySpace = font->lineHeight * scale;
     const float uvScale = 1.0f / FontFace::TEX_SIZE;
     float x = 0.0f;
     float y = 0.0f;
@@ -368,8 +401,7 @@ void Text::Instance::rebuildBuffer() {
         uint32_t currCP = text[i];
 
         // Apply the kerning between the previous and current character
-        float kerning = getKerning(prevCP, currCP, font);
-        x += kerning;
+        x += getKerning(prevCP, currCP, font) * scale;
         prevCP = currCP;
 
         // Handle special characters
@@ -394,10 +426,11 @@ void Text::Instance::rebuildBuffer() {
         // Get the glyph for the current character
         const auto& glyph = font->glyphs.at(currCP);
 
-        float left   = glyph.bounds.x;
-        float top    = glyph.bounds.y;
-        float right  = left + glyph.bounds.z;
-        float bottom = top  + glyph.bounds.w;
+        auto gbounds = glyph.bounds * scale;
+        float left   = gbounds.x;
+        float top    = gbounds.y;
+        float right  = left + gbounds.z;
+        float bottom = top - gbounds.w;
 
         float u1 = uvScale * (glyph.texBounds.x);
         float v1 = uvScale * (glyph.texBounds.y);
@@ -413,7 +446,7 @@ void Text::Instance::rebuildBuffer() {
         vertices.push_back({{x + right, y + bottom}, {u2, v2}, packedColor});
 
         // Advance to the next character
-        x += glyph.advance;
+        x += glyph.advance * scale;
     }
 
     // Update the mesh
@@ -425,7 +458,7 @@ void Text::Instance::rebuildBuffer() {
     buffer.unbind();
 
     arrayCount = vertices.size();
-    dirty = false;
+    dirtyBuffer = false;
 }
 
 void Text::Renderer::init()
@@ -497,7 +530,7 @@ vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale)
         dims = glyph.getBearing() + glyph.getSize();
     }
 
-    return dims;
+    return dims * scale;
 }
 
 vec2 Text::getDims(const std::string& text, const FontFace* font, float scale)
@@ -593,9 +626,10 @@ void Text::Renderer::draw()
     shader.cam.update(glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height));
 
     for (auto& inst : instances) {
-        shader.offset.update(inst->offset);
-
-        inst->rebuildBuffer();
+        shader.offset.update(inst->offset + inst->alignOffset);
+        
+        inst->updateAlignment();
+        inst->updateBuffer();
 
         inst->font->tex.bind();
         inst->vao.bind();

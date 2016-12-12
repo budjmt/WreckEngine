@@ -22,6 +22,8 @@ public:
         auto position = transform.position();
         auto scale = transform.scale();
         
+        inst->alignHorizontal(horizontal);
+        inst->alignVertical(vertical);
         inst->setPosition(position.x, position.y);
         inst->setScale(scale.x);
     }

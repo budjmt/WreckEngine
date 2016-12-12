@@ -54,34 +54,58 @@ namespace Text
         void setSize(const uint32_t height, const uint32_t width = 0);
     };
 
+    enum Justify : GLubyte {START, MIDDLE, END};
+
+    vec2 getDims(char ch, const FontFace* font, float scale);
+    vec2 getDims(uint32_t cp, const FontFace* font, float scale);
+    vec2 getDims(const std::string& text, const FontFace* font, float scale);
+    float getKerning(char ch1, char ch2, const FontFace* font);
+    float getKerning(uint32_t cp1, uint32_t cp2, const FontFace* font);
+
     struct Instance {
         Instance();
         ~Instance();
         
+        inline void alignHorizontal(Justify justify) {
+            if (horiz != justify) {
+                horiz = justify;
+                dirtyAlign = true;
+            }
+        }
+        inline void alignVertical(Justify justify) {
+            if (vert != justify) {
+                vert = justify;
+                dirtyAlign = true;
+            }
+        }
         inline void setColor(const vec4& _color) {
             color = _color;
-            dirty = true;
+            dirtyBuffer = true;
         }
-        void setFont(FontFace* _font) {
+        inline void setFont(FontFace* _font) {
             if (font != _font) {
                 font = _font;
-                dirty = true;
+                dirtyBuffer = true;
             }
         }
         inline void setOffset(const vec2& _offset) {
             offset = _offset;
         }
         inline void setPosition(float _x, float _y) {
-            x = _x;
-            y = _y;
+            offset.x = _x;
+            offset.y = _y;
         }
         inline void setScale(float _scale) {
             scale = _scale;
+            // TODO - Can probably get away with not dirtying the buffer and just update
+            // the offset if we do the scaling in the shader
+            dirtyBuffer = true;
+            dirtyAlign = true;
         }
         inline void setText(const std::string& _text) {
             if (text != _text) {
                 text = _text;
-                dirty = true;
+                dirtyBuffer = true;
             }
         }
 
@@ -91,12 +115,16 @@ namespace Text
         std::string text;
         vec4 color;
         vec2 offset;
+        vec2 alignOffset;
         FontFace* font = nullptr;
-        GLuint arrayCount;
-        float x = 0, y = 0, scale = 1;
-        bool dirty = true;
+        GLuint arrayCount = 0;
+        float scale = 1;
+        Justify horiz, vert;
+        bool dirtyAlign = false;
+        bool dirtyBuffer = true;
 
-        void rebuildBuffer();
+        void updateAlignment();
+        void updateBuffer();
 
         friend struct Renderer;
     };
@@ -115,14 +143,6 @@ namespace Text
         static Shader shader;
     };
 
-    enum Justify : GLubyte { START, MIDDLE, END };
-
     //void draw(const std::string& text, const FontFace* font, Justify vertical, Justify horizontal, float x, float y, float scale, const vec4& color = vec4(0, 0, 0, 1));
     void render(Render::MaterialPass* renderer);
-
-    vec2 getDims(char ch, const FontFace* font, float scale);
-    vec2 getDims(uint32_t cp, const FontFace* font, float scale);
-    vec2 getDims(const std::string& text, const FontFace* font, float scale);
-    float getKerning(char ch1, char ch2, const FontFace* font);
-    float getKerning(uint32_t cp1, uint32_t cp2, const FontFace* font);
 }
