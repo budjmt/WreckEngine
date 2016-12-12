@@ -168,7 +168,6 @@ void Text::FontFace::loadGlyphs()
 
 void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
 {
-#if 1
     // TODO - (M)SDF conversion?
 
     constexpr int rectPaddingPerSide = 1;
@@ -296,31 +295,6 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
     // Unbind the texture
     tex.unbind();
     GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
-
-#else
-    // Old, non-atlas functionality
-    GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
-    for (unsigned char c = begin; c <= end; ++c)
-    {
-        if (FT_Load_Char(fontFace, c, FT_LOAD_RENDER))
-        {
-            std::cout << "Could not load glyph: " << c << std::endl;
-            continue;
-        }
-
-        auto& glyph = fontFace->glyph;
-        auto& bitmap = glyph->bitmap;
-
-        GLtexture t;
-        t.create();
-        t.bind();
-        t.set2D<GLubyte>(bitmap.buffer, bitmap.width, bitmap.rows, GL_RED, GL_RED);
-        t.param(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); t.param(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        t.param(GL_TEXTURE_MIN_FILTER, GL_LINEAR); t.param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glyphs[c] = {t, vec2(bitmap.width, bitmap.rows), vec2(glyph->bitmap_left, glyph->bitmap_top), (uint32_t)glyph->advance.x};
-    }
-    GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 4));
-#endif
 }
 
 Text::Instance::Instance() {
