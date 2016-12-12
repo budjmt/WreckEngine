@@ -471,33 +471,6 @@ void Text::Renderer::init()
     shader.offset = shader.program.getUniform<vec2>("offset");
 }
 
-#if 0
-void Text::draw(const std::string& text, const FontFace* font, Justify vertical, Justify horizontal, float x, float y, float scale, const vec4& color) {
-    if (!Text::active || font == nullptr)
-        return;
-
-    float xoff = 0, yoff = 0;
-    if (vertical != Justify::START || horizontal != Justify::START) {
-        auto textDims = getDims(text, font, scale);
-
-        if (vertical == Justify::MIDDLE)   y -= textDims.y * 0.5f;
-        else if (vertical == Justify::END) y -= textDims.y;
-
-        if (horizontal == Justify::MIDDLE)   x -= textDims.x * 0.5f;
-        else if (horizontal == Justify::END) x -= textDims.x;
-    }
-
-    Instance i;
-    i.text = text;
-    i.font = font;
-    i.x = x;
-    i.y = Window::height - y;
-    i.scale = scale;
-    i.color = color;
-    instances.push_back(i);
-}
-#endif
-
 void Text::render(Render::MaterialPass* matRenderer)
 {
     if (Text::active)
@@ -535,7 +508,6 @@ vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale)
 
 vec2 Text::getDims(const std::string& text, const FontFace* font, float scale)
 {
-#if 1
     float x = 0, y = 0;
     float maxX = 0, maxY = 0;
 
@@ -565,32 +537,6 @@ vec2 Text::getDims(const std::string& text, const FontFace* font, float scale)
     }
 
     return vec2(maxX, maxY);
-#else
-    // Old functionality
-    float x = 0, above = 0, below = 0;
-
-    const auto updateY = [&](const Text::Glyph& glyph)
-    {
-        auto a = glyph.bearing.y * scale
-           , b = glyph.size.y * scale - a;
-        if (a > above) above = a;
-        if (b > below) below = b;
-    };
-
-    auto len = text.length() - 1;
-    for (size_t i = 0; i < len; ++i)
-    {
-        const auto glyph = font->glyphs.at(text[i]);
-        x += (glyph.advance * kerningScale) * scale;
-        updateY(glyph);
-    }
-
-    const auto glyph = font->glyphs.at(text[len]);
-    x += (glyph.size.x + glyph.bearing.x) * scale;
-    updateY(glyph);
-
-    return vec2(x, above + below);
-#endif
 }
 
 float Text::getKerning(char ch1, char ch2, const FontFace* font)
@@ -618,10 +564,8 @@ float Text::getKerning(uint32_t cp1, uint32_t cp2, const FontFace* font)
     return kerning;
 }
 
-// TODO update this to use a method that doesn't rely on sharing a buffer that changes between draw calls
 void Text::Renderer::draw()
 {
-#if 1
     shader.program.use();
     shader.cam.update(glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height));
 
@@ -637,36 +581,4 @@ void Text::Renderer::draw()
         GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, inst->arrayCount)); // this works, but ignores the rendering pipeline; BAD
         inst->vao.unbind();
     }
-
-#else
-    // Old, non-atlas functionality
-    shader.program.use();
-    shader.color.update(instance.color);
-    shader.cam.update(glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height));
-
-    vao.bind();
-    buffer.bind();
-    for (const auto c : instance.text)
-    {
-        const auto glyph = instance.font->glyphs.at(c);
-
-        const auto tx = instance.x + glyph.bearing.x * instance.scale
-            , ty = instance.y - (glyph.size.y - glyph.bearing.y) * instance.scale;
-        const auto dims = glyph.size * instance.scale;
-        float verts[] = {
-            tx,          ty + dims.y, 0, 0,
-            tx,          ty,          0, 1,
-            tx + dims.x, ty,          1, 1,
-            tx,          ty + dims.y, 0, 0,
-            tx + dims.x, ty,          1, 1,
-            tx + dims.x, ty + dims.y, 1, 0
-        };
-
-        instance.font->tex.bind();
-        buffer.subdata(verts, sizeof(verts));
-        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 6)); // this works, but ignores the rendering pipeline; BAD
-
-        instance.x += (glyph.advance * kerningScale) * instance.scale;// the advance is measured in 1/64 pixels, i.e. 1/2^6
-    }
-#endif
 }
