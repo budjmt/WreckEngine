@@ -99,6 +99,7 @@ Text::FontFace::FontFace(const std::string& font)
     }
     else
     {
+        tex.create(GL_TEXTURE_2D);
         std::cout << "Successfully loaded \"" << font << "\"" << std::endl;
     }
 }
@@ -169,6 +170,8 @@ void Text::FontFace::loadGlyphs()
 void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
 {
     // TODO - (M)SDF conversion?
+    // TODO - Currently assumes the texture is empty. Expected functionality would be to have
+    //        multiple glyph ranges loaded at a time
 
     constexpr int rectPaddingPerSide = 1;
     constexpr int rectPadding = rectPaddingPerSide * 2;
@@ -259,7 +262,6 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
     
     // Create the texture
     GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
-    tex.create(GL_TEXTURE_2D);
     tex.bind();
     tex.set2D<GLubyte>(nullptr, TEX_SIZE, TEX_SIZE, GL_RED, GL_RED, 0);
     tex.param(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -274,7 +276,7 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         auto glyphData = loadedGlyphs.at(cp);
         auto& glyph = glyphData->glyph;
 
-        // Set the glyph's texture bounds (removing the padding), then record the glyph
+        // Set the glyph's texture bounds, then record the glyph
         glyph.texBounds = {rect.x, rect.y, rect.w, rect.h};
         glyphs[cp] = glyph;
 
@@ -361,9 +363,9 @@ void Text::Instance::updateBuffer() {
     }
 
     // Get some helper variables
-    const uint32_t packedColor = Color::Pack(color);
-    const float xSpace = font->spaceWidth * scale;
-    const float ySpace = font->lineHeight * scale;
+    const uint32_t packedColor = Color::pack(color);
+    const float xSpace = font->spaceWidth;
+    const float ySpace = font->lineHeight;
     const float uvScale = 1.0f / FontFace::TEX_SIZE;
     float x = 0.0f;
     float y = 0.0f;
@@ -375,7 +377,7 @@ void Text::Instance::updateBuffer() {
         uint32_t currCP = text[i];
 
         // Apply the kerning between the previous and current character
-        x += getKerning(prevCP, currCP, font) * scale;
+        x += getKerning(prevCP, currCP, font);
         prevCP = currCP;
 
         // Handle special characters
@@ -400,7 +402,7 @@ void Text::Instance::updateBuffer() {
         // Get the glyph for the current character
         const auto& glyph = font->glyphs.at(currCP);
 
-        auto gbounds = glyph.bounds * scale;
+        auto gbounds = glyph.bounds;
         float left   = gbounds.x;
         float top    = gbounds.y;
         float right  = left + gbounds.z;
@@ -420,7 +422,7 @@ void Text::Instance::updateBuffer() {
         vertices.push_back({{x + right, y + bottom}, {u2, v2}, packedColor});
 
         // Advance to the next character
-        x += glyph.advance * scale;
+        x += glyph.advance;
     }
 
     // Update the mesh
@@ -443,6 +445,7 @@ void Text::Renderer::init()
     shader.sampler.update(0);
     shader.cam = shader.program.getUniform<mat4>("camera");
     shader.offset = shader.program.getUniform<vec2>("offset");
+    shader.scale = shader.program.getUniform<float>("scale");
 }
 
 void Text::render(Render::MaterialPass* matRenderer)
@@ -545,6 +548,7 @@ void Text::Renderer::draw()
 
     for (auto& inst : instances) {
         shader.offset.update(inst->offset + inst->alignOffset);
+        shader.scale.update(inst->scale);
         
         inst->updateAlignment();
         inst->updateBuffer();

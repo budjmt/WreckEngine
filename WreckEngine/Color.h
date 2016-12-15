@@ -9,19 +9,19 @@ namespace Color
 
     static constexpr float inv255 = 1.0f / 255.0f;
 
-    inline value_type FromRgb(int r, int g, int b)
+    inline value_type fromRgb(int r, int g, int b)
     {
         return value_type(r * inv255, g * inv255, b * inv255, 1.0f);
     }
 
-    inline value_type FromRgba(int r, int g, int b, int a)
+    inline value_type fromRgba(int r, int g, int b, int a)
     {
         return value_type(r * inv255, g * inv255, b * inv255, a * inv255);
     }
 
-    packed_type Pack(const value_type& color);
+    packed_type pack(const value_type& color);
 
-    value_type Unpack(packed_type color);
+    value_type unpack(packed_type color);
 
     #pragma region Pre-defined Colors
 

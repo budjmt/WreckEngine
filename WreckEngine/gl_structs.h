@@ -89,10 +89,7 @@ struct GLtexture {
 
     inline void create(const GLenum _type = GL_TEXTURE_2D, const GLint maxMipLevel = 0) {
         if (valid()) {
-#if defined(_DEBUG)
-            puts("WARNING: Re-creating texture!");
-#endif
-            texture.reset(new GLuint(def), local(delTexture));
+            return;
         }
         type = _type;
         GL_CHECK(glGenTextures(1, texture.get()));

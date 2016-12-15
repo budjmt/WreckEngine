@@ -9,9 +9,10 @@ flat out uint fColor;
 
 uniform mat4 camera; // generally just projection
 uniform vec2 offset;
+uniform float scale;
 
 void main() {
     fUV = vUV;
     fColor = vColor;
-    gl_Position = camera * vec4(vPosition + offset, 0.01, 1.0);
+    gl_Position = camera * vec4(vPosition * scale + offset, 0.01, 1.0);
 }

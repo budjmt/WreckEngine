@@ -139,6 +139,7 @@ namespace Text
             GLuniform<GLsampler> sampler;
             GLuniform<mat4> cam;
             GLuniform<vec2> offset;
+            GLuniform<float> scale;
         } Shader;
         static Shader shader;
     };
