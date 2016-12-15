@@ -6,15 +6,15 @@ class DebugBenchmark
 {
 public:
 	static void start() { 
-		timer = glfwGetTime(); 
+		timer = Time::elapsed(); 
 	}
 
 	static double end() { 
-		auto time = glfwGetTime() - timer;
+		auto time = Time::elapsed() - timer;
 		return time * 1000;
 	}
 private:
 	static double timer;
 };
 
-double DebugBenchmark::timer = glfwGetTime();
+double DebugBenchmark::timer = Time::elapsed();

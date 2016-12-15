@@ -6,6 +6,8 @@
 #include <GLFW/glfw3native.h>
 #endif
 
+#include "Event.h"
+
 namespace UI
 {
     // NOTE - Shaders and globals are copied from ImGui's GLFW example
@@ -48,6 +50,14 @@ namespace UI
 
     static GLbuffer buffer, elements;
     static GLVAO vao;
+
+    static void GlfwKeyCallback(GLFWwindow*, int key, int, int action, int /*mods*/);
+    static void KeyCallback(Event::Handler::param_t e) {
+        auto params = e.data.extract<int, int, int, int>();
+        GlfwKeyCallback(Window::window, std::get<0>(params), std::get<1>(params), std::get<2>(params), std::get<3>(params));
+    };
+
+    static Event::Handler keyHandler = Event::make_handler<Keyboard::KeyHandler>(&KeyCallback);
 
     /**
      * \brief The implementation for retrieving the clipboard's text for ImGui.
@@ -271,8 +281,7 @@ namespace UI
         io.ImeWindowHandle = glfwGetWin32Window(Window::window);
 #endif
 
-        glfwSetKeyCallback(Window::window, GlfwKeyCallback);
-        glfwSetCharCallback(Window::window, GlfwCharCallback);
+        Keyboard::charCallback(GlfwCharCallback);
 
         return true;
     }
@@ -314,7 +323,7 @@ namespace UI
         io.DisplayFramebufferScale = Window::frameScale;
 
         // Setup time step
-        double current_time = glfwGetTime();
+        double current_time = Time::elapsed();
         io.DeltaTime = time > 0.0 ? (float)(current_time - time) : (float)(1.0f / 60.0f);
         time = current_time;
 

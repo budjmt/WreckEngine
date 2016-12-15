@@ -16,10 +16,13 @@ struct UiTestEntity : public Entity
     bool show_test_window = false;
     bool show_another_window = false;
 
-    void draw() override
+    void update(double dt) override
     {
         UI::PrepareFrame();
+    }
 
+    void draw() override
+    {
         // 1. Show a simple window
         // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
         {
