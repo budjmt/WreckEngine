@@ -315,7 +315,8 @@ Text::Instance::Instance() {
     buffer.unbind();
     vao.unbind();
 
-    instances.push_back(this);
+    auto& shader = Renderer::shader;
+    renderInfo.setShaders(shader.program, &shader.cam, &shader.offset, &shader.scale);
 }
 
 void Text::Instance::queueForDraw()
@@ -440,11 +441,10 @@ void Text::Renderer::init()
 {
     shader.program = loadProgram("Shaders/text_v.glsl", "Shaders/text_f.glsl");
     shader.program.use();
-    shader.sampler = shader.program.getUniform<GLsampler>("text");
-    shader.sampler.update(0);
-    shader.cam = shader.program.getUniform<mat4>("camera");
-    shader.offset = shader.program.getUniform<vec2>("offset");
-    shader.scale = shader.program.getUniform<float>("scale");
+    shader.sampler  = shader.program.getUniform<GLsampler>("text");
+    shader.cam      = GLresource<mat4> (shader.program, "camera"); // shader.program.getUniform<mat4>("camera");
+    shader.offset   = GLresource<vec2> (shader.program, "offset"); // shader.program.getUniform<vec2>("offset");
+    shader.scale    = GLresource<float>(shader.program, "scale"); // shader.program.getUniform<float>("scale");
 }
 
 void Text::render(Render::MaterialPass* matRenderer)
@@ -542,21 +542,16 @@ float Text::getKerning(uint32_t cp1, uint32_t cp2, const FontFace* font)
 
 void Text::Renderer::draw()
 {
-    shader.program.use();
-    shader.cam.update(glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height));
+    shader.cam.value = glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height);
 
     for (auto& inst : instances) {
-        shader.offset.update(inst->offset + inst->alignOffset);
-        shader.scale.update(inst->scale);
+        shader.offset.value = inst->offset + inst->alignOffset;
+        shader.scale.value = inst->scale;
         
         inst->updateAlignment();
         inst->updateBuffer();
 
-        inst->font->tex.bind();
-        inst->vao.bind();
-        inst->buffer.bind();
-        GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, inst->arrayCount)); // this works, but ignores the rendering pipeline; BAD
-        inst->vao.unbind();
+        renderer->scheduleDrawArrays(0, &inst->vao, &inst->renderInfo, GL_TRIANGLES, inst->arrayCount);
     }
 
     instances.clear();

@@ -86,6 +86,9 @@ namespace Text
         inline void setFont(FontFace* _font) {
             if (font != _font) {
                 font = _font;
+                if (font) {
+                    renderInfo.setTextures(font->tex);
+                }
                 dirtyBuffer = true;
             }
         }
@@ -111,6 +114,7 @@ namespace Text
         }
 
     private:
+        Render::Info renderInfo;
         GLVAO vao;
         GLbuffer buffer;
         std::string text;
@@ -126,7 +130,7 @@ namespace Text
 
         void updateAlignment();
         void updateBuffer();
-
+        
         friend struct Renderer;
     };
 
@@ -138,11 +142,13 @@ namespace Text
         typedef struct {
             GLprogram program;
             GLuniform<GLsampler> sampler;
-            GLuniform<mat4> cam;
-            GLuniform<vec2> offset;
-            GLuniform<float> scale;
+            GLresource<mat4> cam;
+            GLresource<vec2> offset;
+            GLresource<float> scale;
         } Shader;
         static Shader shader;
+
+        friend Instance;
     };
 
     //void draw(const std::string& text, const FontFace* font, Justify vertical, Justify horizontal, float x, float y, float scale, const vec4& color = vec4(0, 0, 0, 1));
