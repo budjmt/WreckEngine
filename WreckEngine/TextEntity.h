@@ -26,6 +26,8 @@ public:
         inst->alignVertical(vertical);
         inst->setPosition(position.x, position.y);
         inst->setScale(scale.x);
+
+        inst->queueForDraw();
     }
     void draw() {}
 private:

@@ -64,8 +64,9 @@ namespace Text
 
     struct Instance {
         Instance();
-        ~Instance();
         
+        void queueForDraw();
+
         inline void alignHorizontal(Justify justify) {
             if (horiz != justify) {
                 horiz = justify;

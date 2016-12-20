@@ -318,10 +318,9 @@ Text::Instance::Instance() {
     instances.push_back(this);
 }
 
-Text::Instance::~Instance() {
-    auto index = findInstance(this);
-    if (index != -1)
-        instances.erase(instances.begin() + index);
+void Text::Instance::queueForDraw()
+{
+    instances.push_back(this);
 }
 
 void Text::Instance::updateAlignment() {
@@ -559,4 +558,6 @@ void Text::Renderer::draw()
         GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, inst->arrayCount)); // this works, but ignores the rendering pipeline; BAD
         inst->vao.unbind();
     }
+
+    instances.clear();
 }
