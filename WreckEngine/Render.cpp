@@ -10,6 +10,8 @@ std::vector<GLtexture> Render::gBuffer;
 GLtexture Render::depth, Render::stencil;
 GLtexture Render::prevOutput;
 
+GLbuffer Render::fs_triangle;
+
 void Renderer::init(const size_t max_gBufferSize) {
     // these can be optimized in 4.3+ using texture views
     depth = GLframebuffer::createRenderTarget<GLdepthstencil>(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL);
@@ -19,8 +21,20 @@ void Renderer::init(const size_t max_gBufferSize) {
 
     gBuffer.reserve(max_gBufferSize);
     for (size_t i = 0; i < max_gBufferSize; ++i) {
-        gBuffer.push_back(GLframebuffer::createRenderTarget<GLubyte>());
+        gBuffer.push_back(GLframebuffer::createRenderTarget<GLfloat>(GL_RGB16F));
     }
+
+    fs_triangle.create(GL_ARRAY_BUFFER);
+    fs_triangle.bind();
+
+    constexpr float verts[] = {
+        -1.f, -1.f, 0.f, 0.f,
+         3.f, -1.f, 2.f, 0.f,
+        -1.f,  3.f, 0.f, 2.f
+    };
+    fs_triangle.data(sizeof(verts), &verts);
+
+    fs_triangle.unbind();
 
     PostProcessChain::init();
 }
@@ -54,22 +68,12 @@ void PostProcessChain::init() {
 
     triangle.create();
     triangle.bind();
-
-    GLbuffer buffer;
-    buffer.create(GL_ARRAY_BUFFER);
-    buffer.bind();
-
-    constexpr float verts[] = {
-        -1.f, -1.f, 0.f, 0.f,
-         3.f, -1.f, 2.f, 0.f,
-        -1.f,  3.f, 0.f, 2.f
-    };
-    buffer.data(sizeof(verts), &verts);
-
+    
+    fs_triangle.bind();
     GLattrarr attr;
     attr.add<vec2>(2);
     attr.apply();
-
+    
     triangle.unbind();
 }
 
@@ -111,8 +115,6 @@ void MaterialPass::scheduleDrawElements(const size_t group, const GLVAO* vao, co
 
 void MaterialPass::render() {
     frameBuffer.bind();
-    GLframebuffer::clear();
-
     for (auto& renderGroup : renderGroups) {
         Group::Helper(renderGroup).draw();
     }
@@ -163,14 +165,36 @@ void PostProcessChain::render() const {
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 }
 
-void Renderer::render() {
+GLframebuffer genClearFB() {
+    GLframebuffer f;
+    f.create();
+    f.bindPartial();
+    for (size_t i = 0, gBufferSize = gBuffer.size(); i < gBufferSize; ++i)
+        f.attachTexture(gBuffer[i], GLframebuffer::Attachment::Color);
+    f.attachTexture(depth, GLframebuffer::Attachment::DepthStencil);
+    return f;
+}
+
+void clearPrevFrame() {
+    static GLframebuffer clearFrame = genClearFB();
+    
     auto color = GLframebuffer::getClearColor();
     GLframebuffer::setClearColor(0.f, 0.f, 0.f, 0.f);
-    renderChildren();
+
+    clearFrame.bind();
+    GLframebuffer::clear();
+    
     GLframebuffer::setClearColor(color.r, color.g, color.b, color.a);
+    GLframebuffer::clearPartial(GL_COLOR, 0, &color[0]); // clears color to original clear color
+}
+
+void Renderer::render() {
+    clearPrevFrame();
+    renderChildren();
 }
 
 void Renderer::renderChildren() {
+    setup();
     objects.render();
     postProcess.apply();
     if (next) {

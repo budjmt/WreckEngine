@@ -63,7 +63,6 @@ struct InstMesh {
         insts.data(&instances[0]);
     }
     inline void draw(Render::MaterialPass* renderer, Render::Info* mat, const size_t group) const {
-        //glDrawElementsInstanced(GL_TRIANGLES, numVerts, GLtype<uint32_t>(), nullptr, instances.size());
         renderer->scheduleDrawElements(group, &vao, mat, GL_TRIANGLES, numVerts, GLtype<uint32_t>(), instances.size());
     }
 
@@ -79,7 +78,7 @@ public:
     void camera(Camera* c);
 
     //this is the actual draw call
-    void draw(Render::MaterialPass* r);
+    void draw(Render::MaterialPass* opaque, Render::MaterialPass* alpha);
 
     //these are called externally for drawing stuff
     void drawDebugVector(vec3 start, vec3 end, vec3 color = vec3(0.7f, 1, 0));
@@ -103,8 +102,8 @@ private:
 
     shared<Mesh> arrow, sphere, box;
 
-    void setRenderer(Render::MaterialPass* r);
-    Render::MaterialPass* renderer;
+    void setRenderers(Render::MaterialPass* opaque, Render::MaterialPass* alpha);
+    Render::MaterialPass* opaque, * alpha;
     Render::Info vecMat, meshMat;
     
     struct m_MeshData { vec4 color; mat4 transform; };

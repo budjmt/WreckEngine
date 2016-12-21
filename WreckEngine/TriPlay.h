@@ -24,8 +24,8 @@ private:
     GLprogram objectProgram;
     GLuniform<mat4> objectCamera;
 
+    void setupLights();
     void setupPostProcess();
-    GLresource<float> crtTime;
+    GLresource<GLtime> crtTime;
     GLresource<GLresolution> crtRes;
 };
-

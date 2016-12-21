@@ -7,8 +7,6 @@ out vec3 fragPos;
 out vec2 fragTexUV;
 out vec3 fragNormal;
 
-out vec3 camDir;
-
 uniform float time;
 uniform mat4 worldMatrix;
 uniform mat4 iTworldMatrix;
@@ -25,8 +23,6 @@ void main() {
 	//use inverse transpose of world mat to avoid uneven scale
 	//use fourth component as 0 to avoid translation
 	fragNormal = normalize(iTworldMatrix * vec4(vecNormal, 0)).xyz;
-
-	camDir = cameraMatrix[3].xyz;
 
 	ftime = time;
 }

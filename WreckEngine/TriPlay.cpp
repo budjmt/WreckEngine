@@ -6,13 +6,13 @@
 
 namespace {
     void menu_update(LogicEntity* e, double dt) {
-        if (Window::getKey(GLFW_KEY_SPACE) == GLFW_PRESS) {
+        if (Keyboard::keyPressed(Keyboard::Key::Space)) {
             Event::Trigger(e).sendEvent(Event::Handler::get("menu_state"), Event::Message::get("start_game"));
         }
     }
 }
 
-TriPlay::TriPlay(GLprogram prog) : Game(4)
+TriPlay::TriPlay(GLprogram prog) : Game(5)
 {
     auto menuState = make_shared<State>("menu");
     auto mainState = make_shared<State>("main");
@@ -43,7 +43,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
 
     auto m = loadOBJ("Assets/basic.obj");
     m->translateTo(vec3());
-    auto mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.objects, m, "Assets/texture.png", prog));
+    auto mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, m, "Assets/texture.png", prog));
     mesh->id = (void*)0xcaca;
     mainState->addEntity(mesh);
     //me = mesh;
@@ -62,7 +62,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
     //genCone("Assets/cone.obj", 8);
     //auto bezier = loadOBJ("Assets/bezier.obj");
     auto cone = loadOBJ("Assets/cone.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.objects, cone, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, cone, "Assets/texture.png", prog));
     mesh->transform.position = vec3(2.5f, 0, 0);
     //mesh->id = (void*)0xb;
     mesh->id = (void*)0xc1;
@@ -70,7 +70,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
 
     //genCylinder("Assets/cylinder.obj", 64);
     auto cylinder = loadOBJ("Assets/cylinder.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.objects, cylinder, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, cylinder, "Assets/texture.png", prog));
     mesh->id = (void*)0xc;
     mesh->transform.position = vec3(-2.5f, 0, 0);
     mainState->addEntity(mesh);
@@ -78,7 +78,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
 
     //genSphere("Assets/sphere.obj", 16);
     auto sphere = loadOBJ("Assets/sphere.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.objects, sphere, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, sphere, "Assets/texture.png", prog));
     mesh->id = (void*)0xcc;
     mesh->transform.position = vec3(0, 2.5f, 0);
     mainState->addEntity(mesh);
@@ -86,7 +86,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
 
     //genCube("Assets/cube.obj");
     auto cube = loadOBJ("Assets/cube.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.objects, cube, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, cube, "Assets/texture.png", prog));
     mesh->id = (void*)0xc2fb;
     mesh->transform.position = vec3(0, -5.f, 0);
     mesh->transform.scale = vec3(64, 1.5f, 64);
@@ -94,7 +94,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
     mesh->rigidBody.mass(100000);
     mainState->addEntity(mesh);
 
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.objects, cube, "Assets/butt.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, cube, "Assets/butt.png", prog));
     mesh->id = (void*)0xc2;
     mesh->transform.position = vec3(-2.5f, -2.5f, 0);
     mesh->rigidBody.floating(1);
@@ -112,13 +112,35 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
 
     if(DEBUG) DrawDebug::getInstance().camera(camera.get());
 
-    setupPostProcess();
+    setupLights();
+    //setupPostProcess();
+}
+
+void TriPlay::setupLights() {
+    Light::Group<Light::Point> group;
+
+    for (auto i = 0; i < 100; ++i) {
+        Light::Point point;
+        point.position = vec3(Random::getRange(0, 16) - 8, Random::getRange(0, 16) - 8, Random::getRange(0, 16) - 8);
+        point.color = vec3(Random::getf(), Random::getf(), Random::getf());
+        point.falloff = vec2(0.5f, 5.f);
+        group.addLight(point, Light::UpdateFreq::NEVER);
+    }
+
+    Light::Group<Light::Directional> directional;
+    Light::Directional d;
+    d.direction = vec3(0,-1,0);
+    d.color = vec3(1);
+    directional.addLight(d, Light::UpdateFreq::NEVER);
+
+    renderer.lights.pointLights.setGroups({ group });
+    renderer.lights.directionalLights.setGroups({ directional });
 }
 
 void TriPlay::setupPostProcess() {
     using namespace Render;
 
-    renderer.postProcess.output = GLframebuffer::createRenderTarget<GLubyte>();
+    renderer.alpha.postProcess.output = GLframebuffer::createRenderTarget<GLubyte>();
 
     auto& colorRender  = gBuffer[0], 
         & brightRender = gBuffer[1];
@@ -159,12 +181,11 @@ void TriPlay::setupPostProcess() {
     auto crt = make_shared<PostProcess>();
     crt->data.setShaders(PostProcess::make_program("Shaders/postProcess/crt.glsl"), &crtTime, &crtRes);
     crt->data.setTextures(colorRender);
-    crt->renderToTextures(renderer.postProcess.output);
-    crtTime = GLresource<float>(crt->data.shaders->program, "time");
-    crtTime.value = 0.f;
+    crt->renderToTextures(renderer.alpha.postProcess.output);
+    crtTime = GLresource<GLtime>(crt->data.shaders->program, "time");
     crtRes  = GLresource<GLresolution>(crt->data.shaders->program, "resolution");
 
-    renderer.postProcess.entry.chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration)->chainsTo(crt);
+    renderer.alpha.postProcess.entry.chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration)->chainsTo(crt);
 }
 
 #include "CollisionManager.h"
@@ -175,14 +196,14 @@ void TriPlay::update(double delta) {
     CollisionManager::getInstance().update(dt);
 
     //quit the game
-    if (Window::getKey(GLFW_KEY_Q) == GLFW_PRESS) exit('q');
+    if (Keyboard::keyDown(Keyboard::Key::Code::Q)) exit('q');
 
     constexpr auto speed = 5.f;
 
-    bool shift = Window::getKey(GLFW_KEY_RIGHT_SHIFT)   == GLFW_PRESS || Window::getKey(GLFW_KEY_LEFT_SHIFT)   == GLFW_PRESS;
-    bool ctrl  = Window::getKey(GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS || Window::getKey(GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS;
+    bool shift = Keyboard::shiftDown();
+    bool ctrl  = Keyboard::controlDown();
 
-    if (Window::getKey(GLFW_KEY_I) == GLFW_PRESS) {
+    if (Keyboard::keyDown(Keyboard::Key::Code::I)) {
         if (shift)
             me->transform.position += vec3(0, 0, -speed * dt);
         else if (ctrl)
@@ -190,7 +211,7 @@ void TriPlay::update(double delta) {
         else
             me->transform.position += vec3(0, speed * dt, 0);
     }
-    else if (Window::getKey(GLFW_KEY_K) == GLFW_PRESS) {
+    else if (Keyboard::keyDown(Keyboard::Key::Code::K)) {
         if(shift)
             me->transform.position += vec3(0, 0, speed * dt);
         else if (ctrl)
@@ -198,7 +219,7 @@ void TriPlay::update(double delta) {
         else
             me->transform.position += vec3(0, -speed * dt, 0); 
     }
-    if (Window::getKey(GLFW_KEY_L) == GLFW_PRESS) {
+    if (Keyboard::keyDown(Keyboard::Key::Code::L)) {
         if (shift)
             me->transform.rotate(0, 2 * PI * dt, 0);
         else if (ctrl)
@@ -206,7 +227,7 @@ void TriPlay::update(double delta) {
         else
             me->transform.position += vec3(speed * dt, 0, 0);
     }
-    else if (Window::getKey(GLFW_KEY_J) == GLFW_PRESS) {
+    else if (Keyboard::keyDown(Keyboard::Key::Code::J)) {
         if (shift)
             me->transform.rotate(0, -2 * PI * dt, 0);
         else if (ctrl)
@@ -219,8 +240,6 @@ void TriPlay::update(double delta) {
     objectProgram.use();
     objectCamera.update(Camera::main->getCamMat());
 
-    crtTime.value = fmod(crtTime.value + dt, PI * 5);
-
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
@@ -228,5 +247,5 @@ void TriPlay::update(double delta) {
 
 void TriPlay::draw() {
     Game::draw();
-    Text::render(&renderer.objects);
+    Text::render(&renderer.alpha.objects);
 }

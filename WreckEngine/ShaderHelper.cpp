@@ -76,6 +76,6 @@ GLprogram loadProgram(const char* vertexFile, const char* fragmentFile) {
 	glGetProgramiv(shaderProg(), GL_INFO_LOG_LENGTH, &logLength);
 	auto log = std::vector<char>(logLength);
 	glGetProgramInfoLog(shaderProg(), logLength, 0, &log[0]);
-	cout << &log[0] << endl;
+	cout << "PROGRAM LINK ERROR: " << &log[0] << endl;
 	return GLprogram();
 }

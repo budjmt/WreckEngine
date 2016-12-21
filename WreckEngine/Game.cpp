@@ -15,7 +15,7 @@ void Game::draw() {
     currState->draw();
 #if DEBUG
     if (drawDebug)
-        DrawDebug::getInstance().draw(&renderer.objects);
+        DrawDebug::getInstance().draw(&renderer.opaque.objects, &renderer.alpha.objects);
 #endif
     renderer.render();
 }

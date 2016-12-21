@@ -11,6 +11,8 @@ namespace Render {
     extern GLtexture depth, stencil;
     extern GLtexture prevOutput;
 
+    extern GLbuffer fs_triangle;
+
     class MaterialPass {
     public:
         MaterialPass(const size_t gBufferSize);
@@ -77,6 +79,7 @@ namespace Render {
         MaterialPass objects;
         PostProcessChain postProcess;
         Renderer* next = nullptr;
+        std::function<void()> setup = [](){};
 
         static void init(const size_t max_gBufferSize);
 
