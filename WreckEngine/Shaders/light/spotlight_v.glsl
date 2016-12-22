@@ -4,16 +4,16 @@ layout (location = 0) in vec3 vertPos;
 layout (location = 1) in mat4 world;
 // skip 4 for mat4
 layout (location = 5)  in vec3 position;
-layout (location = 6)  in flat int isOff;
+layout (location = 6)  in int isOff;
 layout (location = 7)  in vec2 falloffRad;
 layout (location = 8)  in vec2 falloffLen;
 layout (location = 9)  in vec3 direction;
-layout (location = 10) in flat uint tag;
+layout (location = 10) in uint tag;
 layout (location = 11) in vec3 color;
 
 uniform mat4 camera;
 
-out vec2 uv;
+noperspective out vec2 uv;
 out Spotlight {
     vec3 position;
 	vec2 falloffRad;

@@ -22,9 +22,6 @@ void Point::bindGeometryImpl() {
             Point::count = mesh->indices().verts.size();
             elems.bind();
             elems.data(sizeof(GLuint) * Point::count, &mesh->indices().verts[0]);
-
-            verts.unbind();
-            elems.unbind();
         }
     };
 
@@ -46,8 +43,6 @@ void Directional::bindGeometryImpl() {
                  3.f, -1.f, 2.f, 0.f
             };
             clockwiseFSTri.data(sizeof(verts), &verts);
-
-            clockwiseFSTri.unbind();
         }
     };
 
@@ -70,9 +65,6 @@ void Spotlight::bindGeometryImpl() {
             Spotlight::count = mesh->indices().verts.size();
             elems.bind();
             elems.data(sizeof(GLuint) * Spotlight::count, &mesh->indices().verts[0]);
-
-            verts.unbind();
-            elems.unbind();
         }
     };
 

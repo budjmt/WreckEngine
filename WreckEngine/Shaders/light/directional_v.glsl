@@ -4,13 +4,13 @@ layout (location = 0) in vec2 vertPos;
 layout (location = 1) in vec2 vertUv;
 
 layout (location = 2) in vec3 direction;
-layout (location = 3) in flat int isOff;
+layout (location = 3) in int isOff;
 layout (location = 4) in vec3 color;
-layout (location = 5) in flat uint tag;
+layout (location = 5) in uint tag;
 
 uniform mat4 camera;
 
-out vec2 uv;
+noperspective out vec2 uv;
 out Directional {
     vec3 direction;
 	vec3 color;

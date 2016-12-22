@@ -33,9 +33,9 @@ namespace Light {
     // expands uniformly from a point
     struct Point : public Base<Point> {
         vec3 position;
-        int isOff; // it's a bool, but an int for shader reasons
+        int isOff = 0; // it's a bool, but an int for shader reasons
         vec3 color; // lights can't have opacity
-        uint32_t tag;
+        GLuint tag;
         vec2 falloff; // light radius; inner = x, outer = y
         PADF2;
 
@@ -68,9 +68,9 @@ namespace Light {
     // uniformly lights all objects from a direction
     struct Directional : public Base<Directional> {
         vec3 direction;
-        int isOff;
+        int isOff = 0;
         vec3 color;
-        uint32_t tag;
+        GLuint tag;
 
         static GLuint setupAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
             attrs.add<vec3>(1, 1);
@@ -90,11 +90,11 @@ namespace Light {
     // expands conically from a point and direction
     struct Spotlight : public Base<Spotlight> {
         vec3 position;
-        int isOff;
+        int isOff = 0;
         vec2 falloffRad;
         vec2 falloffLen;
         vec3 direction;
-        uint32_t tag;
+        GLuint tag;
         vec3 color;
         PADF1;
 
@@ -165,11 +165,11 @@ namespace Light {
             ++freqData[freq].size;
 
             switch (freq) {
-            case RARELY:
+            case NEVER:
                 ++freqData[RARELY].offset;
-            case SOMETIMES:
+            case RARELY:
                 ++freqData[SOMETIMES].offset;
-            case OFTEN:
+            case SOMETIMES:
                 ++freqData[OFTEN].offset;
             }
         }

@@ -1,7 +1,7 @@
 #version 400
 
 in mat4 invCam;
-in vec2 uv;
+noperspective in vec2 uv;
 in Point {
     vec3 position;
 	vec3 color;

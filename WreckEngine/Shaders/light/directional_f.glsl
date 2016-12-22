@@ -1,7 +1,7 @@
 #version 400
 
 in mat4 invCam;
-in vec2 uv;
+noperspective in vec2 uv;
 in Directional {
     vec3 direction;
 	vec3 color;
@@ -32,5 +32,5 @@ void main() {
 	vec3 specular = spec * light.color;
 	
 	diffuseColor  = vec4(diffuse, 1.);
-	specularColor = vec4(specular, 1.);
+	//specularColor = vec4(specular, 1.);
 }

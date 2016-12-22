@@ -215,7 +215,7 @@ struct GLbuffer {
 
     // updates a subset of a buffer's data
     inline void subdata(const GLvoid* data, const GLuint _size, const GLuint offset = 0) const {
-        assert(usage != GL_STATIC_DRAW && size); // a buffer allocated with static draw should not be updated / a buffer of 0 size should not need updates
+        assert(usage != GL_STATIC_DRAW && size); // a buffer allocated with static draw should not be updated / a buffer of size 0 shouldn't need updates
         GL_CHECK(glBufferSubData(target, offset, _size, data));
     }
 };

@@ -1,7 +1,7 @@
 #version 400
 
 in mat4 invCam;
-in vec2 uv;
+noperspective in vec2 uv;
 in Spotlight {
     vec3 position;
 	vec2 falloffRad;
