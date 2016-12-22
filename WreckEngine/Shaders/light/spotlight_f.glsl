@@ -20,10 +20,12 @@ layout(location = 3) out vec4 diffuseColor;
 layout(location = 4) out vec4 specularColor;
 
 void main() {
-	vec2 uv      = gl_FragCoord.xy / resolution;
-
-    vec3 fragPos = texture(gPosition, uv).rgb;
+	vec2 uv = gl_FragCoord.xy / resolution;
+	
 	vec3 normal  = texture(gNormal, uv).rgb * 2. - 1.;
+    if(normal == vec3(0)) discard;
+    
+	vec3 fragPos = texture(gPosition, uv).rgb;
 	
 	vec3  toLight  = light.position - fragPos;
 	float distSq   = dot(toLight, toLight);
@@ -39,12 +41,12 @@ void main() {
 	float radLen   = sqrt(distSq - distDir * distDir);
 	
 	float aRad     = max(radLen - discRad.x, 0.);
-	float attenRad = 1. - aRad / (discRad.y - discRad.x);
+	float attenRad = 1. - min(aRad / (discRad.y - discRad.x), 1.);
 	
 	float aLen     = max(dist - light.falloffLen.x, 0.);
-	float attenLen = 1. -  aLen / (light.falloffLen.y - light.falloffLen.x);
+	float attenLen = 1. -  min(aLen / (light.falloffLen.y - light.falloffLen.x), 1.);
 	
-	float atten   = max(attenLen + attenRad - 1., 0.);
+	float atten   = attenLen + attenRad - 1.;
 	
 	vec3 diffuse  = max(dot(normal, lightDir), 0.) * atten * light.color;
 	

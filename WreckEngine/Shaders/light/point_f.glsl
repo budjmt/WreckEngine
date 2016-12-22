@@ -18,10 +18,14 @@ layout (location = 3) out vec4 diffuseColor;
 layout (location = 4) out vec4 specularColor;
 
 void main() {
-	vec2 uv      = gl_FragCoord.xy / resolution;
-	
-    vec3 fragPos = texture(gPosition, uv).rgb;
+	vec2 uv = gl_FragCoord.xy / resolution;
+
+	// if the normal is black, the fragment wasn't rendered to
+	// i.e. light can't reflect off of this fragment
 	vec3 normal  = texture(gNormal, uv).rgb * 2. - 1.;
+	if(normal == vec3(0)) discard;
+
+    vec3 fragPos = texture(gPosition, uv).rgb;	
 	
 	vec3 toLight  = light.position - fragPos;
 	float dist    = length(toLight);
@@ -31,15 +35,14 @@ void main() {
 	vec3 hDir     = normalize(lightDir + viewDir);
 	
 	float a       = max(dist - light.falloff.x, 0.);
-	//float atten   = 1. -  a / (light.falloff.y - light.falloff.x); // plain old linear attenuation
-	float atten = 1;
+	float atten   = 1. -  min(a / (light.falloff.y - light.falloff.x), 1.); // plain old linear attenuation
 	
 	vec3 diffuse  = max(dot(normal, lightDir), 0.) * atten * light.color;
 	
 	float spec    = pow(max(dot(normal, hDir), 0.), 16.);
 	vec3 specular = spec * atten * light.color;
 	
-	diffuseColor  = vec4(diffuse, 1.);
-	specularColor = vec4(specular, 1.);
+	diffuseColor  = vec4(diffuse, atten);
+	specularColor = vec4(specular, atten);
 	//specularColor = vec4(1);
 }

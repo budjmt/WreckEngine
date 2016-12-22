@@ -13,8 +13,13 @@ namespace Render {
             opaque.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
                 GL_CHECK(glFrontFace(GL_CCW));
+                //GL_CHECK(glEnable(GL_DEPTH_TEST));
+                //GL_CHECK(glDepthFunc(GL_LEQUAL));
             };
             lightR.setup = []() {
+                //GL_CHECK(glDisable(GL_DEPTH_TEST));
+                //GL_CHECK(glDepthFunc(GL_GREATER));
+
                 // additive blending for accumulation
                 GL_CHECK(glEnable(GL_BLEND));
                 GL_CHECK(glBlendFunc(GL_ONE, GL_ONE));
