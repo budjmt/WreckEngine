@@ -88,10 +88,11 @@ Manager<type> Light::make_manager_ ## name () { \
     static GLprogram prog = getLightProg("Shaders/light/" #name "_v.glsl", "Shaders/light/" #name "_f.glsl"); \
     static GLuniform<mat4> camLoc = prog.getUniform<mat4>("camera"); \
     static GLuniform<vec3> camPosLoc = prog.getUniform<vec3>("camPos"); \
+    static GLresource<GLresolution> resolutionLoc = GLresource<GLresolution>(prog, "resolution"); \
     Manager<type> m; \
     m.camMat = camLoc; \
     m.camPos = camPosLoc; \
-    m.renderInfo.setShaders(prog); \
+    m.renderInfo.setShaders(prog, &resolutionLoc); \
     m.renderInfo.setTextures(Render::gBuffer[1], Render::gBuffer[2]); \
     return m; \
  }

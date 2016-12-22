@@ -123,14 +123,14 @@ void TriPlay::setupLights() {
         Light::Point point;
         point.position = vec3(Random::getRange(0, 16) - 8, Random::getRange(0, 16) - 8, Random::getRange(0, 16) - 8);
         point.color = vec3(Random::getf(), Random::getf(), Random::getf());
-        point.falloff = vec2(0.5f, 5.f);
+        point.falloff = vec2(0.5f, 1.f);
         group.addLight(point, Light::UpdateFreq::NEVER);
     }
 
     Light::Group<Light::Directional> directional;
     Light::Directional d;
-    d.direction = vec3(0,1,0);
-    d.color = vec3(0.5);
+    d.direction = vec3(-1,-1,0);
+    d.color = vec3(1);
     directional.addLight(d, Light::UpdateFreq::NEVER);
 
     renderer.lights.pointLights.setGroups({ group });

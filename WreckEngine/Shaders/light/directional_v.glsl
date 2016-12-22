@@ -10,7 +10,7 @@ layout (location = 5) in uint tag;
 
 uniform mat4 camera;
 
-noperspective out vec2 uv;
+out vec2 uv;
 out Directional {
     vec3 direction;
 	vec3 color;

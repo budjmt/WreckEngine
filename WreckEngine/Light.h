@@ -188,7 +188,7 @@ namespace Light {
         
         void updateLight(const uint32_t index, const UpdateFreq frequency, const T& light) { 
             assert(frequency != NEVER);
-            assert(index >= freqData[frequency].offset && index < freqData[frequency].offset + freqData[frequency].size);
+            assert(index >= freqData[frequency].offset && index < freqData[frequency].offset + freqData[frequency].size); // the index falls outside the allocated range
             
             if (lights[index].isTransformed(light)) {
                 auto transform = light.getTransform();
@@ -266,16 +266,17 @@ namespace Light {
         // finishes the group set by allocating the VBO and populating it with the groups' data; call after adding all groups
         void finishGroups() {
             forwardBlock.block.bind();
-            transformBuffer.bind();
             forwardBlock.block.data(forwardBlock.block.size, nullptr);
+            update();
+
+            transformBuffer.bind();
             transformBuffer.data(forwardBlock.block.size / sizeof(T) * sizeof(mat4), nullptr);
-            for (auto& group : groups) {
-                group.update();
+            for (auto& group : groups)
                 group.setupTransformBuffer();
-            }
         }
 
         void update() {
+            forwardBlock.block.bindAs(GL_ARRAY_BUFFER);
             for (auto& group : groups)
                 group.update();
         }
@@ -313,7 +314,7 @@ namespace Light {
             attrs.add<mat4>(1, 1);
             index = attrs.apply(index);
 
-            forwardBlock.block.bind(); // instances
+            forwardBlock.block.bindAs(GL_ARRAY_BUFFER); // instances
             Base<T>::setupAttrs(attrs, index);
         }
 
@@ -324,18 +325,18 @@ namespace Light {
     void Manager<Directional>::setupDeferred(GLattrarr& attrs) const {
         deferredVao.bind();
 
-        Base<Directional>::bindGeometry(); // vertices
+        Directional::bindGeometry(); // vertices
         attrs.add<vec2>(2);
         auto index = attrs.apply();
 
-        forwardBlock.block.bind(); // instances
-        Base<Directional>::setupAttrs(attrs, index);
+        forwardBlock.block.bindAs(GL_ARRAY_BUFFER); // instances
+        Directional::setupAttrs(attrs, index);
     }
 
     template<> void Manager<Directional>::finishGroups() {
+        forwardBlock.block.bind();
         forwardBlock.block.data(forwardBlock.block.size, nullptr);
-        for (auto& group : groups)
-            group.update();
+        update();
     }
 
     Manager<Point>       make_manager_point();

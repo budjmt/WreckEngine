@@ -156,6 +156,12 @@ struct GLbuffer {
 
     inline bool valid() const { return *buffer != def; }
 
+    inline GLint getVal(GLenum value) const {
+        GLint val;
+        GL_CHECK(glGetBufferParameteriv(target, value, &val));
+        return val;
+    }
+
     inline void set(const GLenum target, const GLenum usage) {
         this->target = target; this->usage = usage;
     }
@@ -169,9 +175,14 @@ struct GLbuffer {
         set(target, usage);
     }
 
+    // allows for binding buffer as alternative target
+    inline void bindAs(GLenum _target) const {
+        GL_CHECK(glBindBuffer(_target, *buffer));
+    }
+
     // call to bind the buffer to its target
     inline void bind() const {
-        GL_CHECK(glBindBuffer(target, *buffer));
+        bindAs(target);
     }
     inline void unbind() {
         GL_CHECK(glBindBuffer(target, 0));

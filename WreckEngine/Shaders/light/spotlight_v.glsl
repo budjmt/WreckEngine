@@ -13,7 +13,6 @@ layout (location = 11) in vec3 color;
 
 uniform mat4 camera;
 
-noperspective out vec2 uv;
 out Spotlight {
     vec3 position;
 	vec2 falloffRad;
@@ -31,8 +30,6 @@ void main() {
 		light.falloffLen = falloffLen;
 		light.direction  = direction;
 		light.color      = color;
-		
-		uv = gl_Position.xy * 0.5 + 0.5;
 	}
 	else {
 		gl_Position = vec4(vec2(-2.), vec2(1.)); // causes the vertex to be clipped

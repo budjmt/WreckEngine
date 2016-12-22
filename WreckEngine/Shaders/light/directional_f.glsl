@@ -1,13 +1,13 @@
 #version 400
 
-in mat4 invCam;
-noperspective in vec2 uv;
+in vec2 uv;
 in Directional {
     vec3 direction;
 	vec3 color;
 } light;
 
 uniform vec3 camPos;
+uniform vec2 resolution;
 
 // object render targets
 uniform sampler2D gPosition;
@@ -32,5 +32,5 @@ void main() {
 	vec3 specular = spec * light.color;
 	
 	diffuseColor  = vec4(diffuse, 1.);
-	//specularColor = vec4(specular, 1.);
+	specularColor = vec4(specular, 1.);
 }

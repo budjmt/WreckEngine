@@ -1,7 +1,5 @@
 #version 400
 
-in mat4 invCam;
-noperspective in vec2 uv;
 in Spotlight {
     vec3 position;
 	vec2 falloffRad;
@@ -11,6 +9,7 @@ in Spotlight {
 } light;
 
 uniform vec3 camPos;
+uniform vec2 resolution;
 
 // object render targets
 uniform sampler2D gPosition;
@@ -21,6 +20,8 @@ layout(location = 3) out vec4 diffuseColor;
 layout(location = 4) out vec4 specularColor;
 
 void main() {
+	vec2 uv      = gl_FragCoord.xy / resolution;
+
     vec3 fragPos = texture(gPosition, uv).rgb;
 	vec3 normal  = texture(gNormal, uv).rgb * 2. - 1.;
 	
