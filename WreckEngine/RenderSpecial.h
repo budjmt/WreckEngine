@@ -12,13 +12,9 @@ namespace Render {
         LitRenderer(const size_t opaqueG, const size_t alphaG, const size_t lightG) : opaque(opaqueG), alpha(alphaG), lightR(lightG) {
             opaque.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
-                GL_CHECK(glEnable(GL_DEPTH_TEST));
                 GL_CHECK(glFrontFace(GL_CCW));
             };
             lightR.setup = []() {
-                // disable depth test because all light fragments must be rendered
-                GL_CHECK(glDisable(GL_DEPTH_TEST));
-
                 // additive blending for accumulation
                 GL_CHECK(glEnable(GL_BLEND));
                 GL_CHECK(glBlendFunc(GL_ONE, GL_ONE));
@@ -28,7 +24,6 @@ namespace Render {
             };
             alpha.setup = [this]() {
                 // undoing the light-specific settings
-                GL_CHECK(glEnable(GL_DEPTH_TEST));
                 GL_CHECK(glFrontFace(GL_CCW));
 
                 GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));

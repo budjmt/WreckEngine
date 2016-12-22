@@ -91,19 +91,19 @@ GLprogram getLightProg(const char* vs, const char* fs) {
     return prog;
 }
 
-#define MAKE_MANAGER(type, name, index) \
+#define MAKE_MANAGER(type, name) \
 Manager<type> Light::make_manager_ ## name () { \
     static GLprogram prog = getLightProg("Shaders/light/" #name "_v.glsl", "Shaders/light/" #name "_f.glsl"); \
     static GLuniform<mat4> camLoc = prog.getUniform<mat4>("camera"); \
-    static GLuniform<mat4> invCamLoc = prog.getUniform<mat4>("invCamera"); \
+    static GLuniform<vec3> camPosLoc = prog.getUniform<vec3>("camPos"); \
     Manager<type> m; \
     m.camMat = camLoc; \
-    m.invCamMat = invCamLoc; \
+    m.camPos = camPosLoc; \
     m.renderInfo.setShaders(prog); \
     m.renderInfo.setTextures(Render::gBuffer[1], Render::gBuffer[2]); \
     return m; \
  }
 
-MAKE_MANAGER(Point, point, 0)
-MAKE_MANAGER(Directional, directional, 1)
-MAKE_MANAGER(Spotlight, spotlight, 2)
+MAKE_MANAGER(Point, point)
+MAKE_MANAGER(Directional, directional)
+MAKE_MANAGER(Spotlight, spotlight)

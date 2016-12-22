@@ -45,7 +45,7 @@ namespace Light {
             attrs.add<vec3>(1, 1);
             attrs.add<int>(1, 1);
             attrs.add<vec3>(1, 1);
-            attrs.add<uint32_t>(1, 1);
+            attrs.add<GLuint>(1, 1);
             attrs.add<vec2>(1, 1);
             return attrs.apply(baseIndex, sizeof(float) * 2);
         }
@@ -61,7 +61,7 @@ namespace Light {
         }
 
         mat4 getTransform() const {
-            return glm::scale(vec3(falloff.y)) * glm::translate(position);
+            return glm::translate(position) * glm::scale(vec3(falloff.y));
         }
     };
 
@@ -76,7 +76,7 @@ namespace Light {
             attrs.add<vec3>(1, 1);
             attrs.add<int>(1, 1);
             attrs.add<vec3>(1, 1);
-            attrs.add<uint32_t>(1, 1);
+            attrs.add<GLuint>(1, 1);
             return attrs.apply(baseIndex);
         }
 
@@ -106,7 +106,7 @@ namespace Light {
             attrs.add<vec2>(1, 1);
             attrs.add<vec2>(1, 1);
             attrs.add<vec3>(1, 1);
-            attrs.add<uint32_t>(1, 1);
+            attrs.add<GLuint>(1, 1);
             attrs.add<vec3>(1, 1);
             return attrs.apply(baseIndex, sizeof(float));
         }
@@ -122,7 +122,7 @@ namespace Light {
         }
 
         mat4 getTransform() const {
-            return glm::scale(vec3(falloffRad.y, falloffLen.y, falloffRad.y)) * rotateBetween(vec3(0,1,0), direction) * glm::translate(position);
+            return glm::translate(position) * rotateBetween(vec3(0, 1, 0), direction) * glm::scale(vec3(falloffRad.y, falloffLen.y, falloffRad.y));
         }
     };
 
@@ -238,7 +238,8 @@ namespace Light {
 
         GLuniformblock<T> forwardBlock;
         Render::Info renderInfo;
-        GLuniform<mat4> camMat, invCamMat;
+        GLuniform<mat4> camMat;
+        GLuniform<vec3> camPos;
 
         // equivalent to using resetGroups, addGroup (for each lightGroup), and then finishGroups
         void setGroups(std::vector<Group<T>> lightGroups) {
@@ -280,10 +281,9 @@ namespace Light {
         }
 
         void updateCamera(Camera* camera) const {
-            auto mat = camera->getCamMat();
             renderInfo.shaders->program.use();
-            camMat.update(mat);
-            invCamMat.update(glm::inverse(mat));
+            camMat.update(camera->getCamMat());
+            camPos.update(camera->transform.getComputed()->position);
         }
 
         void defer(Render::MaterialPass* renderer, const size_t renderGroup) const {
@@ -307,14 +307,14 @@ namespace Light {
 
             Base<T>::bindGeometry(); // vertices + elements
             attrs.add<vec3>(1);
-            attrs.apply();
+            auto index = attrs.apply();
 
             transformBuffer.bind();
             attrs.add<mat4>(1, 1);
-            attrs.apply(1);
+            index = attrs.apply(index);
 
             forwardBlock.block.bind(); // instances
-            Base<T>::setupAttrs(attrs, 5);
+            Base<T>::setupAttrs(attrs, index);
         }
 
         friend class System;
@@ -326,10 +326,10 @@ namespace Light {
 
         Base<Directional>::bindGeometry(); // vertices
         attrs.add<vec2>(2);
-        attrs.apply();
+        auto index = attrs.apply();
 
         forwardBlock.block.bind(); // instances
-        Base<Directional>::setupAttrs(attrs, 2);
+        Base<Directional>::setupAttrs(attrs, index);
     }
 
     template<> void Manager<Directional>::finishGroups() {

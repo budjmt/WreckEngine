@@ -7,7 +7,7 @@ in Directional {
 	vec3 color;
 } light;
 
-in vec3 camDir;
+uniform vec3 camPos;
 
 // object render targets
 uniform sampler2D gPosition;
@@ -18,11 +18,12 @@ layout(location = 3) out vec4 diffuseColor;
 layout(location = 4) out vec4 specularColor;
 
 void main() {
-	vec3 normal  = (texture(gNormal, uv).rgb - vec3(0.5)) * 2.;
+	vec3 fragPos = texture(gPosition, uv).rgb;
+	vec3 normal  = texture(gNormal, uv).rgb * 2. - 1.;
 	
-	vec3 lightDir = light.direction;
+	vec3 lightDir = -light.direction;
 	
-	vec3 viewDir  = camDir;
+	vec3 viewDir  = normalize(camPos - fragPos);
 	vec3 hDir     = normalize(lightDir + viewDir);
 	
 	vec3 diffuse  = max(dot(normal, lightDir), 0.) * light.color;

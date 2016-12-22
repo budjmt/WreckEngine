@@ -10,7 +10,7 @@ in Spotlight {
 	vec3 color;
 } light;
 
-in vec3 camDir;
+uniform vec3 camPos;
 
 // object render targets
 uniform sampler2D gPosition;
@@ -21,17 +21,15 @@ layout(location = 3) out vec4 diffuseColor;
 layout(location = 4) out vec4 specularColor;
 
 void main() {
-    vec4 fragPos = texture(gPosition, uv);
-	vec3 pos     = (invCam * fragPos).rgb;
+    vec3 fragPos = texture(gPosition, uv).rgb;
+	vec3 normal  = texture(gNormal, uv).rgb * 2. - 1.;
 	
-	vec3 normal  = (texture(gNormal, uv).rgb - vec3(0.5)) * 2.;
-	
-	vec3  toLight  = light.position - pos;
+	vec3  toLight  = light.position - fragPos;
 	float distSq   = dot(toLight, toLight);
 	float dist     = sqrt(distSq);
 	vec3  lightDir = normalize(toLight);
 	
-	vec3 viewDir  = camDir;
+	vec3 viewDir  = normalize(camPos - fragPos);
 	vec3 hDir     = normalize(lightDir + viewDir);
 	
 	float distDir  = -dot(toLight, light.direction);

@@ -10,17 +10,13 @@ layout (location = 8) in flat uint tag;
 layout (location = 9) in vec2 falloff;
 
 uniform mat4 camera;
-uniform mat4 invCamera;
 
-out mat4 invCam;
 out vec2 uv;
 out Point {
     vec3 position;
 	vec3 color;
 	vec2 falloff;
 } light;
-
-out vec3 camDir;
 
 void main() {
 	if(isOff == 0) {
@@ -30,9 +26,7 @@ void main() {
 		light.color    = color;
 		light.falloff  = falloff;
 		
-		invCam = invCamera;
-		uv = gl_Position.xy;
-		camDir = camera[3].xyz;
+		uv = gl_Position.xy * 0.5 + 0.5;
 	}
 	else {
 		gl_Position = vec4(vec2(-2.), vec2(1.)); // causes the vertex to be clipped

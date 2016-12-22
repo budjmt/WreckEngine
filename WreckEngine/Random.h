@@ -1,19 +1,3 @@
-<<<<<<< Updated upstream
-#pragma once
-
-#include <cstdlib>
-#include <ctime>
-
-// TODO fix with actual random generator
-struct Random {
-	static auto seed() { auto s = time(NULL); srand((unsigned long)s); return s; }
-
-	static unsigned get() { static auto do_seed = seed(); return rand(); }
-	static int getRange(int start, int end) { return get() % (end - start) + start; }
-
-	static float  getf() { constexpr unsigned max_range = 1 << 24; return (get() & (max_range - 1)) * (1.f / max_range); }
-	static double getd() { constexpr unsigned max_range = 1 << 24; return (get() & (max_range - 1)) * (1. / max_range); }
-=======
 #pragma once
 
 #include "Time.h"
@@ -61,8 +45,8 @@ namespace Random {
     inline int getRange(engine_t::result_type start, engine_t::result_type end) { return std::uniform_int_distribution<engine_t::result_type>(start, end)(engine); }
 	inline int getRangeFast(engine_t::result_type start, engine_t::result_type end) { return get() % (end - start) + start; }
 
-    inline float  getf() { return std::uniform_real_distribution<float> (0.f, FLT_MAX)(engine); }
-    inline double getd() { return std::uniform_real_distribution<double>(0.,  DBL_MAX)(engine); }
+    inline float  getf() { return std::uniform_real_distribution<float> (0.f, 1.f)(engine); }
+    inline double getd() { return std::uniform_real_distribution<double>(0.0, 1.0)(engine); }
 
 	inline float  getfFast() { 
         constexpr float  inv_max_range = 1.f / engine_t::max(); 
@@ -76,5 +60,4 @@ namespace Random {
     // TODO incorporate lib noise
     namespace Coherent {
     }
->>>>>>> Stashed changes
 };
