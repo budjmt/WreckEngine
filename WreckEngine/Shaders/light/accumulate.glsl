@@ -11,6 +11,6 @@ uniform vec3 ambient;
 layout (location = 0) out vec4 fragColor;
 
 void main() {
-	fragColor = texture(color, uv) * (texture(diffuse, uv) + ambient) + texture(specular, uv);
-	//fragColor = texture(diffuse, uv);
+	//fragColor = texture(color, uv) * (texture(diffuse, uv) + ambient) + texture(specular, uv);
+	fragColor = texture(diffuse, uv);
 }

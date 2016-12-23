@@ -133,7 +133,7 @@ void MaterialPass::Group::Helper::draw() {
     paramBuffer.invalidate();
     paramBuffer.data(group.params.size() * sizeof(DrawCall::Params), &params[0]);
 
-    DrawCall::Params* offset = nullptr;
+    DrawCall::Params* offset = nullptr; // &params[0];
     for (const auto& drawCall : drawCalls) {
         drawCall.render(offset);
         ++offset;

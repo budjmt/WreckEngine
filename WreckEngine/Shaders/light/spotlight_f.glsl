@@ -2,10 +2,10 @@
 
 in Spotlight {
     vec3 position;
-	vec2 falloffRad;
-	vec2 falloffLen;
 	vec3 direction;
 	vec3 color;
+	vec2 falloffRad;
+	vec2 falloffLen;
 } light;
 
 uniform vec3 camPos;
@@ -23,7 +23,7 @@ void main() {
 	vec2 uv = gl_FragCoord.xy / resolution;
 	
 	vec3 normal  = texture(gNormal, uv).rgb * 2. - 1.;
-    if(normal == vec3(0)) discard;
+    //if(normal == vec3(0)) discard;
     
 	vec3 fragPos = texture(gPosition, uv).rgb;
 	
@@ -53,6 +53,7 @@ void main() {
 	float spec    = pow(max(dot(normal, hDir), 0.), 16.);
 	vec3 specular = spec * atten * light.color;
 	
-	diffuseColor  = vec4(diffuse, 1.);
-	specularColor = vec4(specular, 1.);
+	//diffuseColor = vec4(diffuse, 1.);
+	diffuseColor = vec4(1,0,0,1);
+	specularColor  = vec4(specular, 1.);
 }

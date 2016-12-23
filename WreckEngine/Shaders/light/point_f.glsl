@@ -44,5 +44,4 @@ void main() {
 	
 	diffuseColor  = vec4(diffuse, atten);
 	specularColor = vec4(specular, atten);
-	//specularColor = vec4(1);
 }

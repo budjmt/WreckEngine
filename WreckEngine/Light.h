@@ -39,8 +39,6 @@ namespace Light {
         vec2 falloff; // light radius; inner = x, outer = y
         PADF2;
 
-        static size_t count;
-
         static GLuint setupAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
             attrs.add<vec3>(1, 1);
             attrs.add<int>(1, 1);
@@ -63,6 +61,9 @@ namespace Light {
         mat4 getTransform() const {
             return glm::translate(position) * glm::scale(vec3(falloff.y));
         }
+
+    private:
+        static size_t count;
     };
 
     // uniformly lights all objects from a direction
@@ -91,22 +92,19 @@ namespace Light {
     struct Spotlight : public Base<Spotlight> {
         vec3 position;
         int isOff = 0;
-        vec2 falloffRad;
-        vec2 falloffLen;
         vec3 direction;
         GLuint tag;
+        vec2 falloffRad;
+        vec2 falloffLen;
         vec3 color;
         PADF1;
-
-        static size_t count;
 
         static GLuint setupAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
             attrs.add<vec3>(1, 1);
             attrs.add<int>(1, 1);
-            attrs.add<vec2>(1, 1);
-            attrs.add<vec2>(1, 1);
             attrs.add<vec3>(1, 1);
             attrs.add<GLuint>(1, 1);
+            attrs.add<vec2>(2, 1);
             attrs.add<vec3>(1, 1);
             return attrs.apply(baseIndex, sizeof(float));
         }
@@ -122,8 +120,12 @@ namespace Light {
         }
 
         mat4 getTransform() const {
-            return glm::translate(position) * rotateBetween(vec3(0, 1, 0), direction) * glm::scale(vec3(falloffRad.y, falloffLen.y, falloffRad.y));
+            //return glm::translate(position) * rotateBetween(vec3(0, 1, 0), direction) * glm::scale(vec3(falloffRad.y, falloffLen.y, falloffRad.y));
+            return mat4();
         }
+
+    private:
+        static size_t count;
     };
 
     // class Area : public Base

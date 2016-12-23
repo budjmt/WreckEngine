@@ -675,7 +675,7 @@ public:
             stride += attr.bytes;
         }
         for (size_t i = 0, offset = 0, entries = attrs.size(); i < entries; ++i) {
-            const auto& attr = attrs[i];
+            const auto attr = attrs[i];
             GL_CHECK(glEnableVertexAttribArray(i + baseIndex));
             GL_CHECK(glVertexAttribPointer(i + baseIndex, attr.size, attr.type, attr.normalize, stride, (void*)offset));
             if (attr.divisor)

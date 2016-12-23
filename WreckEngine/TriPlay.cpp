@@ -129,12 +129,22 @@ void TriPlay::setupLights() {
 
     Light::Group<Light::Directional> directional;
     Light::Directional d;
-    d.direction = vec3(-1,-1,0);
+    d.direction = normalize(vec3(-1,-1,-1));
     d.color = vec3(1);
     directional.addLight(d, Light::UpdateFreq::NEVER);
 
+    Light::Group<Light::Spotlight> spot;
+    Light::Spotlight s;
+    s.position = vec3(3, 2, 0.5f);
+    s.direction = normalize(vec3(-1, -1, 0));
+    s.color = vec3(1,0,0);
+    s.falloffRad = vec2(2.f, 5.f);
+    s.falloffLen = vec2(1.f, 10.f);
+    spot.addLight(s, Light::UpdateFreq::NEVER);
+
     renderer.lights.pointLights.setGroups({ group });
     renderer.lights.directionalLights.setGroups({ directional });
+    renderer.lights.spotLights.setGroups({ spot });
 }
 
 void TriPlay::setupPostProcess() {

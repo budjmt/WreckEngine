@@ -17,7 +17,7 @@ void DrawCall::render(const void* offset) const {
     vao->bind();
     material->apply();
 
-    //auto p = params + ((size_t)offset / sizeof(Params));
+    //auto p = (Params*) offset;
     switch (call) {
     case Type::Arrays:
         GL_CHECK(glDrawArraysIndirect(tesselPrim, offset));
