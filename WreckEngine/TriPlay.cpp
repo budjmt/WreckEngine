@@ -23,6 +23,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(4)
         if (e.id == start_game_event) {
             currState = mainsp;
             GLframebuffer::setClearColor(0, 0, 0, 1);
+            renderer.postProcess.entry.chainsTo(chainEntry);
         }
     };
     addState(menuState);
@@ -164,7 +165,8 @@ void TriPlay::setupPostProcess() {
     crtTime.value = 0.f;
     crtRes  = GLresource<GLresolution>(crt->data.shaders->program, "resolution");
 
-    renderer.postProcess.entry.chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration)->chainsTo(crt);
+    blurH->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration)->chainsTo(crt);
+    chainEntry = blurH;
 }
 
 #include "CollisionManager.h"
