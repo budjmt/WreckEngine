@@ -24,16 +24,11 @@ namespace Text
     shared<FontFace> loadWinFont(const std::string& font, const uint32_t height, const uint32_t width = 0);
 
     struct Glyph {
-        vec4 bounds;     // Glyph bounds
-        uvec4 texBounds; // Pixel bounds within the texture
+        vec2 bearing;
+        vec2 size;
+        vec2 texBearing;
+        vec2 texSize;
         float advance;
-
-        inline vec2 getBearing() const {
-            return vec2(bounds.x, bounds.y);
-        }
-        inline vec2 getSize() const {
-            return vec2(bounds.z, bounds.w);
-        }
     };
 
     struct FontFace {
@@ -101,11 +96,10 @@ namespace Text
             offset.y = _y;
         }
         inline void setScale(float _scale) {
-            scale.value = _scale;
-            // TODO - Can probably get away with not dirtying the buffer and just update
-            // the offset if we do the scaling in the shader
-            dirtyBuffer = true;
-            dirtyAlign = true;
+            if (scale.value != _scale) {
+                scale.value = _scale;
+                dirtyAlign = true;
+            }
         }
         inline void setText(const std::string& _text) {
             if (text != _text) {

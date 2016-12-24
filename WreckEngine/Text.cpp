@@ -219,9 +219,11 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         glyphData->cp = cp;
         glyphData->bitmap.resize(rect.w * rect.h, 0); // texture is only alpha values
         glyphData->glyph.advance = static_cast<float>(fontFace->glyph->metrics.horiAdvance) * kerningScale;
-        glyphData->glyph.bounds = {
+        glyphData->glyph.bearing = {
             glyphMetrics.horiBearingX * kerningScale,
-            glyphMetrics.horiBearingY * kerningScale,
+            glyphMetrics.horiBearingY * kerningScale
+        };
+        glyphData->glyph.size = {
             glyphMetrics.width        * kerningScale,
             glyphMetrics.height       * kerningScale
         };
@@ -277,7 +279,9 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         auto& glyph = glyphData->glyph;
 
         // Set the glyph's texture bounds, then record the glyph
-        glyph.texBounds = {rect.x, rect.y, rect.w, rect.h};
+        constexpr float uvScale = 1.0f / FontFace::TEX_SIZE;
+        glyph.texBearing = {rect.x * uvScale, rect.y * uvScale};
+        glyph.texSize    = {rect.w * uvScale, rect.h * uvScale};
         glyphs[cp] = glyph;
 
         // Update the sub-region of the texture
@@ -331,17 +335,16 @@ void Text::Instance::updateAlignment() {
     if (!dirtyAlign)
         return;
 
+    alignOffset = vec2(0);
+
     if (vert != START || horiz != START) {
-        
+
         auto dims = getDims(text, font, scale.value);
         
         switch (horiz)
         {
-        case START:
-            alignOffset.x = 0;
-            break;
         case MIDDLE:
-            alignOffset.x =  dims.x * -0.5f;
+            alignOffset.x = dims.x * -0.5f;
             break;
         case END:
             alignOffset.x = -dims.x;
@@ -350,19 +353,13 @@ void Text::Instance::updateAlignment() {
 
         switch (vert)
         {
-        case START:
-            alignOffset.y = 0;
-            break;
         case MIDDLE:
-            alignOffset.y =  dims.y * -0.5f;
+            alignOffset.y = dims.y * -0.5f;
             break;
         case END:
             alignOffset.y = -dims.y;
             break;
         }
-    }
-    else {
-        alignOffset = vec2(0);
     }
 
     dirtyAlign = false;
@@ -377,7 +374,6 @@ void Text::Instance::updateBuffer() {
     const uint32_t packedColor = Color::pack(color);
     const float xSpace = font->spaceWidth;
     const float ySpace = font->lineHeight;
-    const float uvScale = 1.0f / FontFace::TEX_SIZE;
     float x = 0.0f;
     float y = 0.0f;
     uint32_t prevCP = 0;
@@ -392,7 +388,7 @@ void Text::Instance::updateBuffer() {
         prevCP = currCP;
 
         // Handle special characters
-        if (currCP == ' ' || currCP == '\t' || currCP == '\n' || currCP == '\r' || currCP == '\b') {
+        if (isspace(currCP)) {
             switch (currCP) {
                 case ' ':
                     x += xSpace;
@@ -413,16 +409,15 @@ void Text::Instance::updateBuffer() {
         // Get the glyph for the current character
         const auto& glyph = font->glyphs.at(currCP);
 
-        auto gbounds = glyph.bounds;
-        float left   = gbounds.x;
-        float top    = gbounds.y;
-        float right  = left + gbounds.z;
-        float bottom = top - gbounds.w;
+        const float left   = glyph.bearing.x;
+        const float top    = glyph.bearing.y;
+        const float right  = left + glyph.size.x;
+        const float bottom = top  - glyph.size.y;
 
-        float u1 = uvScale * (glyph.texBounds.x);
-        float v1 = uvScale * (glyph.texBounds.y);
-        float u2 = uvScale * (glyph.texBounds.x + glyph.texBounds.z);
-        float v2 = uvScale * (glyph.texBounds.y + glyph.texBounds.w);
+        const float u1 = glyph.texBearing.x;
+        const float v1 = glyph.texBearing.y;
+        const float u2 = glyph.texBearing.x + glyph.texSize.x;
+        const float v2 = glyph.texBearing.y + glyph.texSize.y;
 
         // Now add the quad
         vertices.push_back({{x + left,  y + top   }, {u1, v1}, packedColor});
@@ -486,10 +481,8 @@ vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale)
     }
     else if (font->glyphs.count(cp))
     {
-        const auto& glyph   = font->glyphs.at(cp);
-        const auto  size    = glyph.getSize();
-        const auto  bearing = glyph.getBearing();
-        dims = {glyph.advance, bearing.y - size.y};
+        const auto& glyph = font->glyphs.at(cp);
+        dims = {glyph.advance, glyph.bearing.y - glyph.size.y};
     }
 
     return dims * scale;
@@ -498,7 +491,8 @@ vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale)
 vec2 Text::getDims(const std::string& text, const FontFace* font, float scale)
 {
     float x = 0, y = 0;
-    float maxX = 0, maxY = 0;
+    float maxX = 0;
+    int lineCount = 1;
 
     for (size_t i = 0, length = text.length(); i < length; ++i)
     {
@@ -508,7 +502,7 @@ vec2 Text::getDims(const std::string& text, const FontFace* font, float scale)
         {
             x = 0.0f;
             y = 0.0f;
-            maxY += font->lineHeight * scale;
+            ++lineCount;
         }
         else if (cp == '\r' || cp == '\b')
         {
@@ -522,10 +516,9 @@ vec2 Text::getDims(const std::string& text, const FontFace* font, float scale)
         }
 
         maxX = std::max(maxX, x);
-        maxY = std::max(maxY, y);
     }
 
-    return vec2(maxX, maxY);
+    return vec2(maxX, font->lineHeight * scale * lineCount);
 }
 
 float Text::getKerning(char ch1, char ch2, const FontFace* font)
@@ -553,8 +546,8 @@ float Text::getKerning(uint32_t cp1, uint32_t cp2, const FontFace* font)
     return kerning;
 }
 
-void Text::Renderer::draw()
-{
+void Text::Renderer::draw() {
+
     shader.cam.value = glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height);
 
     for (auto inst : instances) {
