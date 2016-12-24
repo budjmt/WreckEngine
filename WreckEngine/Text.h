@@ -94,13 +94,14 @@ namespace Text
         }
         inline void setOffset(const vec2& _offset) {
             offset = _offset;
+            fullOffset.value = offset + alignOffset;
         }
         inline void setPosition(float _x, float _y) {
             offset.x = _x;
             offset.y = _y;
         }
         inline void setScale(float _scale) {
-            scale = _scale;
+            scale.value = _scale;
             // TODO - Can probably get away with not dirtying the buffer and just update
             // the offset if we do the scaling in the shader
             dirtyBuffer = true;
@@ -117,13 +118,17 @@ namespace Text
         Render::Info renderInfo;
         GLVAO vao;
         GLbuffer buffer;
+        
+        FontFace* font = nullptr;
         std::string text;
         vec4 color;
-        vec2 offset;
-        vec2 alignOffset;
-        FontFace* font = nullptr;
+
+        GLresource<vec2> fullOffset;
+        vec2 offset, alignOffset;
+        GLresource<float> scale;
+        
         GLuint arrayCount = 0;
-        float scale = 1;
+        
         Justify horiz, vert;
         bool dirtyAlign = false;
         bool dirtyBuffer = true;
@@ -143,8 +148,8 @@ namespace Text
             GLprogram program;
             GLuniform<GLsampler> sampler;
             GLresource<mat4> cam;
-            GLresource<vec2> offset;
-            GLresource<float> scale;
+            GLuniform<vec2> offset;
+            GLuniform<float> scale;
         } Shader;
         static Shader shader;
 

@@ -316,7 +316,10 @@ Text::Instance::Instance() {
     vao.unbind();
 
     auto& shader = Renderer::shader;
-    renderInfo.setShaders(shader.program, &shader.cam, &shader.offset, &shader.scale);
+    fullOffset = GLresource<vec2>(shader.offset);
+    scale = GLresource<float>(shader.scale);
+    scale.value = 1;
+    renderInfo.setShaders(shader.program, &shader.cam, &fullOffset, &scale);
 }
 
 void Text::Instance::queueForDraw()
@@ -328,33 +331,41 @@ void Text::Instance::updateAlignment() {
     if (!dirtyAlign)
         return;
 
-    auto dims = getDims(text, font, scale);
-    
-    switch (horiz)
-    {
+    if (vert != START || horiz != START) {
+        
+        auto dims = getDims(text, font, scale.value);
+        
+        switch (horiz)
+        {
         case START:
             alignOffset.x = 0;
             break;
         case MIDDLE:
-            alignOffset.x = -dims.x * 0.5f;
+            alignOffset.x =  dims.x * -0.5f;
             break;
         case END:
             alignOffset.x = -dims.x;
             break;
-    }
+        }
 
-    switch (vert)
-    {
+        switch (vert)
+        {
         case START:
             alignOffset.y = 0;
             break;
         case MIDDLE:
-            alignOffset.y = -dims.y * 0.5f;
+            alignOffset.y =  dims.y * -0.5f;
             break;
         case END:
             alignOffset.y = -dims.y;
             break;
+        }
     }
+    else {
+        alignOffset = vec2(0);
+    }
+
+    dirtyAlign = false;
 }
 
 void Text::Instance::updateBuffer() {
@@ -443,8 +454,8 @@ void Text::Renderer::init()
     shader.program.use();
     shader.sampler  = shader.program.getUniform<GLsampler>("text");
     shader.cam      = GLresource<mat4> (shader.program, "camera"); // shader.program.getUniform<mat4>("camera");
-    shader.offset   = GLresource<vec2> (shader.program, "offset"); // shader.program.getUniform<vec2>("offset");
-    shader.scale    = GLresource<float>(shader.program, "scale"); // shader.program.getUniform<float>("scale");
+    shader.offset   = shader.program.getUniform<vec2>("offset");
+    shader.scale    = shader.program.getUniform<float>("scale");
 }
 
 void Text::render(Render::MaterialPass* matRenderer)
@@ -544,12 +555,12 @@ void Text::Renderer::draw()
 {
     shader.cam.value = glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height);
 
-    for (auto& inst : instances) {
-        shader.offset.value = inst->offset + inst->alignOffset;
-        shader.scale.value = inst->scale;
+    for (auto inst : instances) {
         
         inst->updateAlignment();
         inst->updateBuffer();
+
+        inst->fullOffset.value = inst->offset + inst->alignOffset;
 
         renderer->scheduleDrawArrays(0, &inst->vao, &inst->renderInfo, GL_TRIANGLES, inst->arrayCount);
     }

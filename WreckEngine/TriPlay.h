@@ -23,6 +23,7 @@ private:
     shared<Entity> me;
     GLprogram objectProgram;
     GLuniform<mat4> objectCamera;
+    shared<Render::PostProcess> chainEntry;
 
     void setupPostProcess();
     GLresource<float> crtTime;
