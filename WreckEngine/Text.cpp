@@ -475,8 +475,10 @@ vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale)
     }
     else if (font->glyphs.count(cp))
     {
-        const auto& glyph = font->glyphs.at(cp);
-        dims = glyph.getBearing() + glyph.getSize();
+        const auto& glyph   = font->glyphs.at(cp);
+        const auto  size    = glyph.getSize();
+        const auto  bearing = glyph.getBearing();
+        dims = {glyph.advance, bearing.y - size.y};
     }
 
     return dims * scale;
