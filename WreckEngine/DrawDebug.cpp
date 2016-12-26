@@ -115,7 +115,7 @@ void DrawDebug::drawVectors() {
                  , e = debugVectors[i + 2], c2 = debugVectors[i + 3];
         
         const auto es = e - s;
-        const auto v = e - es * (sfact * 0.5f);
+        const auto v = e - es * (sfact * 0.5f / length(es));
 
         const auto translate = glm::translate(v);
         const auto rotate = rotateBetween(vec3(0,1,0), glm::normalize(es));

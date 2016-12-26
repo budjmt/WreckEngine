@@ -1,6 +1,7 @@
 #version 400
 
 in vec2 uv;
+in mat4 camMat;
 in Directional {
     vec3 direction;
 	vec3 color;
@@ -18,12 +19,14 @@ layout(location = 3) out vec4 diffuseColor;
 layout(location = 4) out vec4 specularColor;
 
 void main() {
-	vec3 fragPos = texture(gPosition, uv).rgb;
-	vec3 normal  = texture(gNormal, uv).rgb * 2. - 1.;
+	vec3 normal  = texture(gNormal, uv).rgb;
+	if(normal == vec3(0)) discard;
+	
+	vec3 fragPos = (camMat * texture(gPosition, uv)).rgb;
 	
 	vec3 lightDir = -light.direction;
 	
-	vec3 viewDir  = normalize(camPos - fragPos);
+	vec3 viewDir  = normalize(-fragPos);
 	vec3 hDir     = normalize(lightDir + viewDir);
 	
 	vec3 diffuse  = max(dot(normal, lightDir), 0.) * light.color;

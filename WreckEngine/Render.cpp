@@ -4,6 +4,8 @@
 
 #include "ShaderHelper.h"
 
+#include "GLstate.h"
+
 using namespace Render;
 
 std::vector<GLtexture> Render::gBuffer;
@@ -144,6 +146,8 @@ void MaterialPass::Group::Helper::draw() {
 }
 
 void PostProcessChain::apply() {
+    GLstate<GL_DEPTH, GL_ENABLE_BIT> depthSave;
+    GL_CHECK(glDisable(GL_DEPTH_TEST));
     triangle.bind();
     finish(&entry);
     entry.refresh(); // resets the whole chain
@@ -178,6 +182,9 @@ GLframebuffer genClearFB() {
 void clearPrevFrame() {
     static GLframebuffer clearFrame = genClearFB();
     
+    GLstate<GL_DEPTH, GL_DEPTH_WRITEMASK> maskState;
+    GL_CHECK(glDepthMask(GL_TRUE));
+
     auto color = GLframebuffer::getClearColor();
     GLframebuffer::setClearColor(0.f, 0.f, 0.f, 0.f);
 

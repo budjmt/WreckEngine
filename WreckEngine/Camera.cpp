@@ -11,7 +11,7 @@ Camera::Camera(GLprogram shaderProg)
 mat4 Camera::getCamMat() { return projection * view; }
 
 void Camera::update(double dt) {
-	view = glm::lookAt(transform.position(), getLookAt(), up());
+	view = glm::lookAt(transform.getComputed()->position(), getLookAt(), up());
 	// update projection
 	// updateProjection();
 }
@@ -27,7 +27,8 @@ void Camera::turn(float dx, float dy) {
 }
 
 vec3 Camera::getLookAt(float units) {
-	return transform.position() + forward() * units;
+    auto t = transform.getComputed();
+	return t->position() + t->forward() * units;
 }
 
 void Camera::updateProjection() {

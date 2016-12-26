@@ -13,12 +13,10 @@ namespace Render {
             opaque.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
                 GL_CHECK(glFrontFace(GL_CCW));
-                //GL_CHECK(glEnable(GL_DEPTH_TEST));
-                //GL_CHECK(glDepthFunc(GL_LEQUAL));
+                GL_CHECK(glDepthMask(GL_TRUE));
             };
             lightR.setup = []() {
-                //GL_CHECK(glDisable(GL_DEPTH_TEST));
-                //GL_CHECK(glDepthFunc(GL_GREATER));
+                GL_CHECK(glDepthMask(GL_FALSE));
 
                 // additive blending for accumulation
                 GL_CHECK(glEnable(GL_BLEND));
@@ -58,7 +56,7 @@ namespace Render {
 
         void render() { 
             lights.update();
-            lights.updateCamera(Camera::main);
+            if(Camera::main) lights.updateCamera(Camera::main);
             lights.defer(&lightR.objects, lightGroup);
             opaque.render(); 
         }

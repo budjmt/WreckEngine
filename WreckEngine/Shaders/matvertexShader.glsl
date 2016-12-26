@@ -5,7 +5,7 @@ layout (location = 1) in vec2 vecUV;
 layout (location = 2) in vec3 vecNormal;
 out vec4 fragPos;
 out vec2 fragUV;
-out vec3 fragNormal;
+out vec4 fragNormal;
 
 uniform float time;
 uniform mat4 worldMatrix;
@@ -23,7 +23,7 @@ void main() {
 	
 	// use inverse transpose of world mat to avoid uneven scale
 	// use 0 as fourth component to avoid translation
-	fragNormal = normalize(iTworldMatrix * vec4(vecNormal, 0)).xyz;
+	fragNormal = normalize(iTworldMatrix * vec4(vecNormal, 0));
 
 	//ftime = time;
 }

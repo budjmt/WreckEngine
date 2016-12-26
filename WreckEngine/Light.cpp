@@ -8,10 +8,11 @@ size_t Point::count;
 size_t Spotlight::count;
 
 void Point::bindGeometryImpl() {
+
     struct GeometrySetup {
         GLbuffer verts, elems;
-        GeometrySetup() {
-            auto mesh = loadOBJ("Assets/Lights/point.obj");
+        GeometrySetup(const char* file, size_t& count) {
+            auto mesh = loadOBJ(file);
 
             verts.create(GL_ARRAY_BUFFER);
             elems.create(GL_ELEMENT_ARRAY_BUFFER);
@@ -19,13 +20,13 @@ void Point::bindGeometryImpl() {
             verts.bind();
             verts.data(sizeof(vec3) * mesh->data().verts.size(), &mesh->data().verts[0]);
 
-            Point::count = mesh->indices().verts.size();
+            count = mesh->indices().verts.size();
             elems.bind();
-            elems.data(sizeof(GLuint) * Point::count, &mesh->indices().verts[0]);
+            elems.data(sizeof(GLuint) * count, &mesh->indices().verts[0]);
         }
     };
 
-    static GeometrySetup geometry;
+    static GeometrySetup geometry ("Assets/Lights/point.obj", Point::count);
     geometry.verts.bind();
     geometry.elems.bind();
 }
@@ -51,10 +52,12 @@ void Directional::bindGeometryImpl() {
 }
 
 void Spotlight::bindGeometryImpl() {
+
     struct GeometrySetup {
         GLbuffer verts, elems;
-        GeometrySetup() {
-            auto mesh = loadOBJ("Assets/Lights/spotlight.obj");
+        GeometrySetup(const char* file, size_t& count) {
+            auto mesh = loadOBJ(file);
+            mesh->translate(vec3(0, -0.5f, 0));
 
             verts.create(GL_ARRAY_BUFFER);
             elems.create(GL_ELEMENT_ARRAY_BUFFER);
@@ -62,13 +65,13 @@ void Spotlight::bindGeometryImpl() {
             verts.bind();
             verts.data(sizeof(vec3) * mesh->data().verts.size(), &mesh->data().verts[0]);
 
-            Spotlight::count = mesh->indices().verts.size();
+            count = mesh->indices().verts.size();
             elems.bind();
-            elems.data(sizeof(GLuint) * Spotlight::count, &mesh->indices().verts[0]);
+            elems.data(sizeof(GLuint) * count, &mesh->indices().verts[0]);
         }
     };
 
-    static GeometrySetup geometry;
+    static GeometrySetup geometry ("Assets/Lights/spotlight.obj", Spotlight::count);
     geometry.verts.bind();
     geometry.elems.bind();
 }

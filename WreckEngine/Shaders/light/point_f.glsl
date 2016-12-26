@@ -1,5 +1,6 @@
 #version 400
 
+in mat4 camMat;
 in Point {
     vec3 position;
 	vec3 color;
@@ -22,16 +23,18 @@ void main() {
 
 	// if the normal is black, the fragment wasn't rendered to
 	// i.e. light can't reflect off of this fragment
-	vec3 normal  = texture(gNormal, uv).rgb * 2. - 1.;
+	vec3 normal  = texture(gNormal, uv).rgb;
 	if(normal == vec3(0)) discard;
 
-    vec3 fragPos = texture(gPosition, uv).rgb;	
+    vec4 pos      = texture(gPosition, uv);
+	vec3 worldPos = pos.rgb;
+    vec3 fragPos  = (camMat * pos).rgb;
 	
-	vec3 toLight  = light.position - fragPos;
+	vec3 toLight  = light.position - worldPos;
 	float dist    = length(toLight);
 	vec3 lightDir = normalize(toLight);
 	
-	vec3 viewDir  = normalize(camPos - fragPos);
+	vec3 viewDir  = normalize(-fragPos);
 	vec3 hDir     = normalize(lightDir + viewDir);
 	
 	float a       = max(dist - light.falloff.x, 0.);

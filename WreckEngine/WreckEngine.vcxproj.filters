@@ -257,6 +257,9 @@
     <ClInclude Include="Light.h">
       <Filter>Render</Filter>
     </ClInclude>
+    <ClInclude Include="GLstate.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

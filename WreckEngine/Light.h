@@ -59,7 +59,7 @@ namespace Light {
         }
 
         mat4 getTransform() const {
-            return glm::translate(position) * glm::scale(vec3(falloff.y));
+            return glm::translate(position) * glm::scale(vec3(falloff.y * 2 + 0.01f));
         }
 
     private:
@@ -120,8 +120,7 @@ namespace Light {
         }
 
         mat4 getTransform() const {
-            //return glm::translate(position) * rotateBetween(vec3(0, 1, 0), direction) * glm::scale(vec3(falloffRad.y, falloffLen.y, falloffRad.y));
-            return mat4();
+            return glm::translate(position) * rotateBetween(vec3(0,-1,0), direction) * glm::scale(vec3(falloffRad.y * 2 + 0.01f, falloffLen.y + 0.01f, falloffRad.y * 2 + 0.01f));
         }
 
     private:
@@ -342,8 +341,8 @@ namespace Light {
     }
 
     Manager<Point>       make_manager_point();
-    Manager<Directional> make_manager_directional();
     Manager<Spotlight>   make_manager_spotlight();
+    Manager<Directional> make_manager_directional();
 
     class Block {
     public:
@@ -352,13 +351,13 @@ namespace Light {
         Block() = default;
         Block(GLprogram& program, const char* point, const char* directional, const char* spot) {
             pointLights = program.getUniformBlock<Point>(point, 0);
-            directionalLights = program.getUniformBlock<Directional>(directional, 1);
             spotLights = program.getUniformBlock<Spotlight>(spot, 2);
+            directionalLights = program.getUniformBlock<Directional>(directional, 1);
         }
 
         GLuniformblock<Point> pointLights;
-        GLuniformblock<Directional> directionalLights;
         GLuniformblock<Spotlight> spotLights;
+        GLuniformblock<Directional> directionalLights;
     };
 
     class System {
@@ -367,38 +366,38 @@ namespace Light {
         System() {
             GLattrarr attrs;
             pointLights.setupDeferred(attrs);
-            directionalLights.setupDeferred(attrs);
             spotLights.setupDeferred(attrs);
+            directionalLights.setupDeferred(attrs);
         }
 
         Manager<Point> pointLights = make_manager_point();
-        Manager<Directional> directionalLights = make_manager_directional();
         Manager<Spotlight> spotLights = make_manager_spotlight();
+        Manager<Directional> directionalLights = make_manager_directional();
 
         Block getForwardBlock(GLprogram& program, const char* point, const char* directional, const char* spot) {
             Block b(program, point, directional, spot);
             b.pointLights.block = pointLights.forwardBlock.block;
-            b.directionalLights.block = directionalLights.forwardBlock.block;
             b.spotLights.block = spotLights.forwardBlock.block;
+            b.directionalLights.block = directionalLights.forwardBlock.block;
             return b;
         }
 
         void update() {
             pointLights.update();
-            directionalLights.update();
             spotLights.update();
+            directionalLights.update();
         }
 
         void updateCamera(Camera* camera) const {
             pointLights.updateCamera(camera);
-            directionalLights.updateCamera(camera);
             spotLights.updateCamera(camera);
+            directionalLights.updateCamera(camera);
         }
 
         void defer(Render::MaterialPass* renderer, const uint32_t group) {
             pointLights.defer(renderer, group);
-            directionalLights.defer(renderer, group);
             spotLights.defer(renderer, group);
+            directionalLights.defer(renderer, group); // must be rendered last to prevent clipping with depth test enabled
         }
     };
 

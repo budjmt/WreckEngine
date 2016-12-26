@@ -20,6 +20,8 @@ typedef GLint GLsampler;
 
 inline GLint getGLVal(GLenum value) { GLint val; GL_CHECK(glGetIntegerv(value, &val)); return val; }
 
+#define CHECK_GL_VERSION(major, minor) glewIsSupported("GL_VERSION_" #major "_" #minor)
+
 namespace {
     // default value used to represent "uninitialized" resources
     constexpr GLuint def = (GLuint)-1;
@@ -473,100 +475,6 @@ private:
     friend struct GLFWmanager;
 };
 
-/// <summary>
-/// Defines an OpenGL rendering state.
-/// </summary>
-class GLstate {
-public:
-    /// <summary>
-    /// Creates a new OpenGL state.
-    /// </summary>
-    GLstate();
-
-    /// <summary>
-    /// Checks to see if there are any cached states.
-    /// </summary>
-    /// <returns>True if there is a state on the stack, otherwise false.</returns>
-    static bool empty();
-
-    /// <summary>
-    /// Gets the OpenGL state at the top of the stack.
-    /// </summary>
-    /// <returns>The OpenGL state at the top of the stack.</returns>
-    static GLstate* peek();
-
-    /// <summary>
-    /// Pushes the current OpenGL state.
-    /// </summary>
-    static void push();
-
-    /// <summary>
-    /// Attempts to pop an OpenGL state off of the stack.
-    /// </summary>
-    /// <returns>True if there was a state to pop, otherwise false.</returns>
-    static bool pop();
-
-private:
-    static std::vector<GLstate> states;
-    
-    struct dims { GLint x, y; GLsizei width, height; }; 
-    struct comp { GLint rgb, alpha; };
-    
-    dims viewport;
-    dims scissorBox;
-    
-    struct {
-        GLint program;
-        GLint texture;
-        GLint activeTexture;
-        GLint arrayBuffer;
-        GLint elementArrayBuffer;
-        GLint vertexArray;
-    } bound;
-    
-    struct {
-        comp src;
-        comp dst;
-        comp equation;
-    } blend;
-
-    struct {
-        GLboolean blend;
-        GLboolean cullFace;
-        GLboolean depthTest;
-        GLboolean scissorTest;
-    } enable;
-
-    /// <summary>
-    /// Applies this state to OpenGL.
-    /// </summary>
-    void apply();
-
-    /// <summary>
-    /// Captures the current OpenGL state.
-    /// </summary>
-    void capture();
-};
-
-/// <summary>
-/// Defines a scoped state helper.
-/// </summary>
-struct GLsavestate {
-    /// <summary>
-    /// Creates a new state helper and pushes the current OpenGL state.
-    /// </summary>
-    GLsavestate() {
-        GLstate::push();
-    }
-
-    /// <summary>
-    /// Destroys this state helper and pops the current OpenGL state.
-    /// </summary>
-    ~GLsavestate() {
-        GLstate::pop();
-    }
-};
-
 struct GLres { virtual void update() const = 0; };
 
 template<typename T>
@@ -620,7 +528,7 @@ private:
 // helper class, used to assist in creating vertex array attribute bindings (create and use locally, DO NOT STORE!)
 class GLattrarr {
     struct GLattr {
-        GLenum type; GLuint size, bytes, divisor; bool normalize;
+        GLenum type; GLuint size, bytes, divisor; bool normalize, castToFloat;
     };
     inline void reset() {
         attrs = std::vector<GLattr>();
@@ -631,39 +539,40 @@ public:
 
     // adds an attribute of type T to the cache. Use a divisor value of 1 for instanced variables
     template<typename T>
-    inline void add(const size_t size, const GLuint divisor = 0, const bool normalize = GL_FALSE) {
+    inline void add(const size_t size, const GLuint divisor = 0, const bool normalize = GL_FALSE, const bool castToFloat = false) {
         GLattr attr;
         attr.type = GLtype<T>();
         attr.size = size;
         attr.divisor = divisor;
         attr.bytes = sizeof(T) * size;
         attr.normalize = normalize;
+        attr.castToFloat = normalize || castToFloat;
 
         attrs.push_back(attr);
     }
 
-    template<> inline void add<vec2>(const size_t size, const GLuint divisor, const bool normalize) {
-        for (size_t i = 0; i < size; ++i) add<GLfloat>(2, divisor, normalize);
+    template<> inline void add<vec2>(const size_t size, const GLuint divisor, const bool normalize, const bool castToFloat) {
+        for (size_t i = 0; i < size; ++i) add<GLfloat>(2, divisor, normalize, castToFloat);
     }
-    template<> inline void add<vec3>(const size_t size, const GLuint divisor, const bool normalize) {
-        for (size_t i = 0; i < size; ++i) add<GLfloat>(3, divisor, normalize);
+    template<> inline void add<vec3>(const size_t size, const GLuint divisor, const bool normalize, const bool castToFloat) {
+        for (size_t i = 0; i < size; ++i) add<GLfloat>(3, divisor, normalize, castToFloat);
     }
-    template<> inline void add<vec4>(const size_t size, const GLuint divisor, const bool normalize) {
-        for (size_t i = 0; i < size; ++i) add<GLfloat>(4, divisor, normalize);
+    template<> inline void add<vec4>(const size_t size, const GLuint divisor, const bool normalize, const bool castToFloat) {
+        for (size_t i = 0; i < size; ++i) add<GLfloat>(4, divisor, normalize, castToFloat);
     }
-    template<> inline void add<mat3>(const size_t size, const GLuint divisor, const bool normalize) {
+    template<> inline void add<mat3>(const size_t size, const GLuint divisor, const bool normalize, const bool castToFloat) {
         for (size_t i = 0; i < size; ++i) {
-            add<GLfloat>(3, divisor, normalize);
-            add<GLfloat>(3, divisor, normalize);
-            add<GLfloat>(3, divisor, normalize);
+            add<GLfloat>(3, divisor, normalize, castToFloat);
+            add<GLfloat>(3, divisor, normalize, castToFloat);
+            add<GLfloat>(3, divisor, normalize, castToFloat);
         }
     }
-    template<> inline void add<mat4>(const size_t size, const GLuint divisor, const bool normalize) {
+    template<> inline void add<mat4>(const size_t size, const GLuint divisor, const bool normalize, const bool castToFloat) {
         for (size_t i = 0; i < size; ++i) {
-            add<GLfloat>(4, divisor, normalize);
-            add<GLfloat>(4, divisor, normalize);
-            add<GLfloat>(4, divisor, normalize);
-            add<GLfloat>(4, divisor, normalize);
+            add<GLfloat>(4, divisor, normalize, castToFloat);
+            add<GLfloat>(4, divisor, normalize, castToFloat);
+            add<GLfloat>(4, divisor, normalize, castToFloat);
+            add<GLfloat>(4, divisor, normalize, castToFloat);
         }
     }
 
@@ -677,7 +586,27 @@ public:
         for (size_t i = 0, offset = 0, entries = attrs.size(); i < entries; ++i) {
             const auto attr = attrs[i];
             GL_CHECK(glEnableVertexAttribArray(i + baseIndex));
-            GL_CHECK(glVertexAttribPointer(i + baseIndex, attr.size, attr.type, attr.normalize, stride, (void*)offset));
+            if (attr.castToFloat) {
+            FLOATCAST: 
+                GL_CHECK(glVertexAttribPointer(i + baseIndex, attr.size, attr.type, attr.normalize, stride, (void*)offset));
+            }
+            else {
+                switch (attr.type) {
+                case GLtype<GLbyte>() :
+                case GLtype<GLubyte>() :
+                case GLtype<GLshort>() :
+                case GLtype<GLushort>() :
+                case GLtype<GLint>() :
+                case GLtype<GLuint>() :
+                    GL_CHECK(glVertexAttribIPointer(i + baseIndex, attr.size, attr.type, stride, (void*)offset));
+                    break;
+                case GLtype<GLdouble>():
+                    GL_CHECK(glVertexAttribLPointer(i + baseIndex, attr.size, attr.type, stride, (void*)offset));
+                    break;
+                default:
+                    goto FLOATCAST;
+                }
+            }
             if (attr.divisor)
                 GL_CHECK(glVertexAttribDivisor(i + baseIndex, attr.divisor));
             offset += attr.bytes;

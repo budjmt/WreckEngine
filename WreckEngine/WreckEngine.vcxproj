@@ -223,6 +223,7 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="GLError.h" />
     <ClInclude Include="GLmanager.h" />
+    <ClInclude Include="GLstate.h" />
     <ClInclude Include="gl_structs.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="MarchMath.h" />
