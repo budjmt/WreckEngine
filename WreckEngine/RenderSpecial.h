@@ -12,10 +12,9 @@ namespace Render {
         LitRenderer(const size_t opaqueG, const size_t alphaG, const size_t lightG) : opaque(opaqueG), alpha(alphaG), lightR(lightG) {
             opaque.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
-                GL_CHECK(glFrontFace(GL_CCW));
-                GL_CHECK(glDepthMask(GL_TRUE));
             };
             lightR.setup = []() {
+                // prevents lights from culling each other
                 GL_CHECK(glDepthMask(GL_FALSE));
 
                 // additive blending for accumulation
@@ -28,21 +27,23 @@ namespace Render {
             alpha.setup = [this]() {
                 // undoing the light-specific settings
                 GL_CHECK(glFrontFace(GL_CCW));
+                GL_CHECK(glDepthMask(GL_TRUE));
 
                 GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
             };
 
             // GBuffer layout:
-            // 0: color
+            // 0: regular color
             // 1: position
             // 2: normals
-            // 3: diffuse light accumulation
-            // 4: specular light accumulation
-            lightR.postProcess.output = GLframebuffer::createRenderTarget<GLubyte>();
+            // 3: deferred color
+            // 4: diffuse light accumulation
+            // 5: specular light accumulation
+            lightR.postProcess.output = gBuffer[0];
 
             auto accumulate = make_shared<PostProcess>();
             accumulate->data.setShaders(PostProcess::make_program("Shaders/light/accumulate.glsl"));
-            accumulate->data.setTextures(gBuffer[0], gBuffer[3], gBuffer[4]);
+            accumulate->data.setTextures(gBuffer[3], gBuffer[4], gBuffer[5]);
             accumulate->renderToTextures(lightR.postProcess.output);
             accumulate->data.shaders->program.use();
             accumulate->data.setSamplers(0, "color", "diffuse", "specular");
@@ -50,7 +51,7 @@ namespace Render {
             lightR.postProcess.entry.chainsTo(accumulate);
 
             opaque.next = &lightR;
-            //lightR.next = &alpha;
+            lightR.next = &alpha;
             lightGroup = 0;
         }
 

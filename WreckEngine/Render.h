@@ -9,7 +9,6 @@ namespace Render {
 
     extern std::vector<GLtexture> gBuffer;
     extern GLtexture depth, stencil;
-    extern GLtexture prevOutput;
 
     extern GLbuffer fs_triangle;
 

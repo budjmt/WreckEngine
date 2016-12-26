@@ -12,7 +12,7 @@ namespace {
     }
 }
 
-TriPlay::TriPlay(GLprogram prog) : Game(5)
+TriPlay::TriPlay(GLprogram prog) : Game(6)
 {
     auto menuState = make_shared<State>("menu");
     auto mainState = make_shared<State>("main");

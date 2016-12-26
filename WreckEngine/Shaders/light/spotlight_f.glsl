@@ -17,8 +17,8 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 
 // light accumulation targets
-layout (location = 3) out vec4 diffuseColor;
-layout (location = 4) out vec4 specularColor;
+layout (location = 4) out vec4 diffuseColor;
+layout (location = 5) out vec4 specularColor;
 
 void main() {
 	vec2 uv = gl_FragCoord.xy / resolution;

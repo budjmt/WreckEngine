@@ -23,18 +23,18 @@ struct GLstate {
     void capture();
 };
 
-template<>
-struct GLstate<GL_DEPTH, GL_ENABLE_BIT> {
+template<GLenum GLE>
+struct GLstate<GL_ENABLE_BIT, GLE> {
 public:
     GLstate() { capture(); }
     ~GLstate() { apply(); }
 
     void apply() const {
-        if (enabled) { GL_CHECK(glEnable(GL_DEPTH_TEST)); } else { GL_CHECK(glDisable(GL_DEPTH_TEST)); }
+        if (enabled) { GL_CHECK(glEnable(GLE)); } else { GL_CHECK(glDisable(GLE)); }
     }
 
     void capture() {
-        GL_CHECK(enabled = glIsEnabled(GL_DEPTH_TEST));
+        GL_CHECK(enabled = glIsEnabled(GLE));
     }
 
 private:

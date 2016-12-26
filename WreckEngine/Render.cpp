@@ -10,7 +10,6 @@ using namespace Render;
 
 std::vector<GLtexture> Render::gBuffer;
 GLtexture Render::depth, Render::stencil;
-GLtexture Render::prevOutput;
 
 GLbuffer Render::fs_triangle;
 
@@ -146,7 +145,7 @@ void MaterialPass::Group::Helper::draw() {
 }
 
 void PostProcessChain::apply() {
-    GLstate<GL_DEPTH, GL_ENABLE_BIT> depthSave;
+    GLstate<GL_ENABLE_BIT, GL_DEPTH_TEST> depthSave;
     GL_CHECK(glDisable(GL_DEPTH_TEST));
     triangle.bind();
     finish(&entry);
@@ -163,6 +162,11 @@ void PostProcessChain::finish(PostProcess* curr) {
 
 // output the final texture to the screen
 void PostProcessChain::render() const {
+    GLstate<GL_ENABLE_BIT, GL_DEPTH_TEST> depthSave;
+    GLstate<GL_ENABLE_BIT, GL_BLEND> blendSave;
+    GL_CHECK(glDisable(GL_DEPTH_TEST));
+    GL_CHECK(glDisable(GL_BLEND));
+
     GLframebuffer::unbind(GL_FRAMEBUFFER);
     finalize.use();
     (entry.endsChain() ? gBuffer[0] : output).bind();
@@ -205,8 +209,6 @@ void Renderer::renderChildren() {
     objects.render();
     postProcess.apply();
     if (next) {
-        // if there's no post process chain, the output is from the mat renderer
-        prevOutput = postProcess.entry.endsChain() ? gBuffer[0] : postProcess.output;
         next->renderChildren();
     }
     else postProcess.render();
