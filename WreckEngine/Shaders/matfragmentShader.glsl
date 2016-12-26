@@ -5,7 +5,7 @@ uniform vec4 tint;
 uniform sampler2D uniformTex;
 in vec4 fragPos;
 in vec2 fragUV;
-in vec4 fragNormal;
+in vec3 fragNormal;
 
 in float ftime;
 
@@ -20,7 +20,7 @@ void main() {
 	
 	fragColor      = color;
 	fragPosition   = fragPos;
-	fragNormalized = fragNormal;
+	fragNormalized = vec4(fragNormal, 1);
 	
 	//float unique = (gl_FragCoord.x + 1) * 2 + (gl_FragCoord.y + 1) * 4;
 	//if(int(ftime * unique) % 2 == 0)

@@ -129,7 +129,7 @@ void TriPlay::setupLights() {
 
     Light::Group<Light::Directional> directional;
     Light::Directional d;
-    d.direction = normalize(vec3(0,-1,0));
+    d.direction = normalize(vec3(-1,-1,-0.5f));
     d.color = vec3(1);
     directional.addLight(d, Light::UpdateFreq::NEVER);
 
