@@ -40,16 +40,33 @@ void Renderer::init(const size_t max_gBufferSize) {
     PostProcessChain::init();
 }
 
-MaterialPass::MaterialPass(const size_t gBufferSize) {
+void MaterialPass::prepareFrameBuffer() {
     frameBuffer.create();
     frameBuffer.bindPartial();
     frameBuffer.attachTexture(depth, GLframebuffer::Attachment::DepthStencil);
     //frameBuffer.attachTexture(stencil, GLframebuffer::Attachment::Stencil);
+}
+
+MaterialPass::MaterialPass(const size_t gBufferSize) {
+    prepareFrameBuffer();
 
     assert(gBufferSize <= gBuffer.size());
 
     for (size_t i = 0; i < gBufferSize; ++i)
         frameBuffer.attachTexture(gBuffer[i], GLframebuffer::Attachment::Color);
+
+    frameBuffer.unbind();
+}
+
+MaterialPass::MaterialPass(const std::vector<GLuint>& targets) {
+    prepareFrameBuffer();
+
+    assert(targets.size() <= gBuffer.size());
+
+    for (auto target : targets) {
+        assert(target >= 0 && target < gBuffer.size());
+        frameBuffer.attachTexture(gBuffer[target], GLframebuffer::Attachment::Color);
+    }
 
     frameBuffer.unbind();
 }
@@ -134,7 +151,7 @@ void MaterialPass::Group::Helper::draw() {
     paramBuffer.invalidate();
     paramBuffer.data(group.params.size() * sizeof(DrawCall::Params), &params[0]);
 
-    DrawCall::Params* offset = nullptr; // &params[0];
+    DrawCall::Params* offset = &params[0];
     for (const auto& drawCall : drawCalls) {
         drawCall.render(offset);
         ++offset;
@@ -146,7 +163,9 @@ void MaterialPass::Group::Helper::draw() {
 
 void PostProcessChain::apply() {
     GLstate<GL_ENABLE_BIT, GL_DEPTH_TEST> depthSave;
+    GLstate<GL_ENABLE_BIT, GL_CULL_FACE> cullSave;
     GL_CHECK(glDisable(GL_DEPTH_TEST));
+    GL_CHECK(glDisable(GL_CULL_FACE));
     triangle.bind();
     finish(&entry);
     entry.refresh(); // resets the whole chain
@@ -164,8 +183,10 @@ void PostProcessChain::finish(PostProcess* curr) {
 void PostProcessChain::render() const {
     GLstate<GL_ENABLE_BIT, GL_DEPTH_TEST> depthSave;
     GLstate<GL_ENABLE_BIT, GL_BLEND> blendSave;
+    GLstate<GL_ENABLE_BIT, GL_CULL_FACE> cullSave;
     GL_CHECK(glDisable(GL_DEPTH_TEST));
     GL_CHECK(glDisable(GL_BLEND));
+    GL_CHECK(glDisable(GL_CULL_FACE));
 
     GLframebuffer::unbind(GL_FRAMEBUFFER);
     finalize.use();

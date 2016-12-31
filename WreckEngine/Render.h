@@ -15,6 +15,7 @@ namespace Render {
     class MaterialPass {
     public:
         MaterialPass(const size_t gBufferSize);
+        MaterialPass(const std::vector<GLuint>& targets);
 
         void scheduleDraw(const size_t group, const DrawCall d, const DrawCall::Params p);
         void scheduleDrawArrays  (const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const uint32_t instances = 1);
@@ -54,6 +55,8 @@ namespace Render {
 
         std::vector<Group> renderGroups = { Group([]() {}, []() {}) };
         GLframebuffer frameBuffer;
+
+        void prepareFrameBuffer();
     };
 
     class PostProcessChain {
@@ -83,6 +86,7 @@ namespace Render {
         static void init(const size_t max_gBufferSize);
 
         Renderer(const size_t gBufferSize) : objects(gBufferSize) {}
+        Renderer(const std::vector<GLuint>& targets) : objects(targets) {}
 
         void render();
         void renderChildren();

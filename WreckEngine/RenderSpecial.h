@@ -9,9 +9,11 @@ namespace Render {
         Renderer opaque, alpha;
         Light::System lights;
 
-        LitRenderer(const size_t opaqueG, const size_t alphaG, const size_t lightG) : opaque(opaqueG), alpha(alphaG), lightR(lightG) {
+        LitRenderer(const size_t gBufferSize) : opaque({ 1, 2, 3 }), alpha(gBufferSize), lightR({ 0, 4, 5 }) {
             opaque.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
+                GL_CHECK(glFrontFace(GL_CCW));
+                GL_CHECK(glDepthMask(GL_TRUE));
             };
             lightR.setup = []() {
                 // prevents lights from culling each other
@@ -51,13 +53,14 @@ namespace Render {
             lightR.postProcess.entry.chainsTo(accumulate);
 
             opaque.next = &lightR;
-            lightR.next = &alpha;
+            //lightR.next = &alpha;
             lightGroup = 0;
         }
 
         void render() { 
             lights.update();
             if(Camera::main) lights.updateCamera(Camera::main);
+            lights.forward();
             lights.defer(&lightR.objects, lightGroup);
             opaque.render(); 
         }

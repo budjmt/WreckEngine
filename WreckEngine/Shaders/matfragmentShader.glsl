@@ -1,4 +1,4 @@
-#version 400
+#version 450
 
 uniform vec4 tint;
 
@@ -9,9 +9,9 @@ in vec3 fragNormal;
 
 in float ftime;
 
-layout (location = 1) out vec4 fragPosition;
-layout (location = 2) out vec4 fragNormalized;
-layout (location = 3) out vec4 fragColor;
+layout (location = 0) out vec4 fragPosition;
+layout (location = 1) out vec4 fragNormalized;
+layout (location = 2) out vec4 fragColor;
 
 void main() {
 

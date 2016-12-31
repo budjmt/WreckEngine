@@ -78,7 +78,8 @@ void initGraphics() {
     GL_CHECK(glDepthFunc(GL_LEQUAL));
 
     // back-face culling
-    if (!DEBUG) { GL_CHECK(glEnable(GL_CULL_FACE)); }
+    if (!DEBUG)
+        GL_CHECK(glEnable(GL_CULL_FACE));
     GL_CHECK(glCullFace(GL_BACK));
     GL_CHECK(glFrontFace(GL_CCW));
 }

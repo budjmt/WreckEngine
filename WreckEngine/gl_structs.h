@@ -266,10 +266,6 @@ struct GLuniformblock : public GLuniform<T> {
         block.invalidate();
         block.data(size, data);
     }
-
-    void bindToProgram(const GLprogram& prog, const uint32_t index) {
-        prog.bindUniformBlock(location, this->index = index);
-    }
 };
 
 // wraps a compiled shader
@@ -360,7 +356,7 @@ struct GLprogram {
 //   - Attached to at least one buffer (color, depth, stencil, etc.)
 //   - Attached to at least one _color_
 //   - All attachments are complete
-//   - All attachments have the same number of multisamples
+//   - All attachments have the same number of multi-samples
 struct GLframebuffer {
     shared<GLuint> framebuffer{ new GLuint(def), local(delFrameBuffer) };
     GLenum type = GL_FRAMEBUFFER;

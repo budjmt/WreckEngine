@@ -59,7 +59,7 @@ namespace Light {
         }
 
         mat4 getTransform() const {
-            return glm::translate(position) * glm::scale(vec3(falloff.y * 2 + 0.01f));
+            return glm::translate(position) * glm::scale(vec3(falloff.y * 2 + 0.1f));
         }
 
     private:
@@ -120,7 +120,7 @@ namespace Light {
         }
 
         mat4 getTransform() const {
-            return glm::translate(position) * rotateBetween(vec3(0,-1,0), direction) * glm::scale(vec3(falloffRad.y * 2 + 0.01f, falloffLen.y + 0.01f, falloffRad.y * 2 + 0.01f));
+            return glm::translate(position) * rotateBetween(vec3(0,-1,0), direction) * glm::scale(vec3(falloffRad.y * 2 + 0.1f, falloffLen.y + 0.1f, falloffRad.y * 2 + 0.1f));
         }
 
     private:
@@ -288,6 +288,11 @@ namespace Light {
             camPos.update(camera->transform.getComputed()->position);
         }
 
+        void forward(const GLuint index) {
+            forwardBlock.index = index;
+            forwardBlock.bind();
+        }
+
         void defer(Render::MaterialPass* renderer, const size_t renderGroup) const {
             Base<T>::draw(renderer, renderGroup, &deferredVao, &renderInfo, forwardBlock.block.size / sizeof(T));
         }
@@ -344,22 +349,6 @@ namespace Light {
     Manager<Spotlight>   make_manager_spotlight();
     Manager<Directional> make_manager_directional();
 
-    class Block {
-    public:
-        template<typename T>
-
-        Block() = default;
-        Block(GLprogram& program, const char* point, const char* directional, const char* spot) {
-            pointLights = program.getUniformBlock<Point>(point, 0);
-            spotLights = program.getUniformBlock<Spotlight>(spot, 2);
-            directionalLights = program.getUniformBlock<Directional>(directional, 1);
-        }
-
-        GLuniformblock<Point> pointLights;
-        GLuniformblock<Spotlight> spotLights;
-        GLuniformblock<Directional> directionalLights;
-    };
-
     class System {
     public:
 
@@ -374,12 +363,10 @@ namespace Light {
         Manager<Spotlight> spotLights = make_manager_spotlight();
         Manager<Directional> directionalLights = make_manager_directional();
 
-        Block getForwardBlock(GLprogram& program, const char* point, const char* directional, const char* spot) {
-            Block b(program, point, directional, spot);
-            b.pointLights.block = pointLights.forwardBlock.block;
-            b.spotLights.block = spotLights.forwardBlock.block;
-            b.directionalLights.block = directionalLights.forwardBlock.block;
-            return b;
+        void connectLightBlocks(GLprogram& program, const char* point, const char* directional, const char* spot) {
+            program.getUniformBlock<Point>(point, 0);
+            program.getUniformBlock<Spotlight>(spot, 1);
+            program.getUniformBlock<Directional>(directional, 2);
         }
 
         void update() {
@@ -392,6 +379,12 @@ namespace Light {
             pointLights.updateCamera(camera);
             spotLights.updateCamera(camera);
             directionalLights.updateCamera(camera);
+        }
+
+        void forward() {
+            pointLights.forward(0);
+            spotLights.forward(1);
+            directionalLights.forward(2);
         }
 
         void defer(Render::MaterialPass* renderer, const uint32_t group) {

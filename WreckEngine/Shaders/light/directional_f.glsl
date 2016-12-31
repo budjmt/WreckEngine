@@ -1,4 +1,4 @@
-#version 400
+#version 450
 
 in vec2 uv;
 in mat4 camMat;
@@ -15,8 +15,8 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 
 // light accumulation targets
-layout(location = 4) out vec4 diffuseColor;
-layout(location = 5) out vec4 specularColor;
+layout(location = 1) out vec4 diffuseColor;
+layout(location = 2) out vec4 specularColor;
 
 void main() {
 	vec3 normal  = texture(gNormal, uv).rgb;
@@ -34,6 +34,6 @@ void main() {
 	float spec    = pow(max(dot(normal, hDir), 0.), 16.);
 	vec3 specular = spec * light.color;
 	
-	diffuseColor  = vec4(diffuse, 1.);
+	diffuseColor  = vec4(diffuse, 1);
 	specularColor = vec4(specular, 1.);
 }

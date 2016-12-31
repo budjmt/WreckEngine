@@ -101,6 +101,14 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     mainState->addEntity(mesh);
     me = mesh;
 
+    //auto forwardProg = loadProgram("Shaders/forwardTest_v.glsl", "Shaders/forwardTest_f.glsl");
+    //auto forwardMesh = make_shared<DrawMesh>(&renderer.alpha.objects, sphere, "Assets/butt.png", forwardProg);
+    //mesh = make_shared<ColliderEntity>(forwardMesh);
+    //renderer.lights.connectLightBlocks(forwardMesh->material.shaders->program, "points", "directionals", "spotlights");
+    //mesh->transform.position = vec3(-5.f, 0, 0);
+    //mesh->rigidBody.floating(1);
+    //mainState->addEntity(mesh);
+
     auto camera = make_shared<Camera>(prog);
     camera->id = (void*)0xcab;
     camera->transform.position = vec3(0, 0, 1);

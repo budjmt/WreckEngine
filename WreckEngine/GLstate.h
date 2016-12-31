@@ -89,8 +89,7 @@ struct GLstate<GL_BLEND> {
     ~GLstate() { apply(); }
 
     void apply() const {
-        if (enabled) { GL_CHECK(glEnable(GL_BLEND)); }
-        else { GL_CHECK(glDisable(GL_BLEND)); }
+        if (enabled) { GL_CHECK(glEnable(GL_BLEND)); } else { GL_CHECK(glDisable(GL_BLEND)); }
         GL_CHECK(glBlendEquationSeparate(equation.rgb, equation.alpha));
         GL_CHECK(glBlendFuncSeparate(src.rgb, dst.rgb, src.alpha, dst.alpha));
     }

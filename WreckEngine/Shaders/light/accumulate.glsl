@@ -1,4 +1,4 @@
-#version 400
+#version 450
 
 in vec2 uv;
 
@@ -12,5 +12,5 @@ layout (location = 0) out vec4 fragColor;
 
 void main() {
 	fragColor = texture(color, uv) * (texture(diffuse, uv) + vec4(ambient,0)) + texture(specular, uv);
-	//fragColor = texture(diffuse, uv);
+	//fragColor = texture(specular, uv);
 }

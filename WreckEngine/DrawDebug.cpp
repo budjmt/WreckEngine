@@ -80,7 +80,7 @@ void DrawDebug::setRenderers(Render::MaterialPass* opaque, Render::MaterialPass*
         }
     };
 
-    static X addWireframe(this, opaque);
+    static X addWireframe(this, alpha);
     this->opaque = opaque;
     this->alpha = alpha;
 }
@@ -126,10 +126,10 @@ void DrawDebug::drawVectors() {
     vecVAO.bind();
     vecBuffer.bind();
     vecBuffer.data(&debugVectors[0]);
-    opaque->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, numVecs / 2);
+    alpha->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, numVecs / 2);
 
     arrows.update();
-    arrows.draw(opaque, &meshMat, 0);
+    arrows.draw(alpha, &meshMat, 0);
 
     debugVectors.clear();
     arrows.instances.clear();
@@ -161,7 +161,7 @@ void DrawDebug::drawBoxes() {
     }
 
     boxes.update();
-    boxes.draw(opaque, &meshMat, wireframeIndex);
+    boxes.draw(alpha, &meshMat, wireframeIndex);
 
     debugBoxes.clear();
     boxes.instances.clear();

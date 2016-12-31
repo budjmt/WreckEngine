@@ -15,7 +15,7 @@
 class Game
 {
 public:
-    Game(const size_t gBufferSize) : renderer(Render::LitRenderer(gBufferSize, gBufferSize, gBufferSize)) {}
+    Game(const size_t gBufferSize) : renderer(Render::LitRenderer(gBufferSize)) {}
     virtual ~Game() = default;
 
     void addState(shared<State> s);
