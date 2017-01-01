@@ -1,6 +1,5 @@
 #version 450
 
-in mat4 camMat;
 in Point {
     vec3 position;
 	vec3 color;
@@ -26,15 +25,13 @@ void main() {
 	vec3 normal  = texture(gNormal, uv).rgb;
 	if(normal == vec3(0)) discard;
 
-    vec4 pos      = texture(gPosition, uv);
-	vec3 worldPos = pos.rgb;
-    vec3 fragPos  = (camMat * pos).rgb;
+    vec3 worldPos = texture(gPosition, uv).rgb;
 	
 	vec3 toLight  = light.position - worldPos;
 	float dist    = length(toLight);
 	vec3 lightDir = normalize(toLight);
 	
-	vec3 viewDir  = normalize(-fragPos);
+	vec3 viewDir  = normalize(camPos - worldPos);
 	vec3 hDir     = normalize(lightDir + viewDir);
 	
 	float a       = max(dist - light.falloff.x, 0.);

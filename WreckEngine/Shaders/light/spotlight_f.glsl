@@ -1,6 +1,5 @@
 #version 450
 
-in mat4 camMat;
 in Spotlight {
     vec3 position;
     vec3 direction;
@@ -26,9 +25,7 @@ void main() {
 	vec3 normal  = texture(gNormal, uv).rgb;
     if(normal == vec3(0)) discard;
     
-	vec4 pos      = texture(gPosition, uv);
-	vec3 worldPos = pos.rgb;
-	vec3 fragPos  = (camMat * pos).rgb;
+	vec3 worldPos  = texture(gPosition, uv).rgb;
 	
 	vec3  toLight  = light.position - worldPos;
 	vec3  lightDir = normalize(toLight);
@@ -37,7 +34,7 @@ void main() {
 	float distSq   = dist * dist;
 	float distDir  = max(-dot(toLight, light.direction), 0);
 	
-	vec3 viewDir  = normalize(-fragPos);
+	vec3 viewDir  = normalize(camPos - worldPos);
 	vec3 hDir     = normalize(lightDir + viewDir);
 	
 	float lenFact  = distDir / light.falloffLen.y;

@@ -11,7 +11,6 @@ layout (location = 5) in uint tag;
 uniform mat4 camera;
 
 out vec2 uv;
-out mat4 camMat;
 out Directional {
     vec3 direction;
 	vec3 color;
@@ -25,7 +24,6 @@ void main() {
 		light.color     = color;
 		
 		uv = vertUv;
-		camMat = camera;
 	}
 	else {
 		gl_Position = vec4(vec2(-2.), vec2(1.)); // causes the vertex to be clipped
