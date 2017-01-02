@@ -349,6 +349,16 @@ struct GLprogram {
     // convenience function for setting a one time uniform value, e.g. a GLsampler 
     template<typename T> 
     inline void setOnce(const char* name, const T& value) const { getUniform<T>(name).update(value); }
+
+    inline size_t getUniformOffset(const char* name) {
+        GLuint index;
+        GL_CHECK(index = glGetProgramResourceIndex(*program, GL_UNIFORM, name));
+
+        GLenum prop = GL_OFFSET;
+        GLint length, param;
+        GL_CHECK(glGetProgramResourceiv(*program, GL_UNIFORM, index, 1, &prop, sizeof(GLuint), &length, &param));
+        return param;
+    }
 };
 
 // allows access to frame buffers
@@ -574,17 +584,18 @@ public:
 
     // call once all desired attributes have been added; applies the added attributes, starting at [baseIndex] and clears the cache.
     // [baseIndex] would be used when there are multiple buffers bound to a single shader, e.g. instanced rendering, where the stride must be reset
-    inline GLuint apply(const GLuint baseIndex = 0, const size_t endPadding = 0) {
+    inline GLuint apply(const GLuint baseIndex = 0, const size_t endPadding = 0, const size_t startOffset = 0) {
         size_t stride = endPadding;
         for (const auto& attr : attrs) {
             stride += attr.bytes;
         }
-        for (size_t i = 0, offset = 0, entries = attrs.size(); i < entries; ++i) {
+        auto offset = (char*) startOffset;
+        for (size_t i = 0, entries = attrs.size(); i < entries; ++i) {
             const auto attr = attrs[i];
             GL_CHECK(glEnableVertexAttribArray(i + baseIndex));
             if (attr.castToFloat) {
             FLOATCAST: 
-                GL_CHECK(glVertexAttribPointer(i + baseIndex, attr.size, attr.type, attr.normalize, stride, (void*)offset));
+                GL_CHECK(glVertexAttribPointer(i + baseIndex, attr.size, attr.type, attr.normalize, stride, offset));
             }
             else {
                 switch (attr.type) {
@@ -594,10 +605,10 @@ public:
                 case GLtype<GLushort>() :
                 case GLtype<GLint>() :
                 case GLtype<GLuint>() :
-                    GL_CHECK(glVertexAttribIPointer(i + baseIndex, attr.size, attr.type, stride, (void*)offset));
+                    GL_CHECK(glVertexAttribIPointer(i + baseIndex, attr.size, attr.type, stride, offset));
                     break;
                 case GLtype<GLdouble>():
-                    GL_CHECK(glVertexAttribLPointer(i + baseIndex, attr.size, attr.type, stride, (void*)offset));
+                    GL_CHECK(glVertexAttribLPointer(i + baseIndex, attr.size, attr.type, stride, offset));
                     break;
                 default:
                     goto FLOATCAST;

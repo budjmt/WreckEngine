@@ -17,8 +17,8 @@ namespace Light {
     struct Base {
         // uint32_t priority; // conceptual, cull lower priority lights on lower-end platforms
 
-        static GLuint setupAttrs(GLattrarr& attrs, GLuint baseIndex = 0) {
-            return T::setupAttrsImpl(attrs, baseIndex);
+        static GLuint setupAttrs(GLattrarr& attrs, size_t offset = 0, GLuint baseIndex = 0) {
+            return T::setupAttrsImpl(attrs, offset, baseIndex);
         }
 
         static void bindGeometry() {
@@ -39,13 +39,13 @@ namespace Light {
         vec2 falloff; // light radius; inner = x, outer = y
         PADF2;
 
-        static GLuint setupAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
+        static GLuint setupAttrsImpl(GLattrarr& attrs, size_t offset, GLuint baseIndex) {
             attrs.add<vec3>(1, 1);
             attrs.add<int>(1, 1);
             attrs.add<vec3>(1, 1);
             attrs.add<GLuint>(1, 1);
             attrs.add<vec2>(1, 1);
-            return attrs.apply(baseIndex, sizeof(float) * 2);
+            return attrs.apply(baseIndex, sizeof(float) * 2, offset);
         }
 
         static void bindGeometryImpl();
@@ -73,12 +73,12 @@ namespace Light {
         vec3 color;
         GLuint tag;
 
-        static GLuint setupAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
+        static GLuint setupAttrsImpl(GLattrarr& attrs, size_t offset, GLuint baseIndex) {
             attrs.add<vec3>(1, 1);
             attrs.add<int>(1, 1);
             attrs.add<vec3>(1, 1);
             attrs.add<GLuint>(1, 1);
-            return attrs.apply(baseIndex);
+            return attrs.apply(baseIndex, 0, offset);
         }
 
         static void bindGeometryImpl();
@@ -99,14 +99,14 @@ namespace Light {
         vec3 color;
         PADF1;
 
-        static GLuint setupAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
+        static GLuint setupAttrsImpl(GLattrarr& attrs, size_t offset, GLuint baseIndex) {
             attrs.add<vec3>(1, 1);
             attrs.add<int>(1, 1);
             attrs.add<vec3>(1, 1);
             attrs.add<GLuint>(1, 1);
             attrs.add<vec2>(2, 1);
             attrs.add<vec3>(1, 1);
-            return attrs.apply(baseIndex, sizeof(float));
+            return attrs.apply(baseIndex, sizeof(float), offset);
         }
 
         static void bindGeometryImpl();
@@ -154,7 +154,7 @@ namespace Light {
         void update() {
             if (neededUpdates > OFTEN) return;
             auto offset = freqData[neededUpdates].offset;
-            subBuffer.subdata(&lights[offset], (lights.size() - offset) * sizeof(T), (bufferIndex + offset) * sizeof(T));
+            subBuffer.subdata(&lights[offset], (lights.size() - offset) * sizeof(T), (bufferIndex + offset) * sizeof(T) + sizeof(vec4));
             neededUpdates = (UpdateFreq) (OFTEN + 1);
         }
 
@@ -266,12 +266,10 @@ namespace Light {
 
         // finishes the group set by allocating the VBO and populating it with the groups' data; call after adding all groups
         void finishGroups() {
-            forwardBlock.block.bind();
-            forwardBlock.block.data(forwardBlock.block.size, nullptr);
-            update();
+            auto numLights = finishMainBuffer();
 
             transformBuffer.bind();
-            transformBuffer.data(forwardBlock.block.size / sizeof(T) * sizeof(mat4), nullptr);
+            transformBuffer.data(numLights * sizeof(mat4), nullptr);
             for (auto& group : groups)
                 group.setupTransformBuffer();
         }
@@ -309,6 +307,19 @@ namespace Light {
             forwardBlock.block.size += g.setBuffers(forwardBlock.block, transformBuffer);
         }
 
+        uint32_t finishMainBuffer() {
+            uint32_t numLights = forwardBlock.block.size / sizeof(T);
+            forwardBlock.block.size += sizeof(vec4);
+
+            forwardBlock.block.bind();
+            forwardBlock.block.data(forwardBlock.block.size, nullptr);
+
+            forwardBlock.block.subdata(&numLights, sizeof(uint32_t));
+            update();
+
+            return numLights;
+        }
+
         void setupDeferred(GLattrarr& attrs) const {
             deferredVao.bind();
 
@@ -321,7 +332,7 @@ namespace Light {
             index = attrs.apply(index);
 
             forwardBlock.block.bindAs(GL_ARRAY_BUFFER); // instances
-            Base<T>::setupAttrs(attrs, index);
+            Base<T>::setupAttrs(attrs, sizeof(vec4), index);
         }
 
         friend class System;
@@ -336,13 +347,11 @@ namespace Light {
         auto index = attrs.apply();
 
         forwardBlock.block.bindAs(GL_ARRAY_BUFFER); // instances
-        Directional::setupAttrs(attrs, index);
+        Directional::setupAttrs(attrs, sizeof(vec4), index);
     }
 
     template<> void Manager<Directional>::finishGroups() {
-        forwardBlock.block.bind();
-        forwardBlock.block.data(forwardBlock.block.size, nullptr);
-        update();
+        finishMainBuffer();
     }
 
     Manager<Point>       make_manager_point();
@@ -363,7 +372,7 @@ namespace Light {
         Manager<Spotlight> spotLights = make_manager_spotlight();
         Manager<Directional> directionalLights = make_manager_directional();
 
-        void connectLightBlocks(GLprogram& program, const char* point, const char* directional, const char* spot) {
+        void connectLightBlocks(GLprogram& program, const char* point, const char* spot, const char* directional) {
             program.getUniformBlock<Point>(point, 0);
             program.getUniformBlock<Spotlight>(spot, 1);
             program.getUniformBlock<Directional>(directional, 2);

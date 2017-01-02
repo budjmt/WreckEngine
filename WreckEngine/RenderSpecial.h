@@ -12,8 +12,6 @@ namespace Render {
         LitRenderer(const size_t gBufferSize) : opaque({ 1, 2, 3 }), alpha(gBufferSize), lightR({ 0, 4, 5 }) {
             opaque.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
-                GL_CHECK(glFrontFace(GL_CCW));
-                GL_CHECK(glDepthMask(GL_TRUE));
             };
             lightR.setup = []() {
                 // prevents lights from culling each other
@@ -53,7 +51,7 @@ namespace Render {
             lightR.postProcess.entry.chainsTo(accumulate);
 
             opaque.next = &lightR;
-            //lightR.next = &alpha;
+            lightR.next = &alpha;
             lightGroup = 0;
         }
 

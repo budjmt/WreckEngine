@@ -101,13 +101,17 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     mainState->addEntity(mesh);
     me = mesh;
 
-    //auto forwardProg = loadProgram("Shaders/forwardTest_v.glsl", "Shaders/forwardTest_f.glsl");
-    //auto forwardMesh = make_shared<DrawMesh>(&renderer.alpha.objects, sphere, "Assets/butt.png", forwardProg);
-    //mesh = make_shared<ColliderEntity>(forwardMesh);
-    //renderer.lights.connectLightBlocks(forwardMesh->material.shaders->program, "points", "directionals", "spotlights");
-    //mesh->transform.position = vec3(-5.f, 0, 0);
-    //mesh->rigidBody.floating(1);
-    //mainState->addEntity(mesh);
+    auto forwardProg = loadProgram("Shaders/forwardTest_v.glsl", "Shaders/forwardTest_f.glsl");
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.alpha.objects, sphere, "Assets/butt.png", forwardProg));
+    renderer.lights.connectLightBlocks(forwardProg, "PointBlock", "SpotlightBlock", "DirectionalBlock");
+    mesh->color = vec4(0, 1, 0.5f, 0.5f);
+    mesh->transform.position = vec3(-5.f, 0, 0);
+    mesh->rigidBody.floating(1);
+    mainState->addEntity(mesh);
+
+    forwardData.prog = forwardProg;
+    forwardData.mat = forwardProg.getUniform<mat4>("cameraMatrix");
+    forwardData.pos = forwardProg.getUniform<vec3>("camPos");
 
     auto camera = make_shared<Camera>(prog);
     camera->id = (void*)0xcab;
@@ -115,8 +119,8 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     camera->transform.rotate(0, PI, 0);
     mainState->addEntity(camera);
 
-    objectProgram = prog;
-    objectCamera = prog.getUniform<mat4>("cameraMatrix");
+    objectData.prog = prog;
+    objectData.mat = prog.getUniform<mat4>("cameraMatrix");
 
     if(DEBUG) DrawDebug::getInstance().camera(camera.get());
 
@@ -255,8 +259,13 @@ void TriPlay::update(double delta) {
     }
 
     Camera::mayaCam(Camera::main, dt);
-    objectProgram.use();
-    objectCamera.update(Camera::main->getCamMat());
+    
+    auto mat = Camera::main->getCamMat();
+    objectData.prog.use();
+    objectData.mat.update(mat);
+    forwardData.prog.use();
+    forwardData.mat.update(mat);
+    forwardData.pos.update(Camera::main->transform.getComputed()->position);
 
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));

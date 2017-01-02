@@ -21,8 +21,14 @@ public:
     void draw();
 private:
     shared<Entity> me;
-    GLprogram objectProgram;
-    GLuniform<mat4> objectCamera;
+    
+    struct RenderData {
+        GLprogram prog;
+        GLuniform<mat4> mat;
+        GLuniform<vec3> pos;
+    };
+
+    RenderData objectData, forwardData;
 
     void setupLights();
     void setupPostProcess();
