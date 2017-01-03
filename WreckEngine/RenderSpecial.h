@@ -9,7 +9,7 @@ namespace Render {
         Renderer opaque, alpha;
         Light::System lights;
 
-        LitRenderer(const size_t gBufferSize) : opaque({ 1, 2, 3 }), alpha(gBufferSize), lightR({ 0, 4, 5 }) {
+        LitRenderer(const size_t gBufferSize) : opaque({ 0, 1, 2 }), alpha(gBufferSize), lightR({ 3, 4 }) {
             opaque.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
             };
@@ -33,17 +33,16 @@ namespace Render {
             };
 
             // GBuffer layout:
-            // 0: regular color
-            // 1: position
-            // 2: normals
-            // 3: deferred color
-            // 4: diffuse light accumulation
-            // 5: specular light accumulation
+            // 0: position -> lit color
+            // 1: normals
+            // 2: deferred color
+            // 3: diffuse  light accumulation
+            // 4: specular light accumulation
             lightR.postProcess.output = gBuffer[0];
 
             auto accumulate = make_shared<PostProcess>();
             accumulate->data.setShaders(PostProcess::make_program("Shaders/light/accumulate.glsl"));
-            accumulate->data.setTextures(gBuffer[3], gBuffer[4], gBuffer[5]);
+            accumulate->data.setTextures(gBuffer[2], gBuffer[3], gBuffer[4]);
             accumulate->renderToTextures(lightR.postProcess.output);
             accumulate->data.shaders->program.use();
             accumulate->data.setSamplers(0, "color", "diffuse", "specular");

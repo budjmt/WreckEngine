@@ -96,7 +96,7 @@ Manager<type> Light::make_manager_ ## name () { \
     m.camMat = camLoc; \
     m.camPos = camPosLoc; \
     m.renderInfo.setShaders(prog, &resolutionLoc); \
-    m.renderInfo.setTextures(Render::gBuffer[1], Render::gBuffer[2]); \
+    m.renderInfo.setTextures(Render::gBuffer[0], Render::gBuffer[1]); \
     return m; \
  }
 

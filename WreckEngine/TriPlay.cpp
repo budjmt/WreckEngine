@@ -125,7 +125,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     if(DEBUG) DrawDebug::getInstance().camera(camera.get());
 
     setupLights();
-    //setupPostProcess();
+    setupPostProcess();
 }
 
 void TriPlay::setupLights() {
@@ -167,6 +167,12 @@ void TriPlay::setupPostProcess() {
     auto& colorRender  = gBuffer[0], 
         & brightRender = gBuffer[1];
 
+    // bright pass
+    auto brightPass = make_shared<PostProcess>();
+    brightPass->data.setShaders(PostProcess::make_program("Shaders/postProcess/brightPass.glsl"));
+    brightPass->data.setTextures(colorRender);
+    brightPass->renderToTextures(brightRender);
+
     // blur
     auto blurH = make_shared<PostProcess>(), blurV = make_shared<PostProcess>();
     auto blurTarget = GLframebuffer::createRenderTarget<GLubyte>();
@@ -207,7 +213,7 @@ void TriPlay::setupPostProcess() {
     crtTime = GLresource<GLtime>(crt->data.shaders->program, "time");
     crtRes  = GLresource<GLresolution>(crt->data.shaders->program, "resolution");
 
-    renderer.alpha.postProcess.entry.chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration)->chainsTo(crt);
+    renderer.alpha.postProcess.entry.chainsTo(brightPass)->chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration)->chainsTo(crt);
 }
 
 #include "CollisionManager.h"

@@ -14,8 +14,8 @@ uniform sampler2D gPosition;
 uniform sampler2D gNormal;
 
 // light accumulation targets
-layout(location = 1) out vec4 diffuseColor;
-layout(location = 2) out vec4 specularColor;
+layout(location = 0) out vec4 diffuseColor;
+layout(location = 1) out vec4 specularColor;
 
 void main() {
 	vec3 normal  = texture(gNormal, uv).rgb;
