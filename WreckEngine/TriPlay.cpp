@@ -139,6 +139,18 @@ void TriPlay::setupLights() {
         group.addLight(point, Light::UpdateFreq::NEVER);
     }
 
+    dLight.light.position = vec3();
+    dLight.light.color = vec3(0,0,1);
+    dLight.light.falloff = vec2(1.f, 3.f);
+    dLight.light.tag = 1;
+    group.addLight(dLight.light, Light::UpdateFreq::OFTEN);
+
+    dLight2.light.position = vec3(0,1,0);
+    dLight2.light.color = vec3(1, 0, 0);
+    dLight2.light.falloff = vec2(2.75f, 4.5f);
+    dLight2.light.tag = 2;
+    group.addLight(dLight2.light, Light::UpdateFreq::SOMETIMES);
+
     Light::Group<Light::Directional> directional;
     Light::Directional d;
     d.direction = normalize(vec3(-1,-1,-0.5f));
@@ -157,6 +169,11 @@ void TriPlay::setupLights() {
     renderer.lights.pointLights.setGroups({ group });
     renderer.lights.directionalLights.setGroups({ directional });
     renderer.lights.spotLights.setGroups({ spot });
+
+    dLight.index  = group.getLightIndexByTag(1, Light::UpdateFreq::OFTEN);
+    dLight2.index = group.getLightIndexByTag(2, Light::UpdateFreq::SOMETIMES);
+    dLight.group  = &renderer.lights.pointLights.getGroup(0);
+    dLight2.group = dLight.group;
 }
 
 void TriPlay::setupPostProcess() {
@@ -276,6 +293,23 @@ void TriPlay::update(double delta) {
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
+
+    updateLights();
+}
+
+void TriPlay::updateLights() {
+    static float mul = 0.05f;
+    static uint32_t frameCounter = 1;
+
+    dLight.light.position += vec3(mul);
+    if (abs(dLight.light.position.x) > 3.f) mul = -mul;
+    dLight.group->updateLight(dLight.index, Light::UpdateFreq::OFTEN, dLight.light);
+
+    if (frameCounter % 30 == 0) {
+        dLight2.light.color = vec3(1) - dLight2.light.color;
+        dLight2.group->updateLight(dLight2.index, Light::UpdateFreq::SOMETIMES, dLight2.light);
+    }
+    ++frameCounter;
 }
 
 void TriPlay::draw() {

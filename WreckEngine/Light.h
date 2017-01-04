@@ -193,6 +193,7 @@ namespace Light {
             
             if (lights[index].isTransformed(light)) {
                 auto transform = light.getTransform();
+                subTransformBuffer.bind();
                 subTransformBuffer.subdata(&transform, sizeof(mat4), (bufferIndex + index) * sizeof(mat4));
             }
             
@@ -241,6 +242,10 @@ namespace Light {
         Render::Info renderInfo;
         GLuniform<mat4> camMat;
         GLuniform<vec3> camPos;
+
+        auto& getGroup(uint32_t index) {
+            return groups[index];
+        }
 
         // equivalent to using resetGroups, addGroup (for each lightGroup), and then finishGroups
         void setGroups(std::vector<Group<T>> lightGroups) {

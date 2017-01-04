@@ -30,6 +30,15 @@ private:
 
     RenderData objectData, forwardData;
 
+    struct LightData {
+        Light::Point light;
+        uint32_t index;
+        Light::Group<Light::Point>* group;
+    };
+
+    LightData dLight, dLight2;
+    void updateLights();
+
     void setupLights();
     void setupPostProcess();
     GLresource<GLtime> crtTime;
