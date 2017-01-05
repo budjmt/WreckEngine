@@ -16,6 +16,7 @@ namespace Render {
             lightR.setup = []() {
                 // prevents lights from culling each other
                 GL_CHECK(glDepthMask(GL_FALSE));
+                GL_CHECK(glDepthFunc(GL_GREATER));
 
                 // additive blending for accumulation
                 GL_CHECK(glEnable(GL_BLEND));
@@ -28,9 +29,16 @@ namespace Render {
                 // undoing the light-specific settings
                 GL_CHECK(glFrontFace(GL_CCW));
                 GL_CHECK(glDepthMask(GL_TRUE));
+                GL_CHECK(glDepthFunc(GL_LEQUAL));
 
                 GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
             };
+
+            lightGroup = lightR.objects.addGroup([]() {
+                GL_CHECK(glDisable(GL_DEPTH_TEST));
+            }, []() {
+                GL_CHECK(glEnable(GL_DEPTH_TEST));
+            });
 
             // GBuffer layout:
             // 0: position -> lit color
@@ -51,7 +59,6 @@ namespace Render {
 
             opaque.next = &lightR;
             lightR.next = &alpha;
-            lightGroup = 0;
         }
 
         void render() { 

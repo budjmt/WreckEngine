@@ -51,7 +51,7 @@ namespace Light {
         static void bindGeometryImpl();
 
         static void drawImpl(Render::MaterialPass* r, const uint32_t group, const GLVAO* vao, const Render::Info* info, size_t instances) {
-            r->scheduleDrawElements(group, vao, info, GL_TRIANGLES, count, GLtype<GLuint>(), instances);
+            r->scheduleDrawElements(0, vao, info, GL_TRIANGLES, count, GLtype<GLuint>(), instances);
         }
 
         bool isTransformed(const Point& update) const {
@@ -112,7 +112,7 @@ namespace Light {
         static void bindGeometryImpl();
 
         static void drawImpl(Render::MaterialPass* r, const uint32_t group, const GLVAO* vao, const Render::Info* info, size_t instances) {
-            r->scheduleDrawElements(group, vao, info, GL_TRIANGLES, count, GLtype<GLuint>(), instances);
+            r->scheduleDrawElements(0, vao, info, GL_TRIANGLES, count, GLtype<GLuint>(), instances);
         }
 
         bool isTransformed(const Spotlight& update) const {
