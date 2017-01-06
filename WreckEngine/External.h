@@ -8,6 +8,7 @@
 
 namespace Window {
     extern GLFWwindow* window;
+    extern bool isFullScreen;
     extern int width, height;
     extern int frameWidth, frameHeight;
     extern float aspect;
@@ -16,6 +17,10 @@ namespace Window {
     // These two are purely for convenience with ImGui
     extern vec2 size;
     extern vec2 frameScale;
+
+    void toggleFullScreen(GLFWmonitor* monitor, int x, int y, int width, int height);
+    void toggleFullScreen(int width, int height);
+    void toggleFullScreen();
 
     inline void viewport(size_t x, size_t y, size_t width, size_t height) { GL_CHECK(glViewport(x, y, width, height)); }
     inline void viewport(size_t width, size_t height) { viewport(0, 0, width, height); }

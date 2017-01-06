@@ -14,6 +14,8 @@ struct GLFWmanager {
         }
     }
     GLFWmanager(const size_t width, const size_t height);
+
+    static GLFWmonitor* getMonitor() { return glfwGetPrimaryMonitor(); }
 };
 
 struct GLEWmanager {

@@ -53,13 +53,15 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    auto monitor = getMonitor();
+    const auto vm = glfwGetVideoMode(monitor);
 
-    /*const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
-    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
-    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
-    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);*/
+    /*
+    glfwWindowHint(GLFW_RED_BITS, vm->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, vm->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, vm->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, vm->refreshRate);
+    */
 
     if (DEBUG) glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
@@ -70,7 +72,6 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     Window::defaultResize(Window::window, width, height);
 
     // Center the window
-    const GLFWvidmode* vm = glfwGetVideoMode(monitor);
     glfwSetWindowPos(Window::window, (vm->width - width) / 2, (vm->height - height) / 2);
 
     Window::resizeCallback(Window::defaultResize);
@@ -87,6 +88,7 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
 }
 
 GLFWwindow* Window::window;
+bool Window::isFullScreen;
 int Window::width;
 int Window::height;
 int Window::frameWidth;
@@ -98,6 +100,29 @@ int Window::cursorMode = GLFW_CURSOR_NORMAL;
 
 Mouse::Info Mouse::info;
 Keyboard::Info Keyboard::info;
+
+void Window::toggleFullScreen(GLFWmonitor* monitor, int x, int y, int width, int height) {
+    if (isFullScreen = !isFullScreen)
+        glfwSetWindowMonitor(window, monitor, 0, 0, width, height, GLFW_DONT_CARE);
+    else
+        glfwSetWindowMonitor(window, nullptr, x, y, width, height, GLFW_DONT_CARE);
+}
+void Window::toggleFullScreen(int width, int height) {
+    auto monitor = GLFWmanager::getMonitor();
+    const auto vidMode = glfwGetVideoMode(monitor);
+    if(isFullScreen)
+        toggleFullScreen(monitor, (vidMode->width - width) / 2, (vidMode->height - height) / 2, width, height);
+    else
+        toggleFullScreen(monitor, 0, 0, vidMode->width, vidMode->height);
+}
+void Window::toggleFullScreen() {
+    static int oldWidth = width, oldHeight = height;
+    if (!isFullScreen) {
+        oldWidth = width;
+        oldHeight = height;
+    }
+    toggleFullScreen(oldWidth, oldHeight);
+}
 
 void Window::defaultResize(GLFWwindow* window, int w, int h) {
     width = w;

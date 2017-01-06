@@ -104,6 +104,9 @@ void update() {
     title += fpsMode ? " FpS" : " MSpF";
     glfwSetWindowTitle(Window::window, title.c_str());
 
+    if (Keyboard::keyPressed(Keyboard::Key::F11))
+        Window::toggleFullScreen();
+
     if (Keyboard::altDown()) {
         if (Keyboard::keyPressed(Keyboard::Key::_0))
             fpsMode = !fpsMode;
