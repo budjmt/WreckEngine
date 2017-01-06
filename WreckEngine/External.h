@@ -17,6 +17,9 @@ namespace Window {
     extern vec2 size;
     extern vec2 frameScale;
 
+    inline void viewport(size_t x, size_t y, size_t width, size_t height) { GL_CHECK(glViewport(x, y, width, height)); }
+    inline void viewport(size_t width, size_t height) { viewport(0, 0, width, height); }
+
     inline void resizeCallback(GLFWwindowsizefun f) { glfwSetWindowSizeCallback(window, f); }
 
     void defaultResize(GLFWwindow* window, int width, int height);

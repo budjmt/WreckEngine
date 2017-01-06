@@ -59,8 +59,6 @@ void init() {
 }
 
 void initGraphics() {
-    GL_CHECK(glViewport(0, 0, Window::width, Window::height));
-
     // alpha blending
     GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));

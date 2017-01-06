@@ -32,5 +32,10 @@ public:
 
 private:
 	mat4 projection, view;
+
+    void resizeFunc(Event::Handler::param_t e) {
+        updateProjection();
+    }
+    Event::Handler resizeHandler = Event::make_handler<Window::ResizeHandler>(Event::Handler::wrap_member_func(this, &Camera::resizeFunc));
 };
 

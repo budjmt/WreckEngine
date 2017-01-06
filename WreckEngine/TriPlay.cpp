@@ -179,7 +179,7 @@ void TriPlay::setupLights() {
 void TriPlay::setupPostProcess() {
     using namespace Render;
 
-    renderer.alpha.postProcess.output = GLframebuffer::createRenderTarget<GLubyte>();
+    renderer.alpha.postProcess.output = Target::create<GLubyte>();
 
     auto& colorRender  = gBuffer[0], 
         & brightRender = gBuffer[1];
@@ -192,7 +192,7 @@ void TriPlay::setupPostProcess() {
 
     // blur
     auto blurH = make_shared<PostProcess>(), blurV = make_shared<PostProcess>();
-    auto blurTarget = GLframebuffer::createRenderTarget<GLubyte>();
+    auto blurTarget = Target::create<GLubyte>();
     auto blurF = loadShader("Shaders/postProcess/blur.glsl", GL_FRAGMENT_SHADER);
     
     blurH->data.setShaders(PostProcess::make_program(blurF));

@@ -102,12 +102,14 @@ Keyboard::Info Keyboard::info;
 void Window::defaultResize(GLFWwindow* window, int w, int h) {
     width = w;
     height = h;
-    aspect = (float) width / height;
     glfwGetFramebufferSize(window, &frameWidth, &frameHeight);
+    aspect = (float) frameWidth / frameHeight;
 
     size = vec2(width, height);
     frameScale = vec2(width  > 0 ? ((float) frameWidth  / width ) : 0,
                       height > 0 ? ((float) frameHeight / height) : 0);
+
+    viewport(frameWidth, frameHeight);
 
     static uint32_t resize_id = Message::add("window_resize");
     Dispatcher::central_trigger.sendBulkEvent<ResizeHandler>(resize_id);
