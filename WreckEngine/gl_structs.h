@@ -20,6 +20,8 @@ typedef GLint GLsampler;
 
 inline GLint getGLVal(GLenum value) { GLint val; GL_CHECK(glGetIntegerv(value, &val)); return val; }
 
+#define CHECK_GL_VERSION(major, minor) glewIsSupported("GL_VERSION_" #major "_" #minor)
+
 namespace {
     // default value used to represent "uninitialized" resources
     constexpr GLuint def = (GLuint)-1;
@@ -42,6 +44,7 @@ struct GLbuffer;
 struct GLVAO;
 struct GLshader;
 struct GLprogram;
+struct GLframebuffer;
 
 struct GLdepthstencil;
 
@@ -58,11 +61,12 @@ template<> inline constexpr GLenum GLtype<GLdouble>()  { return GL_DOUBLE; }
 
 template<> inline constexpr GLenum GLtype<GLdepthstencil>() { return GL_UNSIGNED_INT_24_8; }
 
-template<> inline constexpr GLenum GLtype<GLtexture>() { return GL_TEXTURE; }
-template<> inline constexpr GLenum GLtype<GLbuffer>()  { return GL_BUFFER; }
-template<> inline constexpr GLenum GLtype<GLVAO>()     { return GL_VERTEX_ARRAY; }
-template<> inline constexpr GLenum GLtype<GLshader>()  { return GL_SHADER; }
-template<> inline constexpr GLenum GLtype<GLprogram>() { return GL_PROGRAM; }
+template<> inline constexpr GLenum GLtype<GLtexture>()     { return GL_TEXTURE; }
+template<> inline constexpr GLenum GLtype<GLbuffer>()      { return GL_BUFFER; }
+template<> inline constexpr GLenum GLtype<GLVAO>()         { return GL_VERTEX_ARRAY; }
+template<> inline constexpr GLenum GLtype<GLshader>()      { return GL_SHADER; }
+template<> inline constexpr GLenum GLtype<GLprogram>()     { return GL_PROGRAM; }
+template<> inline constexpr GLenum GLtype<GLframebuffer>() { return GL_FRAMEBUFFER; }
 
 // wraps a location pointing to a uniform variable of type T. the value is updated using update(T t). If there is no definition for update, the type is unsupported.
 template<typename T> struct GLuniform { GLuint location; };
@@ -155,10 +159,16 @@ private:
 struct GLbuffer {
     shared<GLuint> buffer {new GLuint(def), local(delBuffer)};
     GLenum target, usage;
-    size_t size;
+    size_t size = 0;
     inline WR_GL_OP_PARENS(GLuint, buffer);
 
     inline bool valid() const { return *buffer != def; }
+
+    inline GLint getVal(GLenum value) const {
+        GLint val;
+        GL_CHECK(glGetBufferParameteriv(target, value, &val));
+        return val;
+    }
 
     inline void set(const GLenum target, const GLenum usage) {
         this->target = target; this->usage = usage;
@@ -173,12 +183,33 @@ struct GLbuffer {
         set(target, usage);
     }
 
+    // allows for binding buffer as alternative target
+    inline void bindAs(GLenum _target) const {
+        GL_CHECK(glBindBuffer(_target, *buffer));
+    }
+
     // call to bind the buffer to its target
     inline void bind() const {
-        GL_CHECK(glBindBuffer(target, *buffer));
+        bindAs(target);
     }
     inline void unbind() {
         GL_CHECK(glBindBuffer(target, 0));
+    }
+
+    // binds to an index, which resizes when the buffer is resized
+    inline void bindBase(GLuint index) const {
+        GL_CHECK(glBindBufferBase(target, index, *buffer));
+    }
+    inline void unbindBase(GLuint index) const {
+        GL_CHECK(glBindBufferBase(target, index, 0));
+    }
+
+    // binds to an index with an optional offset, must be manually resized
+    inline void bindRange(GLuint index, GLintptr offset = 0) const {
+        GL_CHECK(glBindBufferRange(target, index, *buffer, offset, size));
+    }
+    inline void unbindRange(GLuint index) const {
+        unbindBase(index); // equivalent operation, provided for convenience
     }
 
     // invalidates the buffer; used for streaming
@@ -203,7 +234,7 @@ struct GLbuffer {
 
     // updates a subset of a buffer's data
     inline void subdata(const GLvoid* data, const GLuint _size, const GLuint offset = 0) const {
-        assert(usage != GL_STATIC_DRAW && size); // a buffer allocated with static draw should not be updated / a buffer of 0 size should not need updates
+        assert(usage != GL_STATIC_DRAW && size); // a buffer allocated with static draw should not be updated / a buffer of size 0 shouldn't need updates
         GL_CHECK(glBufferSubData(target, offset, _size, data));
     }
 };
@@ -224,6 +255,22 @@ struct GLVAO {
     }
     static inline void unbind() {
         GL_CHECK(glBindVertexArray(0));
+    }
+};
+
+// a uniform block variable in GLSL, 
+template<typename T>
+struct GLuniformblock : public GLuniform<T> {
+    GLuint index;
+    GLbuffer block;
+
+    inline void create() { block.create(GL_UNIFORM_BUFFER, GL_STREAM_DRAW); }
+    inline void bind(const size_t offsetBytes = 0) const { block.bindRange(index, offsetBytes); }
+
+    inline void update(const size_t size, const T* data) {
+        block.bind();
+        block.invalidate();
+        block.data(size, data);
     }
 };
 
@@ -259,13 +306,16 @@ struct GLprogram {
         if (valid()) return;
         GL_CHECK(*program = glCreateProgram());
     }
+
+    inline void attach(const GLshader& shader) const { GL_CHECK(glAttachShader(*program, shader())); }
+
     // properly sets up the program once the shaders are set
     inline void link() const {
-        if (vertex.valid())       GL_CHECK(glAttachShader(*program, vertex()));
-        if (tessControl.valid())  GL_CHECK(glAttachShader(*program, tessControl()));
-        if (tessEval.valid())     GL_CHECK(glAttachShader(*program, tessEval()));
-        if (geometry.valid())     GL_CHECK(glAttachShader(*program, geometry()));
-        if (fragment.valid())     GL_CHECK(glAttachShader(*program, fragment()));
+        if (vertex.valid())       attach(vertex);
+        if (tessControl.valid())  attach(tessControl);
+        if (tessEval.valid())     attach(tessEval);
+        if (geometry.valid())     attach(geometry);
+        if (fragment.valid())     attach(fragment);
         GL_CHECK(glLinkProgram(*program));
     }
 
@@ -281,9 +331,40 @@ struct GLprogram {
         return u;
     }
 
+    // binds a uniform block index to a slot index (must be called before use)
+    inline void bindUniformBlock(const uint32_t location, const uint32_t index) const {
+        GL_CHECK(glUniformBlockBinding(*program, location, index));
+    }
+
+    // used for retrieving uniform block variables (of type T)
+    template<typename T>
+    inline GLuniformblock<T> getUniformBlock(const char* name) const {
+        GLuniformblock<T> u;
+        GL_CHECK(u.location = glGetUniformBlockIndex(*program, name));
+        return u;
+    }
+
+    // used for retrieving uniform block variables (of type T)
+    template<typename T>
+    inline GLuniformblock<T> getUniformBlock(const char* name, const uint32_t index) const {
+        auto u = getUniformBlock<T>(name);
+        bindUniformBlock(u.location, u.index = index);
+        return u;
+    }
+
     // convenience function for setting a one time uniform value, e.g. a GLsampler 
     template<typename T> 
     inline void setOnce(const char* name, const T& value) const { getUniform<T>(name).update(value); }
+
+    inline size_t getUniformOffset(const char* name) {
+        GLuint index;
+        GL_CHECK(index = glGetProgramResourceIndex(*program, GL_UNIFORM, name));
+
+        GLenum prop = GL_OFFSET;
+        GLint length, param;
+        GL_CHECK(glGetProgramResourceiv(*program, GL_UNIFORM, index, 1, &prop, sizeof(GLuint), &length, &param));
+        return param;
+    }
 };
 
 // allows access to frame buffers
@@ -291,7 +372,7 @@ struct GLprogram {
 //   - Attached to at least one buffer (color, depth, stencil, etc.)
 //   - Attached to at least one _color_
 //   - All attachments are complete
-//   - All attachments have the same number of multisamples
+//   - All attachments have the same number of multi-samples
 struct GLframebuffer {
     shared<GLuint> framebuffer{ new GLuint(def), local(delFrameBuffer) };
     GLenum type = GL_FRAMEBUFFER;
@@ -313,6 +394,15 @@ struct GLframebuffer {
     static inline void setClearColor(GLclampf r, GLclampf g, GLclampf b, GLclampf a) { GL_CHECK(glClearColor(r, g, b, a)); }
 
     static inline void clear() { GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)); }
+    
+    static inline void clearPartial(GLenum buffer, GLint drawBuffer, const GLfloat* value) { 
+        assert(buffer == GL_COLOR || drawBuffer == 0); 
+        GL_CHECK(glClearBufferfv(buffer, drawBuffer, value)); 
+    }
+
+    static inline void clearPartial(GLfloat depth = 1.f, GLint stencil = 0) { 
+        GL_CHECK(glClearBufferfi(GL_DEPTH_STENCIL, 0, depth, stencil)); 
+    }
 
     inline void create(const GLenum target = GL_FRAMEBUFFER) {
         if (valid()) return;
@@ -397,100 +487,6 @@ private:
     friend struct GLFWmanager;
 };
 
-/// <summary>
-/// Defines an OpenGL rendering state.
-/// </summary>
-class GLstate {
-public:
-    /// <summary>
-    /// Creates a new OpenGL state.
-    /// </summary>
-    GLstate();
-
-    /// <summary>
-    /// Checks to see if there are any cached states.
-    /// </summary>
-    /// <returns>True if there is a state on the stack, otherwise false.</returns>
-    static bool empty();
-
-    /// <summary>
-    /// Gets the OpenGL state at the top of the stack.
-    /// </summary>
-    /// <returns>The OpenGL state at the top of the stack.</returns>
-    static GLstate* peek();
-
-    /// <summary>
-    /// Pushes the current OpenGL state.
-    /// </summary>
-    static void push();
-
-    /// <summary>
-    /// Attempts to pop an OpenGL state off of the stack.
-    /// </summary>
-    /// <returns>True if there was a state to pop, otherwise false.</returns>
-    static bool pop();
-
-private:
-    static std::vector<GLstate> states;
-    
-    struct dims { GLint x, y; GLsizei width, height; }; 
-    struct comp { GLint rgb, alpha; };
-    
-    dims viewport;
-    dims scissorBox;
-    
-    struct {
-        GLint program;
-        GLint texture;
-        GLint activeTexture;
-        GLint arrayBuffer;
-        GLint elementArrayBuffer;
-        GLint vertexArray;
-    } bound;
-    
-    struct {
-        comp src;
-        comp dst;
-        comp equation;
-    } blend;
-
-    struct {
-        GLboolean blend;
-        GLboolean cullFace;
-        GLboolean depthTest;
-        GLboolean scissorTest;
-    } enable;
-
-    /// <summary>
-    /// Applies this state to OpenGL.
-    /// </summary>
-    void apply();
-
-    /// <summary>
-    /// Captures the current OpenGL state.
-    /// </summary>
-    void capture();
-};
-
-/// <summary>
-/// Defines a scoped state helper.
-/// </summary>
-struct GLsavestate {
-    /// <summary>
-    /// Creates a new state helper and pushes the current OpenGL state.
-    /// </summary>
-    GLsavestate() {
-        GLstate::push();
-    }
-
-    /// <summary>
-    /// Destroys this state helper and pops the current OpenGL state.
-    /// </summary>
-    ~GLsavestate() {
-        GLstate::pop();
-    }
-};
-
 struct GLres { virtual void update() const = 0; };
 
 template<typename T>
@@ -544,7 +540,7 @@ private:
 // helper class, used to assist in creating vertex array attribute bindings (create and use locally, DO NOT STORE!)
 class GLattrarr {
     struct GLattr {
-        GLenum type; GLuint size, bytes, divisor; bool normalize;
+        GLenum type; GLuint size, bytes, divisor; bool normalize, castToFloat;
     };
     inline void reset() {
         attrs = std::vector<GLattr>();
@@ -555,59 +551,74 @@ public:
 
     // adds an attribute of type T to the cache. Use a divisor value of 1 for instanced variables
     template<typename T>
-    inline void add(const size_t size, const GLuint divisor = 0, const bool normalize = GL_FALSE) {
+    inline void add(const size_t size, const GLuint divisor = 0, const bool normalize = GL_FALSE, const bool castToFloat = false) {
         GLattr attr;
         attr.type = GLtype<T>();
         attr.size = size;
         attr.divisor = divisor;
         attr.bytes = sizeof(T) * size;
         attr.normalize = normalize;
+        attr.castToFloat = normalize || castToFloat;
 
         attrs.push_back(attr);
     }
 
-    template<> inline void add<vec2>(const size_t size, const GLuint divisor, const bool normalize) {
-        for (size_t i = 0; i < size; ++i) add<GLfloat>(2, divisor, normalize);
+    template<> inline void add<vec2>(const size_t size, const GLuint divisor, const bool normalize, const bool castToFloat) {
+        for (size_t i = 0; i < size; ++i) add<GLfloat>(2, divisor, normalize, castToFloat);
     }
-    template<> inline void add<vec3>(const size_t size, const GLuint divisor, const bool normalize) {
-        for (size_t i = 0; i < size; ++i) add<GLfloat>(3, divisor, normalize);
+    template<> inline void add<vec3>(const size_t size, const GLuint divisor, const bool normalize, const bool castToFloat) {
+        for (size_t i = 0; i < size; ++i) add<GLfloat>(3, divisor, normalize, castToFloat);
     }
-    template<> inline void add<vec4>(const size_t size, const GLuint divisor, const bool normalize) {
-        for (size_t i = 0; i < size; ++i) add<GLfloat>(4, divisor, normalize);
+    template<> inline void add<vec4>(const size_t size, const GLuint divisor, const bool normalize, const bool castToFloat) {
+        for (size_t i = 0; i < size; ++i) add<GLfloat>(4, divisor, normalize, castToFloat);
     }
-    template<> inline void add<mat3>(const size_t size, const GLuint divisor, const bool normalize) {
+    template<> inline void add<mat3>(const size_t size, const GLuint divisor, const bool normalize, const bool castToFloat) {
         for (size_t i = 0; i < size; ++i) {
-            add<GLfloat>(3, divisor, normalize);
-            add<GLfloat>(3, divisor, normalize);
-            add<GLfloat>(3, divisor, normalize);
+            add<GLfloat>(3, divisor, normalize, castToFloat);
+            add<GLfloat>(3, divisor, normalize, castToFloat);
+            add<GLfloat>(3, divisor, normalize, castToFloat);
         }
     }
-    template<> inline void add<mat4>(const size_t size, const GLuint divisor, const bool normalize) {
+    template<> inline void add<mat4>(const size_t size, const GLuint divisor, const bool normalize, const bool castToFloat) {
         for (size_t i = 0; i < size; ++i) {
-            add<GLfloat>(4, divisor, normalize);
-            add<GLfloat>(4, divisor, normalize);
-            add<GLfloat>(4, divisor, normalize);
-            add<GLfloat>(4, divisor, normalize);
+            add<GLfloat>(4, divisor, normalize, castToFloat);
+            add<GLfloat>(4, divisor, normalize, castToFloat);
+            add<GLfloat>(4, divisor, normalize, castToFloat);
+            add<GLfloat>(4, divisor, normalize, castToFloat);
         }
     }
 
     // call once all desired attributes have been added; applies the added attributes, starting at [baseIndex] and clears the cache.
     // [baseIndex] would be used when there are multiple buffers bound to a single shader, e.g. instanced rendering, where the stride must be reset
-    inline void apply(const GLuint baseIndex = 0) {
-        size_t stride = 0;
+    inline GLuint apply(const GLuint baseIndex = 0, const size_t endPadding = 0, const size_t startOffset = 0) {
+        size_t stride = endPadding;
         for (const auto& attr : attrs) {
             stride += attr.bytes;
         }
-        for (size_t i = 0, offset = 0, entries = attrs.size(); i < entries; ++i) {
-            const auto& attr = attrs[i];
+        auto offset = (char*) startOffset;
+        for (size_t i = 0, entries = attrs.size(); i < entries; ++i) {
+            const auto attr = attrs[i];
             GL_CHECK(glEnableVertexAttribArray(i + baseIndex));
-            if (isIntType(attr.type))
-            {
-                GL_CHECK(glVertexAttribIPointer(i + baseIndex, attr.size, attr.type, stride, (void*)offset));
+            if (attr.castToFloat) {
+            FLOATCAST: 
+                GL_CHECK(glVertexAttribPointer(i + baseIndex, attr.size, attr.type, attr.normalize, stride, offset));
             }
-            else
-            {
-                GL_CHECK(glVertexAttribPointer(i + baseIndex, attr.size, attr.type, attr.normalize, stride, (void*)offset));
+            else {
+                switch (attr.type) {
+                case GLtype<GLbyte>() :
+                case GLtype<GLubyte>() :
+                case GLtype<GLshort>() :
+                case GLtype<GLushort>() :
+                case GLtype<GLint>() :
+                case GLtype<GLuint>() :
+                    GL_CHECK(glVertexAttribIPointer(i + baseIndex, attr.size, attr.type, stride, offset));
+                    break;
+                case GLtype<GLdouble>():
+                    GL_CHECK(glVertexAttribLPointer(i + baseIndex, attr.size, attr.type, stride, offset));
+                    break;
+                default:
+                    goto FLOATCAST;
+                }
             }
             if (attr.divisor)
             {
@@ -615,7 +626,9 @@ public:
             }
             offset += attr.bytes;
         }
+        GLuint finalIndex = attrs.size() + baseIndex;
         reset();
+        return finalIndex;
     }
 
 private:

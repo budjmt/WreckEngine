@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Core">
@@ -69,6 +69,9 @@
     <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp">
       <Filter>ThirdParty\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="Color.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
     <ClCompile Include="MarchMath.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
@@ -129,11 +132,11 @@
     <ClCompile Include="PostProcess.cpp">
       <Filter>Render</Filter>
     </ClCompile>
-    <ClCompile Include="Color.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
     <ClCompile Include="Random.cpp">
       <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>Render</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -156,6 +159,9 @@
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="ModelHelper.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.h">
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">
@@ -248,10 +254,16 @@
     <ClInclude Include="PostProcess.h">
       <Filter>Render</Filter>
     </ClInclude>
-    <ClInclude Include="Color.h">
+    <ClInclude Include="Time.h">
       <Filter>Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="Time.h">
+    <ClInclude Include="RenderSpecial.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="GLstate.h">
       <Filter>Utilities</Filter>
     </ClInclude>
   </ItemGroup>

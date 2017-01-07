@@ -94,7 +94,7 @@ void genOBJ(const char* file, Mesh::FaceData& data, Mesh::FaceIndex& indices) {
 		}
 		fileContents += "\n";
 	}
-	fileContents += "# " + to_string(indices.verts.size()) + " faces\n\n";
+	fileContents += "# " + to_string(indices.verts.size() / FLOATS_PER_VERT) + " faces\n\n";
 
 	//cout << "Writing..." << endl;
 	//write fileContents to the file, overwrite its contents

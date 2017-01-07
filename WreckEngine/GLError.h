@@ -50,10 +50,10 @@ inline const char* const GetGlErrorString(GLenum error) {
 }
 
 inline bool CheckGlErrorImpl(const char* call, const char* file, int line, const char* function) {
-    GLenum error = glGetError();
-    if (error == GL_NO_ERROR) return false;
-
-    printf("[GL] '%s': %s\n  FILE: %s(%i)\n  FUNC: %s\n\n", call, GetGlErrorString(error), file, line, function);
+    //GLenum error = glGetError();
+    //if (error == GL_NO_ERROR) return false;
+    //
+    //printf("[GL] '%s': %s\n  FILE: %s(%i)\n  FUNC: %s\n\n", call, GetGlErrorString(error), file, line, function);
     return true;
 }
 

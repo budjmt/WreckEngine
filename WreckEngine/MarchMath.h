@@ -39,18 +39,6 @@ std::string to_string(const vec3&);
 std::string to_string(const vec4&);
 std::string to_string(const quat&);
 
-struct alignas(16) aligned_mat4 {
-	mat4 data;
-	template<class... Args>
-	aligned_mat4(Args&&... args) : data(mat4(std::forward<Args>(args)...)) { }
-	mat4& operator=(const mat4& other) { return data = other; }
-	mat4 operator()() { return data; }
-	operator mat4() { return data; }
-	virtual ~aligned_mat4() = default;
-	void* operator new(size_t i) { return _aligned_malloc(i, 16); }
-	void operator delete(void* p) { _aligned_free(p); }
-};
-
 mat4 inv_tp_tf(const mat4& m);
 mat4 rotateBetween(const vec3 from, const vec3 to);
 

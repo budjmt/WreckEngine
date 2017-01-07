@@ -11,7 +11,7 @@ Camera::Camera(GLprogram shaderProg)
 mat4 Camera::getCamMat() { return projection * view; }
 
 void Camera::update(double dt) {
-	view = glm::lookAt(transform.position(), getLookAt(), up());
+	view = glm::lookAt(transform.getComputed()->position(), getLookAt(), up());
 	// update projection
 	// updateProjection();
 }
@@ -27,7 +27,8 @@ void Camera::turn(float dx, float dy) {
 }
 
 vec3 Camera::getLookAt(float units) {
-	return transform.position() + forward() * units;
+    auto t = transform.getComputed();
+	return t->position() + t->forward() * units;
 }
 
 void Camera::updateProjection() {
@@ -79,6 +80,6 @@ void Camera::mayaCam(Camera* camera, double delta) {
 
 	if      (Keyboard::keyDown(Keyboard::Key::Up))    camera->transform.position += vec3(0, 1, 0) *  (u * dt);
 	else if (Keyboard::keyDown(Keyboard::Key::Down))  camera->transform.position += vec3(0, 1, 0) * -(u * dt);
-	if      (Keyboard::keyDown(Keyboard::Key::Left))  camera->transform.position += vec3(1, 0, 0) *  (u * dt);
-	else if (Keyboard::keyDown(Keyboard::Key::Right)) camera->transform.position += vec3(1, 0, 0) * -(u * dt);
+	if      (Keyboard::keyDown(Keyboard::Key::Left))  camera->transform.position += vec3(1, 0, 0) * -(u * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::Right)) camera->transform.position += vec3(1, 0, 0) *  (u * dt);
 }
