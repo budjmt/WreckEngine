@@ -67,7 +67,7 @@ DrawDebug& DrawDebug::getInstance() {
 
 void DrawDebug::camera(Camera* c) { cam = c; }
 
-void DrawDebug::setRenderers(Render::MaterialPass* opaque, Render::MaterialPass* alpha) {
+void DrawDebug::setRenderers(Render::MaterialPass* deferred, Render::MaterialPass* forward) {
     struct X { 
         X(DrawDebug* d, Render::MaterialPass* r) { 
             d->wireframeIndex = r->addGroup([]() { 
@@ -80,9 +80,9 @@ void DrawDebug::setRenderers(Render::MaterialPass* opaque, Render::MaterialPass*
         }
     };
 
-    static X addWireframe(this, alpha);
-    this->opaque = opaque;
-    this->alpha = alpha;
+    static X addWireframe(this, forward);
+    this->deferred = deferred;
+    this->forward = forward;
 }
 
 void DrawDebug::draw(Render::MaterialPass* o, Render::MaterialPass* a) {
@@ -126,10 +126,10 @@ void DrawDebug::drawVectors() {
     vecVAO.bind();
     vecBuffer.bind();
     vecBuffer.data(&debugVectors[0]);
-    alpha->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, numVecs / 2);
+    forward->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, numVecs / 2);
 
     arrows.update();
-    arrows.draw(alpha, &meshMat, 0);
+    arrows.draw(forward, &meshMat, 0);
 
     debugVectors.clear();
     arrows.instances.clear();
@@ -145,7 +145,7 @@ void DrawDebug::drawSpheres() {
     }
 
     spheres.update();
-    spheres.draw(alpha, &meshMat, 0);
+    spheres.draw(forward, &meshMat, 0);
 
     debugSpheres.clear();
     spheres.instances.clear();
@@ -161,7 +161,7 @@ void DrawDebug::drawBoxes() {
     }
 
     boxes.update();
-    boxes.draw(alpha, &meshMat, wireframeIndex);
+    boxes.draw(forward, &meshMat, wireframeIndex);
 
     debugBoxes.clear();
     boxes.instances.clear();

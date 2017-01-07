@@ -43,7 +43,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     auto m = loadOBJ("Assets/basic.obj");
     m->translateTo(vec3());
-    auto mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, m, "Assets/texture.png", prog));
+    auto mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, m, "Assets/texture.png", prog));
     mesh->id = (void*)0xcaca;
     mainState->addEntity(mesh);
     //me = mesh;
@@ -62,7 +62,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     //genCone("Assets/cone.obj", 8);
     //auto bezier = loadOBJ("Assets/bezier.obj");
     auto cone = loadOBJ("Assets/cone.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, cone, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cone, "Assets/texture.png", prog));
     mesh->transform.position = vec3(2.5f, 0, 0);
     //mesh->id = (void*)0xb;
     mesh->id = (void*)0xc1;
@@ -70,7 +70,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     //genCylinder("Assets/cylinder.obj", 64);
     auto cylinder = loadOBJ("Assets/cylinder.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, cylinder, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cylinder, "Assets/texture.png", prog));
     mesh->id = (void*)0xc;
     mesh->transform.position = vec3(-2.5f, 0, 0);
     mainState->addEntity(mesh);
@@ -78,7 +78,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     //genSphere("Assets/sphere.obj", 16);
     auto sphere = loadOBJ("Assets/sphere.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, sphere, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, sphere, "Assets/texture.png", prog));
     mesh->id = (void*)0xcc;
     mesh->transform.position = vec3(0, 2.5f, 0);
     mainState->addEntity(mesh);
@@ -86,7 +86,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     //genCube("Assets/cube.obj");
     auto cube = loadOBJ("Assets/cube.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, cube, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cube, "Assets/texture.png", prog));
     mesh->id = (void*)0xc2fb;
     mesh->transform.position = vec3(0, -5.f, 0);
     mesh->transform.scale = vec3(64, 1.5f, 64);
@@ -94,7 +94,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     mesh->rigidBody.mass(100000);
     mainState->addEntity(mesh);
 
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.opaque.objects, cube, "Assets/butt.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cube, "Assets/butt.png", prog));
     mesh->id = (void*)0xc2;
     mesh->transform.position = vec3(-2.5f, -2.5f, 0);
     mesh->rigidBody.floating(1);
@@ -102,7 +102,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     me = mesh;
 
     auto forwardProg = loadProgram("Shaders/forwardTest_v.glsl", "Shaders/forwardTest_f.glsl");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.alpha.objects, sphere, "Assets/butt.png", forwardProg));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.forward.objects, sphere, "Assets/butt.png", forwardProg));
     renderer.lights.connectLightBlocks(forwardProg, "PointBlock", "SpotlightBlock", "DirectionalBlock");
     mesh->color = vec4(0, 1, 0.5f, 0.5f);
     mesh->transform.position = vec3(-5.f, 0, 0);
@@ -179,7 +179,7 @@ void TriPlay::setupLights() {
 void TriPlay::setupPostProcess() {
     using namespace Render;
 
-    renderer.alpha.postProcess.output = GLframebuffer::createRenderTarget<GLubyte>();
+    renderer.forward.postProcess.output = GLframebuffer::createRenderTarget<GLubyte>();
 
     auto& colorRender  = gBuffer[0], 
         & brightRender = gBuffer[1];
@@ -226,11 +226,11 @@ void TriPlay::setupPostProcess() {
     auto crt = make_shared<PostProcess>();
     crt->data.setShaders(PostProcess::make_program("Shaders/postProcess/crt.glsl"), &crtTime, &crtRes);
     crt->data.setTextures(colorRender);
-    crt->renderToTextures(renderer.alpha.postProcess.output);
+    crt->renderToTextures(renderer.forward.postProcess.output);
     crtTime = GLresource<GLtime>(crt->data.shaders->program, "time");
     crtRes  = GLresource<GLresolution>(crt->data.shaders->program, "resolution");
 
-    renderer.alpha.postProcess.entry.chainsTo(brightPass)->chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration)->chainsTo(crt);
+    renderer.forward.postProcess.entry.chainsTo(brightPass)->chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration)->chainsTo(crt);
 }
 
 #include "CollisionManager.h"
@@ -314,5 +314,5 @@ void TriPlay::updateLights() {
 
 void TriPlay::draw() {
     Game::draw();
-    Text::render(&renderer.alpha.objects);
+    Text::render(&renderer.forward.objects);
 }

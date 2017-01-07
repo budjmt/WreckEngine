@@ -78,7 +78,7 @@ public:
     void camera(Camera* c);
 
     //this is the actual draw call
-    void draw(Render::MaterialPass* opaque, Render::MaterialPass* alpha);
+    void draw(Render::MaterialPass* deferred, Render::MaterialPass* forward);
 
     //these are called externally for drawing stuff
     void drawDebugVector(vec3 start, vec3 end, vec3 color = vec3(0.7f, 1, 0));
@@ -102,8 +102,8 @@ private:
 
     shared<Mesh> arrow, sphere, box;
 
-    void setRenderers(Render::MaterialPass* opaque, Render::MaterialPass* alpha);
-    Render::MaterialPass* opaque, * alpha;
+    void setRenderers(Render::MaterialPass* deferred, Render::MaterialPass* forward);
+    Render::MaterialPass* deferred, * forward;
     Render::Info vecMat, meshMat;
     
     struct m_MeshData { vec4 color; mat4 transform; };

@@ -6,11 +6,11 @@
 namespace Render {
     
     struct LitRenderer {
-        Renderer opaque, alpha;
+        Renderer deferred, forward;
         Light::System lights;
 
-        LitRenderer(const size_t gBufferSize) : opaque({ 0, 1, 2 }), alpha(gBufferSize), lightR({ 3, 4 }) {
-            opaque.setup = []() {
+        LitRenderer(const size_t gBufferSize) : deferred({ 0, 1, 2 }), forward(gBufferSize), lightR({ 3, 4 }) {
+            deferred.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
             };
             lightR.setup = []() {
@@ -25,12 +25,14 @@ namespace Render {
                 // clockwise winding for back-lit faces
                 GL_CHECK(glFrontFace(GL_CW));
             };
-            alpha.setup = [this]() {
+            forward.setup = [this]() {
                 // undoing the light-specific settings
                 GL_CHECK(glFrontFace(GL_CCW));
                 GL_CHECK(glDepthMask(GL_TRUE));
                 GL_CHECK(glDepthFunc(GL_LEQUAL));
 
+                // re-enable blend after the accumulation PP and change blend func
+                GL_CHECK(glEnable(GL_BLEND));
                 GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
             };
 
@@ -38,6 +40,7 @@ namespace Render {
                 GL_CHECK(glDisable(GL_DEPTH_TEST));
             }, []() {
                 GL_CHECK(glEnable(GL_DEPTH_TEST));
+                GL_CHECK(glDisable(GL_BLEND));
             });
 
             // GBuffer layout:
@@ -57,8 +60,8 @@ namespace Render {
 
             lightR.postProcess.entry.chainsTo(accumulate);
 
-            opaque.next = &lightR;
-            lightR.next = &alpha;
+            deferred.next = &lightR;
+            lightR.next = &forward;
         }
 
         void render() { 
@@ -66,7 +69,7 @@ namespace Render {
             if(Camera::main) lights.updateCamera(Camera::main);
             lights.forward();
             lights.defer(&lightR.objects, lightGroup);
-            opaque.render(); 
+            deferred.render(); 
         }
 
     private:
