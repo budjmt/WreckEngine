@@ -54,8 +54,8 @@ void init() {
     Render::Renderer::init(4);
 
     // this won't be initialized until after GLFW/GLEW are
-    //game = make_unique<TriPlay>(shaderProg);
-    game = make_unique<UiTest>();
+    game = make_unique<TriPlay>(shaderProg);
+    //game = make_unique<UiTest>();
 }
 
 void initGraphics() {
