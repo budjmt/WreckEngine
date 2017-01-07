@@ -4,22 +4,22 @@ namespace Color
 {
     using byte = unsigned char;
 
-    static inline byte PackFloat(float value)
+    static inline byte packFloat(float value)
     {
         return static_cast<byte>(glm::round(glm::clamp(value, 0.0f, 1.0f) * 255.0f));
     }
 
-    static inline float UnpackFloat(byte value)
+    static inline float unpackFloat(byte value)
     {
         return value * inv255;
     }
 
     packed_type pack(const value_type& color)
     {
-        byte r = PackFloat(color.r),
-             g = PackFloat(color.g),
-             b = PackFloat(color.b),
-             a = PackFloat(color.a);
+        byte r = packFloat(color.r),
+             g = packFloat(color.g),
+             b = packFloat(color.b),
+             a = packFloat(color.a);
         return (r << 24) | (g << 16) | (b << 8) | a;
     }
 
@@ -29,10 +29,10 @@ namespace Color
              g = (color >> 16) & 255,
              b = (color >>  8) & 255,
              a = (color >>  0) & 255;
-        return value_type(UnpackFloat(r),
-                          UnpackFloat(g),
-                          UnpackFloat(b),
-                          UnpackFloat(a));
+        return value_type(unpackFloat(r),
+                          unpackFloat(g),
+                          unpackFloat(b),
+                          unpackFloat(a));
     }
 
     #pragma region Pre-defined Colors
