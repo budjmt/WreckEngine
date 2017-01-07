@@ -54,6 +54,7 @@ namespace Text
     vec2 getDims(char ch, const FontFace* font, float scale);
     vec2 getDims(uint32_t cp, const FontFace* font, float scale);
     vec2 getDims(const std::string& text, const FontFace* font, float scale);
+    vec2 getDims(const std::string& text, const FontFace* font, float scale, int& lineCount);
     float getKerning(char ch1, char ch2, const FontFace* font);
     float getKerning(uint32_t cp1, uint32_t cp2, const FontFace* font);
 

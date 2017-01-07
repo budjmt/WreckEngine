@@ -339,7 +339,8 @@ void Text::Instance::updateAlignment() {
 
     if (vert != START || horiz != START) {
 
-        auto dims = getDims(text, font, scale.value);
+        int lineCount; // Guaranteed to at least be 1
+        auto dims = getDims(text, font, scale.value, lineCount);
         
         switch (horiz)
         {
@@ -354,10 +355,10 @@ void Text::Instance::updateAlignment() {
         switch (vert)
         {
         case MIDDLE:
-            alignOffset.y = dims.y * -0.5f;
+            alignOffset.y = (dims.y - font->lineHeight * (lineCount - 1)) * -0.5f;
             break;
         case END:
-            alignOffset.y = -dims.y;
+            alignOffset.y = -dims.y + font->lineHeight * (lineCount - 1);
             break;
         }
     }
@@ -397,7 +398,7 @@ void Text::Instance::updateBuffer() {
                     x += xSpace * 4;
                     break;
                 case '\n':
-                    y += ySpace;
+                    y -= ySpace;
                     x = 0.0f;
                     break;
             }
@@ -490,9 +491,15 @@ vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale)
 
 vec2 Text::getDims(const std::string& text, const FontFace* font, float scale)
 {
+    int lineCount = 0;
+    return getDims(text, font, scale, lineCount);
+}
+
+vec2 Text::getDims(const std::string& text, const FontFace* font, float scale, int& lineCount)
+{
     float x = 0, y = 0;
     float maxX = 0;
-    int lineCount = 1;
+    lineCount = 1;
 
     for (size_t i = 0, length = text.length(); i < length; ++i)
     {
