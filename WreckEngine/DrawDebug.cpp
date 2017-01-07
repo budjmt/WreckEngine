@@ -67,7 +67,7 @@ DrawDebug& DrawDebug::getInstance() {
 
 void DrawDebug::camera(Camera* c) { cam = c; }
 
-void DrawDebug::setRenderer(Render::MaterialPass* r) {
+void DrawDebug::setRenderers(Render::MaterialPass* deferred, Render::MaterialPass* forward) {
     struct X { 
         X(DrawDebug* d, Render::MaterialPass* r) { 
             d->wireframeIndex = r->addGroup([]() { 
@@ -80,13 +80,14 @@ void DrawDebug::setRenderer(Render::MaterialPass* r) {
         }
     };
 
-    static X addWireframe(this, r);
-    renderer = r;
+    static X addWireframe(this, forward);
+    this->deferred = deferred;
+    this->forward = forward;
 }
 
-void DrawDebug::draw(Render::MaterialPass* r) {
+void DrawDebug::draw(Render::MaterialPass* o, Render::MaterialPass* a) {
 #if DEBUG
-    setRenderer(r);
+    setRenderers(o, a);
     
     if (cam) {
         auto c = cam->getCamMat();
@@ -114,7 +115,7 @@ void DrawDebug::drawVectors() {
                  , e = debugVectors[i + 2], c2 = debugVectors[i + 3];
         
         const auto es = e - s;
-        const auto v = e - es * (sfact * 0.5f);
+        const auto v = e - es * (sfact * 0.5f / length(es));
 
         const auto translate = glm::translate(v);
         const auto rotate = rotateBetween(vec3(0,1,0), glm::normalize(es));
@@ -125,10 +126,10 @@ void DrawDebug::drawVectors() {
     vecVAO.bind();
     vecBuffer.bind();
     vecBuffer.data(&debugVectors[0]);
-    renderer->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, numVecs / 2);
+    forward->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, numVecs / 2);
 
     arrows.update();
-    arrows.draw(renderer, &meshMat, 0);
+    arrows.draw(forward, &meshMat, 0);
 
     debugVectors.clear();
     arrows.instances.clear();
@@ -144,7 +145,7 @@ void DrawDebug::drawSpheres() {
     }
 
     spheres.update();
-    spheres.draw(renderer, &meshMat, 0);
+    spheres.draw(forward, &meshMat, 0);
 
     debugSpheres.clear();
     spheres.instances.clear();
@@ -160,7 +161,7 @@ void DrawDebug::drawBoxes() {
     }
 
     boxes.update();
-    boxes.draw(renderer, &meshMat, wireframeIndex);
+    boxes.draw(forward, &meshMat, wireframeIndex);
 
     debugBoxes.clear();
     boxes.instances.clear();

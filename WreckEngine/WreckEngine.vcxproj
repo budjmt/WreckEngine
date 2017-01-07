@@ -183,6 +183,7 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GLDebug.cpp" />
     <ClCompile Include="gl_structs.cpp" />
+    <ClCompile Include="Light.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="PostProcess.cpp" />
     <ClCompile Include="Random.cpp" />
@@ -222,7 +223,9 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="GLError.h" />
     <ClInclude Include="GLmanager.h" />
+    <ClInclude Include="GLstate.h" />
     <ClInclude Include="gl_structs.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="MarchMath.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
@@ -231,6 +234,7 @@
     <ClInclude Include="property.h" />
     <ClInclude Include="Random.h" />
     <ClInclude Include="Render.h" />
+    <ClInclude Include="RenderSpecial.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="ShaderHelper.h" />
     <ClInclude Include="smart_ptr.h" />

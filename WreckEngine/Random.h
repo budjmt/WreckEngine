@@ -45,8 +45,8 @@ namespace Random {
     inline int getRange(engine_t::result_type start, engine_t::result_type end) { return std::uniform_int_distribution<engine_t::result_type>(start, end)(engine); }
 	inline int getRangeFast(engine_t::result_type start, engine_t::result_type end) { return get() % (end - start) + start; }
 
-    inline float  getf() { return std::uniform_real_distribution<float> (0.f, FLT_MAX)(engine); }
-    inline double getd() { return std::uniform_real_distribution<double>(0.,  DBL_MAX)(engine); }
+    inline float  getf() { return std::uniform_real_distribution<float> (0.f, 1.f)(engine); }
+    inline double getd() { return std::uniform_real_distribution<double>(0.0, 1.0)(engine); }
 
 	inline float  getfFast() { 
         constexpr float  inv_max_range = 1.f / engine_t::max(); 

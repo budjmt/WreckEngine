@@ -49,7 +49,8 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     if (!initialized) exit(val);
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
     GLFWmonitor* monitor = glfwGetPrimaryMonitor();
@@ -65,10 +66,11 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     Window::window = glfwCreateWindow(width, height, "Wreck Engine", nullptr, nullptr);
     if (!Window::window) exit('w');
     glfwMakeContextCurrent(Window::window);
+    //glfwSwapInterval(0);
     Window::defaultResize(Window::window, width, height);
 
     // Center the window
-    const GLFWvidmode* vm = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    const GLFWvidmode* vm = glfwGetVideoMode(monitor);
     glfwSetWindowPos(Window::window, (vm->width - width) / 2, (vm->height - height) / 2);
 
     Window::resizeCallback(Window::defaultResize);

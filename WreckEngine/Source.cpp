@@ -51,11 +51,11 @@ void init() {
 
     UI::Initialize();
     Text::init();
-    Render::Renderer::init(4);
+    Render::Renderer::init(6);
 
     // this won't be initialized until after GLFW/GLEW are
-    //game = make_unique<TriPlay>(shaderProg);
-    game = make_unique<UiTest>();
+    game = make_unique<TriPlay>(shaderProg);
+    //game = make_unique<UiTest>();
 }
 
 void initGraphics() {
@@ -78,7 +78,8 @@ void initGraphics() {
     GL_CHECK(glDepthFunc(GL_LEQUAL));
 
     // back-face culling
-    if (!DEBUG) { GL_CHECK(glEnable(GL_CULL_FACE)); }
+    if (!DEBUG)
+        GL_CHECK(glEnable(GL_CULL_FACE));
     GL_CHECK(glCullFace(GL_BACK));
     GL_CHECK(glFrontFace(GL_CCW));
 }

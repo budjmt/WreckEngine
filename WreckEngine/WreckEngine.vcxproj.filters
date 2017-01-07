@@ -132,6 +132,9 @@
     <ClCompile Include="Random.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="unique_id.h">
@@ -246,6 +249,15 @@
       <Filter>Render</Filter>
     </ClInclude>
     <ClInclude Include="Time.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderSpecial.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="GLstate.h">
       <Filter>Utilities</Filter>
     </ClInclude>
   </ItemGroup>

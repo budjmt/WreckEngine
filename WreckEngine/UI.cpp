@@ -1,4 +1,5 @@
 #include "UI.h"
+#include "GLstate.h"
 #include "GLError.h"
 #include "External.h"
 #if defined(_WIN32) || defined(_WIN64)

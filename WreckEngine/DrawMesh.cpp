@@ -29,10 +29,7 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 
 	vArray.unbind();
 
-	// this needs to be refined at some point when multiple samplers come into the picture, probably with the material system
 	shader.use();
-	shader.setOnce<GLsampler>("uniformTex", 0);
-
 	worldMatrix   = GLresource<mat4>(shader, "worldMatrix");
 	iTworldMatrix = GLresource<mat4>(shader, "iTworldMatrix");
 	_color = GLresource<vec4>(shader, "tint");
