@@ -23,7 +23,6 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
         if (e.id == start_game_event) {
             currState = mainsp;
             GLframebuffer::setClearColor(0, 0, 0, 1);
-            renderer.postProcess.entry.chainsTo(chainEntry);
         }
     };
     addState(menuState);
