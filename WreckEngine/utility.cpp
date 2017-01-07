@@ -10,6 +10,33 @@ using namespace Event;
 
 // this file is used to define any external stuff needed by all the various utility files
 
+std::chrono::high_resolution_clock::time_point Time::start = Time::now();
+
+std::chrono::high_resolution_clock::time_point Time::now() {
+    return std::chrono::high_resolution_clock::now();
+}
+
+long long Time::ctime() {
+    using namespace std::chrono;
+    return duration_cast<seconds>(Time::now().time_since_epoch()).count();
+}
+
+double Time::elapsed() {
+    using namespace std::chrono;
+    return duration<double>(now() - start).count();
+}
+
+thread_local double deltaTime = 0.;
+thread_local const double& Time::delta = deltaTime;
+
+void Time::updateDelta() {
+    using namespace std::chrono;
+    thread_local auto prevFrame = Time::start;
+    auto currFrame = now();
+    deltaTime = duration<double>(currFrame - prevFrame).count();
+    prevFrame = currFrame;
+}
+
 bool GLFWmanager::initialized = false;
 bool GLEWmanager::initialized = false;
 
@@ -48,6 +75,7 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     Mouse::buttonCallback(Mouse::defaultButton);
     Mouse::moveCallback(Mouse::defaultMove);
     Mouse::scrollCallback(Mouse::defaultScroll);
+    Keyboard::keyCallback(Keyboard::defaultKey);
 
     Window::cursorMode = GLFW_CURSOR_NORMAL;
     glfwSetInputMode(Window::window, GLFW_CURSOR, Window::cursorMode);
@@ -67,6 +95,7 @@ float Window::aspect;
 int Window::cursorMode = GLFW_CURSOR_NORMAL;
 
 Mouse::Info Mouse::info;
+Keyboard::Info Keyboard::info;
 
 void Window::defaultResize(GLFWwindow* window, int w, int h) {
     width = w;
@@ -96,7 +125,7 @@ void Mouse::defaultButton(GLFWwindow* window, int button, int action, int mods) 
         info.setButtonDown(button);
         
         auto& b = info.buttons[button];
-        b.lastDown = glfwGetTime();
+        b.lastDown = Time::elapsed();
         b.downThisFrame = true;
     }
     else if (action == GLFW_RELEASE)
@@ -126,4 +155,32 @@ void Mouse::defaultScroll(GLFWwindow* window, double xoffset, double yoffset) {
 
     static uint32_t scroll_id = Message::add("mouse_scroll");
     Dispatcher::central_trigger.sendBulkEvent<ScrollHandler>(scroll_id);
+}
+
+constexpr size_t getKeyIndex(const int key) { return key - Keyboard::Key::Code::First; }
+
+bool Keyboard::keyPressed(const Key::Code code) { return info.keys[getKeyIndex(code)].pressed; }
+bool Keyboard::keyDown(const Key::Code code) { return info.keys[getKeyIndex(code)].held; }
+
+bool Keyboard::shiftDown()   { return keyDown(Key::Code::RShift)   || keyDown(Key::Code::LShift);   }
+bool Keyboard::controlDown() { return keyDown(Key::Code::LControl) || keyDown(Key::Code::RControl); }
+bool Keyboard::altDown()     { return keyDown(Key::Code::LAlt)     || keyDown(Key::Code::RAlt);     }
+bool Keyboard::superDown()   { return keyDown(Key::Code::LSuper)   || keyDown(Key::Code::RSuper);   }
+
+void Keyboard::update() {
+    constexpr size_t k = getKeyIndex(Key::Code::Last);
+    for (size_t i = 0; i < k; ++i) {
+        info.keys[i].pressed = false;
+    }
+}
+
+void Keyboard::defaultKey(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    // works when combined with the scan code, this is difficult to support generally
+    if (key == Key::Code::ScanKey) return;
+
+    bool press = action != GLFW_RELEASE;
+    info.keys[getKeyIndex(key)] = { press, press, Time::elapsed() };
+
+    static uint32_t key_id = Message::add("keyboard_key");
+    Dispatcher::central_trigger.sendBulkEvent<KeyHandler>(key_id, key, scancode, action, mods);
 }

@@ -186,6 +186,7 @@
     <ClCompile Include="gl_structs.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="PostProcess.cpp" />
+    <ClCompile Include="Random.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui_demo.cpp" />
@@ -239,6 +240,7 @@
     <ClInclude Include="Text.h" />
     <ClInclude Include="TextEntity.h" />
     <ClInclude Include="ThirdParty\Include\imconfig.h" />
+    <ClInclude Include="Time.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="TriPlay.h" />
     <ClInclude Include="UI.h" />

@@ -26,7 +26,7 @@ private:
     shared<Render::PostProcess> chainEntry;
 
     void setupPostProcess();
-    GLresource<float> crtTime;
+    GLresource<GLtime> crtTime;
     GLresource<GLresolution> crtRes;
 };
 
