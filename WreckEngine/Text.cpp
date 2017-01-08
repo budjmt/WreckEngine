@@ -196,10 +196,10 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         auto& glyphMetrics = fontFace->glyph->metrics;
         glyphData.cp = cp;
         glyphData.bitmap.resize(rect.w * rect.h, 0); // texture is only alpha values
-        glyphData.glyph.advance = static_cast<float>(fontFace->glyph->metrics.horiAdvance) * kerningScale;
+        glyphData.glyph.advance = glyphMetrics.horiAdvance * kerningScale;
         glyphData.glyph.bearing = {
             glyphMetrics.horiBearingX * kerningScale,
-            glyphMetrics.horiBearingY * kerningScale
+            glyphMetrics.vertBearingY * kerningScale
         };
         glyphData.glyph.size = {
             glyphMetrics.width        * kerningScale,
@@ -324,7 +324,7 @@ void Text::Instance::updateAlignment() {
         switch (horiz)
         {
         case MIDDLE:
-            alignOffset.x = dims.x * -0.5f;
+            alignOffset.x = -dims.x * 0.5f;
             break;
         case END:
             alignOffset.x = -dims.x;
@@ -334,10 +334,10 @@ void Text::Instance::updateAlignment() {
         switch (vert)
         {
         case MIDDLE:
-            alignOffset.y = (dims.y - font->lineHeight * (lineCount - 1)) * -0.5f;
+            alignOffset.y = dims.y * 0.5f;
             break;
         case END:
-            alignOffset.y = -dims.y + font->lineHeight * (lineCount - 1);
+            alignOffset.y = -dims.y;
             break;
         }
     }
@@ -462,7 +462,7 @@ vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale)
     else if (font->glyphs.count(cp))
     {
         const auto& glyph = font->glyphs.at(cp);
-        dims = {glyph.advance, glyph.bearing.y - glyph.size.y};
+        dims = {glyph.advance, glyph.size.y - glyph.bearing.y};
     }
 
     return dims * scale;
@@ -476,8 +476,8 @@ vec2 Text::getDims(const std::string& text, const FontFace* font, float scale)
 
 vec2 Text::getDims(const std::string& text, const FontFace* font, float scale, int& lineCount)
 {
-    float x = 0, y = 0;
-    float maxX = 0;
+    float x = 0, maxX = 0;
+    float firstLineHeight = 0;
     lineCount = 1;
 
     for (char cp : text)
@@ -485,7 +485,6 @@ vec2 Text::getDims(const std::string& text, const FontFace* font, float scale, i
         if (cp == '\n')
         {
             x = 0.0f;
-            y = 0.0f;
             ++lineCount;
         }
         else if (cp == '\r' || cp == '\b')
@@ -496,13 +495,15 @@ vec2 Text::getDims(const std::string& text, const FontFace* font, float scale, i
         {
             auto dims = getDims(cp, font, scale);
             x += dims.x;
-            y = std::max(y, dims.y);
+            if (lineCount == 1)
+                firstLineHeight = fmax(firstLineHeight, dims.y);
         }
 
-        maxX = std::max(maxX, x);
+        maxX = fmax(maxX, x);
     }
 
-    return vec2(maxX, font->lineHeight * scale * lineCount);
+    // Note: maxX is already scaled
+    return vec2(maxX, ((lineCount / 2) * font->lineHeight + firstLineHeight) * scale);
 }
 
 float Text::getKerning(char ch1, char ch2, const FontFace* font)

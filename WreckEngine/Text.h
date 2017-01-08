@@ -90,7 +90,7 @@ namespace Text
         }
         inline void setPosition(float _x, float _y) {
             offset.x = _x;
-            offset.y = _y;
+            offset.y = Window::height - _y;
         }
         inline void setScale(float _scale) {
             if (scale.value != _scale) {
