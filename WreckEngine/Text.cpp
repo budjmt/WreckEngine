@@ -43,19 +43,10 @@ namespace
     std::vector<Text::Instance*> instances;
     std::unordered_map<std::string, shared<Text::FontFace>> fontFaces;
 
-    inline size_t findInstance(const Text::Instance* inst) {
-        for (size_t i = 0, size = instances.size(); i < size; ++i) {
-            if (instances[i] == inst) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
     const std::string WIN_DIR = getEnvVar("windir");
 }
 
-static const float kerningScale = 1.0f / (1 << 6);
+static constexpr float kerningScale = 1.0f / (1 << 6);
 static FT_Long nextFontIndex = 0;
 bool Text::active = true;
 Text::Renderer::Shader Text::Renderer::shader;
@@ -99,7 +90,6 @@ Text::FontFace::FontFace(const std::string& font)
     }
     else
     {
-        tex.create(GL_TEXTURE_2D);
         std::cout << "Successfully loaded \"" << font << "\"" << std::endl;
     }
 }
@@ -178,7 +168,7 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
 
     // Load each of the glyphs in the range
     std::vector<stbrp_rect> packRects;
-    std::unordered_map<uint32_t, shared<GlyphData>> loadedGlyphs;
+    std::vector<GlyphData> loadedGlyphs;
     for (uint32_t cp = begin; cp <= end; ++cp)
     {
         // Load code point
@@ -202,23 +192,23 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         packRects.push_back(rect);
 
         // Create glyph data
-        auto glyphData = std::make_shared<GlyphData>();
+        GlyphData glyphData;
         auto& glyphMetrics = fontFace->glyph->metrics;
-        glyphData->cp = cp;
-        glyphData->bitmap.resize(rect.w * rect.h, 0); // texture is only alpha values
-        glyphData->glyph.advance = static_cast<float>(fontFace->glyph->metrics.horiAdvance) * kerningScale;
-        glyphData->glyph.bearing = {
+        glyphData.cp = cp;
+        glyphData.bitmap.resize(rect.w * rect.h, 0); // texture is only alpha values
+        glyphData.glyph.advance = static_cast<float>(fontFace->glyph->metrics.horiAdvance) * kerningScale;
+        glyphData.glyph.bearing = {
             glyphMetrics.horiBearingX * kerningScale,
             glyphMetrics.horiBearingY * kerningScale
         };
-        glyphData->glyph.size = {
+        glyphData.glyph.size = {
             glyphMetrics.width        * kerningScale,
             glyphMetrics.height       * kerningScale
         };
 
         // Copy glyph buffer data (all pixels are white with varying alpha levels)
         const unsigned char* pixels = bitmap.buffer;
-        auto& glyphBuffer = glyphData->bitmap;
+        auto& glyphBuffer = glyphData.bitmap;
         for (uint32_t y = 0; y < bitmapHeight; ++y)
         {
             for (uint32_t x = 0; x < bitmapWidth; ++x)
@@ -240,7 +230,7 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         }
 
         // Register the glyph data
-        loadedGlyphs.insert({cp, glyphData});
+        loadedGlyphs.push_back(glyphData);
     }
 
     // Now let's pack the glyphs into a texture
@@ -252,6 +242,7 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
     
     // Create the texture
     GL_CHECK(glPixelStorei(GL_UNPACK_ALIGNMENT, 1));
+    tex.create(GL_TEXTURE_2D);
     tex.bind();
     tex.set2D<GLubyte>(nullptr, TEX_SIZE, TEX_SIZE, GL_RED, GL_RED, 0);
     tex.param(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -263,8 +254,8 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
     for (const auto& rect : packRects)
     {
         auto cp = static_cast<uint32_t>(rect.id);
-        auto glyphData = loadedGlyphs.at(cp);
-        auto& glyph = glyphData->glyph;
+        auto& glyphData = loadedGlyphs[cp - begin];
+        auto& glyph = glyphData.glyph;
 
         // Set the glyph's texture bounds, then record the glyph
         constexpr float uvScale = 1.0f / FontFace::TEX_SIZE;
@@ -273,7 +264,7 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         glyphs[cp] = glyph;
 
         // Update the sub-region of the texture
-        auto& pixelBuffer = glyphData->bitmap;
+        auto& pixelBuffer = glyphData.bitmap;
         if (pixelBuffer.size() && rect.was_packed)
         {
             tex.setSub2D<GLubyte>(&pixelBuffer[0], rect.x, rect.y, rect.w, rect.h, GL_RED, 0);
@@ -437,7 +428,7 @@ void Text::Renderer::init()
     shader.program = loadProgram("Shaders/text_v.glsl", "Shaders/text_f.glsl");
     shader.program.use();
     shader.sampler  = shader.program.getUniform<GLsampler>("text");
-    shader.cam      = GLresource<mat4> (shader.program, "camera"); // shader.program.getUniform<mat4>("camera");
+    shader.cam      = GLresource<mat4> (shader.program, "camera");
     shader.offset   = shader.program.getUniform<vec2>("offset");
     shader.scale    = shader.program.getUniform<float>("scale");
 }
@@ -489,10 +480,8 @@ vec2 Text::getDims(const std::string& text, const FontFace* font, float scale, i
     float maxX = 0;
     lineCount = 1;
 
-    for (size_t i = 0, length = text.length(); i < length; ++i)
+    for (char cp : text)
     {
-        uint32_t cp = text[i];
-        
         if (cp == '\n')
         {
             x = 0.0f;

@@ -88,10 +88,6 @@ namespace Text
                 dirtyBuffer = true;
             }
         }
-        inline void setOffset(const vec2& _offset) {
-            offset = _offset;
-            fullOffset.value = offset + alignOffset;
-        }
         inline void setPosition(float _x, float _y) {
             offset.x = _x;
             offset.y = _y;
@@ -139,13 +135,13 @@ namespace Text
         void draw();
         Render::MaterialPass* renderer;
     private:
-        typedef struct {
+        struct Shader {
             GLprogram program;
             GLuniform<GLsampler> sampler;
             GLresource<mat4> cam;
             GLuniform<vec2> offset;
             GLuniform<float> scale;
-        } Shader;
+        };
         static Shader shader;
 
         friend Instance;
