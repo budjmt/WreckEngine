@@ -182,27 +182,15 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
     for (uint32_t cp = begin; cp <= end; ++cp)
     {
         // Load code point
-        if (FT_Load_Char(fontFace, cp, FT_LOAD_FORCE_AUTOHINT))
+        if (FT_Load_Char(fontFace, cp, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT))
         {
             std::cout << "Could not load code point " << cp << " (" << static_cast<char>(cp) << ')' << std::endl;
             continue;
         }
 
-        // Load glyph of code point
-        FT_Glyph glyph = nullptr;
-        if (FT_Get_Glyph(fontFace->glyph, &glyph))
-        {
-            std::cout << "Failed to get glyph for " << cp << " (" << static_cast<char>(cp) << ')' << std::endl;
-            continue;
-        }
+        auto& glyph = fontFace->glyph;
+        auto& bitmap = glyph->bitmap;
 
-        // Render glyph to bitmap
-        if (FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, 0, 1))
-        {
-            std::cout << "Failed to render glyph for " << cp << " (" << static_cast<char>(cp) << ')' << std::endl;
-            continue;
-        }
-        auto& bitmap = reinterpret_cast<FT_BitmapGlyph>(glyph)->bitmap;
         const auto bitmapWidth = bitmap.width;
         const auto bitmapHeight = bitmap.rows;
 
