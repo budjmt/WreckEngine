@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -175,6 +175,7 @@
     <ClCompile Include="Collider.cpp" />
     <ClCompile Include="ColliderEntity.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
+    <ClCompile Include="Color.cpp" />
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="DrawDebug.cpp" />
     <ClCompile Include="DrawMesh.cpp" />
@@ -195,6 +196,7 @@
     <ClCompile Include="UiTest.cpp" />
     <ClCompile Include="UV.cpp" />
     <ClInclude Include="CollisionManager.h" />
+    <ClInclude Include="Color.h" />
     <ClInclude Include="DebugBenchmark.h" />
     <ClInclude Include="DrawDebug.h" />
     <ClInclude Include="Event.h" />

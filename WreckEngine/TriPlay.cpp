@@ -28,7 +28,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     addState(menuState);
     menuState->addEntity(make_shared<LogicEntity>(menu_update));
     
-    auto menuText = make_shared<TextEntity>("Press space to begin.", "QuartzMS.ttf", Text::Justify::MIDDLE, Text::Justify::MIDDLE, 48);
+    auto menuText = make_shared<TextEntity>("Press space\nto begin.", "QuartzMS.ttf", Text::Justify::MIDDLE, Text::Justify::MIDDLE, 48);
     menuText->transform.position = vec3(Window::width * 0.5f, Window::height * 0.5f, 0);
     menuText->transform.scale = vec3(0.5f, 1, 1);
     menuState->addEntity(menuText);
