@@ -6,6 +6,16 @@
 #include "Time.h"
 #include "Random.h"
 
+#include <functional>
+#include <future>
+#include "safe_queue.h"
+
+namespace MainThread {
+    std::future<void> run(std::function<void()> func);
+    void tryExecute(std::chrono::milliseconds duration);
+    void flush();
+}
+
 namespace Window {
     extern GLFWwindow* window;
     extern bool isFullScreen;
@@ -17,6 +27,8 @@ namespace Window {
     // These two are purely for convenience with ImGui
     extern vec2 size;
     extern vec2 frameScale;
+
+    inline bool closing() { return glfwWindowShouldClose(Window::window) != 0; }
 
     void toggleFullScreen(GLFWmonitor* monitor, int x, int y, int width, int height);
     void toggleFullScreen(int width, int height);

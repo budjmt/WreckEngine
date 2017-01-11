@@ -27,19 +27,16 @@ unique<GLEWmanager> glew;
 #include "UiTest.h"
 #include "UI.h"
 
+#include "Update.h"
+
 void initGraphics();
 
-double FPS = 60;
-double runningAvgDelta = 1.0 / FPS;
-int samples = 10;
-bool fpsMode = true;
-GLprogram shaderProg;
 unique<Game> game;
 
 using namespace std;
 
 void init() {
-    shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
+    auto shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
     if(shaderProg.valid()) {
         shaderProg.use();
         shaderProg.setOnce<vec4>("tint", vec4(1));
@@ -83,46 +80,51 @@ void initGraphics() {
 }
 
 void update() {
-    Time::updateDelta();
-    //need to separate drawing and update pipelines
-    //double spf = 1.0 / FPS;
-    //while (dt < spf) {
-    //  currFrame = Time::elapsed();
-    //  dt += currFrame - prevFrame;
-    //  prevFrame = currFrame;
-    //}
+    MainThread::run(&glfwPollEvents).wait();
 
-    // game update occurs before anything else
+    // game update occurs before external updates
     // this enables simpler rules for clearing events per frame
     game->update(Time::delta);
 
-    runningAvgDelta -= runningAvgDelta / samples;
-    runningAvgDelta += Time::delta / samples;
-    auto title = std::to_string(fpsMode ? 1.0 / runningAvgDelta : runningAvgDelta * 1000.0);
+    Mouse::update();
+    Keyboard::update();
+}
+
+void updateFPS() {
+    constexpr int samples = 10;
+    static struct {
+        double FPS = 60;
+        double runningAvgDelta = 1.0 / FPS;
+        bool fpsMode = true;
+    } fpsInfo;
+
+    fpsInfo.runningAvgDelta -= fpsInfo.runningAvgDelta / samples;
+    fpsInfo.runningAvgDelta += Time::delta / samples;
+    auto title = std::to_string(fpsInfo.fpsMode ? 1.0 / fpsInfo.runningAvgDelta : fpsInfo.runningAvgDelta * 1000.0);
     auto decimal = title.find('.');
     if (title.length() - decimal > 3) title = title.erase(decimal + 3);
-    title += fpsMode ? " FpS" : " MSpF";
-    glfwSetWindowTitle(Window::window, title.c_str());
+    title += fpsInfo.fpsMode ? " FpS" : " MSpF";
+    auto str = title.c_str();
+    MainThread::run([str] { glfwSetWindowTitle(Window::window, str); }).wait();
 
     if (Keyboard::keyPressed(Keyboard::Key::F11))
         Window::toggleFullScreen();
 
     if (Keyboard::altDown()) {
         if (Keyboard::keyPressed(Keyboard::Key::_0))
-            fpsMode = !fpsMode;
+            fpsInfo.fpsMode = !fpsInfo.fpsMode;
         else if (Keyboard::keyPressed(Keyboard::Key::Equal))
-            FPS += (FPS < 5) ? 1 : ((FPS < 20) ? 5 : ((FPS < 60) ? 10 : 0));
+            fpsInfo.FPS += (fpsInfo.FPS < 5) ? 1 : ((fpsInfo.FPS < 20) ? 5 : ((fpsInfo.FPS < 60) ? 10 : 0));
         else if (Keyboard::keyPressed(Keyboard::Key::Minus))
-            FPS -= (FPS > 20) ? 10 : ((FPS > 5) ? 5 : ((FPS > 1) ? 1 : 0));
+            fpsInfo.FPS -= (fpsInfo.FPS > 20) ? 10 : ((fpsInfo.FPS > 5) ? 5 : ((fpsInfo.FPS > 1) ? 1 : 0));
     }
-
-    Mouse::update();
-    Keyboard::update();
 }
 
 void draw() {
+    updateFPS();
     GLframebuffer::clear();
     game->draw();
+    glfwSwapBuffers(Window::window);
 }
 
 int main(int argc, char** argv) {
@@ -132,13 +134,22 @@ int main(int argc, char** argv) {
     if (DEBUG)
         initDebug();
     init();
-    glfwShowWindow(Window::window);
-    while (!glfwWindowShouldClose(Window::window)) {
-        glfwPollEvents();
-        update();
-        draw();
-        glfwSwapBuffers(Window::window);
-    }
 
+    // nullify context so it can be moved to the render thread
+    glfwMakeContextCurrent(nullptr);
+
+    Update<0> regUpdate(&update);
+    Update<0> render(&draw, []() { glfwMakeContextCurrent(Window::window); });
+    //Update<120> physicsUpdate(&physics);
+
+    glfwShowWindow(Window::window);
+    while (!Window::closing()) {
+        using namespace std::chrono_literals;
+        constexpr auto tryDuration = 100ms;
+        MainThread::tryExecute(tryDuration);
+    }
+    MainThread::flush();
+
+    UpdateBase::join();
     return 0;
 }

@@ -45,24 +45,27 @@ void Transform::updateMats() const {
 	mats->world = t * r * s;
 }
 
-const Transform* Transform::getComputed() const {
+Transform::safe_tf_ptr Transform::getComputed() const {
 	//if there's no parent, this is already an accurate transform
-	if (!_parent) return this;
+	if (!_parent) return safe_tf_ptr(this, computedMut.object);
 	//if there is no previously computed transform, allocate one so we can compute it
 	else if (!computed) computed.reset(new Transform);
 	//if there is a previously computed transform and we haven't made any "dirtying" changes since computing it
-	else if (!dirtyComp) return computed.get();
+	else if (!dirtyComp) return safe_tf_ptr(computed.get(), computedMut.object);
 	//[re]compute the transform
 	dirtyComp = false;
-	return computeTransform();
+	return safe_tf_ptr(computeTransform(), computedMut.object);
 }
 
 Transform* Transform::computeTransform() const {
-	auto p = _parent->getComputed();
-	computed->_position = _position + p->_position;
-	computed->_scale    = _scale * p->_scale;
-	computed->_rotation = _rotation * p->_rotation;
-	computed->updateRot();
+    {
+        std::unique_lock<std::shared_mutex> lock(computedMut.object);
+        auto p = _parent->getComputed();
+        computed->_position = _position + p->_position;
+        computed->_scale = _scale * p->_scale;
+        computed->_rotation = _rotation * p->_rotation;
+        computed->updateRot();
+    }
 	return computed.get();
 }
 

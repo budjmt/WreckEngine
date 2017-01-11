@@ -131,7 +131,7 @@ void Text::draw(const std::string& text, const FontFace* font, Justify vertical,
 	i.x = x; i.y = Window::height - y;
 	i.scale = scale;
 	i.color = color;
-	instances.push_back(i);
+	//instances.push_back(i);
 }
 
 void Text::render(Render::MaterialPass* matRenderer) {

@@ -282,19 +282,10 @@ void TriPlay::update(double delta) {
     }
 
     Camera::mayaCam(Camera::main, dt);
-    
-    auto mat = Camera::main->getCamMat();
-    objectData.prog.use();
-    objectData.mat.update(mat);
-    forwardData.prog.use();
-    forwardData.mat.update(mat);
-    forwardData.pos.update(Camera::main->transform.getComputed()->position);
 
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
-
-    updateLights();
 }
 
 void TriPlay::updateLights() {
@@ -313,6 +304,16 @@ void TriPlay::updateLights() {
 }
 
 void TriPlay::draw() {
+
+    auto mat = Camera::main->getCamMat();
+    objectData.prog.use();
+    objectData.mat.update(mat);
+    forwardData.prog.use();
+    forwardData.mat.update(mat);
+    forwardData.pos.update(Camera::main->transform.getComputed()->position);
+
+    updateLights();
+
     Game::draw();
     Text::render(&renderer.forward.objects);
 }

@@ -1,16 +1,20 @@
 #include "Event.h"
 
+#include <shared_mutex>
+
 #include "gl_structs.h"
 #include "GLmanager.h"
 #include "External.h"
 
 #include "DrawDebug.h"
 
+#include "Update.h"
+
 using namespace Event;
 
 // this file is used to define any external stuff needed by all the various utility files
 
-std::chrono::high_resolution_clock::time_point Time::start = Time::now();
+const std::chrono::high_resolution_clock::time_point Time::start = Time::now();
 
 std::chrono::high_resolution_clock::time_point Time::now() {
     return std::chrono::high_resolution_clock::now();
@@ -36,6 +40,8 @@ void Time::updateDelta() {
     deltaTime = duration<double>(currFrame - prevFrame).count();
     prevFrame = currFrame;
 }
+
+std::vector<std::thread*> UpdateBase::updateThreads;
 
 bool GLFWmanager::initialized = false;
 bool GLEWmanager::initialized = false;
@@ -85,6 +91,36 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
 
     GLtexture::setMaxTextures();
     GLframebuffer::setMaxColorAttachments();
+}
+
+namespace {
+    safe_queue<std::packaged_task<void()>> commands;
+    bool exiting = false;
+};
+
+std::future<void> MainThread::run(std::function<void()> func) { 
+    // return a completed future if the program is exiting
+    if (exiting) {
+        std::promise<void> temp;
+        temp.set_value();
+        return temp.get_future();
+    }
+    std::packaged_task<void()> task(func);
+    auto future = task.get_future();
+    commands.push(std::move(task));
+    return future; 
+}
+
+void MainThread::tryExecute(std::chrono::milliseconds duration) {
+    std::packaged_task<void()> command;
+    if (commands.tryPop(command, duration))
+        command();
+}
+
+void MainThread::flush() {
+    exiting = true;
+    while (!commands.empty())
+        commands.pop()();
 }
 
 GLFWwindow* Window::window;
@@ -186,10 +222,12 @@ void Mouse::defaultScroll(GLFWwindow* window, double xoffset, double yoffset) {
     Dispatcher::central_trigger.sendBulkEvent<ScrollHandler>(scroll_id);
 }
 
+std::shared_mutex keyboardMut;
+
 constexpr size_t getKeyIndex(const int key) { return key - Keyboard::Key::Code::First; }
 
-bool Keyboard::keyPressed(const Key::Code code) { return info.keys[getKeyIndex(code)].pressed; }
-bool Keyboard::keyDown(const Key::Code code) { return info.keys[getKeyIndex(code)].held; }
+bool Keyboard::keyPressed(const Key::Code code) { std::shared_lock<std::shared_mutex> lock(keyboardMut); return info.keys[getKeyIndex(code)].pressed; }
+bool Keyboard::keyDown(const Key::Code code)    { std::shared_lock<std::shared_mutex> lock(keyboardMut); return info.keys[getKeyIndex(code)].held; }
 
 bool Keyboard::shiftDown()   { return keyDown(Key::Code::RShift)   || keyDown(Key::Code::LShift);   }
 bool Keyboard::controlDown() { return keyDown(Key::Code::LControl) || keyDown(Key::Code::RControl); }
@@ -197,6 +235,7 @@ bool Keyboard::altDown()     { return keyDown(Key::Code::LAlt)     || keyDown(Ke
 bool Keyboard::superDown()   { return keyDown(Key::Code::LSuper)   || keyDown(Key::Code::RSuper);   }
 
 void Keyboard::update() {
+    std::unique_lock<std::shared_mutex> lock(keyboardMut);
     constexpr size_t k = getKeyIndex(Key::Code::Last);
     for (size_t i = 0; i < k; ++i) {
         info.keys[i].pressed = false;
@@ -208,7 +247,11 @@ void Keyboard::defaultKey(GLFWwindow* window, int key, int scancode, int action,
     if (key == Key::Code::ScanKey) return;
 
     bool press = action != GLFW_RELEASE;
-    info.keys[getKeyIndex(key)] = { press, press, Time::elapsed() };
+    {
+        std::unique_lock<std::shared_mutex> lock(keyboardMut);
+        auto& keyData = info.keys[getKeyIndex(key)];
+        keyData = { keyData.pressed || press, press, Time::elapsed() };
+    }
 
     static uint32_t key_id = Message::add("keyboard_key");
     Dispatcher::central_trigger.sendBulkEvent<KeyHandler>(key_id, key, scancode, action, mods);

@@ -236,6 +236,7 @@
     <ClInclude Include="Render.h" />
     <ClInclude Include="RenderSpecial.h" />
     <ClInclude Include="RigidBody.h" />
+    <ClInclude Include="safe_queue.h" />
     <ClInclude Include="ShaderHelper.h" />
     <ClInclude Include="smart_ptr.h" />
     <ClInclude Include="State.h" />
@@ -248,6 +249,7 @@
     <ClInclude Include="UI.h" />
     <ClInclude Include="UiTest.h" />
     <ClInclude Include="unique_id.h" />
+    <ClInclude Include="Update.h" />
     <ClInclude Include="UV.h" />
   </ItemGroup>
   <ItemGroup>
