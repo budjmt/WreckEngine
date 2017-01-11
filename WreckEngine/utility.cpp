@@ -9,6 +9,7 @@
 #include "DrawDebug.h"
 
 #include "Update.h"
+#include "safe_queue.h"
 
 using namespace Event;
 
@@ -98,7 +99,7 @@ namespace {
     bool exiting = false;
 };
 
-std::future<void> MainThread::run(std::function<void()> func) { 
+std::future<void> MainThread::runAsync(std::function<void()> func) { 
     // return a completed future if the program is exiting
     if (exiting) {
         std::promise<void> temp;

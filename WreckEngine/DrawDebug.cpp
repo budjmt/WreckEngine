@@ -85,6 +85,19 @@ void DrawDebug::setRenderers(Render::MaterialPass* deferred, Render::MaterialPas
     this->forward = forward;
 }
 
+void DrawDebug::update() {
+    if (!debugVectors.size()) {
+        for (auto i = 0; i < 4; ++i) debugVectors.push_back(vec3());
+    }
+    debugVectors.seal();
+
+    if (!debugSpheres.size()) debugSpheres.push_back(Sphere());
+    debugSpheres.seal();
+
+    if (!debugBoxes.size()) for (auto i = 0; i < 3; ++i) debugBoxes.push_back(vec4());
+    debugBoxes.seal();
+}
+
 void DrawDebug::draw(Render::MaterialPass* o, Render::MaterialPass* a) {
 #if DEBUG
     setRenderers(o, a);
@@ -104,24 +117,22 @@ void DrawDebug::draw(Render::MaterialPass* o, Render::MaterialPass* a) {
 }
 
 void DrawDebug::drawVectors() {
-    if (!debugVectors.size()) {
-        for (auto i = 0; i < 4; ++i) debugVectors.push_back(vec3());
-    }
-
     const auto numVecs = debugVectors.size();
-    for (size_t i = 0; i < numVecs; i += 4) {
-        const auto sfact = 0.05f;
-        const auto s = debugVectors[i]    , c1 = debugVectors[i + 1]
-                 , e = debugVectors[i + 2], c2 = debugVectors[i + 3];
-        
-        const auto es = e - s;
-        const auto v = e - es * (sfact * 0.5f / length(es));
+    debugVectors.consume([this, numVecs] {
+        for (size_t i = 0; i < numVecs; i += 4) {
+            const auto sfact = 0.05f;
+            const auto s = debugVectors[i], c1 = debugVectors[i + 1]
+                , e = debugVectors[i + 2], c2 = debugVectors[i + 3];
 
-        const auto translate = glm::translate(v);
-        const auto rotate = rotateBetween(vec3(0,1,0), glm::normalize(es));
-        const auto scale = glm::scale(vec3(0.5f, 1.f, 0.5f) * sfact);
-        arrows.instances.push_back({ vec4(c2, 1), translate * rotate * scale });
-    }
+            const auto es = e - s;
+            const auto v = e - es * (sfact * 0.5f / length(es));
+
+            const auto translate = glm::translate(v);
+            const auto rotate = rotateBetween(vec3(0, 1, 0), glm::normalize(es));
+            const auto scale = glm::scale(vec3(0.5f, 1.f, 0.5f) * sfact);
+            arrows.instances.push_back({ vec4(c2, 1), translate * rotate * scale });
+        }
+    });
 
     vecVAO.bind();
     vecBuffer.bind();
@@ -131,39 +142,36 @@ void DrawDebug::drawVectors() {
     arrows.update();
     arrows.draw(forward, &meshMat, 0);
 
-    debugVectors.clear();
     arrows.instances.clear();
 }
 
 void DrawDebug::drawSpheres() {	
-    if (!debugSpheres.size()) debugSpheres.push_back(Sphere());
-    
-    for (const auto& s : debugSpheres) {
-        const auto translate = glm::translate(s.center);
-        const auto scale = glm::scale(vec3(s.rad * 2));
-        spheres.instances.push_back({ s.color, translate * scale });
-    }
+    debugSpheres.consume([this] {
+        for (const auto& s : debugSpheres) {
+            const auto translate = glm::translate(s.center);
+            const auto scale = glm::scale(vec3(s.rad * 2));
+            spheres.instances.push_back({ s.color, translate * scale });
+        }
+    });
 
     spheres.update();
     spheres.draw(forward, &meshMat, 0);
 
-    debugSpheres.clear();
     spheres.instances.clear();
 }
 
 void DrawDebug::drawBoxes() {
-    if (!debugBoxes.size()) for(auto i = 0; i < 3; ++i) debugBoxes.push_back(vec4());
-
-    for (size_t i = 0, numBoxes = debugBoxes.size(); i < numBoxes; i += 3) {
-        const auto translate = glm::translate(vec3(debugBoxes[i]));
-        const auto scale = glm::scale(vec3(debugBoxes[i + 1]));
-        boxes.instances.push_back({ debugBoxes[i + 2], translate * scale });
-    }
+    debugBoxes.consume([this] {
+        for (size_t i = 0, numBoxes = debugBoxes.size(); i < numBoxes; i += 3) {
+            const auto translate = glm::translate(vec3(debugBoxes[i]));
+            const auto scale = glm::scale(vec3(debugBoxes[i + 1]));
+            boxes.instances.push_back({ debugBoxes[i + 2], translate * scale });
+        }
+    });
 
     boxes.update();
     boxes.draw(forward, &meshMat, wireframeIndex);
 
-    debugBoxes.clear();
     boxes.instances.clear();
 }
 

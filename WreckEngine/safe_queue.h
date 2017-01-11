@@ -4,6 +4,7 @@
 #include <mutex>
 #include <queue>
 
+// thread-safe queue that can be populated/depopulated from multiple threads
 template<typename T, typename Container = std::deque<T>>
 class safe_queue {
 public:
@@ -64,4 +65,52 @@ private:
     std::mutex mut;
     std::condition_variable condition;
     std::queue<T, Container> queue;
+};
+
+// simple data structure designed for a list that's populated once, and can only be repopulated once consumed
+// designed to be usable by one consumer, one producer
+template<typename T>
+class frame_vector : public std::vector<T> {
+public:
+    void push_back(const T& value) {
+        if (isSealed) return;
+        std::vector<T>::push_back(value);
+    }
+
+    void push_back(T&& value) { 
+        if (isSealed) return; 
+        std::vector<T>::push_back(std::move(value)); 
+    }
+
+    template<typename... Args>
+    void emplace_back(Args&&... args) { 
+        if (isSealed) return; 
+        std::vector<T>::emplace_back(std::forward<Args>(value)...); 
+    }
+
+    void seal() { 
+        std::unique_lock<std::mutex> lock(mut);
+        if (wasConsumed) {
+            clear();
+            wasConsumed = false;
+        }
+        else {
+            isSealed = true;
+            condition.notify_one();
+        }
+    }
+
+    // [func] is a function that iterates over the list, "consuming" it
+    void consume(std::function<void()> func) {
+        std::unique_lock<std::mutex> lock(mut);
+        condition.wait(lock, [this] { return isSealed; });
+        func();
+        clear();
+        isSealed = false;
+        wasConsumed = true;
+    }
+private:
+    bool isSealed = false, wasConsumed = false;
+    std::mutex mut;
+    std::condition_variable condition;
 };

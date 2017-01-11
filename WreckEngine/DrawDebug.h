@@ -14,9 +14,10 @@
 #include "Mesh.h"
 
 #include <functional>
+#include "safe_queue.h"
 
 //#if defined(_DEBUG) && !defined(NDEBUG)
-#define DEBUG false
+#define DEBUG true
 //#else
 //#define DEBUG false
 //#endif
@@ -77,6 +78,8 @@ public:
     static DrawDebug& getInstance();
     void camera(Camera* c);
 
+    void update();
+
     //this is the actual draw call
     void draw(Render::MaterialPass* deferred, Render::MaterialPass* forward);
 
@@ -114,7 +117,7 @@ private:
     
     struct Sphere { vec4 color; vec3 center; float rad; };
 
-    std::vector<vec3> debugVectors;
-    std::vector<vec4> debugBoxes;
-    std::vector<Sphere> debugSpheres;
+    frame_vector<vec3> debugVectors;
+    frame_vector<vec4> debugBoxes;
+    frame_vector<Sphere> debugSpheres;
 };

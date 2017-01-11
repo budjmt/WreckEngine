@@ -8,10 +8,10 @@
 
 #include <functional>
 #include <future>
-#include "safe_queue.h"
 
 namespace MainThread {
-    std::future<void> run(std::function<void()> func);
+    std::future<void> runAsync(std::function<void()> func);
+    inline void run(std::function<void()> func) { runAsync(func).wait(); }
     void tryExecute(std::chrono::milliseconds duration);
     void flush();
 }

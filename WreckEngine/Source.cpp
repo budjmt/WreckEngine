@@ -87,14 +87,15 @@ void initGraphics() {
 }
 
 void update() {
-    MainThread::run(&glfwPollEvents).wait();
+    MainThread::run(&glfwPollEvents);
 
     // game update occurs before external updates
     // this enables simpler rules for clearing events per frame
     game->update(Time::delta);
+    game->postUpdate();
 
     if (Keyboard::keyPressed(Keyboard::Key::F11))
-        MainThread::run([] { Window::toggleFullScreen(); });
+        MainThread::runAsync([] { Window::toggleFullScreen(); });
 
     if (Keyboard::altDown()) {
         if (Keyboard::keyPressed(Keyboard::Key::_0))
@@ -110,14 +111,13 @@ void update() {
 }
 
 void updateFPS() {
-    fpsInfo.runningAvgDelta -= fpsInfo.runningAvgDelta / samples;
-    fpsInfo.runningAvgDelta += Time::delta / samples;
+    fpsInfo.runningAvgDelta += (Time::delta - fpsInfo.runningAvgDelta) / samples;
     auto title = std::to_string(fpsInfo.fpsMode ? 1.0 / fpsInfo.runningAvgDelta : fpsInfo.runningAvgDelta * 1000.0);
     auto decimal = title.find('.');
     if (title.length() - decimal > 3) title = title.erase(decimal + 3);
     title += fpsInfo.fpsMode ? " FpS" : " MSpF";
     auto str = title.c_str();
-    MainThread::run([str] { glfwSetWindowTitle(Window::window, str); }).wait();
+    MainThread::run([str] { glfwSetWindowTitle(Window::window, str); });
 }
 
 void draw() {
