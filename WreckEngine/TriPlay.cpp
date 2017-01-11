@@ -127,6 +127,9 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     setupLights();
     setupPostProcess();
+
+    DrawDebug::getInstance().flush();
+    Text::flush();
 }
 
 void TriPlay::setupLights() {

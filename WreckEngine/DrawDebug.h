@@ -78,6 +78,7 @@ public:
     static DrawDebug& getInstance();
     void camera(Camera* c);
 
+    void flush();
     void preUpdate();
     void postUpdate();
 
@@ -114,11 +115,14 @@ private:
 
     GLVAO vecVAO;
     GLbuffer vecBuffer;
+    
     InstMesh<m_MeshData> arrows, spheres, boxes;
+    std::vector<vec3> vectorInsts;
+    size_t vecsAdded, spheresAdded, boxesAdded;
     
     struct Sphere { vec4 color; vec3 center; float rad; };
 
-    frame_vector<vec3> debugVectors;
-    frame_vector<vec4> debugBoxes;
-    frame_vector<Sphere> debugSpheres;
+    thread_frame_vector<vec3> debugVectors;
+    thread_frame_vector<vec4> debugBoxes;
+    thread_frame_vector<Sphere> debugSpheres;
 };

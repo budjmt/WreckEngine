@@ -64,6 +64,7 @@ namespace Text
 	
 	enum Justify : GLubyte { START, MIDDLE, END };
 
+    void flush();
     void preUpdate();
     void postUpdate();
 

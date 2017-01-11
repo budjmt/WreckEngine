@@ -20,7 +20,7 @@ namespace {
 	FT_Wrapper FT;
 
 	Text::Renderer renderer;
-	frame_vector<Text::Instance> instances;
+	thread_frame_vector<Text::Instance> instances;
 	std::unordered_map<std::string, shared<Text::FontFace>> fontFaces;
 	
 	const std::string WIN_DIR = getEnvVar("windir");
@@ -112,12 +112,16 @@ void Text::Renderer::init() {
 	shader.color   = shader.program.getUniform<vec4>("textColor");
 }
 
+void Text::flush() {
+    instances.flush();
+}
+
 void Text::preUpdate() {
-    instances.unseal();
+    instances.get().unseal();
 }
 
 void Text::postUpdate() {
-    instances.seal();
+    instances.get().seal();
 }
 
 void Text::draw(const std::string& text, const FontFace* font, Justify vertical, Justify horizontal, float x, float y, float scale, const vec4& color) {
@@ -141,13 +145,13 @@ void Text::draw(const std::string& text, const FontFace* font, Justify vertical,
 	i.x = x; i.y = Window::height - y;
 	i.scale = scale;
 	i.color = color;
-	instances.push_back(i);
+	instances.get().push_back(i);
 }
 
 void Text::render(Render::MaterialPass* matRenderer) {
     renderer.renderer = matRenderer;
-    if (Text::active) { instances.consume([] { for (auto& instance : instances) renderer.draw(instance); }); }
-    else instances.consume([] {}); // clears the list without doing anything
+    if (Text::active) { instances.consumeAll([](auto& instances) { for (auto& instance : instances) renderer.draw(instance); }); }
+    else instances.consumeAll([](auto&) {}); // clears the list without doing anything
 }
 
 vec2 Text::getDims(const std::string& text, const FontFace* font, float scale) {

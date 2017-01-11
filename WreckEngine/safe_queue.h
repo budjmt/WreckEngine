@@ -3,6 +3,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <queue>
+#include <map>
 
 // thread-safe queue that can be populated/depopulated from multiple threads
 template<typename T, typename Container = std::deque<T>>
@@ -103,13 +104,28 @@ public:
     }
 
     // [func] is a function that iterates over the list, "consuming" it
-    void consume(std::function<void()> func) {
+    void consume(std::function<void(frame_vector<T>&)> func) {
         std::unique_lock<std::mutex> lock(mut);
         condition.wait(lock, [this] { return isSealed; });
-        func();
+        func(*this);
     }
 private:
     bool isSealed = false;
     std::mutex mut;
     std::condition_variable condition;
+};
+
+template<typename T>
+class thread_frame_vector {
+public:
+    // returns the frame_vector corresponding to the current thread
+    frame_vector<T>& get() { return vectors[std::this_thread::get_id()]; }
+    
+    // consumes all threads' frame_vectors one at a time
+    void consumeAll(std::function<void(frame_vector<T>&)> func) { for(auto& frameVec : vectors) frameVec.second.consume(func); }
+
+    // use when threads that aren't supposed to be producing do so and you want to reset the map
+    void flush() { vectors.clear(); }
+private:
+    std::map<std::thread::id, frame_vector<T>> vectors;
 };
