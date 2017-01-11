@@ -91,6 +91,7 @@ void update() {
 
     // game update occurs before external updates
     // this enables simpler rules for clearing events per frame
+    game->preUpdate();
     game->update(Time::delta);
     game->postUpdate();
 

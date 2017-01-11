@@ -112,7 +112,11 @@ void Text::Renderer::init() {
 	shader.color   = shader.program.getUniform<vec4>("textColor");
 }
 
-void Text::update() {
+void Text::preUpdate() {
+    instances.unseal();
+}
+
+void Text::postUpdate() {
     instances.seal();
 }
 

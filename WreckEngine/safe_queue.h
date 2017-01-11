@@ -88,16 +88,18 @@ public:
         std::vector<T>::emplace_back(std::forward<Args>(value)...); 
     }
 
-    void seal() { 
-        if (wasConsumed) {
-            clear();
-            wasConsumed = false;
-        }
-        else if(!isSealed) {
-            std::unique_lock<std::mutex> lock(mut);
-            isSealed = true;
-            condition.notify_one();
-        }
+    void seal() {
+        if (isSealed) return;
+        std::unique_lock<std::mutex> lock(mut);
+        isSealed = true;
+        condition.notify_one();
+    }
+
+    void unseal() {
+        if (!isSealed) return;
+        std::unique_lock<std::mutex> lock(mut);
+        clear();
+        isSealed = false;
     }
 
     // [func] is a function that iterates over the list, "consuming" it
@@ -105,12 +107,9 @@ public:
         std::unique_lock<std::mutex> lock(mut);
         condition.wait(lock, [this] { return isSealed; });
         func();
-        clear();
-        isSealed = false;
-        wasConsumed = true;
     }
 private:
-    bool isSealed = false, wasConsumed = false;
+    bool isSealed = false;
     std::mutex mut;
     std::condition_variable condition;
 };

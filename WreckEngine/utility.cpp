@@ -236,7 +236,7 @@ bool Keyboard::altDown()     { return keyDown(Key::Code::LAlt)     || keyDown(Ke
 bool Keyboard::superDown()   { return keyDown(Key::Code::LSuper)   || keyDown(Key::Code::RSuper);   }
 
 void Keyboard::update() {
-    std::unique_lock<std::shared_mutex> lock(keyboardMut);
+    std::lock_guard<std::shared_mutex> lock(keyboardMut);
     constexpr size_t k = getKeyIndex(Key::Code::Last);
     for (size_t i = 0; i < k; ++i) {
         info.keys[i].pressed = false;
@@ -249,7 +249,7 @@ void Keyboard::defaultKey(GLFWwindow* window, int key, int scancode, int action,
 
     bool press = action != GLFW_RELEASE;
     {
-        std::unique_lock<std::shared_mutex> lock(keyboardMut);
+        std::lock_guard<std::shared_mutex> lock(keyboardMut);
         auto& keyData = info.keys[getKeyIndex(key)];
         keyData = { keyData.pressed || press, press, Time::elapsed() };
     }

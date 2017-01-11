@@ -78,7 +78,8 @@ public:
     static DrawDebug& getInstance();
     void camera(Camera* c);
 
-    void update();
+    void preUpdate();
+    void postUpdate();
 
     //this is the actual draw call
     void draw(Render::MaterialPass* deferred, Render::MaterialPass* forward);

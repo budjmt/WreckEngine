@@ -85,7 +85,13 @@ void DrawDebug::setRenderers(Render::MaterialPass* deferred, Render::MaterialPas
     this->forward = forward;
 }
 
-void DrawDebug::update() {
+void DrawDebug::preUpdate() {
+    debugVectors.unseal();
+    debugSpheres.unseal();
+    debugBoxes.unseal();
+}
+
+void DrawDebug::postUpdate() {
     if (!debugVectors.size()) {
         for (auto i = 0; i < 4; ++i) debugVectors.push_back(vec3());
     }
@@ -117,10 +123,9 @@ void DrawDebug::draw(Render::MaterialPass* o, Render::MaterialPass* a) {
 }
 
 void DrawDebug::drawVectors() {
-    const auto numVecs = debugVectors.size();
-    debugVectors.consume([this, numVecs] {
-        for (size_t i = 0; i < numVecs; i += 4) {
-            const auto sfact = 0.05f;
+    debugVectors.consume([this] {
+        for (size_t i = 0, numVecs = debugVectors.size(); i < numVecs; i += 4) {
+            constexpr auto sfact = 0.05f;
             const auto s = debugVectors[i], c1 = debugVectors[i + 1]
                 , e = debugVectors[i + 2], c2 = debugVectors[i + 3];
 
@@ -137,7 +142,7 @@ void DrawDebug::drawVectors() {
     vecVAO.bind();
     vecBuffer.bind();
     vecBuffer.data(&debugVectors[0]);
-    forward->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, numVecs / 2);
+    forward->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, arrows.instances.size() * 2);
 
     arrows.update();
     arrows.draw(forward, &meshMat, 0);

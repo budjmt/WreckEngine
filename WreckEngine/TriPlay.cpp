@@ -304,9 +304,14 @@ void TriPlay::updateLights() {
     ++frameCounter;
 }
 
+void TriPlay::preUpdate() {
+    Game::preUpdate();
+    Text::preUpdate();
+}
+
 void TriPlay::postUpdate() {
     Game::postUpdate();
-    Text::update();
+    Text::postUpdate();
 }
 
 void TriPlay::draw() {

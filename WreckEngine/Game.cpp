@@ -11,11 +11,18 @@ void Game::update(double dt) {
     currState->update(dt);
 }
 
+void Game::preUpdate() {
+#if DEBUG
+    if (drawDebug)
+        DrawDebug::getInstance().preUpdate();
+#endif
+}
+
 // special method for updates that must occur after all others; these cannot be implemented by entities
 void Game::postUpdate() {
 #if DEBUG
 if(drawDebug)
-    DrawDebug::getInstance().update();
+    DrawDebug::getInstance().postUpdate();
 #endif
 }
 

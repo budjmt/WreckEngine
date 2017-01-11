@@ -59,7 +59,7 @@ Transform::safe_tf_ptr Transform::getComputed() const {
 
 Transform* Transform::computeTransform() const {
     {
-        std::unique_lock<std::shared_mutex> lock(computedMut.object);
+        std::lock_guard<std::shared_mutex> lock(computedMut.object);
         auto p = _parent->getComputed();
         computed->_position = _position + p->_position;
         computed->_scale = _scale * p->_scale;
