@@ -89,12 +89,12 @@ public:
     }
 
     void seal() { 
-        std::unique_lock<std::mutex> lock(mut);
         if (wasConsumed) {
             clear();
             wasConsumed = false;
         }
-        else {
+        else if(!isSealed) {
+            std::unique_lock<std::mutex> lock(mut);
             isSealed = true;
             condition.notify_one();
         }

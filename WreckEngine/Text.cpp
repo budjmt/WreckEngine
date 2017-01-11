@@ -4,6 +4,8 @@
 
 #include "External.h"
 
+#include "safe_queue.h"
+
 namespace {
 	struct FT_Wrapper {
 		
@@ -18,7 +20,7 @@ namespace {
 	FT_Wrapper FT;
 
 	Text::Renderer renderer;
-	std::vector<Text::Instance> instances;
+	frame_vector<Text::Instance> instances;
 	std::unordered_map<std::string, shared<Text::FontFace>> fontFaces;
 	
 	const std::string WIN_DIR = getEnvVar("windir");
@@ -110,6 +112,10 @@ void Text::Renderer::init() {
 	shader.color   = shader.program.getUniform<vec4>("textColor");
 }
 
+void Text::update() {
+    instances.seal();
+}
+
 void Text::draw(const std::string& text, const FontFace* font, Justify vertical, Justify horizontal, float x, float y, float scale, const vec4& color) {
 	if (!Text::active || font == nullptr) 
 		return;
@@ -131,13 +137,13 @@ void Text::draw(const std::string& text, const FontFace* font, Justify vertical,
 	i.x = x; i.y = Window::height - y;
 	i.scale = scale;
 	i.color = color;
-	//instances.push_back(i);
+	instances.push_back(i);
 }
 
 void Text::render(Render::MaterialPass* matRenderer) {
     renderer.renderer = matRenderer;
-	if (Text::active) { for (auto& instance : instances) renderer.draw(instance); }
-	instances.clear();
+    if (Text::active) { instances.consume([] { for (auto& instance : instances) renderer.draw(instance); }); }
+    else instances.consume([] {}); // clears the list without doing anything
 }
 
 vec2 Text::getDims(const std::string& text, const FontFace* font, float scale) {

@@ -304,6 +304,11 @@ void TriPlay::updateLights() {
     ++frameCounter;
 }
 
+void TriPlay::postUpdate() {
+    Game::postUpdate();
+    Text::update();
+}
+
 void TriPlay::draw() {
 
     auto mat = Camera::main->getCamMat();
