@@ -31,6 +31,13 @@ unique<GLEWmanager> glew;
 
 void initGraphics();
 
+constexpr int samples = 10;
+static struct {
+    double FPS = 60;
+    double runningAvgDelta = 1.0 / FPS;
+    bool fpsMode = true;
+} fpsInfo;
+
 unique<Game> game;
 
 using namespace std;
@@ -86,29 +93,8 @@ void update() {
     // this enables simpler rules for clearing events per frame
     game->update(Time::delta);
 
-    Mouse::update();
-    Keyboard::update();
-}
-
-void updateFPS() {
-    constexpr int samples = 10;
-    static struct {
-        double FPS = 60;
-        double runningAvgDelta = 1.0 / FPS;
-        bool fpsMode = true;
-    } fpsInfo;
-
-    fpsInfo.runningAvgDelta -= fpsInfo.runningAvgDelta / samples;
-    fpsInfo.runningAvgDelta += Time::delta / samples;
-    auto title = std::to_string(fpsInfo.fpsMode ? 1.0 / fpsInfo.runningAvgDelta : fpsInfo.runningAvgDelta * 1000.0);
-    auto decimal = title.find('.');
-    if (title.length() - decimal > 3) title = title.erase(decimal + 3);
-    title += fpsInfo.fpsMode ? " FpS" : " MSpF";
-    auto str = title.c_str();
-    MainThread::run([str] { glfwSetWindowTitle(Window::window, str); }).wait();
-
     if (Keyboard::keyPressed(Keyboard::Key::F11))
-        Window::toggleFullScreen();
+        MainThread::run([] { Window::toggleFullScreen(); });
 
     if (Keyboard::altDown()) {
         if (Keyboard::keyPressed(Keyboard::Key::_0))
@@ -118,6 +104,20 @@ void updateFPS() {
         else if (Keyboard::keyPressed(Keyboard::Key::Minus))
             fpsInfo.FPS -= (fpsInfo.FPS > 20) ? 10 : ((fpsInfo.FPS > 5) ? 5 : ((fpsInfo.FPS > 1) ? 1 : 0));
     }
+
+    Mouse::update();
+    Keyboard::update();
+}
+
+void updateFPS() {
+    fpsInfo.runningAvgDelta -= fpsInfo.runningAvgDelta / samples;
+    fpsInfo.runningAvgDelta += Time::delta / samples;
+    auto title = std::to_string(fpsInfo.fpsMode ? 1.0 / fpsInfo.runningAvgDelta : fpsInfo.runningAvgDelta * 1000.0);
+    auto decimal = title.find('.');
+    if (title.length() - decimal > 3) title = title.erase(decimal + 3);
+    title += fpsInfo.fpsMode ? " FpS" : " MSpF";
+    auto str = title.c_str();
+    MainThread::run([str] { glfwSetWindowTitle(Window::window, str); }).wait();
 }
 
 void draw() {
