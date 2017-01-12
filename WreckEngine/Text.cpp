@@ -199,7 +199,7 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         glyphData.glyph.advance = glyphMetrics.horiAdvance * kerningScale;
         glyphData.glyph.bearing = {
             glyphMetrics.horiBearingX * kerningScale,
-            glyphMetrics.vertBearingY * kerningScale
+            glyphMetrics.horiBearingY * kerningScale
         };
         glyphData.glyph.size = {
             glyphMetrics.width        * kerningScale,
