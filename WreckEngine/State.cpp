@@ -9,6 +9,13 @@ void State::update(double dt) {
 	}
 }
 
+void State::physicsUpdate(double dt) {
+    for (auto e : entities) {
+        if (e->active)
+            e->physicsUpdate(dt);
+    }
+}
+
 void State::draw() {
 	for (auto e : entities) {
 		if (e->active)

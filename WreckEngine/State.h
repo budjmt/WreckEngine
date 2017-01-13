@@ -26,6 +26,7 @@ public:
     void addEntity(shared<Entity> e);
 
     void update(double dt);
+    void physicsUpdate(double dt);
     void draw();
 private:
     const std::string name;

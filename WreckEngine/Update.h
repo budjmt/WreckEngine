@@ -36,7 +36,7 @@ public:
     }
 
 private:
-    static constexpr auto interval = std::chrono::seconds((float) sec / freq);
+    static constexpr auto interval = std::chrono::duration<double>((double) sec / freq);
     std::function<void()> init, update;
     std::thread thread = std::thread([this] { this->run(); });
 };

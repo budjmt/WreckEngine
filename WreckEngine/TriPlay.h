@@ -20,6 +20,7 @@ public:
     void update(double dt);
     void preUpdate();
     void postUpdate();
+    void physicsUpdate(double dt);
     void draw();
 private:
     shared<Entity> me;

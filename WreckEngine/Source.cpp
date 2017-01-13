@@ -86,6 +86,12 @@ void initGraphics() {
     GL_CHECK(glFrontFace(GL_CCW));
 }
 
+void physicsUpdate() {
+    game->preUpdate();
+    game->physicsUpdate(Time::delta);
+    game->postUpdate();
+}
+
 void update() {
     MainThread::run(&glfwPollEvents);
 
@@ -141,7 +147,7 @@ int main(int argc, char** argv) {
 
     Update<0> regUpdate(&update);
     Update<0> render(&draw, []() { glfwMakeContextCurrent(Window::window); });
-    //Update<120> physicsUpdate(&physics);
+    Update<120> physicsUpdate(&physicsUpdate);
 
     glfwShowWindow(Window::window);
     while (!Window::closing()) {

@@ -5,6 +5,8 @@
 #include <queue>
 #include <map>
 
+#include "smart_ptr.h"
+
 // thread-safe queue that can be populated/depopulated from multiple threads
 template<typename T, typename Container = std::deque<T>>
 class safe_queue {
@@ -118,14 +120,31 @@ private:
 template<typename T>
 class thread_frame_vector {
 public:
+    using safe_fv_ptr = safe<frame_vector<T>, std::shared_lock<std::shared_mutex>>;
+
     // returns the frame_vector corresponding to the current thread
-    frame_vector<T>& get() { return vectors[std::this_thread::get_id()]; }
+    frame_vector<T>& get() { 
+        return vectors[std::this_thread::get_id()];
+    }
     
+    void seal() { 
+        const auto id = std::this_thread::get_id();
+        if (vectors.count(id)) vectors.at(id).seal();
+    }
+
+    void unseal() {
+        const auto id = std::this_thread::get_id();
+        if (vectors.count(id)) vectors.at(id).unseal();
+    }
+
     // consumes all threads' frame_vectors one at a time
-    void consumeAll(std::function<void(frame_vector<T>&)> func) { for(auto& frameVec : vectors) frameVec.second.consume(func); }
+    void consumeAll(std::function<void(frame_vector<T>&)> func) { 
+        for(auto& frameVec : vectors) frameVec.second.consume(func); 
+    }
 
     // use when threads that aren't supposed to be producing do so and you want to reset the map
     void flush() { vectors.clear(); }
 private:
     std::map<std::thread::id, frame_vector<T>> vectors;
+    std::shared_mutex mut;
 };

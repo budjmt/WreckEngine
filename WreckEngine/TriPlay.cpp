@@ -242,7 +242,6 @@ void TriPlay::update(double delta) {
     const auto dt = (float)delta;
 
     Game::update(delta);
-    CollisionManager::getInstance().update(dt);
 
     //quit the game
     if (Keyboard::keyDown(Keyboard::Key::Code::Q)) exit('q');
@@ -287,9 +286,9 @@ void TriPlay::update(double delta) {
 
     Camera::mayaCam(Camera::main, dt);
 
-    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
-    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
-    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
+    //DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
+    //DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
+    //DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
 }
 
 void TriPlay::updateLights() {
@@ -315,6 +314,11 @@ void TriPlay::preUpdate() {
 void TriPlay::postUpdate() {
     Game::postUpdate();
     Text::postUpdate();
+}
+
+void TriPlay::physicsUpdate(double dt) {
+    Game::physicsUpdate(dt);
+    CollisionManager::getInstance().update((float)dt);
 }
 
 void TriPlay::draw() {

@@ -27,6 +27,7 @@ public:
 	void* id = (void*)Random::get();//meant to identify the object for debugging purposes
 
 	virtual void update(double dt) { };
+    virtual void physicsUpdate(double dt) {};
 	virtual void draw();
 protected:
 	shared<Drawable> shape;

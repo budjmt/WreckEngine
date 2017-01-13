@@ -117,11 +117,11 @@ void Text::flush() {
 }
 
 void Text::preUpdate() {
-    instances.get().unseal();
+    instances.unseal();
 }
 
 void Text::postUpdate() {
-    instances.get().seal();
+    instances.seal();
 }
 
 void Text::draw(const std::string& text, const FontFace* font, Justify vertical, Justify horizontal, float x, float y, float scale, const vec4& color) {

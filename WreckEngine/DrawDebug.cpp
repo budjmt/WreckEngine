@@ -92,28 +92,35 @@ void DrawDebug::flush() {
 }
 
 void DrawDebug::preUpdate() {
-    debugVectors.get().unseal();
+    debugVectors.unseal();
     vecsAdded = 0;
-    debugSpheres.get().unseal();
+    debugSpheres.unseal();
     spheresAdded = 0;
-    debugBoxes.get().unseal();
+    debugBoxes.unseal();
     boxesAdded = 0;
 }
 
 void DrawDebug::postUpdate() {
-    auto& v = debugVectors.get();
-    if (!v.size()) {
-        for (auto i = 0; i < 4; ++i) v.push_back(vec3());
+    static const m_MeshData defaultMesh = { vec4(), mat4(0) };
+
+    if (!vecsAdded) {
+        ++vecsAdded;
+        for (auto i = 0; i < 4; ++i) vectorInsts.push_back(vec3());
+        arrows.instances.push_back(defaultMesh);
     }
-    v.seal();
+    debugVectors.seal();
 
-    auto& s = debugSpheres.get();
-    if (!s.size()) s.push_back(Sphere());
-    s.seal();
+    if (!spheresAdded) {
+        ++spheresAdded;
+        spheres.instances.push_back(defaultMesh);
+    }
+    debugSpheres.seal();
 
-    auto& b = debugBoxes.get();
-    if (!b.size()) for (auto i = 0; i < 3; ++i) b.push_back(vec4());
-    b.seal();
+    if (!boxesAdded) {
+        ++boxesAdded;
+        boxes.instances.push_back(defaultMesh);
+    }
+    debugBoxes.seal();
 }
 
 void DrawDebug::draw(Render::MaterialPass* o, Render::MaterialPass* a) {
@@ -216,9 +223,9 @@ void DrawDebug::drawDebugBox(vec3 pos, float w, float h, float d, vec3 color, fl
 #if DEBUG
     if (boxesAdded > MAX_BOXES) return;
     auto& b = debugBoxes.get();
-    b.push_back(vec4(pos, 0));
-    b.push_back(vec4(w, h, d, 0));
-    b.push_back(vec4(color, opacity));
+    b->push_back(vec4(pos, 0));
+    b->push_back(vec4(w, h, d, 0));
+    b->push_back(vec4(color, opacity));
     ++boxesAdded;
 #endif
 }

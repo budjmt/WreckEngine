@@ -26,6 +26,10 @@ if(drawDebug)
 #endif
 }
 
+void Game::physicsUpdate(double dt) {
+    currState->physicsUpdate(dt);
+}
+
 void Game::draw() {
     currState->draw();
 #if DEBUG

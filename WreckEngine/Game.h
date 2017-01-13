@@ -23,6 +23,7 @@ public:
     virtual void update(double dt);
     virtual void preUpdate();
     virtual void postUpdate();
+    virtual void physicsUpdate(double dt);
     virtual void draw();
 protected:
     Render::LitRenderer renderer;
