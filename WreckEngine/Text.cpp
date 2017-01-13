@@ -44,6 +44,42 @@ namespace
     std::unordered_map<std::string, shared<Text::FontFace>> fontFaces;
 
     const std::string WIN_DIR = getEnvVar("windir");
+
+    constexpr int rectPaddingPerSide = 1;
+    constexpr int rectPadding = rectPaddingPerSide * 2;
+
+    static void extractMonoBitmapPixels(const FT_Bitmap& bmp, std::vector<unsigned char>& glyphPixels, int pitch) {
+        const auto bitmapWidth = bmp.width;
+        const auto bitmapHeight = bmp.rows;
+        auto pixels = bmp.buffer;
+
+        for (uint32_t y = 0; y < bitmapHeight; ++y)
+        {
+            for (uint32_t x = 0; x < bitmapWidth; ++x)
+            {
+                const size_t index = (x + rectPaddingPerSide) + (y + rectPaddingPerSide) * pitch;
+                auto isBitSet = (pixels[x / 8]) & (1 << (7 - (x % 8)));
+                glyphPixels[index] = isBitSet ? 255 : 0;
+            }
+            pixels += bmp.pitch;
+        }
+    }
+
+    static void extractBitmapPixels(const FT_Bitmap& bmp, std::vector<unsigned char>& glyphPixels, int pitch) {
+        const auto bitmapWidth = bmp.width;
+        const auto bitmapHeight = bmp.rows;
+        auto pixels = bmp.buffer;
+
+        for (uint32_t y = 0; y < bitmapHeight; ++y)
+        {
+            for (uint32_t x = 0; x < bitmapWidth; ++x)
+            {
+                const size_t index = (x + rectPaddingPerSide) + (y + rectPaddingPerSide) * pitch;
+                glyphPixels[index] = pixels[x];
+            }
+            pixels += bmp.pitch;
+        }
+    }
 }
 
 static constexpr float kerningScale = 1.0f / (1 << 6);
@@ -163,9 +199,6 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
     // TODO - Currently assumes the texture is empty. Expected functionality would be to have
     //        multiple glyph ranges loaded at a time
 
-    constexpr int rectPaddingPerSide = 1;
-    constexpr int rectPadding = rectPaddingPerSide * 2;
-
     // Load each of the glyphs in the range
     std::vector<stbrp_rect> packRects;
     std::vector<GlyphData> loadedGlyphs;
@@ -207,27 +240,10 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         };
 
         // Copy glyph buffer data (all pixels are white with varying alpha levels)
-        const unsigned char* pixels = bitmap.buffer;
-        auto& glyphBuffer = glyphData.bitmap;
-        for (uint32_t y = 0; y < bitmapHeight; ++y)
-        {
-            for (uint32_t x = 0; x < bitmapWidth; ++x)
-            {
-                const size_t index = (x + rectPaddingPerSide) + (y + rectPaddingPerSide) * rect.w;
-                if (bitmap.pixel_mode == FT_PIXEL_MODE_MONO)
-                {
-                    // Pixels are 1 bit monochrome values
-                    auto isBitSet = ((pixels[x / 8]) & (1 << (7 - (x % 8))));
-                    glyphBuffer[index] = isBitSet ? 255 : 0;
-                }
-                else
-                {
-                    // Pixels are 8-bit gray scale
-                    glyphBuffer[index] = pixels[x];
-                }
-            }
-            pixels += bitmap.pitch;
-        }
+        if (bitmap.pixel_mode == FT_PIXEL_MODE_MONO)
+            extractMonoBitmapPixels(bitmap, glyphData.bitmap, rect.w);
+        else
+            extractBitmapPixels(bitmap, glyphData.bitmap, rect.w);
 
         // Register the glyph data
         loadedGlyphs.push_back(glyphData);
@@ -495,11 +511,12 @@ vec2 Text::getDims(const std::string& text, const FontFace* font, float scale, i
         {
             auto dims = getDims(cp, font, scale);
             x += dims.x;
-            if (lineCount == 1)
-                firstLineHeight = fmax(firstLineHeight, dims.y);
+            if (lineCount == 1 && dims.y > firstLineHeight)
+                firstLineHeight = dims.y;
         }
 
-        maxX = fmax(maxX, x);
+        if (x > maxX)
+            maxX = x;
     }
 
     // Note: maxX is already scaled

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <glm/glm.hpp>
+#include "MarchMath.h"
 
 namespace Color
 {
-    using value_type = glm::vec4;
+    using value_type = vec4;
     using packed_type = uint32_t;
 
     static constexpr float inv255 = 1.0f / 255.0f;
