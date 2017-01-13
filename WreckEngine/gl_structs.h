@@ -92,7 +92,9 @@ struct GLtexture {
     inline bool valid() const { return *texture != def; }
 
     inline void create(const GLenum _type = GL_TEXTURE_2D, const GLint maxMipLevel = 0) {
-        if (valid()) return;
+        if (valid()) {
+            return;
+        }
         type = _type;
         GL_CHECK(glGenTextures(1, texture.get()));
         // these are globally bound, so technically this line affects every texture [of the type] each time the value changes
@@ -135,6 +137,10 @@ struct GLtexture {
     template<typename value_t>
     inline void set2D(const GLvoid* pixelData, const GLuint width, const GLuint height, const GLenum formatFrom = GL_RGBA, const GLenum formatTo = GL_RGBA, const GLint mipLevel = 0) const {
         GL_CHECK(glTexImage2D(type, mipLevel, formatTo, width, height, 0, formatFrom, GLtype<value_t>(), pixelData));
+    }
+    template<typename value_t>
+    inline void setSub2D(const GLvoid* pixelData, const GLint xoffset, const GLint yoffset, const GLuint width, const GLuint height, const GLenum format = GL_RGBA, const GLint mipLevel = 0) const {
+        GL_CHECK(glTexSubImage2D(type, mipLevel, xoffset, yoffset, width, height, format, GLtype<value_t>(), pixelData));
     }
     template<typename value_t>
     inline void set3D(const GLvoid* pixelData, const GLuint width, const GLuint height, const GLuint depth, const GLenum formatFrom = GL_RGBA, const GLenum formatTo = GL_RGBA, const GLint mipLevel = 0) const {
@@ -615,7 +621,9 @@ public:
                 }
             }
             if (attr.divisor)
+            {
                 GL_CHECK(glVertexAttribDivisor(i + baseIndex, attr.divisor));
+            }
             offset += attr.bytes;
         }
         GLuint finalIndex = attrs.size() + baseIndex;
