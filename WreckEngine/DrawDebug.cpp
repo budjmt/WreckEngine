@@ -101,25 +101,8 @@ void DrawDebug::preUpdate() {
 }
 
 void DrawDebug::postUpdate() {
-    static const m_MeshData defaultMesh = { vec4(), mat4(0) };
-
-    if (!vecsAdded) {
-        ++vecsAdded;
-        for (auto i = 0; i < 4; ++i) vectorInsts.push_back(vec3());
-        arrows.instances.push_back(defaultMesh);
-    }
     debugVectors.seal();
-
-    if (!spheresAdded) {
-        ++spheresAdded;
-        spheres.instances.push_back(defaultMesh);
-    }
     debugSpheres.seal();
-
-    if (!boxesAdded) {
-        ++boxesAdded;
-        boxes.instances.push_back(defaultMesh);
-    }
     debugBoxes.seal();
 }
 
@@ -161,7 +144,7 @@ void DrawDebug::drawVectors() {
 
     vecVAO.bind();
     vecBuffer.bind();
-    vecBuffer.data(&vectorInsts[0]);
+    vecBuffer.data(vectorInsts.data());
     forward->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, vectorInsts.size());
     vectorInsts.clear();
 
@@ -223,9 +206,9 @@ void DrawDebug::drawDebugBox(vec3 pos, float w, float h, float d, vec3 color, fl
 #if DEBUG
     if (boxesAdded > MAX_BOXES) return;
     auto& b = debugBoxes.get();
-    b->push_back(vec4(pos, 0));
-    b->push_back(vec4(w, h, d, 0));
-    b->push_back(vec4(color, opacity));
+    b.push_back(vec4(pos, 0));
+    b.push_back(vec4(w, h, d, 0));
+    b.push_back(vec4(color, opacity));
     ++boxesAdded;
 #endif
 }

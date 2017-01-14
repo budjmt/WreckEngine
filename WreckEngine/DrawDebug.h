@@ -61,7 +61,7 @@ struct InstMesh {
     inline void update() const {
         vao.bind();
         insts.bind();
-        insts.data(&instances[0]);
+        insts.data(instances.data());
     }
     inline void draw(Render::MaterialPass* renderer, Render::Info* mat, const size_t group) const {
         renderer->scheduleDrawElements(group, &vao, mat, GL_TRIANGLES, numVerts, GLtype<uint32_t>(), instances.size());
@@ -118,7 +118,7 @@ private:
     
     InstMesh<m_MeshData> arrows, spheres, boxes;
     std::vector<vec3> vectorInsts;
-    size_t vecsAdded, spheresAdded, boxesAdded;
+    std::atomic<size_t> vecsAdded, spheresAdded, boxesAdded;
     
     struct Sphere { vec4 color; vec3 center; float rad; };
 

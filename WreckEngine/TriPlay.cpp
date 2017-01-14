@@ -22,7 +22,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     menuState->handler_func = [this, mainsp, start_game_event](Event::Handler::param_t e) {
         if (e.id == start_game_event) {
             currState = mainsp;
-            GLframebuffer::setClearColor(0, 0, 0, 1);
+            Thread::Render::runPreFrame([] { GLframebuffer::setClearColor(0, 0, 0, 1); });
         }
     };
     addState(menuState);
@@ -34,8 +34,8 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     menuState->addEntity(menuText);
     //Text::active = false;
 
-    //GLframebuffer::setClearColor(0, 0.5f, 0.2f, 1);
-    GLframebuffer::setClearColor(0, 0, 0, 1); // this will remain until GL calls are thread independent
+   GLframebuffer::setClearColor(0, 0.5f, 0.2f, 1);
+   // GLframebuffer::setClearColor(0, 0, 0, 1); // this will remain until GL calls are thread independent
 
     mainState->handler_func = [](Event::Handler::param_t e) {
         //nothing right now

@@ -95,33 +95,60 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
 }
 
 namespace {
-    safe_queue<std::packaged_task<void()>> commands;
+    safe_queue<std::packaged_task<void()>> mainCommands;
+    
+    safe_queue<std::function<void()>> preRenderCommands;
+    std::mutex frameMutex;
+    std::condition_variable frameEndCondition;
+    
     bool exiting = false;
 };
 
-std::future<void> MainThread::runAsync(std::function<void()> func) { 
+std::future<void> completed_future() {
+    std::promise<void> temp;
+    temp.set_value();
+    return temp.get_future();
+}
+
+std::future<void> Thread::Main::runAsync(std::function<void()> func) { 
     // return a completed future if the program is exiting
     if (exiting) {
-        std::promise<void> temp;
-        temp.set_value();
-        return temp.get_future();
+        return completed_future();
     }
     std::packaged_task<void()> task(func);
     auto future = task.get_future();
-    commands.push(std::move(task));
+    mainCommands.push(std::move(task));
     return future; 
 }
 
-void MainThread::tryExecute(std::chrono::milliseconds duration) {
+void Thread::Main::tryExecute() {
+    using namespace std::chrono_literals;
+    constexpr auto duration = 10ms;
+
     std::packaged_task<void()> command;
-    if (commands.tryPop(command, duration))
+    if (mainCommands.tryPop(command, duration))
         command();
 }
 
-void MainThread::flush() {
+void Thread::Main::flush() {
     exiting = true;
-    while (!commands.empty())
-        commands.pop()();
+    while (!mainCommands.empty())
+        mainCommands.pop()();
+}
+
+void Thread::Render::runPreFrame(std::function<void()> func) { preRenderCommands.push(func); }
+
+void Thread::Render::executePreFrame() {
+    while (!preRenderCommands.empty()) {
+        preRenderCommands.pop()();
+    }
+}
+
+void Thread::Render::finishFrame() { frameEndCondition.notify_all(); }
+
+void Thread::Render::waitForFrame() {
+    std::unique_lock<std::mutex> lock(frameMutex);
+    frameEndCondition.wait(lock, [] { return true; });
 }
 
 GLFWwindow* Window::window;
@@ -171,7 +198,7 @@ void Window::defaultResize(GLFWwindow* window, int w, int h) {
     frameScale = vec2(width  > 0 ? ((float) frameWidth  / width ) : 0,
                       height > 0 ? ((float) frameHeight / height) : 0);
 
-    viewport(frameWidth, frameHeight);
+    Thread::Render::runPreFrame([] { viewport(frameWidth, frameHeight); });
 
     static uint32_t resize_id = Message::add("window_resize");
     Dispatcher::central_trigger.sendBulkEvent<ResizeHandler>(resize_id);

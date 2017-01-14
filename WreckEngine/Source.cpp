@@ -93,7 +93,7 @@ void physicsUpdate() {
 }
 
 void update() {
-    MainThread::run(&glfwPollEvents);
+    Thread::Main::run(&glfwPollEvents);
 
     // game update occurs before external updates
     // this enables simpler rules for clearing events per frame
@@ -102,7 +102,7 @@ void update() {
     game->postUpdate();
 
     if (Keyboard::keyPressed(Keyboard::Key::F11))
-        MainThread::runAsync([] { Window::toggleFullScreen(); });
+        Thread::Main::runAsync([] { Window::toggleFullScreen(); });
 
     if (Keyboard::altDown()) {
         if (Keyboard::keyPressed(Keyboard::Key::_0))
@@ -124,14 +124,16 @@ void updateFPS() {
     if (title.length() - decimal > 3) title = title.erase(decimal + 3);
     title += fpsInfo.fpsMode ? " FpS" : " MSpF";
     auto str = title.c_str();
-    MainThread::run([str] { glfwSetWindowTitle(Window::window, str); });
+    Thread::Main::run([str] { glfwSetWindowTitle(Window::window, str); });
 }
 
 void draw() {
     updateFPS();
-    GLframebuffer::clear();
+    Thread::Render::executePreFrame();
+    GLframebuffer::clear(); 
     game->draw();
     glfwSwapBuffers(Window::window);
+    Thread::Render::finishFrame();
 }
 
 int main(int argc, char** argv) {
@@ -146,16 +148,14 @@ int main(int argc, char** argv) {
     glfwMakeContextCurrent(nullptr);
 
     Update<0> regUpdate(&update);
-    Update<0> render(&draw, []() { glfwMakeContextCurrent(Window::window); });
     Update<120> physicsUpdate(&physicsUpdate);
+    Update<0> renderCommands(&draw, [] { glfwMakeContextCurrent(Window::window); });
 
     glfwShowWindow(Window::window);
     while (!Window::closing()) {
-        using namespace std::chrono_literals;
-        constexpr auto tryDuration = 100ms;
-        MainThread::tryExecute(tryDuration);
+        Thread::Main::tryExecute();
     }
-    MainThread::flush();
+    Thread::Main::flush();
 
     UpdateBase::join();
     return 0;

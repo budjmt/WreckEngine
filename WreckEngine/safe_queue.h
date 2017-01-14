@@ -2,6 +2,7 @@
 
 #include <condition_variable>
 #include <mutex>
+#include <shared_mutex>
 #include <queue>
 #include <map>
 
@@ -51,7 +52,8 @@ public:
         return front;
     }
 
-    bool tryPop(T& outVal, std::chrono::milliseconds duration) {
+    template<typename Duration>
+    bool tryPop(T& outVal, Duration duration) {
         std::unique_lock<std::mutex> lock(mut);
         if (!condition.wait_for(lock, duration, [this] { return !empty(); })) {
             return false;

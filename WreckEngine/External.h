@@ -9,11 +9,25 @@
 #include <functional>
 #include <future>
 
-namespace MainThread {
-    std::future<void> runAsync(std::function<void()> func);
-    inline void run(std::function<void()> func) { runAsync(func).wait(); }
-    void tryExecute(std::chrono::milliseconds duration);
-    void flush();
+namespace Thread {
+    // main thread functions are typically related to input and other GLFW functionality
+    // they can be run synchronously or asynchronously, depending on the requirements, 
+    // e.g. input polling must be synchronous while full screening doesn't need to be
+    namespace Main {
+        std::future<void> runAsync(std::function<void()> func);
+        inline void run(std::function<void()> func) { runAsync(func).wait(); }
+        void tryExecute(); // intended only to be executed by the main thread
+        void flush(); // flushes the remainder of the command queue to free up any pending calls
+    };
+
+    // render (aka GL context) thread calls fall into two categories: the actual render thread (the one that is responsible for draw commands) and those from other threads
+    // only the render thread has guaranteed execution over a frame in a more or less real-time fashion, other threads use a pre-frame hook for state changes
+    namespace Render {
+        void runPreFrame(std::function<void()> func); // the commands can originate from any thread
+        void executePreFrame(); // executes all pre-frame commands in the buffer
+        void finishFrame(); // call this from the render thread to indicate the frame is complete; this allows the loop to cycle
+        void waitForFrame(); // call from any thread to wait for the completion of a render frame
+    };
 }
 
 namespace Window {
