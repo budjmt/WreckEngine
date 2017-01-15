@@ -133,6 +133,8 @@ void DrawDebug::drawVectors() {
         }
     });
 
+    vecsAdded -= arrows.instances.size();
+
     vecVAO.bind();
     vecBuffer.bind();
     vecBuffer.data(vectorInsts.data());
@@ -153,6 +155,8 @@ void DrawDebug::drawSpheres() {
         }
     });
 
+    spheresAdded -= spheres.instances.size();
+
     spheres.update();
     spheres.draw(forward, &meshMat, 0);
     spheres.instances.clear();
@@ -166,6 +170,8 @@ void DrawDebug::drawBoxes() {
             boxes.instances.push_back({ debugBoxes[i + 2], translate * scale });
         }
     });
+
+    boxesAdded -= boxes.instances.size();
 
     boxes.update();
     boxes.draw(forward, &meshMat, wireframeIndex);

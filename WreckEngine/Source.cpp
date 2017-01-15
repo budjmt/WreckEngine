@@ -32,7 +32,7 @@ unique<GLEWmanager> glew;
 void initGraphics();
 
 constexpr int samples = 10;
-static struct {
+struct {
     double FPS = 60;
     double runningAvgDelta = 1.0 / FPS;
     bool fpsMode = true;
@@ -43,6 +43,9 @@ unique<Game> game;
 using namespace std;
 
 void init() {
+    if (DEBUG)
+        initDebug();
+
     auto shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
     if(shaderProg.valid()) {
         shaderProg.use();
@@ -141,16 +144,14 @@ int main(int argc, char** argv) {
     glfw = make_unique<GLFWmanager>(800, 600);
     glew = make_unique<GLEWmanager>();
 
-    if (DEBUG)
-        initDebug();
     init();
 
     // nullify context so it can be moved to the render thread
     glfwMakeContextCurrent(nullptr);
 
-    Update<0> regUpdate(&update);
-    Update<120> physicsUpdate(&physicsUpdate);
-    Update<0> renderCommands(&draw, [] { glfwMakeContextCurrent(Window::window); });
+    Update<0>   regUpdate     (&update);
+    Update<120> physicsUpdate (&physicsUpdate);
+    Update<0>   render        (&draw, [] { glfwMakeContextCurrent(Window::window); });
 
     glfwShowWindow(Window::window);
     while (!Window::closing()) {

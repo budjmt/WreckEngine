@@ -286,6 +286,8 @@ void TriPlay::update(double delta) {
 
     Camera::mayaCam(Camera::main, dt);
 
+    updateLights();
+
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
@@ -297,11 +299,11 @@ void TriPlay::updateLights() {
 
     dLight.light.position += vec3(mul);
     if (abs(dLight.light.position.x) > 3.f) mul = -mul;
-    dLight.group->updateLight(dLight.index, Light::UpdateFreq::OFTEN, dLight.light);
+    Thread::Render::runNextFrame([this] { dLight.group->updateLight(dLight.index, Light::UpdateFreq::OFTEN, dLight.light); });
 
     if (frameCounter % 30 == 0) {
         dLight2.light.color = vec3(1) - dLight2.light.color;
-        dLight2.group->updateLight(dLight2.index, Light::UpdateFreq::SOMETIMES, dLight2.light);
+        Thread::Render::runNextFrame([this] { dLight2.group->updateLight(dLight2.index, Light::UpdateFreq::SOMETIMES, dLight2.light); });
     }
     ++frameCounter;
 }
@@ -324,8 +326,6 @@ void TriPlay::draw() {
     forwardData.prog.use();
     forwardData.mat.update(mat);
     forwardData.pos.update(Camera::main->transform.getComputed()->position);
-
-    updateLights();
 
     Game::draw();
     Text::render(&renderer.forward.objects);

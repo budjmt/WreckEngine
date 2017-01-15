@@ -84,9 +84,8 @@ public:
     // call at the end of a frame to indicate that the cache should be moved to the next frame
     void seal() {
         ++activeList %= frame_cache;
-        ++numSealed;
-        if (numSealed == frame_cache) {
-            std::unique_lock<std::mutex> lock(mut);
+        std::unique_lock<std::mutex> lock(mut);
+        if (++numSealed == frame_cache) {
             consumeCondition.wait(lock, [this] { return numSealed < frame_cache; });
         }
     }
@@ -133,7 +132,9 @@ public:
 
     // consumes all threads' frame_vectors one at a time
     void consumeAll(std::function<void(std::vector<T>&)> func) { 
-        for(auto& frameVec : vectors) frameVec.second.consume(func); 
+        for (auto& frameVec : vectors) {
+            frameVec.second.consume(func);
+        }
     }
 
     // resets the thread map; intended for use after threads that don't normally access the queue do so to improve efficiency and stability

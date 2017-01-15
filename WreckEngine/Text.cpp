@@ -147,11 +147,9 @@ void Text::draw(const std::string& text, const FontFace* font, Justify vertical,
 void Text::render(Render::MaterialPass* matRenderer) {
     renderer.renderer = matRenderer;
     if (Text::active) { 
-        instances.consumeAll([](auto& instances) { 
-            //Thread::Render::runFrame([instances] { 
-                for (auto& instance : instances) 
-                    renderer.draw(instance); 
-            //}); 
+        instances.consumeAll([](auto& instances) {
+            for (auto& instance : instances) 
+                renderer.draw(instance);
         }); 
     }
     else instances.consumeAll([](auto&) {}); // clears the list without doing anything
