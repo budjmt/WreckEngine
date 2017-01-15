@@ -23,7 +23,6 @@ public:
     void draw();
 private:
     shared<Entity> me;
-    
     struct RenderData {
         GLprogram prog;
         GLuniform<mat4> mat;

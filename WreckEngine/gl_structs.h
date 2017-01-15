@@ -151,6 +151,11 @@ struct GLtexture {
         set3D(GLtype<value_t>(), pixelData, width, height, depth, formatFrom, formatTo, mipLevel);
     }
 
+    template<typename value_t>
+    inline void setSub2D(const GLvoid* pixelData, const GLint xoffset, const GLint yoffset, const GLuint width, const GLuint height, const GLenum format = GL_RGBA, const GLint mipLevel = 0) const {
+        GL_CHECK(glTexSubImage2D(target, mipLevel, xoffset, yoffset, width, height, format, GLtype<value_t>(), pixelData));
+    }
+
     // these sets correspond to glTexImage. Texture must be bound for these to work.
     template<typename value_t>
     inline void setStorage1D(const GLuint width, const GLenum format = GL_RGBA, const GLint mipLevels = 1) const {
@@ -631,7 +636,9 @@ public:
                 }
             }
             if (attr.divisor)
+            {
                 GL_CHECK(glVertexAttribDivisor(i + baseIndex, attr.divisor));
+            }
             offset += attr.bytes;
         }
         GLuint finalIndex = attrs.size() + baseIndex;

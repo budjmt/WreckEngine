@@ -72,6 +72,9 @@
     <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp">
       <Filter>ThirdParty\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="Color.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
     <ClCompile Include="MarchMath.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
@@ -159,6 +162,9 @@
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="ModelHelper.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Color.h">
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">

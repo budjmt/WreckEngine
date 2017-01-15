@@ -1,11 +1,18 @@
 #version 400
 
-layout (location = 0) in vec4 vertex;
-out vec2 uv;
+layout (location = 0) in vec2 vPosition;
+layout (location = 1) in vec2 vUV;
+layout (location = 2) in uint vColor;
+
+out vec2 fUV;
+flat out uint fColor;
 
 uniform mat4 camera; // generally just projection
+uniform vec2 offset;
+uniform float scale;
 
 void main() {
-	gl_Position = camera * vec4(vertex.xy, 0.01, 1.0);
-	uv = vertex.zw;
+    fUV = vUV;
+    fColor = vColor;
+    gl_Position = camera * vec4(vPosition * scale + offset, 0.01, 1.0);
 }
