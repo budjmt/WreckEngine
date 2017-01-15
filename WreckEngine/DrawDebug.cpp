@@ -133,13 +133,13 @@ void DrawDebug::drawVectors() {
         }
     });
 
-    vecsAdded -= arrows.instances.size();
-
     vecVAO.bind();
     vecBuffer.bind();
     vecBuffer.data(vectorInsts.data());
     forward->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, vectorInsts.size());
+    
     vectorInsts.clear();
+    vecsAdded -= arrows.instances.size(); // the number of complete vectors == the number of arrows rendered (vectorInsts.size() / 2)
 
     arrows.update();
     arrows.draw(forward, &meshMat, 0);
@@ -155,11 +155,12 @@ void DrawDebug::drawSpheres() {
         }
     });
 
-    spheresAdded -= spheres.instances.size();
-
     spheres.update();
     spheres.draw(forward, &meshMat, 0);
+    
+    auto spheresRendered = spheres.instances.size();
     spheres.instances.clear();
+    spheresAdded -= spheresRendered;
 }
 
 void DrawDebug::drawBoxes() {
@@ -171,11 +172,12 @@ void DrawDebug::drawBoxes() {
         }
     });
 
-    boxesAdded -= boxes.instances.size();
-
     boxes.update();
     boxes.draw(forward, &meshMat, wireframeIndex);
+    
+    auto boxesRendered = boxes.instances.size();
     boxes.instances.clear();
+    boxesAdded -= boxesRendered;
 }
 
 void DrawDebug::drawDebugVector(vec3 start, vec3 end, vec3 color) {
