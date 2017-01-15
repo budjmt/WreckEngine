@@ -210,7 +210,6 @@ void Mouse::update() {
     
     for (int i = 0; i < 3; ++i) 
         info.buttons[i].downThisFrame = false;
-    info.wheel = 0.f;
 }
 
 void Mouse::defaultButton(GLFWwindow* window, int button, int action, int mods) {

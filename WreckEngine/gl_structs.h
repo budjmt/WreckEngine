@@ -31,12 +31,12 @@ namespace {
     GET_GL_CONSTANT_FUNC(getMaxNumTextures, GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     GET_GL_CONSTANT_FUNC(getMaxColorAttachments, GL_MAX_COLOR_ATTACHMENTS);
 
-    void local(delTexture)    (GLuint* t) { if (GLFWmanager::initialized && *t != def) GL_CHECK(glDeleteTextures(1, t));     delete t; }
-    void local(delBuffer)     (GLuint* b) { if (GLFWmanager::initialized && *b != def) GL_CHECK(glDeleteBuffers(1, b));      delete b; }
-    void local(delVAO)        (GLuint* a) { if (GLFWmanager::initialized && *a != def) GL_CHECK(glDeleteVertexArrays(1, a)); delete a; }
-    void local(delShader)     (GLuint* s) { if (GLFWmanager::initialized && *s != def) GL_CHECK(glDeleteShader(*s));         delete s; }
-    void local(delShaderProg) (GLuint* p) { if (GLFWmanager::initialized && *p != def) GL_CHECK(glDeleteProgram(*p));        delete p; }
-    void local(delFrameBuffer)(GLuint* f) { if (GLFWmanager::initialized && *f != def) GL_CHECK(glDeleteFramebuffers(1, f)); delete f; }
+    void local(delTexture)    (GLuint* t) { auto tv = *t; Thread::Render::runNextFrame([=] { if (GLFWmanager::initialized && tv != def) GL_CHECK(glDeleteTextures(1, &tv));     }); delete t; }
+    void local(delBuffer)     (GLuint* b) { auto bv = *b; Thread::Render::runNextFrame([=] { if (GLFWmanager::initialized && bv != def) GL_CHECK(glDeleteBuffers(1, &bv));      }); delete b; }
+    void local(delVAO)        (GLuint* a) { auto av = *a; Thread::Render::runNextFrame([=] { if (GLFWmanager::initialized && av != def) GL_CHECK(glDeleteVertexArrays(1, &av)); }); delete a; }
+    void local(delShader)     (GLuint* s) { auto sv = *s; Thread::Render::runNextFrame([=] { if (GLFWmanager::initialized && sv != def) GL_CHECK(glDeleteShader(sv));           }); delete s; }
+    void local(delShaderProg) (GLuint* p) { auto pv = *p; Thread::Render::runNextFrame([=] { if (GLFWmanager::initialized && pv != def) GL_CHECK(glDeleteProgram(pv));          }); delete p; }
+    void local(delFrameBuffer)(GLuint* f) { auto fv = *f; Thread::Render::runNextFrame([=] { if (GLFWmanager::initialized && fv != def) GL_CHECK(glDeleteFramebuffers(1, &fv)); }); delete f; }
 }
 
 struct GLtexture;

@@ -324,7 +324,9 @@ namespace UI
 
         // Setup inputs
         // (We've already got mouse wheel, keyboard keys & characters from GLFW callbacks polled in glfwPollEvents())
-        if (glfwGetWindowAttrib(Window::window, GLFW_FOCUSED))
+        int focused;
+        Thread::Main::run([&focused] { focused = glfwGetWindowAttrib(Window::window, GLFW_FOCUSED); });
+        if (focused)
         {
             // Mouse position in screen coordinates
             io.MousePos = ImVec2((float)Mouse::info.currPixel.x, (float)Mouse::info.currPixel.y);
@@ -344,7 +346,7 @@ namespace UI
         io.MouseWheel = Mouse::info.wheel;
 
         // Hide OS mouse cursor if ImGui is drawing it
-        glfwSetInputMode(Window::window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : Window::cursorMode);
+        Thread::Main::run([&io] { glfwSetInputMode(Window::window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : Window::cursorMode); });
 
         // Start the frame
         ImGui::NewFrame();

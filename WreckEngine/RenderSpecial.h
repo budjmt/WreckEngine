@@ -66,9 +66,11 @@ namespace Render {
 
         void render() { 
             lights.update();
-            if(Camera::main) lights.updateCamera(Camera::main);
-            lights.forward();
-            lights.defer(&lightR.objects, lightGroup);
+            if (Camera::main) {
+                lights.updateCamera(Camera::main);
+                lights.forward();
+                lights.defer(&lightR.objects, lightGroup);
+            }
             deferred.render(); 
         }
 

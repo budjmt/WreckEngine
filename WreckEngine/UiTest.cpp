@@ -8,21 +8,18 @@ namespace {
             printf("Global: Mods %d\n", e.data.peek<int>(2));
         }
     }
+
+    ImVec4 clear_color = ImColor(100, 149, 237);
 }
 
 struct UiTestEntity : public Entity
 {
-    ImVec4 clear_color = ImColor(100, 149, 237);
     bool show_test_window = false;
     bool show_another_window = false;
 
-    void update(double dt) override
-    {
-        UI::PrepareFrame();
-    }
-
     void draw() override
     {
+        UI::PrepareFrame();
         // 1. Show a simple window
         // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appears in a window automatically called "Debug"
         {
@@ -54,8 +51,6 @@ struct UiTestEntity : public Entity
             ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
             ImGui::ShowTestWindow(&show_test_window);
         }
-
-        GLframebuffer::setClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     }
 
     void testHandler(Event::Handler::param_t e) {
@@ -89,7 +84,10 @@ UiTest::~UiTest()
 }
 
 void UiTest::draw() {
+    GLframebuffer::setClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
     Game::draw();
+    GLframebuffer::unbind(GL_FRAMEBUFFER);
+    GLframebuffer::clear();
     UI::Draw();
 }
 
