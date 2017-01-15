@@ -22,7 +22,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     menuState->handler_func = [this, mainsp, start_game_event](Event::Handler::param_t e) {
         if (e.id == start_game_event) {
             currState = mainsp;
-            Thread::Render::runPreFrame([] { GLframebuffer::setClearColor(0, 0, 0, 1); });
+            Thread::Render::runNextFrame([] { GLframebuffer::setClearColor(0, 0, 0, 1); });
         }
     };
     addState(menuState);
@@ -286,9 +286,9 @@ void TriPlay::update(double delta) {
 
     Camera::mayaCam(Camera::main, dt);
 
-    //DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
-    //DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
-    //DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
+    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
+    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
+    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
 }
 
 void TriPlay::updateLights() {
@@ -304,11 +304,6 @@ void TriPlay::updateLights() {
         dLight2.group->updateLight(dLight2.index, Light::UpdateFreq::SOMETIMES, dLight2.light);
     }
     ++frameCounter;
-}
-
-void TriPlay::preUpdate() {
-    Game::preUpdate();
-    Text::preUpdate();
 }
 
 void TriPlay::postUpdate() {

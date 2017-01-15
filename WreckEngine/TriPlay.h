@@ -18,7 +18,6 @@ class TriPlay : public Game
 public:
     TriPlay(GLprogram prog);
     void update(double dt);
-    void preUpdate();
     void postUpdate();
     void physicsUpdate(double dt);
     void draw();

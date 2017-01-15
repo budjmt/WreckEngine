@@ -87,7 +87,6 @@ void initGraphics() {
 }
 
 void physicsUpdate() {
-    game->preUpdate();
     game->physicsUpdate(Time::delta);
     game->postUpdate();
 }
@@ -97,7 +96,6 @@ void update() {
 
     // game update occurs before external updates
     // this enables simpler rules for clearing events per frame
-    game->preUpdate();
     game->update(Time::delta);
     game->postUpdate();
 
@@ -129,10 +127,13 @@ void updateFPS() {
 
 void draw() {
     updateFPS();
-    Thread::Render::executePreFrame();
+    
+    Thread::Render::executeFrameQueue();
+    
     GLframebuffer::clear(); 
     game->draw();
     glfwSwapBuffers(Window::window);
+    
     Thread::Render::finishFrame();
 }
 

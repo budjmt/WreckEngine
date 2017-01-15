@@ -91,15 +91,6 @@ void DrawDebug::flush() {
     debugBoxes.flush();
 }
 
-void DrawDebug::preUpdate() {
-    debugVectors.unseal();
-    vecsAdded = 0;
-    debugSpheres.unseal();
-    spheresAdded = 0;
-    debugBoxes.unseal();
-    boxesAdded = 0;
-}
-
 void DrawDebug::postUpdate() {
     debugVectors.seal();
     debugSpheres.seal();

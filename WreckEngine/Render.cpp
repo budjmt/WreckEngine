@@ -12,7 +12,7 @@ Event::Handler Target::resizeHandler = Event::make_handler<Window::ResizeHandler
 std::vector<Target> Target::targets;
 
 void Target::resizeTargets(Event::Handler::param_t e) {
-    Thread::Render::runPreFrame([] {
+    Thread::Render::runNextFrame([] {
         for (auto& target : targets) {
             auto formatInfo = target.formatInfo;
             target.texture.bind();

@@ -74,79 +74,71 @@ private:
 
 // simple data structure designed for a list that's populated once, and can only be repopulated once consumed
 // designed to be usable by one consumer, one producer
-template<typename T>
-class frame_vector : public std::vector<T> {
+template<typename T, size_t frame_cache = 2>
+class frame_vector {
 public:
-    void push_back(const T& value) {
-        if (isSealed) return;
-        std::vector<T>::push_back(value);
+    std::vector<T>& get() {
+        return frameLists[activeList];
     }
 
-    void push_back(T&& value) { 
-        if (isSealed) return; 
-        std::vector<T>::push_back(std::move(value)); 
-    }
-
-    template<typename... Args>
-    void emplace_back(Args&&... args) { 
-        if (isSealed) return; 
-        std::vector<T>::emplace_back(std::forward<Args>(value)...); 
-    }
-
+    // call at the end of a frame to indicate that the cache should be moved to the next frame
     void seal() {
-        if (isSealed) return;
-        std::unique_lock<std::mutex> lock(mut);
-        isSealed = true;
-        condition.notify_one();
-    }
-
-    void unseal() {
-        if (!isSealed) return;
-        std::unique_lock<std::mutex> lock(mut);
-        clear();
-        isSealed = false;
+        ++activeList %= frame_cache;
+        ++numSealed;
+        if (numSealed == frame_cache) {
+            std::unique_lock<std::mutex> lock(mut);
+            consumeCondition.wait(lock, [this] { return numSealed < frame_cache; });
+        }
     }
 
     // [func] is a function that iterates over the list, "consuming" it
-    void consume(std::function<void(frame_vector<T>&)> func) {
+    void consume(std::function<void(std::vector<T>&)> func) {
+        if (numSealed == 0) return;
+        
+        auto& oldest = getOldest();
+        func(oldest);
+        oldest.clear();
+        
         std::unique_lock<std::mutex> lock(mut);
-        condition.wait(lock, [this] { return isSealed; });
-        func(*this);
+        --numSealed;
+        consumeCondition.notify_all();
     }
 private:
-    bool isSealed = false;
+    std::vector<T> frameLists[frame_cache];
+    size_t activeList = 0, numSealed = 0;
+    std::condition_variable consumeCondition;
     std::mutex mut;
-    std::condition_variable condition;
+
+    std::vector<T>& getOldest() {
+        return frameLists[(frame_cache + activeList - numSealed) % frame_cache];
+    }
 };
 
-template<typename T>
+template<typename T, size_t frame_cache = 2>
 class thread_frame_vector {
 public:
-    using safe_fv_ptr = safe<frame_vector<T>, std::shared_lock<std::shared_mutex>>;
-
-    // returns the frame_vector corresponding to the current thread
-    frame_vector<T>& get() { 
+    auto& getFrameVector() {
         return vectors[std::this_thread::get_id()];
     }
-    
+
+    // returns the active vector corresponding to the current thread
+    std::vector<T>& get() {
+        return getFrameVector().get();
+    }
+
     void seal() { 
         const auto id = std::this_thread::get_id();
         if (vectors.count(id)) vectors.at(id).seal();
     }
 
-    void unseal() {
-        const auto id = std::this_thread::get_id();
-        if (vectors.count(id)) vectors.at(id).unseal();
-    }
-
     // consumes all threads' frame_vectors one at a time
-    void consumeAll(std::function<void(frame_vector<T>&)> func) { 
+    void consumeAll(std::function<void(std::vector<T>&)> func) { 
         for(auto& frameVec : vectors) frameVec.second.consume(func); 
     }
 
-    // use when threads that aren't supposed to be producing do so and you want to reset the map
+    // resets the thread map; intended for use after threads that don't normally access the queue do so to improve efficiency and stability
     void flush() { vectors.clear(); }
 private:
-    std::map<std::thread::id, frame_vector<T>> vectors;
+    std::map<std::thread::id, frame_vector<T, frame_cache>> vectors;
     std::shared_mutex mut;
 };

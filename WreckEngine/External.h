@@ -20,13 +20,23 @@ namespace Thread {
         void flush(); // flushes the remainder of the command queue to free up any pending calls
     };
 
-    // render (aka GL context) thread calls fall into two categories: the actual render thread (the one that is responsible for draw commands) and those from other threads
-    // only the render thread has guaranteed execution over a frame in a more or less real-time fashion, other threads use a pre-frame hook for state changes
+    // the rendering thread has a pre-frame hook for external threads to push GL state changes
+    // the commands cannot be awaited, as their potential execution timing doesn't make sense in that context
+    // the waitForFrame() function can be used externally to delay execution until a render frame completes
     namespace Render {
-        void runPreFrame(std::function<void()> func); // the commands can originate from any thread
-        void executePreFrame(); // executes all pre-frame commands in the buffer
-        void finishFrame(); // call this from the render thread to indicate the frame is complete; this allows the loop to cycle
-        void waitForFrame(); // call from any thread to wait for the completion of a render frame
+        // queue a command to execute at the beginning of the next render frame
+        // can be called from any thread
+        void runNextFrame(std::function<void()> func);
+
+        // executes and clears all previously queued frame commands; called before a new frame renders anything
+        void executeFrameQueue();
+        
+        // alerts any waitForFrame() calls that a render frame has completed
+        void finishFrame();
+
+        // blocks execution at call site until a render frame completes
+        // can be called from any thread
+        void waitForFrame();
     };
 }
 

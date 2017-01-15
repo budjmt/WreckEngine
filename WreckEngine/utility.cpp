@@ -136,9 +136,9 @@ void Thread::Main::flush() {
         mainCommands.pop()();
 }
 
-void Thread::Render::runPreFrame(std::function<void()> func) { preRenderCommands.push(func); }
+void Thread::Render::runNextFrame(std::function<void()> func) { preRenderCommands.push(func); }
 
-void Thread::Render::executePreFrame() {
+void Thread::Render::executeFrameQueue() {
     while (!preRenderCommands.empty()) {
         preRenderCommands.pop()();
     }
@@ -198,7 +198,7 @@ void Window::defaultResize(GLFWwindow* window, int w, int h) {
     frameScale = vec2(width  > 0 ? ((float) frameWidth  / width ) : 0,
                       height > 0 ? ((float) frameHeight / height) : 0);
 
-    Thread::Render::runPreFrame([] { viewport(frameWidth, frameHeight); });
+    Thread::Render::runNextFrame([] { viewport(frameWidth, frameHeight); });
 
     static uint32_t resize_id = Message::add("window_resize");
     Dispatcher::central_trigger.sendBulkEvent<ResizeHandler>(resize_id);

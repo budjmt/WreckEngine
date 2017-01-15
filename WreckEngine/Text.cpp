@@ -116,10 +116,6 @@ void Text::flush() {
     instances.flush();
 }
 
-void Text::preUpdate() {
-    instances.unseal();
-}
-
 void Text::postUpdate() {
     instances.seal();
 }

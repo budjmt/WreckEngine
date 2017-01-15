@@ -65,7 +65,6 @@ namespace Text
 	enum Justify : GLubyte { START, MIDDLE, END };
 
     void flush();
-    void preUpdate();
     void postUpdate();
 
 	void draw(const std::string& text, const FontFace* font, Justify vertical, Justify horizontal, float x, float y, float scale, const vec4& color = vec4(0, 0, 0, 1));
