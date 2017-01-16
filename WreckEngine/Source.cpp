@@ -159,6 +159,7 @@ int main(int argc, char** argv) {
     }
     Thread::Main::flush();
 
-    UpdateBase::join();
+    UpdateBase::join(); // join all the update threads to ensure destruction
+    glfwMakeContextCurrent(Window::window); // ensure that the context is current for global destructors
     return 0;
 }
