@@ -243,7 +243,7 @@ void TriPlay::update(double delta) {
     Game::update(delta);
 
     //quit the game
-    if (Keyboard::keyDown(Keyboard::Key::Code::Q)) exit('q');
+    if (Keyboard::keyDown(Keyboard::Key::Code::Q)) Window::close();
 
     constexpr auto speed = 5.f;
 

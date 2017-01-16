@@ -86,7 +86,7 @@ public:
         ++activeList %= frame_cache;
         std::unique_lock<std::mutex> lock(mut);
         if (++numSealed == frame_cache) {
-            consumeCondition.wait(lock, [this] { return numSealed < frame_cache; });
+            consumeCondition.wait(lock, [this] { return numSealed < frame_cache || Window::closing(); });
         }
     }
 

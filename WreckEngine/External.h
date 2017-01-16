@@ -52,6 +52,7 @@ namespace Window {
     extern vec2 size;
     extern vec2 frameScale;
 
+    inline void close()   { glfwSetWindowShouldClose(window, GLFW_TRUE); }
     inline bool closing() { return glfwWindowShouldClose(Window::window) != 0; }
 
     void toggleFullScreen(GLFWmonitor* monitor, int x, int y, int width, int height);
