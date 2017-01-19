@@ -74,12 +74,13 @@ namespace Mouse {
     struct Info {
         struct button { double lastDown = 0; bool downThisFrame = false; };
         struct cursor { double x = 0, y = 0; };
+        struct wheel  { float frame = 0.f, accum = 0.f; };
 
         uint32_t down = 0; // bit-field
         button buttons[3];
         cursor curr, currPixel, prev;
         const double clickCoolDown = 0.2;
-        float wheel = 0.f;
+        wheel wheel;
 
         inline bool getButtonState(int b) { return buttons[b].downThisFrame || (down & (1 << b)) != 0; }
         inline void setButtonDown(int b) { down |=   1 << b;  }

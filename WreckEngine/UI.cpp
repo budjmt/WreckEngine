@@ -343,7 +343,7 @@ namespace UI
             io.MouseDown[i] = Mouse::info.getButtonState(i);
         }
 
-        io.MouseWheel = Mouse::info.wheel;
+        io.MouseWheel = Mouse::info.wheel.accum;
 
         // Hide OS mouse cursor if ImGui is drawing it
         Thread::Main::run([&io] { glfwSetInputMode(Window::window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : Window::cursorMode); });

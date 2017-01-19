@@ -210,6 +210,9 @@ void Mouse::update() {
     
     for (int i = 0; i < 3; ++i) 
         info.buttons[i].downThisFrame = false;
+
+    info.wheel.frame = 0.f;
+    info.wheel.accum = glm::mix(0.f, info.wheel.accum, maxf(1.f - (float) Time::delta * 100, 0.f));
 }
 
 void Mouse::defaultButton(GLFWwindow* window, int button, int action, int mods) {
@@ -243,7 +246,7 @@ void Mouse::defaultMove(GLFWwindow* window, double x, double y) {
 }
 
 void Mouse::defaultScroll(GLFWwindow* window, double xoffset, double yoffset) {
-    info.wheel += (float) yoffset;
+    info.wheel.frame = info.wheel.accum = (float) yoffset;
 
     static uint32_t scroll_id = Message::add("mouse_scroll");
     Dispatcher::central_trigger.sendBulkEvent<ScrollHandler>(scroll_id);
