@@ -10,8 +10,14 @@
 struct UpdateBase {
 
     UpdateBase(std::thread* thread) { updateThreads.push_back(thread); }
-    static void join() { for (auto thread : updateThreads) thread->join(); }
+    static void join() { 
+        exitCondition.notify_all(); 
+        for (auto thread : updateThreads) thread->join(); 
+    }
 
+protected:
+    static std::mutex mut;
+    static std::condition_variable exitCondition;
 private:
     static std::vector<std::thread*> updateThreads;
 };
@@ -31,7 +37,8 @@ public:
 
             update();
 
-            std::this_thread::sleep_until(next);
+            std::unique_lock<std::mutex> lock(mut);
+            exitCondition.wait_until(lock, next, [] { return Window::closing(); });
         }
     }
 

@@ -46,6 +46,8 @@ void Time::updateDelta() {
     prevFrame = currFrame;
 }
 
+std::mutex UpdateBase::mut;
+std::condition_variable UpdateBase::exitCondition;
 std::vector<std::thread*> UpdateBase::updateThreads;
 
 bool GLFWmanager::initialized = false;
