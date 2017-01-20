@@ -79,7 +79,6 @@ public:
     void camera(Camera* c);
 
     void flush();
-    void preUpdate();
     void postUpdate();
 
     //this is the actual draw call

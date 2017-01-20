@@ -32,8 +32,9 @@ namespace File {
     
     struct ImageData {
         unsigned char* bytes;
-        shared<FIBITMAP> image{ nullptr, [](FIBITMAP* image) { if (image) FreeImage_Unload(image); } };
+        FIBITMAP* image;
         size_t width, height;
+        void destroy() { if (image) FreeImage_Unload(image); }
     };
 
     template<Extension E> class resource {};
@@ -108,7 +109,7 @@ namespace File {
             return data;
         }
         
-        data.image.reset(image);
+        data.image = image;
         data.width  = FreeImage_GetWidth(image);
         data.height = FreeImage_GetHeight(image);
         data.bytes  = FreeImage_GetBits(image);

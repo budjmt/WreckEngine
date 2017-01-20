@@ -141,6 +141,9 @@
     <ClCompile Include="Light.cpp">
       <Filter>Render</Filter>
     </ClCompile>
+    <ClCompile Include="HotSwap.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="unique_id.h">
@@ -276,6 +279,9 @@
       <Filter>Threading</Filter>
     </ClInclude>
     <ClInclude Include="File.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="HotSwap.h">
       <Filter>Utilities</Filter>
     </ClInclude>
   </ItemGroup>

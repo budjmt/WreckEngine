@@ -69,17 +69,18 @@ template<> inline constexpr GLenum GLtype<GLprogram>()     { return GL_PROGRAM; 
 template<> inline constexpr GLenum GLtype<GLframebuffer>() { return GL_FRAMEBUFFER; }
 
 // wraps a location pointing to a uniform variable of type T. the value is updated using update(T t). If there is no definition for update, the type is unsupported.
-template<typename T> struct GLuniform { GLuint location; };
-template<> struct GLuniform<GLint>     { GLuint location; inline void update(GLint value)       const { GL_CHECK(glUniform1i(location, value)); }; };
-template<> struct GLuniform<GLuint>    { GLuint location; inline void update(GLuint value)      const { GL_CHECK(glUniform1ui(location, value)); }; };
-template<> struct GLuniform<GLfloat>   { GLuint location; inline void update(GLfloat value)     const { GL_CHECK(glUniform1f(location, value)); }; };
-template<> struct GLuniform<GLdouble>  { GLuint location; inline void update(GLdouble value)    const { GL_CHECK(glUniform1d(location, value)); }; };
-template<> struct GLuniform<GLboolean> { GLuint location; inline void update(GLboolean value)   const { GL_CHECK(glUniform1i(location, value)); }; };
-template<> struct GLuniform<vec2>      { GLuint location; inline void update(const vec2& value) const { GL_CHECK(glUniform2fv(location, 1, &value[0])); }; };
-template<> struct GLuniform<vec3>      { GLuint location; inline void update(const vec3& value) const { GL_CHECK(glUniform3fv(location, 1, &value[0])); }; };
-template<> struct GLuniform<vec4>      { GLuint location; inline void update(const vec4& value) const { GL_CHECK(glUniform4fv(location, 1, &value[0])); }; };
-template<> struct GLuniform<mat3>      { GLuint location; inline void update(const mat3& value, bool transpose = false) const { GL_CHECK(glUniformMatrix3fv(location, 1, transpose, &value[0][0])); }; };
-template<> struct GLuniform<mat4>      { GLuint location; inline void update(const mat4& value, bool transpose = false) const { GL_CHECK(glUniformMatrix4fv(location, 1, transpose, &value[0][0])); }; };
+struct GLuniform_t { GLuint location; };
+template<typename T> struct GLuniform  : public GLuniform_t {};
+template<> struct GLuniform<GLint>     : public GLuniform_t { inline void update(GLint value)       const { GL_CHECK(glUniform1i(location, value)); }; };
+template<> struct GLuniform<GLuint>    : public GLuniform_t { inline void update(GLuint value)      const { GL_CHECK(glUniform1ui(location, value)); }; };
+template<> struct GLuniform<GLfloat>   : public GLuniform_t { inline void update(GLfloat value)     const { GL_CHECK(glUniform1f(location, value)); }; };
+template<> struct GLuniform<GLdouble>  : public GLuniform_t { inline void update(GLdouble value)    const { GL_CHECK(glUniform1d(location, value)); }; };
+template<> struct GLuniform<GLboolean> : public GLuniform_t { inline void update(GLboolean value)   const { GL_CHECK(glUniform1i(location, value)); }; };
+template<> struct GLuniform<vec2>      : public GLuniform_t { inline void update(const vec2& value) const { GL_CHECK(glUniform2fv(location, 1, &value[0])); }; };
+template<> struct GLuniform<vec3>      : public GLuniform_t { inline void update(const vec3& value) const { GL_CHECK(glUniform3fv(location, 1, &value[0])); }; };
+template<> struct GLuniform<vec4>      : public GLuniform_t { inline void update(const vec4& value) const { GL_CHECK(glUniform4fv(location, 1, &value[0])); }; };
+template<> struct GLuniform<mat3>      : public GLuniform_t { inline void update(const mat3& value, bool transpose = false) const { GL_CHECK(glUniformMatrix3fv(location, 1, transpose, &value[0][0])); }; };
+template<> struct GLuniform<mat4>      : public GLuniform_t { inline void update(const mat4& value, bool transpose = false) const { GL_CHECK(glUniformMatrix4fv(location, 1, transpose, &value[0][0])); }; };
 
 // wraps a texture. [type] reflects what type of sampler it needs.
 // https://www.opengl.org/wiki/Sampler_(GLSL)
@@ -335,6 +336,15 @@ struct GLprogram {
 
     inline bool valid() const { return *program != def; }
 
+    // deletes the program if it exists and creates a new one
+    inline void refresh() {
+        if (GLFWmanager::initialized && valid()) {
+            GL_CHECK(glDeleteProgram(*program));
+            *program = def;
+        }
+        create();
+    }
+
     inline void create() {
         if (valid()) return;
         GL_CHECK(*program = glCreateProgram());
@@ -348,6 +358,8 @@ struct GLprogram {
 
     inline void attach(const GLshader& shader) const { GL_CHECK(glAttachShader(*program, shader())); }
 
+    inline void relink() const { GL_CHECK(glLinkProgram(*program)); }
+
     // properly sets up the program once the shaders are set
     inline void link() const {
         if (vertex.valid())       attach(vertex);
@@ -355,18 +367,24 @@ struct GLprogram {
         if (tessEval.valid())     attach(tessEval);
         if (geometry.valid())     attach(geometry);
         if (fragment.valid())     attach(fragment);
-        GL_CHECK(glLinkProgram(*program));
+        relink();
     }
 
     inline void use() const {
         GL_CHECK(glUseProgram(*program));
     }
     
+    inline GLuint getUniformLocation(const char* name) const {
+        GLuint l;
+        GL_CHECK(l = glGetUniformLocation(*program, name));
+        return l;
+    }
+
     // used for retrieving uniform variables (of type T)
     template<typename T> 
     inline GLuniform<T> getUniform(const char* name) const {
-        GLuniform<T> u;
-        GL_CHECK(u.location = glGetUniformLocation(*program, name));
+        GLuniform<T> u; 
+        u.location = getUniformLocation(name);
         return u;
     }
 
