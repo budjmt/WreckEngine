@@ -7,6 +7,11 @@ struct GLstate_t {
     struct comp { GLint rgb, alpha; };
 };
 
+#ifndef GL_BINDING
+constexpr GLenum GL_BINDING = GL_ALWAYS; // not reserved for anything else so why not
+                                         // for future: GL_DONT_CARE
+#endif
+
 /// <summary>
 /// Defines an OpenGL rendering state.
 /// </summary>
@@ -138,7 +143,7 @@ struct GLstate<GL_VIEWPORT> {
     ~GLstate() { apply(); }
 
     void apply() const {
-        GL_CHECK(glViewport(viewport.x, viewport.y, viewport.width, viewport.height));
+        Window::viewport(viewport.x, viewport.y, viewport.width, viewport.height);
     }
 
     void capture() {
@@ -170,11 +175,6 @@ private:
     GLstate_t::dims scissorBox;
 };
 
-#ifndef GL_BINDING
-constexpr GLenum GL_BINDING = GL_ALWAYS; // not reserved for anything else so why not
-                                         // for future: GL_DONT_CARE
-#endif
-
 template<>
 struct GLstate<GL_BINDING> {
     GLstate() { capture(); }
@@ -205,6 +205,23 @@ private:
     GLint arrayBuffer;
     GLint elementArrayBuffer;
     GLint vertexArray;
+};
+
+template<>
+struct GLstate<GL_BINDING, GL_TEXTURE_BINDING_2D> {
+    GLstate() { capture(); }
+    ~GLstate() { apply(); }
+
+    void apply() const {
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, bound));
+    }
+
+    void capture() {
+        bound = getGLVal(GL_TEXTURE_BINDING_2D);
+    }
+
+private:
+    GLint bound;
 };
 
 /// <summary>

@@ -22,7 +22,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     menuState->handler_func = [this, mainsp, start_game_event](Event::Handler::param_t e) {
         if (e.id == start_game_event) {
             currState = mainsp;
-            GLframebuffer::setClearColor(0, 0, 0, 1);
+            Thread::Render::runNextFrame([] { GLframebuffer::setClearColor(0, 0, 0, 1); });
         }
     };
     addState(menuState);
@@ -34,7 +34,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     menuState->addEntity(menuText);
     //Text::active = false;
 
-    GLframebuffer::setClearColor(0, 0.5f, 0.2f, 1);
+   GLframebuffer::setClearColor(0, 0.5f, 0.2f, 1);
 
     mainState->handler_func = [](Event::Handler::param_t e) {
         //nothing right now
@@ -126,6 +126,9 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     setupLights();
     setupPostProcess();
+
+    DrawDebug::getInstance().flush();
+    Text::flush();
 }
 
 void TriPlay::setupLights() {
@@ -179,7 +182,7 @@ void TriPlay::setupLights() {
 void TriPlay::setupPostProcess() {
     using namespace Render;
 
-    renderer.forward.postProcess.output = GLframebuffer::createRenderTarget<GLubyte>();
+    renderer.forward.postProcess.output = Target::create<GLubyte>();
 
     auto& colorRender  = gBuffer[0], 
         & brightRender = gBuffer[1];
@@ -192,7 +195,7 @@ void TriPlay::setupPostProcess() {
 
     // blur
     auto blurH = make_shared<PostProcess>(), blurV = make_shared<PostProcess>();
-    auto blurTarget = GLframebuffer::createRenderTarget<GLubyte>();
+    auto blurTarget = Target::create<GLubyte>();
     auto blurF = loadShader("Shaders/postProcess/blur.glsl", GL_FRAGMENT_SHADER);
     
     blurH->data.setShaders(PostProcess::make_program(blurF));
@@ -238,10 +241,9 @@ void TriPlay::update(double delta) {
     const auto dt = (float)delta;
 
     Game::update(delta);
-    CollisionManager::getInstance().update(dt);
 
     //quit the game
-    if (Keyboard::keyDown(Keyboard::Key::Code::Q)) exit('q');
+    if (Keyboard::keyDown(Keyboard::Key::Code::Q)) Window::close();
 
     constexpr auto speed = 5.f;
 
@@ -282,19 +284,12 @@ void TriPlay::update(double delta) {
     }
 
     Camera::mayaCam(Camera::main, dt);
-    
-    auto mat = Camera::main->getCamMat();
-    objectData.prog.use();
-    objectData.mat.update(mat);
-    forwardData.prog.use();
-    forwardData.mat.update(mat);
-    forwardData.pos.update(Camera::main->transform.getComputed()->position);
+
+    updateLights();
 
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
-
-    updateLights();
 }
 
 void TriPlay::updateLights() {
@@ -303,16 +298,34 @@ void TriPlay::updateLights() {
 
     dLight.light.position += vec3(mul);
     if (abs(dLight.light.position.x) > 3.f) mul = -mul;
-    dLight.group->updateLight(dLight.index, Light::UpdateFreq::OFTEN, dLight.light);
+    Thread::Render::runNextFrame([this] { dLight.group->updateLight(dLight.index, Light::UpdateFreq::OFTEN, dLight.light); });
 
     if (frameCounter % 30 == 0) {
         dLight2.light.color = vec3(1) - dLight2.light.color;
-        dLight2.group->updateLight(dLight2.index, Light::UpdateFreq::SOMETIMES, dLight2.light);
+        Thread::Render::runNextFrame([this] { dLight2.group->updateLight(dLight2.index, Light::UpdateFreq::SOMETIMES, dLight2.light); });
     }
     ++frameCounter;
 }
 
+void TriPlay::postUpdate() {
+    Game::postUpdate();
+    Text::postUpdate();
+}
+
+void TriPlay::physicsUpdate(double dt) {
+    Game::physicsUpdate(dt);
+    CollisionManager::getInstance().update((float)dt);
+}
+
 void TriPlay::draw() {
+
+    auto mat = Camera::main->getCamMat();
+    objectData.prog.use();
+    objectData.mat.update(mat);
+    forwardData.prog.use();
+    forwardData.mat.update(mat);
+    forwardData.pos.update(Camera::main->transform.getComputed()->position);
+
     Game::draw();
     Text::render(&renderer.forward.objects);
 }

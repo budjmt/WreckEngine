@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -238,6 +238,7 @@
     <ClInclude Include="Render.h" />
     <ClInclude Include="RenderSpecial.h" />
     <ClInclude Include="RigidBody.h" />
+    <ClInclude Include="safe_queue.h" />
     <ClInclude Include="ShaderHelper.h" />
     <ClInclude Include="smart_ptr.h" />
     <ClInclude Include="State.h" />
@@ -250,6 +251,7 @@
     <ClInclude Include="UI.h" />
     <ClInclude Include="UiTest.h" />
     <ClInclude Include="unique_id.h" />
+    <ClInclude Include="Update.h" />
     <ClInclude Include="UV.h" />
   </ItemGroup>
   <ItemGroup>

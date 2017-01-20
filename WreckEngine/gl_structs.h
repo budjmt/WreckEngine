@@ -85,17 +85,15 @@ template<> struct GLuniform<mat4>      { GLuint location; inline void update(con
 // https://www.opengl.org/wiki/Sampler_(GLSL)
 struct GLtexture {
     shared<GLuint> texture = shared<GLuint>(new GLuint(def), local(delTexture));
-    GLenum type;
+    GLenum target;
     inline WR_GL_OP_PARENS(GLuint, texture);
     inline WR_GL_OP_EQEQ(GLtexture, texture);
 
     inline bool valid() const { return *texture != def; }
 
     inline void create(const GLenum _type = GL_TEXTURE_2D, const GLint maxMipLevel = 0) {
-        if (valid()) {
-            return;
-        }
-        type = _type;
+        if (valid()) return;
+        target = _type;
         GL_CHECK(glGenTextures(1, texture.get()));
         // these are globally bound, so technically this line affects every texture [of the type] each time the value changes
         // this can be fixed with immutable textures in 4.3+
@@ -104,15 +102,15 @@ struct GLtexture {
     }
     // must be done while bound
     inline void genMipMap() {
-        GL_CHECK(glGenerateMipmap(type));
+        GL_CHECK(glGenerateMipmap(target));
     }
     inline void bind(const GLint index = 0) const {
         assert(index < MAX_TEXTURES);
         GL_CHECK(glActiveTexture(GL_TEXTURE0 + index));
-        GL_CHECK(glBindTexture(type, *texture));
+        GL_CHECK(glBindTexture(target, *texture));
     }
     inline void unbind() {
-        GL_CHECK(glBindTexture(type, 0));
+        GL_CHECK(glBindTexture(target, 0));
     }
 
     inline void unload() {
@@ -123,28 +121,57 @@ struct GLtexture {
     }
 
     inline void param(const GLenum name, const int val) {
-        GL_CHECK(glTexParameteri(type, name, val));
+        GL_CHECK(glTexParameteri(target, name, val));
     }
     inline void param(const GLenum name, const float val) {
-        GL_CHECK(glTexParameterf(type, name, val));
+        GL_CHECK(glTexParameterf(target, name, val));
+    }
+
+    inline void set1D(const GLenum type, const void* pixelData, const GLuint width, const GLenum formatFrom, const GLenum formatTo, const GLint mipLevel = 0) const {
+        GL_CHECK(glTexImage1D(target, mipLevel, formatTo, width, 0, formatFrom, type, pixelData));
+    }
+    inline void set2D(const GLenum type, const void* pixelData, const GLuint width, const GLuint height, const GLenum formatFrom, const GLenum formatTo, const GLint mipLevel = 0) const {
+        GL_CHECK(glTexImage2D(target, mipLevel, formatTo, width, height, 0, formatFrom, type, pixelData));
+    }
+    inline void set3D(const GLenum type, const void* pixelData, const GLuint width, const GLuint height, const GLuint depth, const GLenum formatFrom, const GLenum formatTo, const GLint mipLevel = 0) const {
+        GL_CHECK(glTexImage3D(target, mipLevel, formatTo, width, height, depth, 0, formatFrom, type, pixelData));
     }
 
     // these sets correspond to glTexImage. Texture must be bound for these to work.
     template<typename value_t>
     inline void set1D(const GLvoid* pixelData, const GLuint width, const GLenum formatFrom = GL_RGBA, const GLenum formatTo = GL_RGBA, const GLint mipLevel = 0) const {
-        GL_CHECK(glTexImage1D(type, mipLevel, formatTo, width, 0, formatFrom, GLtype<value_t>(), pixelData));
+        set1D(GLtype<value_t>(), pixelData, width, formatFrom, formatTo, mipLevel);
     }
     template<typename value_t>
     inline void set2D(const GLvoid* pixelData, const GLuint width, const GLuint height, const GLenum formatFrom = GL_RGBA, const GLenum formatTo = GL_RGBA, const GLint mipLevel = 0) const {
-        GL_CHECK(glTexImage2D(type, mipLevel, formatTo, width, height, 0, formatFrom, GLtype<value_t>(), pixelData));
-    }
-    template<typename value_t>
-    inline void setSub2D(const GLvoid* pixelData, const GLint xoffset, const GLint yoffset, const GLuint width, const GLuint height, const GLenum format = GL_RGBA, const GLint mipLevel = 0) const {
-        GL_CHECK(glTexSubImage2D(type, mipLevel, xoffset, yoffset, width, height, format, GLtype<value_t>(), pixelData));
+        set2D(GLtype<value_t>(), pixelData, width, height, formatFrom, formatTo, mipLevel);
     }
     template<typename value_t>
     inline void set3D(const GLvoid* pixelData, const GLuint width, const GLuint height, const GLuint depth, const GLenum formatFrom = GL_RGBA, const GLenum formatTo = GL_RGBA, const GLint mipLevel = 0) const {
-        GL_CHECK(glTexImage3D(type, mipLevel, formatTo, width, height, depth, 0, formatFrom, GLtype<value_t>(), pixelData));
+        set3D(GLtype<value_t>(), pixelData, width, height, depth, formatFrom, formatTo, mipLevel);
+    }
+
+    template<typename value_t>
+    inline void setSub2D(const GLvoid* pixelData, const GLint xoffset, const GLint yoffset, const GLuint width, const GLuint height, const GLenum format = GL_RGBA, const GLint mipLevel = 0) const {
+        GL_CHECK(glTexSubImage2D(target, mipLevel, xoffset, yoffset, width, height, format, GLtype<value_t>(), pixelData));
+    }
+
+    // these sets correspond to glTexImage. Texture must be bound for these to work.
+    template<typename value_t>
+    inline void setStorage1D(const GLuint width, const GLenum format = GL_RGBA, const GLint mipLevels = 1) const {
+        GL_CHECK(glTexStorage1D(target, mipLevels, format, width, GLtype<value_t>()));
+    }
+    template<typename value_t>
+    inline void setStorage2D(const GLuint width, const GLuint height, const GLenum format = GL_RGBA, const GLint mipLevels = 1) const {
+        GL_CHECK(glTexStorage2D(target, mipLevels, format, width, height, GLtype<value_t>()));
+    }
+    template<typename value_t>
+    inline void setStorage3D(const GLuint width, const GLuint height, const GLuint depth, const GLenum format = GL_RGBA, const GLint mipLevels = 1) const {
+        GL_CHECK(glTexStorage3D(target, mipLevels, formatTo, width, height, depth, GLtype<value_t>()));
+    }
+
+    inline void view(const GLtexture& tex, const GLenum format = GL_RGBA, const GLint mipLevels = 1, const GLint baseMip = 0) {
+        GL_CHECK(glTextureView(*texture, target, tex(), format, baseMip, mipLevels, 0, 1));
     }
 
 private:
@@ -436,18 +463,18 @@ struct GLframebuffer {
         assert((GLint)(colorBuffers.size() + 1) < MAX_COLOR_ATTACHMENTS);
 
         if (attachment == Attachment::Color) {
-            GL_CHECK(glFramebufferTexture2D(type, attachment + colorBuffers.size(), tex.type, tex(), 0));
+            GL_CHECK(glFramebufferTexture2D(type, attachment + colorBuffers.size(), tex.target, tex(), 0));
             colorBuffers.push_back(attachment + colorBuffers.size());
         }
         else
-            GL_CHECK(glFramebufferTexture2D(type, attachment, tex.type, tex(), 0));
+            GL_CHECK(glFramebufferTexture2D(type, attachment, tex.target, tex(), 0));
     }
 
     void rebindTexture(const GLtexture& tex, Attachment attachment, const uint32_t index = 0) {
         assert(attachment == Attachment::Color || index == 0); // everything except Color can't have multiple attachments
         assert(index <= colorBuffers.size()); // can't rebind what hasn't been bound
 
-        GL_CHECK(glFramebufferTexture2D(type, attachment + index, tex.type, tex(), 0));
+        GL_CHECK(glFramebufferTexture2D(type, attachment + index, tex.target, tex(), 0));
     }
 
     void unbind() const { unbind(type); }
@@ -461,18 +488,6 @@ struct GLframebuffer {
         assert(type == GL_FRAMEBUFFER || type == GL_READ_FRAMEBUFFER); // the frame buffer must be bound to GL_READ_FRAMEBUFFER (or GL_FRAMEBUFFER) for this operation to succeed
         assert(texFormat != GL_DEPTH_STENCIL || unpackType == GL_UNSIGNED_INT_24_8 || unpackType == GL_FLOAT_32_UNSIGNED_INT_24_8_REV); // GL_DEPTH_STENCIL has special requirements
         GL_CHECK(glReadPixels(x, y, width, height, texFormat, unpackType, dest));
-    }
-
-    // creates a render target. If this is for depth and/or stencil, [from] must be GL_DEPTH_COMPONENT, GL_STENCIL_INDEX, or GL_DEPTH_STENCIL
-    template<typename T>
-    static GLtexture createRenderTarget(GLenum to = GL_RGBA, GLenum from = GL_RGBA) {
-        GLtexture tex;
-        tex.create();
-        tex.bind();
-        tex.param(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        tex.param(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        tex.set2D<T>(nullptr, Window::width, Window::height, from, to);
-        return tex;
     }
 
 private:

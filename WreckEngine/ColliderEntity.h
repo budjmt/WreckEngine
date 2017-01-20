@@ -19,7 +19,7 @@ public:
 
 	RigidBody& rigidBody = body;
 
-	virtual void update(double dt);
+	virtual void physicsUpdate(double dt);
 	virtual void calcForces(double dt);
 	virtual void handleCollision(ColliderEntity* other, Manifold& m, double dt, size_t& numCollisions);
 	vec3 calcAngularAccel(Manifold& m, vec3 F);

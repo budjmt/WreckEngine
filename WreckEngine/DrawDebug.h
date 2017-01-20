@@ -14,6 +14,7 @@
 #include "Mesh.h"
 
 #include <functional>
+#include "safe_queue.h"
 
 //#if defined(_DEBUG) && !defined(NDEBUG)
 #define DEBUG true
@@ -60,7 +61,7 @@ struct InstMesh {
     inline void update() const {
         vao.bind();
         insts.bind();
-        insts.data(&instances[0]);
+        insts.data(instances.data());
     }
     inline void draw(Render::MaterialPass* renderer, Render::Info* mat, const size_t group) const {
         renderer->scheduleDrawElements(group, &vao, mat, GL_TRIANGLES, numVerts, GLtype<uint32_t>(), instances.size());
@@ -76,6 +77,10 @@ class DrawDebug {
 public:
     static DrawDebug& getInstance();
     void camera(Camera* c);
+
+    void flush();
+    void preUpdate();
+    void postUpdate();
 
     //this is the actual draw call
     void draw(Render::MaterialPass* deferred, Render::MaterialPass* forward);
@@ -110,11 +115,14 @@ private:
 
     GLVAO vecVAO;
     GLbuffer vecBuffer;
+    
     InstMesh<m_MeshData> arrows, spheres, boxes;
+    std::vector<vec3> vectorInsts;
+    std::atomic<size_t> vecsAdded, spheresAdded, boxesAdded;
     
     struct Sphere { vec4 color; vec3 center; float rad; };
 
-    std::vector<vec3> debugVectors;
-    std::vector<vec4> debugBoxes;
-    std::vector<Sphere> debugSpheres;
+    thread_frame_vector<vec3> debugVectors;
+    thread_frame_vector<vec4> debugBoxes;
+    thread_frame_vector<Sphere> debugSpheres;
 };

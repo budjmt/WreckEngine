@@ -6,8 +6,43 @@
 #include "Time.h"
 #include "Random.h"
 
+#include <functional>
+#include <future>
+
+namespace Thread {
+    // main thread functions are typically related to input and other GLFW functionality
+    // they can be run synchronously or asynchronously, depending on the requirements, 
+    // e.g. input polling must be synchronous while full screening doesn't need to be
+    namespace Main {
+        std::future<void> runAsync(std::function<void()> func);
+        inline void run(std::function<void()> func) { runAsync(func).wait(); }
+        void tryExecute(); // intended only to be executed by the main thread
+        void flush(); // flushes the remainder of the command queue to free up any pending calls
+    };
+
+    // the rendering thread has a pre-frame hook for external threads to push GL state changes
+    // the commands cannot be awaited, as their potential execution timing doesn't make sense in that context
+    // the waitForFrame() function can be used externally to delay execution until a render frame completes
+    namespace Render {
+        // queue a command to execute at the beginning of the next render frame
+        // can be called from any thread
+        void runNextFrame(std::function<void()> func);
+
+        // executes and clears all previously queued frame commands; called before a new frame renders anything
+        void executeFrameQueue();
+        
+        // alerts any waitForFrame() calls that a render frame has completed
+        void finishFrame();
+
+        // blocks execution at call site until a render frame completes
+        // can be called from any thread
+        void waitForFrame();
+    };
+}
+
 namespace Window {
     extern GLFWwindow* window;
+    extern bool isFullScreen;
     extern int width, height;
     extern int frameWidth, frameHeight;
     extern float aspect;
@@ -16,6 +51,16 @@ namespace Window {
     // These two are purely for convenience with ImGui
     extern vec2 size;
     extern vec2 frameScale;
+
+    inline void close()   { glfwSetWindowShouldClose(window, GLFW_TRUE); }
+    inline bool closing() { return glfwWindowShouldClose(Window::window) != 0; }
+
+    void toggleFullScreen(GLFWmonitor* monitor, int x, int y, int width, int height);
+    void toggleFullScreen(int width, int height);
+    void toggleFullScreen();
+
+    inline void viewport(size_t x, size_t y, size_t width, size_t height) { GL_CHECK(glViewport(x, y, width, height)); }
+    inline void viewport(size_t width, size_t height) { viewport(0, 0, width, height); }
 
     inline void resizeCallback(GLFWwindowsizefun f) { glfwSetWindowSizeCallback(window, f); }
 
@@ -29,12 +74,13 @@ namespace Mouse {
     struct Info {
         struct button { double lastDown = 0; bool downThisFrame = false; };
         struct cursor { double x = 0, y = 0; };
+        struct wheel  { float frame = 0.f, accum = 0.f; };
 
         uint32_t down = 0; // bit-field
         button buttons[3];
         cursor curr, currPixel, prev;
         const double clickCoolDown = 0.2;
-        float wheel = 0.f;
+        wheel wheel;
 
         inline bool getButtonState(int b) { return buttons[b].downThisFrame || (down & (1 << b)) != 0; }
         inline void setButtonDown(int b) { down |=   1 << b;  }

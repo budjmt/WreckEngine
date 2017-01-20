@@ -18,6 +18,8 @@ class TriPlay : public Game
 public:
     TriPlay(GLprogram prog);
     void update(double dt);
+    void postUpdate();
+    void physicsUpdate(double dt);
     void draw();
 private:
     shared<Entity> me;

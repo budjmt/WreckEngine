@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Core">
@@ -27,6 +27,9 @@
     </Filter>
     <Filter Include="Render">
       <UniqueIdentifier>{39cc6575-67eb-4652-a78d-4a1c30752488}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Threading">
+      <UniqueIdentifier>{425898cc-a80a-45d3-b514-0c8f84c7354b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -265,6 +268,12 @@
     </ClInclude>
     <ClInclude Include="GLstate.h">
       <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Update.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
+    <ClInclude Include="safe_queue.h">
+      <Filter>Threading</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

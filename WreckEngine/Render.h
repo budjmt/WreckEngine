@@ -4,11 +4,42 @@
 
 #include "Material.h"
 #include "PostProcess.h"
+#include "Event.h"
 
 namespace Render {
 
+    struct Target {
+        GLtexture texture;
+        struct {
+            GLenum to, from, type;
+        } formatInfo;
+
+        // creates a render target. If this is for depth and/or stencil, [from] must be GL_DEPTH_COMPONENT, GL_STENCIL_INDEX, or GL_DEPTH_STENCIL
+        template<typename value_t>
+        static GLtexture create(GLenum to = GL_RGBA, GLenum from = GL_RGBA) {
+            Target rt;
+            rt.texture.create();
+            rt.texture.bind();
+            rt.texture.param(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            rt.texture.param(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            
+            rt.texture.set2D<value_t>(nullptr, Window::frameWidth, Window::frameHeight, rt.formatInfo.from = from, rt.formatInfo.to = to);
+            rt.formatInfo.type = GLtype<value_t>();
+            
+            targets.push_back(rt);
+            return rt.texture;
+        }
+
+    private:
+        Target() = default;
+        static void resizeTargets(Event::Handler::param_t e);
+
+        static Event::Handler resizeHandler;
+        static std::vector<Target> targets;
+    };
+
     extern std::vector<GLtexture> gBuffer;
-    extern GLtexture depth, stencil;
+    extern GLtexture depthstencil;
 
     extern GLbuffer fs_triangle;
 
@@ -61,7 +92,6 @@ namespace Render {
 
     class PostProcessChain {
     public:
-        PostProcessChain();
         PostProcess entry; // chain post processes to this
         GLtexture output;  // bind a color buffer of the final post process to this
 

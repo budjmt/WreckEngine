@@ -27,19 +27,26 @@ unique<GLEWmanager> glew;
 #include "UiTest.h"
 #include "UI.h"
 
+#include "Update.h"
+
 void initGraphics();
 
-double FPS = 60;
-double runningAvgDelta = 1.0 / FPS;
-int samples = 10;
-bool fpsMode = true;
-GLprogram shaderProg;
+constexpr int samples = 10;
+struct {
+    double FPS = 60;
+    double runningAvgDelta = 1.0 / FPS;
+    bool fpsMode = true;
+} fpsInfo;
+
 unique<Game> game;
 
 using namespace std;
 
 void init() {
-    shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
+    if (DEBUG)
+        initDebug();
+
+    auto shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
     if(shaderProg.valid()) {
         shaderProg.use();
         shaderProg.setOnce<vec4>("tint", vec4(1));
@@ -59,8 +66,6 @@ void init() {
 }
 
 void initGraphics() {
-    GL_CHECK(glViewport(0, 0, Window::width, Window::height));
-
     // alpha blending
     GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -84,60 +89,77 @@ void initGraphics() {
     GL_CHECK(glFrontFace(GL_CCW));
 }
 
-void update() {
-    Time::updateDelta();
-    //need to separate drawing and update pipelines
-    //double spf = 1.0 / FPS;
-    //while (dt < spf) {
-    //  currFrame = Time::elapsed();
-    //  dt += currFrame - prevFrame;
-    //  prevFrame = currFrame;
-    //}
+void physicsUpdate() {
+    game->physicsUpdate(Time::delta);
+    game->postUpdate();
+}
 
-    // game update occurs before anything else
+void update() {
+    Thread::Main::run(&glfwPollEvents);
+
+    // game update occurs before external updates
     // this enables simpler rules for clearing events per frame
     game->update(Time::delta);
+    game->postUpdate();
 
-    runningAvgDelta -= runningAvgDelta / samples;
-    runningAvgDelta += Time::delta / samples;
-    auto title = std::to_string(fpsMode ? 1.0 / runningAvgDelta : runningAvgDelta * 1000.0);
-    auto decimal = title.find('.');
-    if (title.length() - decimal > 3) title = title.erase(decimal + 3);
-    title += fpsMode ? " FpS" : " MSpF";
-    glfwSetWindowTitle(Window::window, title.c_str());
+    if (Keyboard::keyPressed(Keyboard::Key::F11))
+        Thread::Main::runAsync([] { Window::toggleFullScreen(); });
 
     if (Keyboard::altDown()) {
         if (Keyboard::keyPressed(Keyboard::Key::_0))
-            fpsMode = !fpsMode;
+            fpsInfo.fpsMode = !fpsInfo.fpsMode;
         else if (Keyboard::keyPressed(Keyboard::Key::Equal))
-            FPS += (FPS < 5) ? 1 : ((FPS < 20) ? 5 : ((FPS < 60) ? 10 : 0));
+            fpsInfo.FPS += (fpsInfo.FPS < 5) ? 1 : ((fpsInfo.FPS < 20) ? 5 : ((fpsInfo.FPS < 60) ? 10 : 0));
         else if (Keyboard::keyPressed(Keyboard::Key::Minus))
-            FPS -= (FPS > 20) ? 10 : ((FPS > 5) ? 5 : ((FPS > 1) ? 1 : 0));
+            fpsInfo.FPS -= (fpsInfo.FPS > 20) ? 10 : ((fpsInfo.FPS > 5) ? 5 : ((fpsInfo.FPS > 1) ? 1 : 0));
     }
 
     Mouse::update();
     Keyboard::update();
 }
 
+void updateFPS() {
+    fpsInfo.runningAvgDelta += (Time::delta - fpsInfo.runningAvgDelta) / samples;
+    auto title = std::to_string(fpsInfo.fpsMode ? 1.0 / fpsInfo.runningAvgDelta : fpsInfo.runningAvgDelta * 1000.0);
+    auto decimal = title.find('.');
+    if (title.length() - decimal > 3) title = title.erase(decimal + 3);
+    title += fpsInfo.fpsMode ? " FpS" : " MSpF";
+    auto str = title.c_str();
+    Thread::Main::run([str] { glfwSetWindowTitle(Window::window, str); });
+}
+
 void draw() {
-    GLframebuffer::clear();
+    updateFPS();
+    
+    Thread::Render::executeFrameQueue();
+    
+    GLframebuffer::clear(); 
     game->draw();
+    glfwSwapBuffers(Window::window);
+    
+    Thread::Render::finishFrame();
 }
 
 int main(int argc, char** argv) {
     glfw = make_unique<GLFWmanager>(800, 600);
     glew = make_unique<GLEWmanager>();
 
-    if (DEBUG)
-        initDebug();
     init();
-    glfwShowWindow(Window::window);
-    while (!glfwWindowShouldClose(Window::window)) {
-        glfwPollEvents();
-        update();
-        draw();
-        glfwSwapBuffers(Window::window);
-    }
 
+    // nullify context so it can be moved to the render thread
+    glfwMakeContextCurrent(nullptr);
+
+    Update<0>   regUpdate     (&update);
+    Update<120> physicsUpdate (&physicsUpdate);
+    Update<0>   render        (&draw, [] { glfwMakeContextCurrent(Window::window); });
+
+    glfwShowWindow(Window::window);
+    while (!Window::closing()) {
+        Thread::Main::tryExecute();
+    }
+    Thread::Main::flush();
+
+    UpdateBase::join(); // join all the update threads to ensure destruction
+    glfwMakeContextCurrent(Window::window); // ensure that the context is current for global destructors
     return 0;
 }

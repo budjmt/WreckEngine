@@ -8,21 +8,32 @@
 
 using namespace Render;
 
+Event::Handler Target::resizeHandler = Event::make_handler<Window::ResizeHandler>(&resizeTargets);
+std::vector<Target> Target::targets;
+
+void Target::resizeTargets(Event::Handler::param_t e) {
+    Thread::Render::runNextFrame([] {
+        for (auto& target : targets) {
+            auto formatInfo = target.formatInfo;
+            target.texture.bind();
+            target.texture.set2D(formatInfo.type, nullptr, Window::frameWidth, Window::frameHeight, formatInfo.from, formatInfo.to);
+        }
+    });
+}
+
 std::vector<GLtexture> Render::gBuffer;
-GLtexture Render::depth, Render::stencil;
+GLtexture Render::depthstencil;
 
 GLbuffer Render::fs_triangle;
 
 void Renderer::init(const size_t max_gBufferSize) {
-    // these can be optimized in 4.3+ using texture views
-    depth = GLframebuffer::createRenderTarget<GLdepthstencil>(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL);
-    // this is more labor intensive than expected
-    //stencil = GLframebuffer::createRenderTarget<GLdepthstencil>(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL);
-    //stencil.param(GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
+    // only depth OR stencil can be sampled without texture views (which only work on immutable storage)
+    // to change mode: depthstencil.param(GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT/GL_STENCIL_COMPONENT);
+    depthstencil = Target::create<GLdepthstencil>(GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL);
 
     gBuffer.reserve(max_gBufferSize);
     for (size_t i = 0; i < max_gBufferSize; ++i) {
-        gBuffer.push_back(GLframebuffer::createRenderTarget<GLfloat>(GL_RGB16F));
+        gBuffer.push_back(Target::create<GLfloat>(GL_RGB16F));
     }
 
     fs_triangle.create(GL_ARRAY_BUFFER);
@@ -43,7 +54,7 @@ void Renderer::init(const size_t max_gBufferSize) {
 void MaterialPass::prepareFrameBuffer() {
     frameBuffer.create();
     frameBuffer.bindPartial();
-    frameBuffer.attachTexture(depth, GLframebuffer::Attachment::DepthStencil);
+    frameBuffer.attachTexture(depthstencil, GLframebuffer::Attachment::DepthStencil);
     //frameBuffer.attachTexture(stencil, GLframebuffer::Attachment::Stencil);
 }
 
@@ -69,10 +80,6 @@ MaterialPass::MaterialPass(const std::vector<GLuint>& targets) {
     }
 
     frameBuffer.unbind();
-}
-
-PostProcessChain::PostProcessChain() {
-    output = GLframebuffer::createRenderTarget<GLubyte>();
 }
 
 GLVAO PostProcessChain::triangle;
@@ -200,7 +207,7 @@ GLframebuffer genClearFB() {
     f.bindPartial();
     for (size_t i = 0, gBufferSize = gBuffer.size(); i < gBufferSize; ++i)
         f.attachTexture(gBuffer[i], GLframebuffer::Attachment::Color);
-    f.attachTexture(depth, GLframebuffer::Attachment::DepthStencil);
+    f.attachTexture(depthstencil, GLframebuffer::Attachment::DepthStencil);
     return f;
 }
 

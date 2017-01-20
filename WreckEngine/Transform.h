@@ -2,6 +2,7 @@
 
 #include <unordered_set>
 #include <malloc.h>
+#include <shared_mutex>
 
 #include "MarchMath.h"
 #include "smart_ptr.h"
@@ -11,6 +12,8 @@ class Transform
 {
 public:
 	Transform();
+
+    using safe_tf_ptr = safe<const Transform, std::shared_lock<std::shared_mutex>>;
 
 	struct alignas(16) mat_cache {
 		mat4 translate, rotate, scale, world;
@@ -23,7 +26,7 @@ public:
 
 	Transform* parent() const; void parent(Transform* p);
 	std::unordered_set<Transform*> children;
-	const Transform* getComputed() const;
+	safe_tf_ptr getComputed() const;
 	mat_cache* getMats() const;
 
 	void setBaseDirections(const vec3 t_forward, const vec3 t_up);
@@ -47,6 +50,7 @@ private:
 
 	// computes are const, so these must be mutable
 	mutable bool dirtyComp, dirtyMats;
+    mutable copy_wrap<std::shared_mutex> computedMut;
 	mutable alloc<Transform> computed = alloc<Transform>(nullptr);
 	mutable alloc<mat_cache> mats = alloc<mat_cache>(nullptr);
 	

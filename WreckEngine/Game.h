@@ -21,6 +21,8 @@ public:
     void addState(shared<State> s);
 
     virtual void update(double dt);
+    virtual void postUpdate();
+    virtual void physicsUpdate(double dt);
     virtual void draw();
 protected:
     Render::LitRenderer renderer;

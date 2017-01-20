@@ -11,6 +11,8 @@
 #define STB_RECT_PACK_IMPLEMENTATION
 #include <stb_rect_pack.h>
 
+#include "safe_queue.h"
+
 namespace
 {
     struct FT_Wrapper
@@ -40,7 +42,7 @@ namespace
     FT_Wrapper FT;
 
     Text::Renderer renderer;
-    std::vector<Text::Instance*> instances;
+    thread_frame_vector<Text::Instance*> instances;
     std::unordered_map<std::string, shared<Text::FontFace>> fontFaces;
 
     const std::string WIN_DIR = getEnvVar("windir");
@@ -323,7 +325,7 @@ Text::Instance::Instance() {
 
 void Text::Instance::queueForDraw()
 {
-    instances.push_back(this);
+    instances.get().push_back(this);
 }
 
 void Text::Instance::updateAlignment() {
@@ -449,15 +451,6 @@ void Text::Renderer::init()
     shader.scale    = shader.program.getUniform<float>("scale");
 }
 
-void Text::render(Render::MaterialPass* matRenderer)
-{
-    if (Text::active)
-    {
-        renderer.renderer = matRenderer;
-        renderer.draw();
-    }
-}
-
 vec2 Text::getDims(char ch, const FontFace* font, float scale)
 {
     return getDims(static_cast<uint32_t>(ch), font, scale);
@@ -548,19 +541,39 @@ float Text::getKerning(uint32_t cp1, uint32_t cp2, const FontFace* font)
     return kerning;
 }
 
+void Text::flush() {
+    instances.flush();
+}
+
+void Text::postUpdate() {
+    instances.seal();
+}
+
+void Text::render(Render::MaterialPass* matRenderer)
+{
+    if (Text::active)
+    {
+        renderer.renderer = matRenderer;
+        renderer.draw();
+    }
+    else {
+        instances.consumeAll([](auto&) {}); // clears the list without doing anything
+    }
+}
+
 void Text::Renderer::draw() {
 
     shader.cam.value = glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height);
 
-    for (auto inst : instances) {
-        
-        inst->updateAlignment();
-        inst->updateBuffer();
+    instances.consumeAll([this](auto& instances) {
+        for (auto inst : instances) {
 
-        inst->fullOffset.value = inst->offset + inst->alignOffset;
+            inst->updateAlignment();
+            inst->updateBuffer();
 
-        renderer->scheduleDrawArrays(0, &inst->vao, &inst->renderInfo, GL_TRIANGLES, inst->arrayCount);
-    }
+            inst->fullOffset.value = inst->offset + inst->alignOffset;
 
-    instances.clear();
+            this->renderer->scheduleDrawArrays(0, &inst->vao, &inst->renderInfo, GL_TRIANGLES, inst->arrayCount);
+        }
+    });
 }

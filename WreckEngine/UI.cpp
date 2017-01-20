@@ -112,7 +112,7 @@ namespace UI
         GL_CHECK(glActiveTexture(GL_TEXTURE0));
 
         // Setup viewport, orthographic projection matrix
-        GL_CHECK(glViewport(0, 0, (GLsizei)fb_width, (GLsizei)fb_height));
+        Window::viewport(fb_width, fb_height);
         
         shader.use();
         texLoc.update(0);
@@ -165,7 +165,7 @@ namespace UI
         io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
         // Upload texture to graphics system
-        auto last_texture = getGLVal(GL_TEXTURE_BINDING_2D);
+        GLstate<GL_BINDING, GL_TEXTURE_BINDING_2D> lastTexture;
         
         fontTex.create(GL_TEXTURE_2D);
         if (!fontTex()) return false;
@@ -178,9 +178,6 @@ namespace UI
         // Store our identifier
         io.Fonts->TexID = (void *)(intptr_t)fontTex();
 
-        // Restore state
-        GL_CHECK(glBindTexture(GL_TEXTURE_2D, last_texture));
-
         return true;
     }
 
@@ -190,10 +187,7 @@ namespace UI
     static void GlfwKeyCallback(GLFWwindow*, int key, int, int action, int /*mods*/)
     {
         auto& io = ImGui::GetIO();
-        if (action == GLFW_PRESS)
-            io.KeysDown[key] = true;
-        if (action == GLFW_RELEASE)
-            io.KeysDown[key] = false;
+        io.KeysDown[key] = action != GLFW_RELEASE;
 
         io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
         io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
@@ -330,7 +324,9 @@ namespace UI
 
         // Setup inputs
         // (We've already got mouse wheel, keyboard keys & characters from GLFW callbacks polled in glfwPollEvents())
-        if (glfwGetWindowAttrib(Window::window, GLFW_FOCUSED))
+        int focused;
+        Thread::Main::run([&focused] { focused = glfwGetWindowAttrib(Window::window, GLFW_FOCUSED); });
+        if (focused)
         {
             // Mouse position in screen coordinates
             io.MousePos = ImVec2((float)Mouse::info.currPixel.x, (float)Mouse::info.currPixel.y);
@@ -347,10 +343,10 @@ namespace UI
             io.MouseDown[i] = Mouse::info.getButtonState(i);
         }
 
-        io.MouseWheel = Mouse::info.wheel;
+        io.MouseWheel = Mouse::info.wheel.accum;
 
         // Hide OS mouse cursor if ImGui is drawing it
-        glfwSetInputMode(Window::window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : Window::cursorMode);
+        Thread::Main::run([&io] { glfwSetInputMode(Window::window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : Window::cursorMode); });
 
         // Start the frame
         ImGui::NewFrame();

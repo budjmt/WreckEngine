@@ -15,6 +15,20 @@ struct alloc_ptr : public std::unique_ptr<T, Deleter> {
 	alloc_ptr& operator=(const alloc_ptr& o) { reset(o ? new T(*o) : nullptr); return *this; }
 };
 
+// wrapper for thread-safe access to some resource; the wrapper must exist to access the object, and thus the lock persists
+template<typename T, class Lock>
+struct safe_ptr {
+    using Mut = std::remove_pointer_t<decltype(std::declval<Lock>().mutex())>;
+
+    safe_ptr(T* ptr, Mut& mut) : value(ptr), lock(mut) {}
+    template<typename = std::enable_if<std::is_copy_constructible<T>::value>>
+    auto operator*() { return *value; }
+    auto operator->() { return value; }
+private:
+    T* value;
+    Lock lock;
+};
+
 template<class T, class... Args>
 alloc_ptr<T> make_alloc(Args&&... args) { return alloc_ptr<T>(make_unique<T>(args)); }
 
@@ -28,6 +42,7 @@ template<class T> using shared = std::shared_ptr<T>;
 template<class T> using weak = std::weak_ptr<T>;
 
 template<class T> using alloc = alloc_ptr<T>;
+template<class T, class Lock> using safe = safe_ptr<T, Lock>;
 
 /*--------------------------------------------------------------------------------------------------
   - Reserved on the heap and can hold anything, with automatic memory management
@@ -71,4 +86,14 @@ private:
 	unique<shared<void>[]> data;
 	size_t size = 0;
 	template<typename T> inline auto peekTuple(const size_t index) const { return std::tuple<T>(peek<T>(index)); }
+};
+
+// simple wrapper for no-copy types
+template<typename T>
+struct copy_wrap {
+    copy_wrap() = default;
+    ~copy_wrap() = default;
+    copy_wrap(const copy_wrap& other) {};
+
+    T object;
 };
