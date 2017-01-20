@@ -1,9 +1,5 @@
 #pragma once
 
-#include "GL/glew.h"
-#include "glm/glm.hpp"
-#include "FreeImage.h"
-
 #include "gl_structs.h"
 
 #include "Transform.h"

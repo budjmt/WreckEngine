@@ -200,6 +200,7 @@
     <ClInclude Include="DebugBenchmark.h" />
     <ClInclude Include="DrawDebug.h" />
     <ClInclude Include="Event.h" />
+    <ClInclude Include="File.h" />
     <ClInclude Include="GLDebug.h" />
     <ClCompile Include="MarchMath.cpp" />
     <ClCompile Include="Mesh.cpp" />

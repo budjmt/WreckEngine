@@ -31,5 +31,3 @@ void genNormals(Mesh::FaceData& data, Mesh::FaceIndex& indices);
 vec3 genNormal(const vec3 a, const vec3 b, const vec3 c);
 
 template<typename T> size_t find_index(const std::vector<T>& container, const T item) { return std::find(container.begin(), container.end(), item) - container.begin(); }
-
-std::vector<std::string> tokenize(std::string str, std::string delimiter);

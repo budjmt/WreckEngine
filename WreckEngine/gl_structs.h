@@ -316,6 +316,12 @@ struct GLshader {
         GL_CHECK(glShaderSource(*shader, 1, &body, 0));
         GL_CHECK(glCompileShader(*shader));
     }
+
+    inline GLint getVal(const GLenum value) const {
+        GLint res;
+        GL_CHECK(glGetShaderiv(*shader, value, &res));
+        return res;
+    }
 private:
     shared<GLuint> shader {new GLuint(def), local(delShader)};
     friend struct GLprogram;
@@ -332,6 +338,12 @@ struct GLprogram {
     inline void create() {
         if (valid()) return;
         GL_CHECK(*program = glCreateProgram());
+    }
+
+    inline GLint getVal(const GLenum value) const {
+        GLint res;
+        GL_CHECK(glGetProgramiv(*program, value, &res));
+        return res;
     }
 
     inline void attach(const GLshader& shader) const { GL_CHECK(glAttachShader(*program, shader())); }

@@ -275,6 +275,9 @@
     <ClInclude Include="safe_queue.h">
       <Filter>Threading</Filter>
     </ClInclude>
+    <ClInclude Include="File.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
