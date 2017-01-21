@@ -29,18 +29,27 @@ namespace HotSwap {
             resource = res;
         }
 
-        bool tryUpdate(File::resource_t<E>& res) {
+        bool checkForUpdate() {
             if (!File::isValid<E>(resource)) return false;
             auto write = fs::last_write_time(filePath);
             if (write > lastModified) {
                 lastModified = write;
-                auto swapRes = File::load<E>(rawPath, options);
-                if (File::isValid<E>(swapRes)) {
-                    res = swapRes;
-                    return true;
-                }
+                return true;
             }
             return false;
+        }
+
+        bool getUpdate(File::resource_t<E>& res) {
+            auto swapRes = File::load<E>(rawPath, options);
+            if (File::isValid<E>(swapRes)) {
+                res = swapRes;
+                return true;
+            }
+            return false;
+        }
+
+        bool tryUpdate(File::resource_t<E>& res) {
+            return checkForUpdate() && getUpdate(res);
         }
     private:
         const char* rawPath;

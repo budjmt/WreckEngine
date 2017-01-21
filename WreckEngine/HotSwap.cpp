@@ -28,14 +28,19 @@ void Shader::setupProgram() {
 }
 
 void Shader::update() {
-    Thread::Render::runNextFrame([this] {
-        auto needsReload = vertex.tryUpdate(program.vertex);
-        needsReload = tessControl.tryUpdate(program.tessControl) || needsReload;
-        needsReload = tessEval.tryUpdate(program.tessEval) || needsReload;
-        needsReload = geometry.tryUpdate(program.geometry) || needsReload;
-        needsReload = fragment.tryUpdate(program.fragment) || needsReload;
+    std::vector<std::pair<Resource<File::Extension::GLSL>&, GLshader&>> updates;
+    if (vertex.checkForUpdate())      updates.push_back({ vertex, program.vertex });
+    if (tessControl.checkForUpdate()) updates.push_back({ tessControl, program.tessControl });
+    if (tessEval.checkForUpdate())    updates.push_back({ tessEval, program.tessEval });
+    if (geometry.checkForUpdate())    updates.push_back({ geometry, program.geometry });
+    if (fragment.checkForUpdate())    updates.push_back({ fragment, program.fragment });
 
-        if (needsReload) {
+    Thread::Render::runNextFrame([this, updates] {
+        bool needsRelink = false;
+        for (auto& u : updates) {
+            needsRelink = u.first.getUpdate(u.second) || needsRelink;
+        }
+        if (needsRelink) {
             program.refresh();
             program.link();
         }
