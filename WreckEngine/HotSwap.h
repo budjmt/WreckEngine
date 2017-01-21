@@ -59,6 +59,8 @@ namespace HotSwap {
         uint32_t options;
     };
 
+    // For a shader to be hot-swappable, it must specify all uniform locations + initial values and any immutable bindings for samplers
+    // Any additions/removals of uniforms require, at minimum, a re-run of the program; sampler binding changes do not
     class Shader : public SwapResource {
     public:
         static shared<Shader> create();
