@@ -198,13 +198,13 @@ void TriPlay::setupPostProcess() {
     auto blurTarget = Target::create<GLubyte>();
     auto blurF = loadShader("Shaders/postProcess/blur.glsl", GL_FRAGMENT_SHADER);
     
-    blurH->data.setShaders(PostProcess::make_program(blurF));
+    blurH->data.setShaders(PostProcess::make_program(blurF, "Shaders/postProcess/blur.glsl"));
     blurH->data.setTextures(brightRender);
     blurH->renderToTextures(blurTarget);
     blurH->data.shaders->program.use();
     blurH->data.shaders->program.setOnce<GLboolean>("horizontal", true);
 
-    blurV->data.setShaders(PostProcess::make_program(blurF));
+    blurV->data.setShaders(PostProcess::make_program(blurF, "Shaders/postProcess/blur.glsl"));
     blurV->data.setTextures(blurTarget);
     blurV->renderToTextures(brightRender);
     blurV->data.shaders->program.use();

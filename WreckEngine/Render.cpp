@@ -87,7 +87,7 @@ GLprogram PostProcessChain::finalize;
 
 void PostProcessChain::init() {
     PostProcess::init();
-    finalize = PostProcess::make_program(loadShader("Shaders/postProcess/res_final_f.glsl", GL_FRAGMENT_SHADER));
+    finalize = PostProcess::make_program("Shaders/postProcess/res_final_f.glsl");
     finalize.use();
     finalize.setOnce<GLsampler>("render", 0);
 
