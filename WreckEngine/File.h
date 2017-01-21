@@ -7,6 +7,7 @@
 
 #include "FreeImage.h"
 
+// tokenizes [str] on any character present in [delimiter]
 inline std::vector<std::string> tokenize(std::string str, std::string delimiter) {
     std::vector<std::string> tokens;
     int curr, prev;
@@ -34,7 +35,7 @@ namespace File {
         unsigned char* bytes;
         FIBITMAP* image;
         size_t width, height;
-        void destroy() { if (image) FreeImage_Unload(image); }
+        void unload() { if (image) FreeImage_Unload(image); }
     };
 
     template<Extension E> class resource {};
@@ -57,17 +58,16 @@ namespace File {
     template<>
     inline resource_t<Extension::TXT> load<Extension::TXT>(const char* path, const uint32_t) {
         using namespace std;
-        ifstream infile;
-        infile.open(path, ios::binary);
+
+        ifstream infile(path, ios::binary);
         if (infile.is_open()) {
             infile.seekg(0, ios::end);
-            int length = (int)infile.tellg();
+            auto length = (size_t) infile.tellg();
             infile.seekg(0, ios::beg);
 
             auto filecontents = make_unique<char[]>(length + 1);
             infile.read(filecontents.get(), length);
             filecontents[length] = 0;
-            infile.close();
             return std::move(filecontents);
         }
         return nullptr;
@@ -119,8 +119,8 @@ namespace File {
     template<>
     inline resource_t<Extension::OBJ> load<Extension::OBJ>(const char* path, const uint32_t) {
         using namespace std;
-        ifstream infile;
-        infile.open(path, ios::in);
+
+        ifstream infile(path);
         if (!infile.is_open()) {
             printf("Error! File %s could not be read.\n", path);
             return shared<Mesh>();

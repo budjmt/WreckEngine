@@ -42,7 +42,7 @@ namespace HotSwap {
         bool getUpdate(File::resource_t<E>& res) {
             auto swapRes = File::load<E>(rawPath, options);
             if (File::isValid<E>(swapRes)) {
-                res = swapRes;
+                res = std::move(swapRes);
                 return true;
             }
             return false;
