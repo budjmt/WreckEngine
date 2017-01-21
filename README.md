@@ -10,7 +10,7 @@ General Goals:
 - Learn advanced graphics programming concepts
 - Make the engine simple to use and reuse
 
-Stuff I've Done:
+Implemented:
 - Arbitrary Mesh Colliders
 - Transform system with hierarchy and as-needed, on-demand computation
 - Memory control using smart pointers
@@ -21,14 +21,15 @@ Stuff I've Done:
 - Multithreading the various update loops
 - Flexible renderer that can manage post-process chains, render groups, and full render pass chains
 - Dynamic lighting, supporting deferred and forward lighting
+- Hot-swappable shaders, i.e. they can be rewritten at runtime and have their changes reflected
 
-Stuff I Want to Do:
+To Be Implemented:
 - Physically accurate collision resolution (in progress!!)
 - Constraints
 - Lua JIT scripting system, allowing for dynamic rebuilds
 - Terrain system
 
-Stuff I Might Want to Do:
+Might Be Implemented:
 - Component System?
 - More advanced rendering techniques?
 	- Sorting non-opaque objects to enable accurate alpha blending
