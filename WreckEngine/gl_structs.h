@@ -336,7 +336,7 @@ struct GLprogram {
 
     inline bool valid() const { return *program != def; }
 
-    // deletes the program if it exists and creates a new one
+    // deletes the program if it exists and creates a new one; this preserves the shaders used without resetting the pointer
     inline void refresh() {
         if (GLFWmanager::initialized && valid()) {
             GL_CHECK(glDeleteProgram(*program));
