@@ -1,8 +1,8 @@
 #version 450
 
-uniform vec4 tint;
+layout (location = 13) uniform vec4 tint = vec4(1);
 
-uniform sampler2D uniformTex;
+layout (location = 14, binding = 0) uniform sampler2D uniformTex;
 in vec4 fragPos;
 in vec2 fragUV;
 in vec3 fragNormal;
@@ -17,6 +17,7 @@ void main() {
 
 	vec4 color = texture(uniformTex, fragUV);
 	color *= tint;
+	//vec4 color = vec4(1,0,0,1);
 	
 	fragPosition   = fragPos;
 	fragNormalized = vec4(fragNormal, 1);

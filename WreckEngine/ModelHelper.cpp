@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <sstream>
-#include <fstream>
+#include "File.h"
 
 using namespace std;
 
@@ -14,52 +14,7 @@ namespace {
 }
 
 shared<Mesh> loadOBJ(const char* file) {
-	//cout << "Loading " << file << endl;
-	ifstream infile;
-	infile.open(file, ios::in);
-	if (!infile.is_open()) {
-		cout << "Error! File " << file << " could not be read." << endl;
-		return shared<Mesh>(nullptr);
-	}
-	else
-		cout << "File " << file << " Loading..." << endl;
-
-	Mesh::FaceData data;
-	Mesh::FaceIndex indices;
-
-	std::string line;
-	while (getline(infile, line)) {
-		auto tokens = tokenize(line, " ");
-        switch (line[0]) {
-        case 'v':
-            switch (line[1]) {
-            case ' ': // vertices
-                data.verts.push_back(vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
-                break;
-            case 'n': // normals
-                data.normals.push_back(vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
-                break;
-            case 't': // UVs
-                data.uvs.push_back(vec3(stof(tokens[1]), stof(tokens[2]), 0));
-                break;
-            }
-            break;
-        case 'f': // faces
-            for (size_t i = 1, numTokens = tokens.size(); i < numTokens; i++) {
-                auto faceTokens = tokenize(tokens[i], "/");
-                auto v = (GLuint) stoi(faceTokens[0]) - 1
-                   , u = (GLuint) stoi(faceTokens[1]) - 1
-                   , n = (GLuint) stoi(faceTokens[2]) - 1;
-                indices.verts.push_back(v);
-                indices.uvs.push_back(u);
-                indices.normals.push_back(n);
-            }
-            break;
-        }
-	}
-	
-	cout << "Complete!" << endl;
-	return make_shared<Mesh>(data, indices);
+	return File::load<File::Extension::OBJ>(file);
 }
 
 void genOBJ(const char* file, Mesh::FaceData& data, Mesh::FaceIndex& indices) {
@@ -442,18 +397,4 @@ vec3 genNormal(const vec3 a, const vec3 b, const vec3 c) {
 	const auto e1 = b - a;
 	const auto e2 = c - a;
 	return glm::normalize(glm::cross(e1, e2));
-}
-
-std::vector<std::string> tokenize(std::string str, std::string delimiter) {
-	std::vector<std::string> tokens;
-	int curr, prev;
-	for (curr = str.find(delimiter, 0), prev = 0; curr != string::npos; prev = curr + 1, curr = str.find(delimiter, prev)) {
-		if (curr - prev > 0) {
-			tokens.push_back(str.substr(prev, curr - prev));
-		}
-	}
-	curr = str.length();
-	if(curr - prev > 0)
-		tokens.push_back(str.substr(prev, curr - prev));
-	return tokens;
 }

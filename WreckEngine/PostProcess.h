@@ -19,7 +19,7 @@ namespace Render {
         static void init();
 
         static GLprogram make_program(const char* shaderFile);
-        static GLprogram make_program(const GLshader& fragment);
+        static GLprogram make_program(const GLshader& fragment, const char* path);
 
         template<typename... GLTextures>
         void renderToTextures(GLTextures... tex) {
@@ -70,8 +70,6 @@ namespace Render {
     protected:
         std::vector<shared<PostProcess>> chain;
         friend class PostProcessChain;
-        
-        static GLshader defaultVertex;
     };
 
     class Composite : public PostProcess {

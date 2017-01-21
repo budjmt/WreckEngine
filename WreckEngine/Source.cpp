@@ -28,6 +28,7 @@ unique<GLEWmanager> glew;
 #include "UI.h"
 
 #include "Update.h"
+#include "HotSwap.h"
 
 void initGraphics();
 
@@ -152,6 +153,7 @@ int main(int argc, char** argv) {
     Update<0>   regUpdate     (&update);
     Update<120> physicsUpdate (&physicsUpdate);
     Update<0>   render        (&draw, [] { glfwMakeContextCurrent(Window::window); });
+    Update<1>   hotSwap       (&HotSwap::main);
 
     glfwShowWindow(Window::window);
     while (!Window::closing()) {

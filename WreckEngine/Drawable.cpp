@@ -34,33 +34,24 @@ void Drawable::unloadTextures() {
     loadedTextures.clear();
 }
 
+#include "File.h"
+
 GLtexture Drawable::genTexture2D(const char* texFile) {
     //check if the image was already loaded
     if (loadedTextures.find(texFile) != loadedTextures.end()) {
         return loadedTextures[texFile];
     }
+    
     GLtexture texture;
-    auto bitmap = FreeImage_Load(FreeImage_GetFileType(texFile), texFile);
-    if (!bitmap) {
-        return texture;
-    }
-    //we convert the 24bit bitmap to 32bits
-    auto image = FreeImage_ConvertTo32Bits(bitmap);
-    //delete the 24bit bitmap from memory
-    FreeImage_Unload(bitmap);
-    if (!image) {
-        return texture;
-    }
-    auto w = FreeImage_GetWidth(image);
-    auto h = FreeImage_GetHeight(image);
-    auto textureData = FreeImage_GetBits(image);
-
+    auto image = File::load<File::Extension::PNG>(texFile);
+    if (!image.image) return texture;
+    
     texture.create(GL_TEXTURE_2D, 0);
     texture.bind();
     //the texture is loaded in BGRA format
-    texture.set2D<GLubyte>(textureData, w, h, GL_BGRA);
+    texture.set2D<GLubyte>(image.bytes, image.width, image.height, GL_BGRA);
     texture.genMipMap();
-    FreeImage_Unload(image);
+    image.unload();
 
     loadedTextures[texFile] = texture;
     return texture;

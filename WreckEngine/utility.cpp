@@ -21,6 +21,10 @@ std::chrono::high_resolution_clock::time_point Time::now() {
     return std::chrono::high_resolution_clock::now();
 }
 
+std::chrono::system_clock::time_point Time::system_now() {
+    return std::chrono::system_clock::now();
+}
+
 long long Time::ctime() {
     using namespace std::chrono;
     return duration_cast<seconds>(Time::now().time_since_epoch()).count();
@@ -42,6 +46,8 @@ void Time::updateDelta() {
     prevFrame = currFrame;
 }
 
+std::mutex UpdateBase::mut;
+std::condition_variable UpdateBase::exitCondition;
 std::vector<std::thread*> UpdateBase::updateThreads;
 
 bool GLFWmanager::initialized = false;
@@ -286,3 +292,4 @@ void Keyboard::defaultKey(GLFWwindow* window, int key, int scancode, int action,
     static uint32_t key_id = Message::add("keyboard_key");
     Dispatcher::central_trigger.sendBulkEvent<KeyHandler>(key_id, key, scancode, action, mods);
 }
+

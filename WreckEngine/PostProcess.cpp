@@ -1,28 +1,28 @@
 #include "PostProcess.h"
 
 #include "ShaderHelper.h"
+#include "HotSwap.h"
 
 #include "Render.h"
 
 using namespace Render;
 
-GLshader PostProcess::defaultVertex;
+HotSwap::Resource<File::Extension::GLSL> defaultVertex;
 
 PostProcess::PostProcess() { fbo.create(); }
 
 void PostProcess::init() {
-    defaultVertex = loadShader("Shaders/postProcess/res_v.glsl", GL_VERTEX_SHADER);
+    defaultVertex = decltype(defaultVertex)("Shaders/postProcess/res_v.glsl", GL_VERTEX_SHADER);
 }
 
-GLprogram PostProcess::make_program(const char* shaderFile) { return make_program(loadShader(shaderFile, GL_FRAGMENT_SHADER)); }
-GLprogram PostProcess::make_program(const GLshader& fragment) {
+GLprogram PostProcess::make_program(const char* shaderFile) { return make_program(loadShader(shaderFile, GL_FRAGMENT_SHADER), shaderFile); }
+GLprogram PostProcess::make_program(const GLshader& fragment, const char* path) {
     assert(fragment.type == GL_FRAGMENT_SHADER);
-    GLprogram p;
-    p.vertex = defaultVertex;
-    p.fragment = fragment;
-    p.create();
-    p.link();
-    return p;
+    auto prog = HotSwap::Shader::create();
+    prog->vertex = defaultVertex;
+    prog->fragment.set(fragment, path, GL_FRAGMENT_SHADER);
+    prog->setupProgram();
+    return prog->getProgram();
 }
 
 PostProcess* PostProcess::chainsTo(shared<PostProcess> p) { 

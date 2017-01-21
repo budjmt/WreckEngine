@@ -7,10 +7,10 @@ out vec4 fragPos;
 out vec2 fragUV;
 out vec3 fragNormal;
 
-uniform float time;
-uniform mat4 worldMatrix;
-uniform mat4 iTworldMatrix;
-uniform mat4 cameraMatrix;
+layout (location = 0) uniform float time;
+layout (location = 1) uniform mat4 worldMatrix;
+layout (location = 5) uniform mat4 iTworldMatrix;
+layout (location = 9) uniform mat4 cameraMatrix;
 
 out float ftime;
 

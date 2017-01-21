@@ -184,6 +184,7 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GLDebug.cpp" />
     <ClCompile Include="gl_structs.cpp" />
+    <ClCompile Include="HotSwap.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="PostProcess.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="DebugBenchmark.h" />
     <ClInclude Include="DrawDebug.h" />
     <ClInclude Include="Event.h" />
+    <ClInclude Include="File.h" />
     <ClInclude Include="GLDebug.h" />
     <ClCompile Include="MarchMath.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -227,6 +229,7 @@
     <ClInclude Include="GLmanager.h" />
     <ClInclude Include="GLstate.h" />
     <ClInclude Include="gl_structs.h" />
+    <ClInclude Include="HotSwap.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="MarchMath.h" />
     <ClInclude Include="Material.h" />
