@@ -44,17 +44,15 @@ mat4 rotateBetween(const vec3 from, const vec3 to);
 
 class quat {
 public:
-	quat() {};
+    quat() : v(), v0(1) {};
 	quat(float _x, float _y, float _z, float _w);
 	quat(float v0, vec3 _v); quat(vec3 a, float t);
 	
-	~quat() = default;
-	quat(const quat& other) = default;
-	quat(quat&& other) = default;
-	quat& operator=(quat other) { _v = other._v; v0 = other.v0; _theta = other._theta; _axis = other._axis; return *this; }
-	
-	vec3& v = _v;
-	float &x = _v.x, &y = _v.y, &z = _v.z, &w = v0;
+    union {
+        struct { vec3 v; float v0; };
+        struct { float x, y, z, w; };
+    };
+
 	float theta() const; void theta(float t);
 	vec3 axis() const; void axis(vec3 a);
 
@@ -73,8 +71,6 @@ public:
 	static quat point(float x, float y, float z);
 
 private:
-	float v0 = 1;
-	vec3 _v;
 	float _theta = 0, sin_t_half = 0; vec3 _axis = vec3(0, 0, 1);
 
 	inline void updateAngles();
