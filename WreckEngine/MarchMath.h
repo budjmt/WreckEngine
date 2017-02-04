@@ -35,9 +35,13 @@ typedef glm::mat4 mat4;
 class quat;
 
 std::string to_string(const vec2&);
+std::string to_string(const vec2&, size_t precision);
 std::string to_string(const vec3&);
+std::string to_string(const vec3&, size_t precision);
 std::string to_string(const vec4&);
+std::string to_string(const vec4&, size_t precision);
 std::string to_string(const quat&);
+std::string to_string(const quat&, size_t precision);
 
 mat4 inv_tp_tf(const mat4& m);
 mat4 rotateBetween(const vec3 from, const vec3 to);

@@ -1,6 +1,8 @@
 #include "MarchMath.h"
 
 #include <intrin.h>
+#include <iomanip>
+#include <sstream>
 
 int sign(int i) { return glm::sign(i); } 
 int bitsign(int i) { constexpr int signbit = 1 << 31; return i & signbit; }
@@ -13,9 +15,32 @@ inline float minf(float a, float b) { return glm::min(a, b); }
 inline float clampf(float val, float min, float max) { return maxf(min, minf(val, max)); }
 
 std::string to_string(const vec2& v) { return std::to_string(v.x) + "," + std::to_string(v.y); }
+std::string to_string(const vec2& v, size_t precision) { 
+	std::stringstream stream;
+	stream << std::fixed << std::setprecision(precision) << v.x << "," << v.y;
+	return stream.str(); 
+}
+
 std::string to_string(const vec3& v) { return std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z); }
+std::string to_string(const vec3& v, size_t precision) {
+	std::stringstream stream;
+	stream << std::fixed << std::setprecision(precision) << v.x << "," << v.y << "," << v.z;
+	return stream.str();
+}
+
 std::string to_string(const vec4& v) { return std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z) + "," + std::to_string(v.w); }
-//std::string to_string(const quat& q) { return std::to_string(q.x) + "," + std::to_string(q.y) + "," + std::to_string(q.z) + "," + std::to_string(q.w); }
+std::string to_string(const vec4& v, size_t precision) {
+	std::stringstream stream;
+	stream << std::fixed << std::setprecision(precision) << v.x << "," << v.y << "," << v.z << "," << v.w;
+	return stream.str();
+}
+
+std::string to_string(const quat& q) { return std::to_string(q.x) + "," + std::to_string(q.y) + "," + std::to_string(q.z) + "," + std::to_string(q.w); }
+std::string to_string(const quat& q, size_t precision) {
+	std::stringstream stream;
+	stream << std::fixed << std::setprecision(precision) << q.x << "," << q.y << "," << q.z << "," << q.w;
+	return stream.str();
+}
 
 //mat4
 //based on the transform inverse shortcut where the mat is [M 0, v 1] (rows) and the inverse is [M^-1 0, -M^-1*v 1]

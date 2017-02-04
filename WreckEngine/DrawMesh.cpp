@@ -40,5 +40,5 @@ void DrawMesh::setup(const char* texFile, GLprogram shader) {
 
 void DrawMesh::draw(const mat4& world) {
 	Drawable::draw(world);
-    renderer->scheduleDrawElements(0, &vArray, &material, GL_TRIANGLES, _mesh->getRenderData()->ebuffer.size(), GLtype<uint32_t>());
+    renderer->scheduleDrawElements(renderGroup, &vArray, &material, tesselPrim, _mesh->getRenderData()->ebuffer.size(), GLtype<uint32_t>());
 }

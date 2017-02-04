@@ -12,7 +12,7 @@ const float CAM_FOV = 2 * PI / 5;
 class Camera : public Entity
 {
 public:
-	Camera(GLprogram shaderProg);
+	Camera();
 	
 	static Camera* main;
 

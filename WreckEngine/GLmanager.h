@@ -9,8 +9,8 @@ struct GLFWmanager {
     static bool initialized;
     ~GLFWmanager() {
         if (initialized) {
-            glfwTerminate();
             initialized = false;
+            glfwTerminate();
         }
     }
     GLFWmanager(const size_t width, const size_t height);

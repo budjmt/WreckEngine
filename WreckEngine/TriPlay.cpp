@@ -28,7 +28,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     addState(menuState);
     menuState->addEntity(make_shared<LogicEntity>(menu_update));
     
-    auto menuText = make_shared<TextEntity>("Press space to begin.", "QuartzMS.ttf", Text::Justify::MIDDLE, Text::Justify::MIDDLE, 48);
+    auto menuText = make_shared<TextEntity>("Press space to begin.", "arial.ttf", Text::Justify::MIDDLE, Text::Justify::MIDDLE, 48);
     menuText->transform.position = vec3(Window::width * 0.5f, Window::height * 0.5f, 0);
     menuText->transform.scale = vec3(0.5f, 1, 1);
     menuState->addEntity(menuText);
@@ -113,7 +113,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     forwardData.mat = forwardProg.getUniform<mat4>("cameraMatrix");
     forwardData.pos = forwardProg.getUniform<vec3>("camPos");
 
-    auto camera = make_shared<Camera>(prog);
+    auto camera = make_shared<Camera>();
     camera->id = (void*)0xcab;
     camera->transform.position = vec3(0, 0, 1);
     camera->transform.rotate(0, PI, 0);

@@ -8,6 +8,7 @@ namespace Render {
     struct LitRenderer {
         Renderer deferred, forward;
         Light::System lights;
+        bool lightingOn = true;
 
         LitRenderer(const size_t gBufferSize) : deferred({ 0, 1, 2 }), forward(gBufferSize), lightR({ 3, 4 }) {
             deferred.setup = []() {
@@ -66,7 +67,7 @@ namespace Render {
 
         void render() { 
             lights.update();
-            if (Camera::main) {
+            if (lightingOn && Camera::main) {
                 lights.updateCamera(Camera::main);
                 lights.forward();
                 lights.defer(&lightR.objects, lightGroup);

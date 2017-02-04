@@ -10,6 +10,9 @@ public:
         
     void setup(const char* texFile, GLprogram shader);
     void draw(const mat4& world);
+
+    GLenum tesselPrim = GL_TRIANGLES;
+    size_t renderGroup = 0;
 private:
     GLbuffer vertBuffer, elBuffer;
     ACCS_GS_T_C (private, shared<Mesh>, Mesh*, Mesh*, mesh, { return _mesh.get(); }, { _mesh.reset(value); });

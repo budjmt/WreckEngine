@@ -190,6 +190,7 @@
     <ClCompile Include="PostProcess.cpp" />
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="Render.cpp" />
+    <ClCompile Include="TessellatorTest.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui_demo.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp" />
@@ -229,6 +230,7 @@
     <ClInclude Include="GLmanager.h" />
     <ClInclude Include="GLstate.h" />
     <ClInclude Include="gl_structs.h" />
+    <ClInclude Include="TessellatorTest.h" />
     <ClInclude Include="HotSwap.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="MarchMath.h" />

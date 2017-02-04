@@ -144,6 +144,9 @@
     <ClCompile Include="HotSwap.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="TessellatorTest.cpp">
+      <Filter>Games</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="unique_id.h">
@@ -283,6 +286,9 @@
     </ClInclude>
     <ClInclude Include="HotSwap.h">
       <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="TessellatorTest.h">
+      <Filter>Games</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

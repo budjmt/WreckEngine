@@ -10,7 +10,7 @@ unique<GLEWmanager> glew;
 
 #pragma endregion
 
-#include <vld.h>
+//#include <vld.h>
 #include <iostream>
 
 #include "GL/glew.h"
@@ -23,12 +23,14 @@ unique<GLEWmanager> glew;
 #include "ModelHelper.h"
 #include "External.h"
 #include "Render.h"
-#include "TriPlay.h"
-#include "UiTest.h"
 #include "UI.h"
 
 #include "Update.h"
 #include "HotSwap.h"
+
+#include "TriPlay.h"
+#include "UiTest.h"
+#include "TessellatorTest.h"
 
 void initGraphics();
 
@@ -62,8 +64,9 @@ void init() {
     Render::Renderer::init(6);
 
     // this won't be initialized until after GLFW/GLEW are
-    game = make_unique<TriPlay>(shaderProg);
+    //game = make_unique<TriPlay>(shaderProg);
     //game = make_unique<UiTest>();
+    game = make_unique<TessellatorTest>();
 }
 
 void initGraphics() {

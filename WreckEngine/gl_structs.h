@@ -234,6 +234,7 @@ struct GLbuffer {
 
     // binds to an index with an optional offset, must be manually resized
     inline void bindRange(GLuint index, GLintptr offset = 0) const {
+        assert(size > 0); // can't bind a range of length 0
         GL_CHECK(glBindBufferRange(target, index, *buffer, offset, size));
     }
     inline void unbindRange(GLuint index) const {

@@ -2,7 +2,7 @@
 
 Camera* Camera::main = nullptr;
 
-Camera::Camera(GLprogram shaderProg)
+Camera::Camera()
 {
 	if (!main) main = this;
 	updateProjection();
