@@ -34,8 +34,10 @@ TessellatorTest::TessellatorTest() : Game(6) {
     dm->tesselPrim = GL_PATCHES;
     dm->renderGroup = renderer.forward.objects.addGroup([] {
         GL_CHECK(glEnable(GL_CULL_FACE));
+        GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
     }, [] {
         GL_CHECK(glDisable(GL_CULL_FACE));
+        GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
     });
 
     auto planet = make_shared<ColliderEntity>(dm);
@@ -59,6 +61,9 @@ TessellatorTest::TessellatorTest() : Game(6) {
     mainState->addEntity(camera);
 
     renderer.lightingOn = false;
+
+    DrawDebug::getInstance().flush();
+    Text::flush();
 }
 
 void TessellatorTest::update(double delta) {

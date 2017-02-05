@@ -14,6 +14,7 @@ namespace Render {
             deferred.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
             };
+            
             lightR.setup = []() {
                 // prevents lights from culling each other
                 GL_CHECK(glDepthMask(GL_FALSE));
@@ -26,6 +27,13 @@ namespace Render {
                 // clockwise winding for back-lit faces
                 GL_CHECK(glFrontFace(GL_CW));
             };
+            lightGroup = lightR.objects.addGroup([]() {
+                GL_CHECK(glDisable(GL_DEPTH_TEST));
+            }, []() {
+                GL_CHECK(glEnable(GL_DEPTH_TEST));
+                GL_CHECK(glDisable(GL_BLEND));
+            });
+
             forward.setup = [this]() {
                 // undoing the light-specific settings
                 GL_CHECK(glFrontFace(GL_CCW));
@@ -36,13 +44,6 @@ namespace Render {
                 GL_CHECK(glEnable(GL_BLEND));
                 GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
             };
-
-            lightGroup = lightR.objects.addGroup([]() {
-                GL_CHECK(glDisable(GL_DEPTH_TEST));
-            }, []() {
-                GL_CHECK(glEnable(GL_DEPTH_TEST));
-                GL_CHECK(glDisable(GL_BLEND));
-            });
 
             // GBuffer layout:
             // 0: position -> lit color

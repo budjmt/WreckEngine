@@ -10,7 +10,7 @@ unique<GLEWmanager> glew;
 
 #pragma endregion
 
-//#include <vld.h>
+#include <vld.h>
 #include <iostream>
 
 #include "GL/glew.h"
