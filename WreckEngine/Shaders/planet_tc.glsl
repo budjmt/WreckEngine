@@ -24,12 +24,12 @@ void main()
     vec3 p2 = tcPosition[2] * radius;
     vec3 c = (p0 + p1 + p2) / 3;
     
-    float distC = distance(c, camPos);
+    float distC = distance(c,  camPos);
     float dist0 = distance(p0, camPos);
     float dist1 = distance(p1, camPos);
     float dist2 = distance(p2, camPos);
     
-    vec4 dist = vec4(vec3(dist0 + dist1, dist1 + dist2, dist2 + dist0) * 0.5, distC);
+    vec4 dist = vec4(vec3(dist1 + dist2, dist2 + dist0, dist0 + dist1) * 0.5, distC);
     vec4 distSc = 1.0 - min(dist / MaxDist, 1.0);
     
     vec4 levels = mix(vec4(1.0), vec4(vec3(tessLevel.y), tessLevel.x), distSc);
