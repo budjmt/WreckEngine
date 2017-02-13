@@ -189,7 +189,7 @@ private:
     static void setMaxTextures() {
         MAX_TEXTURES = local(getMaxNumTextures)();
     }
-    friend struct GLFWmanager;
+    friend struct GLEWmanager;
 };
 
 // wraps a buffer object on the GPU.
@@ -450,13 +450,14 @@ struct GLprogram {
     }
     
     private:
-        static struct { GLint x, y, z; } MAX_COMPUTE_WORK_GROUPS;
+        struct uivec3 { GLuint x, y, z; };
+        static uivec3 MAX_COMPUTE_WORK_GROUPS;
         static void setMaxWorkGroups() {
-            glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &MAX_COMPUTE_WORK_GROUPS.x);
-            glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &MAX_COMPUTE_WORK_GROUPS.y);
-            glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &MAX_COMPUTE_WORK_GROUPS.z);
+            GL_CHECK(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, (GLint*) &MAX_COMPUTE_WORK_GROUPS.x));
+            GL_CHECK(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, (GLint*) &MAX_COMPUTE_WORK_GROUPS.y));
+            GL_CHECK(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, (GLint*) &MAX_COMPUTE_WORK_GROUPS.z));
         }
-        friend class GLFWmanager;
+        friend struct GLEWmanager;
 };
 
 // allows access to frame buffers
@@ -564,13 +565,13 @@ private:
     static void setMaxColorAttachments() {
         MAX_COLOR_ATTACHMENTS = local(getMaxColorAttachments)();
     }
-    friend struct GLFWmanager;
+    friend struct GLEWmanager;
 };
 
-namespace GLsync {
-    inline void barrier(GLbitfield barrier)         { GL_CHECK(glMemoryBarrier(barrier)); }
-    inline void barrierByRegion(GLbitfield barrier) { GL_CHECK(glMemoryBarrierByRegion(barrier)); }
-}
+namespace GLsynchro {
+    static inline void barrier(GLbitfield barrier)         { GL_CHECK(glMemoryBarrier(barrier)); }
+    static inline void barrierByRegion(GLbitfield barrier) { GL_CHECK(glMemoryBarrierByRegion(barrier)); }
+};
 
 struct GLres { virtual void update() const = 0; };
 

@@ -60,6 +60,48 @@ void genOBJ(const char* file, Mesh::FaceData& data, Mesh::FaceIndex& indices) {
 	//cout << "File successfully generated." << endl;
 }
 
+void genPlane(const char* file, const size_t subdivisions) {
+    Mesh::FaceData data;
+    Mesh::FaceIndex indices;
+
+    data.normals.push_back({ 0, 0, 1 });
+
+    auto prop = 1.f / subdivisions;
+    for (size_t i = 0; i < subdivisions + 1; ++i) {
+        auto yOffset = prop * i;
+        data.verts.push_back({ -0.5f, -0.5f + yOffset, 0 });
+        data.uvs.push_back({ 0, yOffset, 0 });
+    }
+
+    const auto addIndex = [&indices](size_t index) {
+        indices.verts.push_back(index);
+        indices.uvs.push_back(index);
+        indices.normals.push_back(1); // all faces share a normal
+    };
+
+    for (size_t i = 1; i < subdivisions + 1; ++i) {
+        float xOffset = prop * i;
+        for (size_t j = 0; j < subdivisions; ++j) {
+            auto yOffset = prop * j;
+            data.verts.push_back({ -0.5f + xOffset, -0.5f + yOffset, 0 });
+            data.uvs.push_back({ xOffset, yOffset, 0 });
+
+            auto index = (subdivisions + 1) * i + j;
+            addIndex(index + 1);
+            addIndex(index - subdivisions + 1);
+            addIndex(index - subdivisions);
+
+            addIndex(index - subdivisions + 1);
+            addIndex(index + 1);
+            addIndex(index + 2);
+        }
+        data.verts.push_back({ -0.5f + xOffset, 0.5f, 0 });
+        data.uvs.push_back({ xOffset, 1, 0 });
+    }
+
+    genOBJ(file, data, indices);
+}
+
 void genCube(const char* file) {
 	Mesh::FaceData data;
 	Mesh::FaceIndex indices;

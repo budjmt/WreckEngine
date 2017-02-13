@@ -95,7 +95,9 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
 
     Window::cursorMode = GLFW_CURSOR_NORMAL;
     glfwSetInputMode(Window::window, GLFW_CURSOR, Window::cursorMode);
+}
 
+void GLEWmanager::initGLValues() {
     GLtexture::setMaxTextures();
     GLprogram::setMaxWorkGroups();
     GLframebuffer::setMaxColorAttachments();
