@@ -5,7 +5,7 @@
 #include "TextEntity.h"
 
 shared<TextEntity> controlText;
-shared<ColliderEntity> me, plane;
+shared<ColliderEntity> me, planet, plane;
 
 TessellatorTest::TessellatorTest() : Game(6) {
     auto mainState = make_shared<State>("main");
@@ -19,10 +19,10 @@ TessellatorTest::TessellatorTest() : Game(6) {
     auto tessProg = HotSwap::Shader::create();
     using ShaderRes = decltype(tessProg->vertex);
 
-    tessProg->vertex = ShaderRes("Shaders/planet_v.glsl", GL_VERTEX_SHADER);
+    tessProg->vertex      = ShaderRes("Shaders/planet_v.glsl",  GL_VERTEX_SHADER);
     tessProg->tessControl = ShaderRes("Shaders/planet_tc.glsl", GL_TESS_CONTROL_SHADER);
-    tessProg->tessEval = ShaderRes("Shaders/planet_te.glsl", GL_TESS_EVALUATION_SHADER);
-    tessProg->fragment = ShaderRes("Shaders/planet_f.glsl", GL_FRAGMENT_SHADER);
+    tessProg->tessEval    = ShaderRes("Shaders/planet_te.glsl", GL_TESS_EVALUATION_SHADER);
+    tessProg->fragment    = ShaderRes("Shaders/planet_f.glsl",  GL_FRAGMENT_SHADER);
     tessProg->setupProgram();
     planetData.prog = tessProg->getProgram();
     planetData.mat = planetData.prog.getUniform<mat4>("cameraMatrix");
@@ -40,22 +40,26 @@ TessellatorTest::TessellatorTest() : Game(6) {
         GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
     });
 
-    auto planet = make_shared<ColliderEntity>(dm);
+    planet = make_shared<ColliderEntity>(dm);
     planet->id = (void*)0xabc;
     planet->rigidBody.floating(1.f);
-    //mainState->addEntity(planet);
+    mainState->addEntity(planet);
 
-    controlData.prog = loadProgram("Shaders/matvertexShader.glsl", "Shaders/dumb_f.glsl");
-    controlData.mat = controlData.prog.getUniform<mat4>("cameraMatrix");
+    planeData.prog = loadProgram("Shaders/normalize_v.glsl", "Shaders/planet_f.glsl");
+    planeData.mat = planeData.prog.getUniform<mat4>("cameraMatrix");
 
     //genPlane("Assets/plane.obj", 5);
     auto planeMesh = loadOBJ("Assets/plane.obj");
-    dm = make_shared<DrawMesh>(&renderer.forward.objects, planeMesh, "Assets/texture.png", controlData.prog);
+    dm = make_shared<DrawMesh>(&renderer.forward.objects, planeMesh, "Assets/texture.png", planeData.prog);
     dm->renderGroup = 1;
 
     plane = make_shared<ColliderEntity>(dm);
     plane->rigidBody.floating(1.f);
+    plane->active = false;
     mainState->addEntity(plane);
+
+    controlData.prog = loadProgram("Shaders/matvertexShader.glsl", "Shaders/dumb_f.glsl");
+    controlData.mat = controlData.prog.getUniform<mat4>("cameraMatrix");
 
     me = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.forward.objects, cube, "Assets/texture.png", controlData.prog));
     me->transform.position = vec3(-3, 0, 0);
@@ -71,6 +75,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     renderer.lightingOn = false;
 
+    //if (DEBUG) DrawDebug::getInstance().camera(camera.get());
+
     DrawDebug::getInstance().flush();
     Text::flush();
 }
@@ -83,13 +89,30 @@ void TessellatorTest::update(double delta) {
     Game::update(delta);
 
     //quit the game
-    if (Keyboard::keyDown(Keyboard::Key::Code::Q)) Window::close();
+    //if (Keyboard::keyDown(Keyboard::Key::Code::Q)) Window::close(); // pretty broken in this game
 
-    auto n = getClosestSphereDir(vec3(), 2, Camera::main->transform.position, Camera::main->transform.forward());
-    //printf("%s\n", to_string(n).c_str());
-    auto p = vec3() + 2.f * n;
-    plane->transform.position = p;
-    plane->transform.rotation = quat(rotateBetween(vec3(0, 0, 1), n));
+    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
+    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 1, 0));
+    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 0, 1));
+
+    auto t = Camera::main->transform.getComputed();
+    auto pos = t->position();
+    if (glm::length(pos) < 3) {
+        plane->active = true;
+        planet->active = false;
+
+        auto rad = 2.f;
+        auto n = getClosestSphereDir(vec3(), rad, pos, t->forward());
+        auto p = rad * n;
+        plane->transform.position = p;
+        
+        plane->transform.rotation = quat(rotateBetween(vec3(0, 0, 1), n));
+
+    }
+    else {
+        planet->active = true;
+        plane->active = false;
+    }
 
     constexpr auto speed = 5.f;
     bool shift = Keyboard::shiftDown();
@@ -141,8 +164,10 @@ void TessellatorTest::draw() {
     auto mat = Camera::main->getCamMat();
     planetData.prog.use();
     planetData.mat.update(mat);
-    //planetData.pos.update(Camera::main->transform.getComputed()->position);
-    planetData.pos.update(me->transform.getComputed()->position);
+    planetData.pos.update(Camera::main->transform.getComputed()->position);
+    //planetData.pos.update(me->transform.getComputed()->position);
+    planeData.prog.use();
+    planeData.mat.update(mat);
     controlData.prog.use();
     controlData.mat.update(mat);
 
