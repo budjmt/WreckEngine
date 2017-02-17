@@ -51,6 +51,7 @@ public:
     quat() : v(), v0(1) {};
 	quat(float _x, float _y, float _z, float _w);
 	quat(float v0, vec3 _v); quat(vec3 a, float t);
+    quat(const mat4& rot);
 	
     union {
         struct { vec3 v; float v0; };

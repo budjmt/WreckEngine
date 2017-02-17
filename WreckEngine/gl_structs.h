@@ -105,6 +105,7 @@ struct GLtexture {
     inline void genMipMap() {
         GL_CHECK(glGenerateMipmap(target));
     }
+    
     inline void bind(const GLint index = 0) const {
         assert(index < MAX_TEXTURES);
         GL_CHECK(glActiveTexture(GL_TEXTURE0 + index));
@@ -112,6 +113,14 @@ struct GLtexture {
     }
     inline void unbind() {
         GL_CHECK(glBindTexture(target, 0));
+    }
+    
+    inline void bindImage(const GLenum access = GL_READ_WRITE, const GLenum format = GL_RGBA, const GLint index = 0, const GLuint level = 0, const GLboolean layered = GL_FALSE, const GLint layer = 0) {
+        // don't need to make the texture active to bind an image
+        GL_CHECK(glBindImageTexture(index, *texture, level, layered, layer, access, format)); // doesn't support 3D/array/layered textures right now
+    }
+    inline void unbindImage(const GLint index = 0) {
+        GL_CHECK(glBindImageTexture(index, 0, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGB)); // values besides index and the first 0 are irrelevant
     }
 
     inline void unload() {
@@ -180,7 +189,7 @@ private:
     static void setMaxTextures() {
         MAX_TEXTURES = local(getMaxNumTextures)();
     }
-    friend struct GLFWmanager;
+    friend struct GLEWmanager;
 };
 
 // wraps a buffer object on the GPU.
@@ -332,6 +341,8 @@ private:
 // wraps a shader program [linked from several shaders]
 struct GLprogram {
     GLshader vertex, tessControl, tessEval, geometry, fragment;
+    GLshader compute; // this must be by itself
+    bool isCompute = false;
     shared<GLuint> program {new GLuint(def), local(delShaderProg)};
     inline WR_GL_OP_PARENS(GLuint, program);
 
@@ -362,12 +373,20 @@ struct GLprogram {
     inline void relink() const { GL_CHECK(glLinkProgram(*program)); }
 
     // properly sets up the program once the shaders are set
-    inline void link() const {
-        if (vertex.valid())       attach(vertex);
-        if (tessControl.valid())  attach(tessControl);
-        if (tessEval.valid())     attach(tessEval);
-        if (geometry.valid())     attach(geometry);
-        if (fragment.valid())     attach(fragment);
+    inline void link() {
+        if (vertex.valid()) {
+            attach(vertex);
+            isCompute = false;
+
+            if (tessControl.valid()) attach(tessControl);
+            if (tessEval.valid())    attach(tessEval);
+            if (geometry.valid())    attach(geometry);
+            if (fragment.valid())    attach(fragment);
+        }
+        else if (compute.valid()) {
+            attach(compute);
+            isCompute = true;
+        }
         relink();
     }
 
@@ -375,6 +394,12 @@ struct GLprogram {
         GL_CHECK(glUseProgram(*program));
     }
     
+    inline void dispatch(GLuint xGroups = 1, GLuint yGroups = 1, GLuint zGroups = 1) const {
+        assert(isCompute); // only compute shaders may be dispatched
+        assert(xGroups < MAX_COMPUTE_WORK_GROUPS.x && yGroups < MAX_COMPUTE_WORK_GROUPS.y && zGroups < MAX_COMPUTE_WORK_GROUPS.z);
+        GL_CHECK(glDispatchCompute(xGroups, yGroups, zGroups));
+    }
+
     inline GLuint getUniformLocation(const char* name) const {
         GLuint l;
         GL_CHECK(l = glGetUniformLocation(*program, name));
@@ -423,6 +448,16 @@ struct GLprogram {
         GL_CHECK(glGetProgramResourceiv(*program, GL_UNIFORM, index, 1, &prop, sizeof(GLuint), &length, &param));
         return param;
     }
+    
+    private:
+        struct uivec3 { GLuint x, y, z; };
+        static uivec3 MAX_COMPUTE_WORK_GROUPS;
+        static void setMaxWorkGroups() {
+            GL_CHECK(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, (GLint*) &MAX_COMPUTE_WORK_GROUPS.x));
+            GL_CHECK(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, (GLint*) &MAX_COMPUTE_WORK_GROUPS.y));
+            GL_CHECK(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, (GLint*) &MAX_COMPUTE_WORK_GROUPS.z));
+        }
+        friend struct GLEWmanager;
 };
 
 // allows access to frame buffers
@@ -530,7 +565,12 @@ private:
     static void setMaxColorAttachments() {
         MAX_COLOR_ATTACHMENTS = local(getMaxColorAttachments)();
     }
-    friend struct GLFWmanager;
+    friend struct GLEWmanager;
+};
+
+namespace GLsynchro {
+    static inline void barrier(GLbitfield barrier)         { GL_CHECK(glMemoryBarrier(barrier)); }
+    static inline void barrierByRegion(GLbitfield barrier) { GL_CHECK(glMemoryBarrierByRegion(barrier)); }
 };
 
 struct GLres { virtual void update() const = 0; };

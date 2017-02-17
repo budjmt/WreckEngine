@@ -22,6 +22,7 @@ void Shader::setupProgram() {
     program.tessEval    = tessEval.get();
     program.geometry    = geometry.get();
     program.fragment    = fragment.get();
+    program.compute     = compute.get();
 
     program.create();
     program.link();
@@ -34,6 +35,7 @@ void Shader::update() {
     if (tessEval.checkForUpdate())    updates.push_back({ tessEval, program.tessEval });
     if (geometry.checkForUpdate())    updates.push_back({ geometry, program.geometry });
     if (fragment.checkForUpdate())    updates.push_back({ fragment, program.fragment });
+    if (compute.checkForUpdate())     updates.push_back({ compute, program.compute });
 
     Thread::Render::runNextFrame([this, updates] {
         bool needsRelink = false;

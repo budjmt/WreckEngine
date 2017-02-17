@@ -14,5 +14,5 @@ private:
         GLuniform<mat4> mat;
         GLuniform<vec3> pos;
     };
-    RenderData planetData, controlData;
+    RenderData planetData, planeData, controlData;
 };

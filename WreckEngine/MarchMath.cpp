@@ -75,6 +75,7 @@ mat4 rotateBetween(const vec3 from, const vec3 to) {
 }
 
 //quat
+#include "glm/gtc/quaternion.hpp"
 #include <cassert>
 void quat::updateAngles() { _theta = acosf(v0); assert(!NaN_CHECK(_theta)); sin_t_half = sinf(_theta); if (sin_t_half) { _axis = v / sin_t_half; } _axis /= glm::length(_axis); _theta *= 2; }
 void quat::updateValues(vec3& a, float t) { t *= 0.5f; sin_t_half = sinf(t); v0 = cosf(t); v = a * sin_t_half; }
@@ -82,6 +83,14 @@ void quat::updateValues(vec3& a, float t) { t *= 0.5f; sin_t_half = sinf(t); v0 
 quat::quat(float _x, float _y, float _z, float _w) : v(_x, _y, _z), v0(_w) { updateAngles(); }
 quat::quat(float _v0, vec3 v1) : v(v1), v0(_v0) { updateAngles(); }
 quat::quat(vec3 a, float t) : _theta(t), _axis(a) { updateValues(a, t); }
+quat::quat(const mat4& rot) { 
+    auto q = glm::quat_cast(rot); // TODO remove glm dependency here
+    w = q.w;
+    x = q.x;
+    y = q.y;
+    z = q.z;
+    updateAngles(); 
+}
 
 float quat::theta() const { return _theta; } void quat::theta(float t) { _theta = t; updateValues(_axis, t); }
 vec3  quat::axis()  const { return _axis;  } void quat::axis(vec3 a)   { _axis = a; v = a * sin_t_half; }

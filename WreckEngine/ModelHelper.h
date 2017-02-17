@@ -16,6 +16,7 @@ void genOBJ(const char* file, Mesh::FaceData& data, Mesh::FaceIndex& indices);
 //generate vertices
 //generate faces and normals
 //generate UVs
+void genPlane(const char* file, size_t subdivisions = 1);
 void genCube(const char* file);
 void genCylinder(const char* file, size_t res);
 void genCone(const char* file, size_t res);

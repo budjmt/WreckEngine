@@ -5,7 +5,7 @@
 #include "TextEntity.h"
 
 shared<TextEntity> controlText;
-shared<ColliderEntity> me;
+shared<ColliderEntity> me, planet, plane;
 
 TessellatorTest::TessellatorTest() : Game(6) {
     auto mainState = make_shared<State>("main");
@@ -40,10 +40,23 @@ TessellatorTest::TessellatorTest() : Game(6) {
         GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
     });
 
-    auto planet = make_shared<ColliderEntity>(dm);
+    planet = make_shared<ColliderEntity>(dm);
     planet->id = (void*)0xabc;
     planet->rigidBody.floating(1.f);
     mainState->addEntity(planet);
+
+    planeData.prog = loadProgram("Shaders/normalize_v.glsl", "Shaders/planet_f.glsl");
+    planeData.mat = planeData.prog.getUniform<mat4>("cameraMatrix");
+
+    //genPlane("Assets/plane.obj", 5);
+    auto planeMesh = loadOBJ("Assets/plane.obj");
+    dm = make_shared<DrawMesh>(&renderer.forward.objects, planeMesh, "Assets/texture.png", planeData.prog);
+    dm->renderGroup = 1;
+
+    plane = make_shared<ColliderEntity>(dm);
+    plane->rigidBody.floating(1.f);
+    plane->active = false;
+    mainState->addEntity(plane);
 
     controlData.prog = loadProgram("Shaders/matvertexShader.glsl", "Shaders/dumb_f.glsl");
     controlData.mat = controlData.prog.getUniform<mat4>("cameraMatrix");
@@ -61,7 +74,11 @@ TessellatorTest::TessellatorTest() : Game(6) {
     mainState->addEntity(camera);
 
     renderer.lightingOn = false;
+    
+    //if (DEBUG) DrawDebug::getInstance().camera(camera.get());
 }
+
+vec3 getClosestSphereDir(vec3, float, vec3, vec3);
 
 void TessellatorTest::update(double delta) {
     const auto dt = (float)delta;
@@ -69,7 +86,30 @@ void TessellatorTest::update(double delta) {
     Game::update(delta);
 
     //quit the game
-    if (Keyboard::keyDown(Keyboard::Key::Code::Q)) Window::close();
+    //if (Keyboard::keyDown(Keyboard::Key::Code::Q)) Window::close(); // pretty broken in this game
+
+    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
+    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 1, 0));
+    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 0, 1));
+
+    auto t = Camera::main->transform.getComputed();
+    auto pos = t->position();
+    if (glm::length(pos) < 3) {
+        plane->active = true;
+        planet->active = false;
+
+        auto rad = 2.f;
+        auto n = getClosestSphereDir(vec3(), rad, pos, t->forward());
+        auto p = rad * n;
+        plane->transform.position = p;
+        
+        plane->transform.rotation = quat(rotateBetween(vec3(0, 0, 1), n));
+
+    }
+    else {
+        planet->active = true;
+        plane->active = false;
+    }
 
     constexpr auto speed = 5.f;
     bool shift = Keyboard::shiftDown();
@@ -121,11 +161,26 @@ void TessellatorTest::draw() {
     auto mat = Camera::main->getCamMat();
     planetData.prog.use();
     planetData.mat.update(mat);
-    //planetData.pos.update(Camera::main->transform.getComputed()->position);
-    planetData.pos.update(me->transform.getComputed()->position);
+    planetData.pos.update(Camera::main->transform.getComputed()->position);
+    //planetData.pos.update(me->transform.getComputed()->position);
+    planeData.prog.use();
+    planeData.mat.update(mat);
     controlData.prog.use();
     controlData.mat.update(mat);
 
     Game::draw();
     Text::render(&renderer.forward.objects);
+}
+
+vec3 getClosestSphereDir(vec3 c, float r, vec3 p0, vec3 n) {
+    auto u = c - p0;
+    auto t = glm::dot(n, u); // normally divided by dot(n, n) == |n|^2, but n is a unit vector so it's unnecessary
+    auto s = t * t - glm::dot(u, u) + r * r;
+    // if the line intersects the sphere, the closest point to the origin isn't the closest pt to the surface
+    if (s >= 0) {
+        s = sqrt(s);
+        t = t - glm::sign(t) * s; // not 100% predictable when p0 is inside the sphere, but that's fine
+    }
+    auto closestLinePt = p0 + n * t;
+    return glm::normalize(closestLinePt - c); // to get closest pt on sphere, multiply by radius and add to center
 }

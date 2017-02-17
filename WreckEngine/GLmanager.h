@@ -28,5 +28,9 @@ struct GLEWmanager {
         auto initValue = glewInit();
         initialized = initValue == GLEW_OK;
         if (!initialized) exit(initValue);
+
+        initGLValues();
     }
+
+    void initGLValues();
 };
