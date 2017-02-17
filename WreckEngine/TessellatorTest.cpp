@@ -74,11 +74,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     mainState->addEntity(camera);
 
     renderer.lightingOn = false;
-
+    
     //if (DEBUG) DrawDebug::getInstance().camera(camera.get());
-
-    DrawDebug::getInstance().flush();
-    Text::flush();
 }
 
 vec3 getClosestSphereDir(vec3, float, vec3, vec3);
