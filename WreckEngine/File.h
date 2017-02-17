@@ -39,7 +39,7 @@ namespace File {
     };
 
     template<Extension E> class resource {};
-    template<> struct resource<Extension::TXT>  { typedef unique<const char[]> type; };
+    template<> struct resource<Extension::TXT>  { typedef std::string type; };
     template<> struct resource<Extension::GLSL> { typedef GLshader type; };
     template<> struct resource<Extension::PNG>  { typedef ImageData type; };
     template<> struct resource<Extension::OBJ>  { typedef shared<Mesh> type; };
@@ -50,7 +50,7 @@ namespace File {
     inline resource_t<E> load(const char* path, const uint32_t options = 0) {}
 
     template<Extension E> inline bool isValid(const resource_t<E>&) { return false; }
-    template<> inline bool isValid<Extension::TXT>  (const resource_t<Extension::TXT>&  res) { return res != nullptr; }
+    template<> inline bool isValid<Extension::TXT>  (const resource_t<Extension::TXT>&  res) { return res.length() > 0; }
     template<> inline bool isValid<Extension::GLSL> (const resource_t<Extension::GLSL>& res) { return res.valid(); }
     template<> inline bool isValid<Extension::PNG>  (const resource_t<Extension::PNG>&  res) { return res.image != nullptr; }
     template<> inline bool isValid<Extension::OBJ>  (const resource_t<Extension::OBJ>&  res) { return res != nullptr; }
@@ -59,30 +59,34 @@ namespace File {
     inline resource_t<Extension::TXT> load<Extension::TXT>(const char* path, const uint32_t) {
         using namespace std;
 
+        std::string fileContents;
         ifstream infile(path, ios::binary);
         if (infile.is_open()) {
             infile.seekg(0, ios::end);
             auto length = (size_t) infile.tellg();
             infile.seekg(0, ios::beg);
 
-            auto filecontents = make_unique<char[]>(length + 1);
-            infile.read(filecontents.get(), length);
-            filecontents[length] = 0;
-            return std::move(filecontents);
+            fileContents.resize(length);
+            infile.read(&fileContents[0], length);
+            //filecontents[length] = 0;
         }
-        return nullptr;
+        return std::move(fileContents);
     }
+
+    void processShaderSource(const char* path, resource_t<Extension::TXT>& resource);
 
     template<>
     inline resource_t<Extension::GLSL> load<Extension::GLSL>(const char* path, const GLenum shaderType) {
+        GLshader shader;
         auto fileContents = load<Extension::TXT>(path);
-        if (!fileContents) {
+        if (!isValid<Extension::TXT>(fileContents)) {
             printf("Error! File %s could not be read.\n", path);
-            return GLshader();
+            return shader;
         }
 
-        GLshader shader;
-        shader.create(fileContents.get(), shaderType);
+        processShaderSource(path, fileContents);
+
+        shader.create(fileContents.c_str(), shaderType);
 
         if (shader.getVal(GL_COMPILE_STATUS) == GL_TRUE)
             return shader;
