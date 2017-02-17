@@ -10,7 +10,7 @@ unique<GLEWmanager> glew;
 
 #pragma endregion
 
-#include <vld.h>
+//#include <vld.h>
 #include <iostream>
 
 #include "GL/glew.h"
@@ -67,6 +67,9 @@ void init() {
     //game = make_unique<TriPlay>(shaderProg);
     //game = make_unique<UiTest>();
     game = make_unique<TessellatorTest>();
+
+	DrawDebug::getInstance().flush();
+	Text::flush();
 }
 
 void initGraphics() {

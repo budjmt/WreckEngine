@@ -7,18 +7,14 @@
 #include "Drawable.h"
 #include "Transform.h"
 
-enum EntityType {
-	NORMAL,
-	COLLIDER,
-	CAMERA
-};
-
 class Entity
 {
 public:
 	Entity() = default;
 	Entity(shared<Drawable> s);
 	Entity(vec3 p, vec3 sc, vec3 rA, float r, shared<Drawable> s);
+
+	virtual ~Entity() = default;
 
 	Transform transform;
 	bool active = true;
@@ -29,9 +25,10 @@ public:
 	virtual void update(double dt) { };
     virtual void physicsUpdate(double dt) {};
 	virtual void draw();
+
+	template<class T> bool isType() const { return dynamic_cast<T*>(this) != nullptr; }
 protected:
 	shared<Drawable> shape;
-	ACCS_G (protected, EntityType, type);
 };
 
 class LogicEntity : public Entity {

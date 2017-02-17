@@ -19,10 +19,10 @@ TessellatorTest::TessellatorTest() : Game(6) {
     auto tessProg = HotSwap::Shader::create();
     using ShaderRes = decltype(tessProg->vertex);
 
-    tessProg->vertex = ShaderRes("Shaders/planet_v.glsl", GL_VERTEX_SHADER);
+    tessProg->vertex      = ShaderRes("Shaders/planet_v.glsl",  GL_VERTEX_SHADER);
     tessProg->tessControl = ShaderRes("Shaders/planet_tc.glsl", GL_TESS_CONTROL_SHADER);
-    tessProg->tessEval = ShaderRes("Shaders/planet_te.glsl", GL_TESS_EVALUATION_SHADER);
-    tessProg->fragment = ShaderRes("Shaders/planet_f.glsl", GL_FRAGMENT_SHADER);
+    tessProg->tessEval    = ShaderRes("Shaders/planet_te.glsl", GL_TESS_EVALUATION_SHADER);
+    tessProg->fragment    = ShaderRes("Shaders/planet_f.glsl",  GL_FRAGMENT_SHADER);
     tessProg->setupProgram();
     planetData.prog = tessProg->getProgram();
     planetData.mat = planetData.prog.getUniform<mat4>("cameraMatrix");
@@ -61,9 +61,6 @@ TessellatorTest::TessellatorTest() : Game(6) {
     mainState->addEntity(camera);
 
     renderer.lightingOn = false;
-
-    DrawDebug::getInstance().flush();
-    Text::flush();
 }
 
 void TessellatorTest::update(double delta) {
