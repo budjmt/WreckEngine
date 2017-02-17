@@ -5,7 +5,7 @@
 #include "TextEntity.h"
 
 shared<TextEntity> controlText;
-shared<ColliderEntity> me, planet, plane;
+shared<Entity> me, planet, plane;
 
 TessellatorTest::TessellatorTest() : Game(6) {
     auto mainState = make_shared<State>("main");
@@ -40,9 +40,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
         GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
     });
 
-    planet = make_shared<ColliderEntity>(dm);
+    planet = make_shared<Entity>(dm);
     planet->id = (void*)0xabc;
-    planet->rigidBody.floating(1.f);
     mainState->addEntity(planet);
 
     planeData.prog = loadProgram("Shaders/normalize_v.glsl", "Shaders/planet_f.glsl");
@@ -53,17 +52,15 @@ TessellatorTest::TessellatorTest() : Game(6) {
     dm = make_shared<DrawMesh>(&renderer.forward.objects, planeMesh, "Assets/texture.png", planeData.prog);
     dm->renderGroup = 1;
 
-    plane = make_shared<ColliderEntity>(dm);
-    plane->rigidBody.floating(1.f);
+    plane = make_shared<Entity>(dm);
     plane->active = false;
     mainState->addEntity(plane);
 
     controlData.prog = loadProgram("Shaders/matvertexShader.glsl", "Shaders/dumb_f.glsl");
     controlData.mat = controlData.prog.getUniform<mat4>("cameraMatrix");
 
-    me = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.forward.objects, cube, "Assets/texture.png", controlData.prog));
+    me = make_shared<Entity>(make_shared<DrawMesh>(&renderer.forward.objects, cube, "Assets/texture.png", controlData.prog));
     me->transform.position = vec3(-3, 0, 0);
-    me->rigidBody.floating(1.f);
     me->color = vec4(1, 0, 0, 1);
     mainState->addEntity(me);
 
@@ -75,7 +72,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     renderer.lightingOn = false;
     
-    //if (DEBUG) DrawDebug::getInstance().camera(camera.get());
+    if (DEBUG) DrawDebug::getInstance().camera(camera.get());
 }
 
 vec3 getClosestSphereDir(vec3, float, vec3, vec3);

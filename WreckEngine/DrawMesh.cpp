@@ -1,13 +1,9 @@
 #include "DrawMesh.h"
 
-DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, const char* texFile, GLprogram shader) : _mesh(m) { renderer = r; setup(texFile, shader); }
+DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, const char* texFile, GLprogram shader) : DrawMesh(r, m, genTexture2D(texFile), shader) {}
 DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, GLtexture tex, GLprogram shader) : _mesh(m) { renderer = r; setup(tex, shader); }
 DrawMesh::DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, const char* texFile, GLprogram shader) : DrawMesh(r, make_shared<Mesh>(fd, fi), texFile, shader) {}
 DrawMesh::DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, GLtexture tex, GLprogram shader) : DrawMesh(r, make_shared<Mesh>(fd, fi), tex, shader) {}
-
-void DrawMesh::setup(const char* texFile, GLprogram shader) {
-    setup(genTexture2D(texFile), shader);
-}
 
 void DrawMesh::setup(GLtexture tex, GLprogram shader) {
     

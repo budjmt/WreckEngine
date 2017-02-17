@@ -12,4 +12,5 @@ void main()
     FragColor = color;
     //FragColor = vec4(color.rgb * teNormal, 1.0);
     //FragColor = vec4(teNormal * 0.5 + 0.5, 1.0);
+    //FragColor = vec4(1,0,0,1);
 }

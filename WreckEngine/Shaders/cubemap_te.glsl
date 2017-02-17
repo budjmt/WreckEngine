@@ -6,8 +6,8 @@ in vec3 tcPosition[];
 out vec3 teNormal;
 
 uniform mat4 ViewProjection;
-uniform mat4 Model;
-uniform mat3 NormalMatrix;
+uniform mat4 worldMatrix;
+uniform mat4 iTworldMatrix;
 uniform float Radius;
 
 void main()
@@ -18,9 +18,9 @@ void main()
 
     vec3 normalizedLocalPosition = normalize(p0 + p1 + p2);
     vec3 localPosition = normalizedLocalPosition * Radius;
-    vec4 worldPosition = ViewProjection * Model * vec4(localPosition, 1.0);
+    vec4 worldPosition = ViewProjection * worldMatrix * vec4(localPosition, 1.0);
 
-    teNormal = normalize(NormalMatrix * normalizedLocalPosition);
+    teNormal = normalize((iTworldMatrix * vec4(normalizedLocalPosition, 0)).xyz);
 
     gl_Position = worldPosition;
 }

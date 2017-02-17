@@ -31,6 +31,7 @@ unique<GLEWmanager> glew;
 #include "TriPlay.h"
 #include "UiTest.h"
 #include "TessellatorTest.h"
+#include "CubemapTest.h"
 
 void initGraphics();
 
@@ -66,7 +67,8 @@ void init() {
     // this won't be initialized until after GLFW/GLEW are
     //game = make_unique<TriPlay>(shaderProg);
     //game = make_unique<UiTest>();
-    game = make_unique<TessellatorTest>();
+    //game = make_unique<TessellatorTest>();
+	game = make_unique<CubemapTest>();
 
 	DrawDebug::getInstance().flush();
 	Text::flush();

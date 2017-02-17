@@ -11,15 +11,10 @@ public:
     void draw() override;
 private:
     struct RenderData {
-        GLprogram material;
-        GLprogram program;
+        GLprogram material, program;
         GLtexture cubemap;
-        GLresource<mat4> viewProjection;
-        GLresource<mat4> model;
-        GLresource<mat3> normalMatrix;
-        GLresource<float> tessLevelInner;
-        GLresource<float> tessLevelOuter;
-        GLresource<float> radius;
+		GLuniform<mat4> viewProjection;
+        GLresource<float> tessLevelInner, tessLevelOuter, radius;
     };
 
     void calcCameraPosition();

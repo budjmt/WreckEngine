@@ -143,8 +143,8 @@ struct GLtexture {
     inline void set2D(const GLenum type, const void* pixelData, const GLuint width, const GLuint height, const GLenum formatFrom, const GLenum formatTo, const GLint mipLevel = 0) const {
         set2DAs(target, type, pixelData, width, height, formatFrom, formatTo, mipLevel);
     }
-    inline void set2DAs(const GLenum target, const GLenum type, const void* pixelData, const GLuint width, const GLuint height, const GLenum formatFrom, const GLenum formatTo, const GLint mipLevel = 0) const {
-        GL_CHECK(glTexImage2D(target, mipLevel, formatTo, width, height, 0, formatFrom, type, pixelData));
+    inline void set2DAs(const GLenum _target, const GLenum type, const void* pixelData, const GLuint width, const GLuint height, const GLenum formatFrom, const GLenum formatTo, const GLint mipLevel = 0) const {
+        GL_CHECK(glTexImage2D(_target, mipLevel, formatTo, width, height, 0, formatFrom, type, pixelData));
     }
     inline void set3D(const GLenum type, const void* pixelData, const GLuint width, const GLuint height, const GLuint depth, const GLenum formatFrom, const GLenum formatTo, const GLint mipLevel = 0) const {
         GL_CHECK(glTexImage3D(target, mipLevel, formatTo, width, height, depth, 0, formatFrom, type, pixelData));
