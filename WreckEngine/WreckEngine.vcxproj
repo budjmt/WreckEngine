@@ -176,11 +176,13 @@
     <ClCompile Include="ColliderEntity.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="Color.cpp" />
+    <ClCompile Include="CubemapTest.cpp" />
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="DrawDebug.cpp" />
     <ClCompile Include="DrawMesh.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Event.cpp" />
+    <ClCompile Include="File.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GLDebug.cpp" />
     <ClCompile Include="gl_structs.cpp" />
@@ -199,6 +201,7 @@
     <ClCompile Include="UV.cpp" />
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="CubemapTest.h" />
     <ClInclude Include="DebugBenchmark.h" />
     <ClInclude Include="DrawDebug.h" />
     <ClInclude Include="Event.h" />

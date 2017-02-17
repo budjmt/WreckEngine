@@ -147,6 +147,12 @@
     <ClCompile Include="TessellatorTest.cpp">
       <Filter>Games</Filter>
     </ClCompile>
+    <ClCompile Include="CubemapTest.cpp">
+      <Filter>Games</Filter>
+    </ClCompile>
+    <ClCompile Include="File.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="unique_id.h">
@@ -288,6 +294,9 @@
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="TessellatorTest.h">
+      <Filter>Games</Filter>
+    </ClInclude>
+    <ClInclude Include="CubemapTest.h">
       <Filter>Games</Filter>
     </ClInclude>
   </ItemGroup>
