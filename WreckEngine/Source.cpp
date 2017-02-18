@@ -68,10 +68,10 @@ void init() {
     //game = make_unique<TriPlay>(shaderProg);
     //game = make_unique<UiTest>();
     //game = make_unique<TessellatorTest>();
-	game = make_unique<CubemapTest>();
+    game = make_unique<CubemapTest>();
 
-	DrawDebug::getInstance().flush();
-	Text::flush();
+    DrawDebug::getInstance().flush();
+    Text::flush();
 }
 
 void initGraphics() {

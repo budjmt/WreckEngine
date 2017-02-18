@@ -13,15 +13,15 @@ CubemapTest::CubemapTest() : Game(6)
     auto mainState = make_shared<State>("main");
     addState(mainState);
 
-	GLframebuffer::setClearColor(1, 0, 0, 1);
+    GLframebuffer::setClearColor(1, 0, 0, 1);
 
     // Setup the camera
     camera = make_shared<Camera>();
-    camera->id = reinterpret_cast<void*>(0xbeefc0de); // why
-	camera->transform.position = vec3(0, 0, viewDistance);
-	camera->transform.rotate(0, PI, 0);
-	mainState->addEntity(camera);
-	
+    camera->id = reinterpret_cast<void*>(0xbeefc0de);
+    camera->transform.position = vec3(0, 0, viewDistance);
+    camera->transform.rotate(0, PI, 0);
+    mainState->addEntity(camera);
+
     // Setup the render material
     auto material = HotSwap::Shader::create();
     using Shader = decltype(material->vertex);
@@ -32,7 +32,6 @@ CubemapTest::CubemapTest() : Game(6)
     material->setupProgram();
 
     renderData.material = material->getProgram();
-	//renderData.material = loadProgram("Shaders/matVertexShader.glsl")
     renderData.viewProjection = renderData.material.getUniform<mat4>("ViewProjection");
     renderData.tessLevelInner = GLresource<float>(renderData.material, "TessLevelInner");
     renderData.tessLevelOuter = GLresource<float>(renderData.material, "TessLevelOuter");
@@ -41,13 +40,17 @@ CubemapTest::CubemapTest() : Game(6)
     // Set initial uniform values
     renderData.tessLevelInner.value = tessLevelInner;
     renderData.tessLevelOuter.value = tessLevelOuter;
-    renderData.radius.value = 3.0f;
+    renderData.radius.value = 5.0f;
 
     // Setup the compute material
     auto program = HotSwap::Shader::create();
     program->compute = Shader("Shaders/cubemap_c.glsl", GL_COMPUTE_SHADER);
     program->setupProgram();
     renderData.program = program->getProgram();
+    renderData.program.use();
+    renderData.compTime = renderData.program.getUniform<float>("Time");
+    renderData.compZoom = renderData.program.getUniform<float>("Zoom");
+    renderData.compZoom.update(6.0f);
 
     // Setup the cubemap
     renderData.cubemap.create(GL_TEXTURE_CUBE_MAP);
@@ -57,45 +60,55 @@ CubemapTest::CubemapTest() : Game(6)
     renderData.cubemap.param(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     renderData.cubemap.param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     renderData.cubemap.param(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
-	renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
-	renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
-	renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
-	renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
-	renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
 
     // Setup the cube mesh
-    auto cube = loadOBJ("Assets/cube.obj");
-    auto mesh = make_shared<DrawMesh>(&renderer.forward.objects, cube, renderData.cubemap, renderData.material);
-    mesh->tesselPrim = GL_PATCHES;
-    mesh->renderGroup = renderer.forward.objects.addGroup([] {
+    auto cubeMesh = loadOBJ("Assets/cube.obj");
+    auto cubeDrawMesh = make_shared<DrawMesh>(&renderer.forward.objects, cubeMesh, renderData.cubemap, renderData.material);
+    cubeDrawMesh->tesselPrim = GL_PATCHES;
+    cubeDrawMesh->renderGroup = renderer.forward.objects.addGroup([] {
         GL_CHECK(glEnable(GL_CULL_FACE));
-		GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }, [] {
         GL_CHECK(glDisable(GL_CULL_FACE));
     });
-	mesh->material.addResource(&renderData.tessLevelInner);
-	mesh->material.addResource(&renderData.tessLevelOuter);
-	mesh->material.addResource(&renderData.radius);
-    mainState->addEntity(make_shared<Entity>(mesh));
+    cubeDrawMesh->material.addResource(&renderData.tessLevelInner);
+    cubeDrawMesh->material.addResource(&renderData.tessLevelOuter);
+    cubeDrawMesh->material.addResource(&renderData.radius);
+    cube = make_shared<Entity>(cubeDrawMesh);
+    mainState->addEntity(cube);
 
     renderer.lightingOn = false;
 
-	if (DEBUG) DrawDebug::getInstance().camera(camera.get());
+    if (DEBUG) DrawDebug::getInstance().camera(camera.get());
 }
 
 void CubemapTest::update(double dt)
 {
-	Game::update(dt);
+    time += static_cast<float>(dt);
+    vec3 axis = {0, 1, 0};
+    axis = glm::normalize(axis);
+    cube->transform.rotate((float)dt, axis);
 
-    if (Keyboard::keyDown(Keyboard::Key::Escape))
+    if (Keyboard::keyPressed(Keyboard::Key::Escape))
     {
         Window::close();
     }
+    else if (Keyboard::keyPressed(Keyboard::Key::Space))
+    {
+        rotate = !rotate;
+    }
+    else if (Keyboard::keyPressed(Keyboard::Key::Backspace))
+    {
+        direction = -direction;
+    }
 
-	//DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
-	//DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 1, 0));
-	//DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 0, 1));
+    Game::update(dt);
 }
 
 void CubemapTest::postUpdate()
@@ -104,15 +117,22 @@ void CubemapTest::postUpdate()
     // Here in case text is needed
 }
 
+inline float cosRange(float val, float min, float max)
+{
+    return (cosf(val) * 0.5f + 0.5f) * (max - min) + min;
+}
+
 void CubemapTest::draw()
 {
     // Probably won't need to do this every frame in production, but ¯\_(ツ)_/¯
     renderData.cubemap.bindImage(GL_WRITE_ONLY, GL_RGBA32F, 0, 0, GL_TRUE);
     renderData.program.use();
+    renderData.compTime.update(time);
+    renderData.compZoom.update(cosRange(time * 0.375f, 1, 8));
     renderData.program.dispatch(texSize, texSize, 6);
 
     // TODO - Only set camera matrix if it's been updated
-	renderData.material.use();
+    renderData.material.use();
     renderData.viewProjection.update(camera->getCamMat());
 
     Game::draw();
