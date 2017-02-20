@@ -13,15 +13,16 @@ private:
     struct RenderData {
         GLprogram material, program;
         GLtexture cubemap;
-		GLuniform<mat4> viewProjection;
+        GLuniform<mat4> viewProjection;
+        GLuniform<float> compTime;
+        GLuniform<float> compZoom;
         GLresource<float> tessLevelInner, tessLevelOuter, radius;
     };
 
-    void calcCameraPosition();
-
     RenderData renderData;
     shared<Camera> camera;
+    shared<Entity> cube;
     float time = 0.0f;
-    float direction = 1.0f;
-    bool rotate = false;
+    float direction = -1.0f;
+    bool rotate = true;
 };
