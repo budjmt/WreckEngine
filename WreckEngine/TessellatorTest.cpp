@@ -101,7 +101,10 @@ void TessellatorTest::update(double delta) {
         plane->transform.position = p;
         
         plane->transform.rotation = quat(rotateBetween(vec3(0, 0, 1), n));
-
+        
+        auto forward = plane->transform.forward();
+        auto correctUp = vec3(-forward.x * forward.y, -forward.x * forward.x + forward.z * forward.z, -forward.z * forward.y);
+        plane->transform.rotation *= quat(rotateBetween(plane->transform.up(), correctUp));
     }
     else {
         planet->active = true;
