@@ -71,7 +71,7 @@ mat4 rotateBetween(const vec3 from, const vec3 to) {
 	
 	const auto v = glm::cross(from, to);// normal of the plane shared by the two vectors
 	const auto vx = mat3(vec3(0, v.z, -v.y), vec3(-v.z, 0, v.x), vec3(v.y, -v.x, 0));
-	return mat4(mat3() + vx + vx * vx / (1.f + c));
+	return mat4(mat3(1) + vx + vx * vx / (1.f + c));
 }
 
 //quat

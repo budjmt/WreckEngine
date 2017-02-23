@@ -41,7 +41,7 @@ vec3 Camera::forward() { return transform.forward(); }
 vec3 Camera::up() {	return transform.up(); }
 vec3 Camera::right() { return transform.right(); }
 
-void Camera::mayaCam(Camera* camera, double delta) {
+void Camera::mayaCam(Camera* camera, double delta, const float speed) {
 	
 	auto dt = (float)delta;
 
@@ -72,14 +72,13 @@ void Camera::mayaCam(Camera* camera, double delta) {
 		}
 	}
 
-	constexpr auto u = 5.f;
-    if      (Keyboard::keyDown(Keyboard::Key::W)) camera->transform.position += camera->forward() *  (u * dt);
-	else if (Keyboard::keyDown(Keyboard::Key::S)) camera->transform.position += camera->forward() * -(u * dt);
-	if      (Keyboard::keyDown(Keyboard::Key::D)) camera->transform.position += camera->right()   * -(u * dt);
-	else if (Keyboard::keyDown(Keyboard::Key::A)) camera->transform.position += camera->right()   *  (u * dt);
+    if      (Keyboard::keyDown(Keyboard::Key::W)) camera->transform.position += camera->forward() * (speed * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::S)) camera->transform.position -= camera->forward() * (speed * dt);
+	if      (Keyboard::keyDown(Keyboard::Key::D)) camera->transform.position -= camera->right()   * (speed * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::A)) camera->transform.position += camera->right()   * (speed * dt);
 
-	if      (Keyboard::keyDown(Keyboard::Key::Up))    camera->transform.position += vec3(0, 1, 0) *  (u * dt);
-	else if (Keyboard::keyDown(Keyboard::Key::Down))  camera->transform.position += vec3(0, 1, 0) * -(u * dt);
-	if      (Keyboard::keyDown(Keyboard::Key::Left))  camera->transform.position += vec3(1, 0, 0) * -(u * dt);
-	else if (Keyboard::keyDown(Keyboard::Key::Right)) camera->transform.position += vec3(1, 0, 0) *  (u * dt);
+	if      (Keyboard::keyDown(Keyboard::Key::Up))    camera->transform.position += vec3(0, 1, 0) * (speed * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::Down))  camera->transform.position -= vec3(0, 1, 0) * (speed * dt);
+	if      (Keyboard::keyDown(Keyboard::Key::Left))  camera->transform.position -= vec3(1, 0, 0) * (speed * dt);
+	else if (Keyboard::keyDown(Keyboard::Key::Right)) camera->transform.position += vec3(1, 0, 0) * (speed * dt);
 }
