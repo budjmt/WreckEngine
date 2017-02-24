@@ -61,9 +61,9 @@ Transform* Transform::computeTransform() const {
     {
         std::unique_lock<std::shared_mutex> lock(computedMut.object);
         auto p = _parent->getComputed();
-        computed->_position = _position + p->_position;
-        computed->_scale = _scale * p->_scale;
-        computed->_rotation = _rotation * p->_rotation;
+        computed->_position = p->_position + _position;
+        computed->_scale = p->_scale * _scale;
+        computed->_rotation = p->_rotation * _rotation;
         computed->updateRot();
     }
 	return computed.get();
