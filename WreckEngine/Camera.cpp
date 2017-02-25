@@ -52,13 +52,12 @@ void Camera::mayaCam(Camera* camera, double delta, const float speed) {
 		auto dy = (float)(mouse.curr.y - mouse.prev.y);
 
 		if (mouse.getButtonState(GLFW_MOUSE_BUTTON_LEFT)) {
-			auto rot = PI;
 
-			dx = signf(dx) * dx * dx * rot;
-			dy = signf(dy) * dy * dy * rot;
+			dx *= 10.f * dt;
+			dy *= 10.f * dt;
 
-			dx = minf(dx, PI * 0.5f);
-			dy = minf(dy, PI * 0.5f);
+			dx = 2 * asin(dx * 0.5f);
+			dy = 2 * asin(dy * 0.5f);
 
 			auto look = camera->getLookAt();
 			camera->turn(dx, dy);
