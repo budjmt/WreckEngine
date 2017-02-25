@@ -281,7 +281,7 @@ void TriPlay::update(double delta) {
             me->transform.position += vec3(-speed * dt, 0, 0);
     }
 
-    Camera::mayaCam(Camera::main, dt);
+    Camera::mayaControl(Camera::main, dt);
 
     updateLights();
 

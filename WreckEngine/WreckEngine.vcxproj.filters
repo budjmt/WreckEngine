@@ -93,9 +93,6 @@
     <ClCompile Include="Transform.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Misc</Filter>
-    </ClCompile>
     <ClCompile Include="Collider.cpp">
       <Filter>Misc</Filter>
     </ClCompile>
@@ -152,6 +149,9 @@
     </ClCompile>
     <ClCompile Include="File.cpp">
       <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -217,9 +217,6 @@
     </ClInclude>
     <ClInclude Include="UiTest.h">
       <Filter>Games</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Misc</Filter>
     </ClInclude>
     <ClInclude Include="Collider.h">
       <Filter>Misc</Filter>
@@ -298,6 +295,9 @@
     </ClInclude>
     <ClInclude Include="CubemapTest.h">
       <Filter>Games</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Entities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

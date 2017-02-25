@@ -41,7 +41,7 @@ vec3 Camera::forward() { return transform.forward(); }
 vec3 Camera::up() {	return transform.up(); }
 vec3 Camera::right() { return transform.right(); }
 
-void Camera::mayaCam(Camera* camera, double delta, const float speed) {
+void Camera::mayaControl(Camera* camera, double delta, const float speed) {
 	
 	auto dt = (float)delta;
 

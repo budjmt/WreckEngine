@@ -75,6 +75,11 @@ public:
 	static quat rotation(float theta, vec3 axis);
 	static quat point(float x, float y, float z);
 
+    static vec3 getEuler(const quat& q);
+    static float getEulerX(const quat& q);
+    static float getEulerY(const quat& q);
+    static float getEulerZ(const quat& q);
+
 private:
 	float _theta = 0, sin_t_half = 0; vec3 _axis = vec3(0, 0, 1);
 

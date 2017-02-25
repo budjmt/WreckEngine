@@ -108,3 +108,39 @@ quat quat::rotate(const quat& q, float theta, vec3 axis) { return q * quat(axis,
 quat quat::slerp(const quat& a, const quat& b, float t) { return quat::pow(b * quat::inverse(a), t) * a; }
 quat quat::rotation(float theta, vec3 axis) { return quat(axis, theta); }
 quat quat::point(float x, float y, float z) { return quat(x, y, z, 0); }
+
+vec3 quat::getEuler(const quat& q) {
+    vec3 euler;
+    auto sqr = q.v * q.v;
+    auto wv = q.w * q.v;
+
+    auto t0 = 2.f * (wv.x + q.y * q.z);
+    auto t1 = 1.f - 2.f * (sqr.x + sqr.y);
+    euler.x = atan2(t0, t1);
+
+    auto t2 = 2.f * (wv.y - q.z * q.x);
+    euler.y = asin(clampf(t2, -1.f, 1.f));
+
+    auto t3 = 2.f * (wv.z + q.x * q.y);
+    auto t4 = 1.f - 2.f * (sqr.y + sqr.z);
+    euler.z = atan2(t3, t4);
+
+    return euler;
+}
+
+float quat::getEulerX(const quat& q) {
+    auto t0 = 2.f * (q.w * q.x + q.y * q.z);
+    auto t1 = 1.f - 2.f * (q.x * q.x + q.y * q.y);
+    return atan2(t0, t1);
+}
+
+float quat::getEulerY(const quat& q) {
+    auto t2 = 2.f * (q.w * q.y - q.z * q.x);
+    return asin(clampf(t2, -1.f, 1.f));
+}
+
+float quat::getEulerZ(const quat& q) {
+    auto t3 = 2.f * (q.w * q.z + q.x * q.y);
+    auto t4 = 1.f - 2.f * (q.y * q.y + q.z * q.z);
+    return atan2(t3, t4);
+}

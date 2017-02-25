@@ -67,15 +67,15 @@ TessellatorTest::TessellatorTest() : Game(6) {
     mainState->addEntity(plane);
 
     cameraControl = make_shared<LogicEntity>([](LogicEntity*, double) {});
-    //cameraControl->transform.position = vec3(0, 0, 5);
-    cameraControl->transform.position = vec3(-3, 0, 0);
+    cameraControl->transform.position = vec3(0, 0, 5);
+    //cameraControl->transform.position = vec3(-3, 0, 0);
     mainState->addEntity(cameraControl);
 
     auto camera = make_shared<Camera>();
     camera->id = (void*)0xcab;
-    camera->transform.position = vec3(0, 0, 5);
-    camera->transform.rotate(0, PI, 0);
-    //camera->transform.parent(&cameraControl->transform);
+    //camera->transform.position = vec3(0, 0, 5);
+    //camera->transform.rotate(0, PI, 0);
+    camera->transform.parent(&cameraControl->transform);
     mainState->addEntity(camera);
 
     controlData.prog = loadProgram("Shaders/matvertexShader.glsl", "Shaders/dumb_f.glsl");
@@ -84,8 +84,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     auto cone = loadOBJ("Assets/cone.obj");
     cone->rotate(quat::rotation(PI / 2, vec3(1, 0, 0)));
     me = make_shared<Entity>(make_shared<DrawMesh>(&renderer.forward.objects, cone, "Assets/texture.png", controlData.prog));
-    //me->transform.position = vec3(-3, 0, 0);
-    me->transform.parent(&cameraControl->transform);
+    me->transform.position = vec3(-3, 0, 0);
+    //me->transform.parent(&cameraControl->transform);
     me->color = vec4(1,0,0,1);
     mainState->addEntity(me);
 
@@ -98,7 +98,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 }
 
 vec3 getClosestSphereDir(vec3, float, vec3, vec3);
-void moveCamera(Entity* camera, float radius);
+void moveCamera(Entity* cameraControl, Entity* camera, float radius);
 void adjustCamera(Entity* camera, float dist);
 
 void TessellatorTest::update(double delta) {
@@ -115,17 +115,13 @@ void TessellatorTest::update(double delta) {
 
     const float radius = 2;
 
-    auto cam = me.get();
-    //auto cam = Camera::main;
+    //auto cam = me.get();
+    auto cam = Camera::main;
 
-    moveCamera(cameraControl.get(), radius);
-    
-    auto pos = cam->transform.getComputed()->position();
+    moveCamera(cameraControl.get(), cam, radius);
+
+    auto pos = Camera::main->transform.getComputed()->position();
     auto dist = glm::length(pos) - radius;
-    adjustCamera(cam, dist);
-
-    pos = Camera::main->transform.getComputed()->position();
-    dist = glm::length(pos) - radius;
     if (dist < 2) {
         plane->active = true;
         planet->active = false;
@@ -158,7 +154,7 @@ void TessellatorTest::update(double delta) {
     DrawDebug::getInstance().drawDebugVector(pos, pos + t->up(), vec3(0, 0, 1));
 
     pos = cam->transform.getComputed()->position();
-    controlText->setMessage(to_string(pos, 3) + "\n" + std::to_string(glm::length(pos)) + "\n" + to_string(cam->transform.forward()));
+    controlText->setMessage(to_string(pos, 3) + "\n" + std::to_string(glm::length(pos)) + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation())));
 }
 
 void TessellatorTest::postUpdate() {
@@ -201,10 +197,32 @@ vec3 getClosestSphereDir(vec3 c, float r, vec3 p0, vec3 n) {
     return glm::normalize(closestLinePt - c); // to get closest pt on sphere, multiply by radius and add to center
 }
 
-void moveCamera(Entity* camera, float radius) {
+void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
     auto dt = (float)Time::delta;
 
-    auto pos = camera->transform.position();
+    // Need another layer of transform parenting so the camera can rotate independently
+
+    //auto mouse = Mouse::info;
+    //if (mouse.down) {
+    //    // mouse coords are represented in screen coords
+    //    auto dx = (float)(mouse.curr.x - mouse.prev.x);
+    //    auto dy = (float)(mouse.curr.y - mouse.prev.y);
+    //
+    //    if (mouse.getButtonState(GLFW_MOUSE_BUTTON_LEFT)) {
+    //
+    //        dx *= 10.f * dt;
+    //        dy *= 10.f * dt;
+    //
+    //        dx = 2 * asin(dx * 0.5f);
+    //        dy = 2 * asin(dy * 0.5f);
+    //
+    //        auto look = camera->transform.position() + camera->transform.forward();
+    //        camera->transform.rotate(dy, dx, 0);
+    //        camera->transform.position = look - camera->transform.getComputed()->forward();
+    //    }
+    //}
+
+    auto pos = cameraControl->transform.position();
     auto centerDist = glm::length(pos);
 
     const auto towardSpeed = centerDist - radius;
@@ -214,24 +232,31 @@ void moveCamera(Entity* camera, float radius) {
     
     if (shift) {
         // move away from/towards the surface
-        if      (Keyboard::keyDown(Keyboard::Key::I))   camera->transform.position += pos * (towardSpeed * dt / centerDist);
-        else if (Keyboard::keyDown(Keyboard::Key::K)) camera->transform.position -= pos * (towardSpeed * dt / centerDist);
+        if      (Keyboard::keyDown(Keyboard::Key::I))   cameraControl->transform.position += pos * (towardSpeed * dt / centerDist);
+        else if (Keyboard::keyDown(Keyboard::Key::K)) cameraControl->transform.position -= pos * (towardSpeed * dt / centerDist);
+
+        pos = camera->transform.getComputed()->position();
+        auto dist = glm::length(pos) - radius;
+        adjustCamera(camera, dist);
     }
     else {
         // move around the surface
         float dH = 0, dV = 0;
+        bool moved = false;
 
-        if      (Keyboard::keyDown(Keyboard::Key::I))     dV = -lateralSpeed * dt;
-        else if (Keyboard::keyDown(Keyboard::Key::K))     dV =  lateralSpeed * dt;
-        if      (Keyboard::keyDown(Keyboard::Key::J))     dH =  lateralSpeed * dt;
-        else if (Keyboard::keyDown(Keyboard::Key::L))     dH = -lateralSpeed * dt;
+        if      (Keyboard::keyDown(Keyboard::Key::I)) { dV =  lateralSpeed * dt; moved = true; }
+        else if (Keyboard::keyDown(Keyboard::Key::K)) { dV = -lateralSpeed * dt; moved = true; }
+        if      (Keyboard::keyDown(Keyboard::Key::J)) { dH = -lateralSpeed * dt; moved = true; }
+        else if (Keyboard::keyDown(Keyboard::Key::L)) { dH =  lateralSpeed * dt; moved = true; }
         
         const auto getRot = [](float d, float radius) {
             return 2 * asin(d * 0.5f / radius);
         };
        
-        camera->transform.rotate(getRot(dV, centerDist), getRot(dH, centerDist), 0);
-        camera->transform.position = camera->transform.forward() * -centerDist;
+        if (moved) {
+            cameraControl->transform.rotate(getRot(dV, centerDist), getRot(dH, centerDist), 0);
+            cameraControl->transform.position = cameraControl->transform.forward() * -centerDist;
+        }
     }
 }
 
@@ -243,5 +268,5 @@ void adjustCamera(Entity* camera, float dist) {
 
     // lerp between no rotation and orthogonal rotation; this translates to facing the surfact to facing tangent to the surface when combined with the parent
     auto faceRot = glm::mix(0.f, PI * 0.5f, clampf((farCamDist - dist) / (farCamDist - nearCamDist), 0.f, 1.f));
-    camera->transform.rotation = quat::rotation(faceRot, vec3(1,0,0));
+    camera->transform.rotation = quat::rotation(faceRot, vec3(-1, 0, 0));
 }

@@ -28,7 +28,7 @@ public:
 	vec3 getLookAt(float units = 1.f);
 	void updateProjection();
 
-	static void mayaCam(Camera* camera, double dt, const float speed = 5.f);
+	static void mayaControl(Camera* camera, double dt, const float speed = 5.f);
 
 private:
 	mat4 projection, view;
