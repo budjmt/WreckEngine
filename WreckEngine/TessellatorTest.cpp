@@ -133,7 +133,7 @@ void TessellatorTest::update(double delta) {
         plane->transform.rotation = quat(rotateBetween(vec3(0, 0, 1), n));
         
         auto forward = plane->transform.forward();
-        auto correctUp = vec3(-forward.x * forward.y, -forward.x * forward.x + forward.z * forward.z, -forward.z * forward.y);
+        auto correctUp = vec3(-forward.x * forward.y, forward.x * forward.x + forward.z * forward.z, -forward.z * forward.y);
         plane->transform.rotation *= quat(rotateBetween(plane->transform.up(), correctUp));
 
         float scaleFactor;
@@ -147,11 +147,6 @@ void TessellatorTest::update(double delta) {
         planet->active = true;
         plane->active = false;
     }
-
-    auto t = cam->transform.getComputed(); 
-    pos = t->position();
-    DrawDebug::getInstance().drawDebugVector(pos, pos + t->forward());
-    DrawDebug::getInstance().drawDebugVector(pos, pos + t->up(), vec3(0, 0, 1));
 
     pos = cam->transform.getComputed()->position();
     controlText->setMessage(to_string(pos, 3) + "\n" + std::to_string(glm::length(pos)) + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation())));
@@ -266,7 +261,7 @@ void adjustCamera(Entity* camera, float dist) {
     constexpr auto farCamDist = 2.f;
     constexpr auto nearCamDist = 0.05f;
 
-    // lerp between no rotation and orthogonal rotation; this translates to facing the surfact to facing tangent to the surface when combined with the parent
+    // lerp between no rotation and orthogonal rotation; this translates to facing the surface to facing tangent to the surface when combined with the parent
     auto faceRot = glm::mix(0.f, PI * 0.5f, clampf((farCamDist - dist) / (farCamDist - nearCamDist), 0.f, 1.f));
     camera->transform.rotation = quat::rotation(faceRot, vec3(-1, 0, 0));
 }
