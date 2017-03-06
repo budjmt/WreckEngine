@@ -8,7 +8,7 @@ class ComputeEntity : public Entity
 {
 public:
     GLprogram program;
-    std::function<void(GLprogram)> update_uniforms;
+    std::function<void()> update_uniforms;
     glm::ivec3 dispatchSize;
     // the compute shader will be run every "updateFreq" seconds
     // default is 16x / second

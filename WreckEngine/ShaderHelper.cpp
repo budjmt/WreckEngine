@@ -32,14 +32,23 @@ GLprogram loadProgram(const char* vertexFile, const char* fragmentFile) {
     shaderProg->setupProgram();
     auto prog = shaderProg->getProgram();
 
-    if (prog.getVal(GL_LINK_STATUS) == GL_TRUE) {
-        cout << "Successfully loaded " << vertexFile << " and " << fragmentFile << endl;
-        return prog;
+    if (checkProgLinkError(prog)) {
+        cout << "^^ Error found in " << vertexFile << " and " << fragmentFile << endl;
+        return GLprogram();
     }
+    
+    cout << "Successfully loaded " << vertexFile << " and " << fragmentFile << endl;
+    return prog;
+}
+
+// returns true if there was an error
+bool checkProgLinkError(const GLprogram& prog) {
+    if (prog.getVal(GL_LINK_STATUS) == GL_TRUE)
+        return false;
 
     auto logLength = prog.getVal(GL_INFO_LOG_LENGTH);
     auto log = std::vector<char>(logLength);
     glGetProgramInfoLog(prog(), logLength, 0, &log[0]);
-    cout << "PROGRAM LINK ERROR: " << vertexFile << " + " << fragmentFile << ": " << &log[0] << endl;
-    return GLprogram();
+    cout << "PROGRAM LINK ERROR: " << &log[0] << endl;
+    return true;
 }

@@ -12,7 +12,7 @@ void ComputeEntity::draw()
         program.use();
 
         if (update_uniforms)
-            update_uniforms(program);
+            update_uniforms();
 
         program.dispatch(dispatchSize.x, dispatchSize.y, dispatchSize.z);
 
@@ -25,12 +25,7 @@ void ComputeEntity::draw()
 
 void ComputeTextureEntity::draw()
 {
-    GLboolean layered = GL_FALSE;
-    if (texture.target == GL_TEXTURE_CUBE_MAP ||
-        texture.target == GL_TEXTURE_CUBE_MAP_ARRAY)
-    {
-        layered = GL_TRUE;
-    }
+    GLboolean layered = texture.target == GL_TEXTURE_CUBE_MAP || texture.target == GL_TEXTURE_CUBE_MAP_ARRAY;
 
     texture.bindImage(access, format, 0, 0, layered);
     ComputeEntity::draw();

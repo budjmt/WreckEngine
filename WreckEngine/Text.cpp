@@ -263,10 +263,8 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
     tex.create(GL_TEXTURE_2D);
     tex.bind();
     tex.set2D<GLubyte>(nullptr, TEX_SIZE, TEX_SIZE, GL_RED, GL_RED, 0);
-    tex.param(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    tex.param(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    tex.param(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    tex.param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    tex.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    tex.param(GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Iterate the packed rectangles and build the texture
     for (const auto& rect : packRects)

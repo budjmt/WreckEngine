@@ -20,8 +20,7 @@ namespace Render {
             Target rt;
             rt.texture.create();
             rt.texture.bind();
-            rt.texture.param(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            rt.texture.param(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            rt.texture.param(GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             
             rt.texture.set2D<value_t>(nullptr, Window::frameWidth, Window::frameHeight, rt.formatInfo.from = from, rt.formatInfo.to = to);
             rt.formatInfo.type = GLtype<value_t>();
