@@ -11,8 +11,7 @@ out vec3 tessCoord;
 layout (location = 4) uniform mat4 iTworldMatrix;
 layout (location = 8) uniform mat4 cameraMatrix;
 
-layout (location = 14, binding = 1) uniform samplerCube heightMap;
-out float height;
+layout (binding = 1) uniform samplerCube heightMap;
 
 patch in float radius;
 patch in vec3 teCamPos;
@@ -28,7 +27,7 @@ void main()
     vec3 pos = fragNormal * radius; // normalizing makes the c-sphere
 
     float dist = distance(pos, teCamPos);
-    height = texture(heightMap, fragNormal).r;
+    float height = texture(heightMap, fragNormal).r;
     pos += fragNormal * (height / dist);
     
     gl_Position = cameraMatrix * vec4(pos, 1);

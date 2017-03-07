@@ -191,9 +191,9 @@ void TessellatorTest::update(double delta) {
         plane->transform.rotation *= quat(rotateBetween(plane->transform.up(), correctUp));
 
         float scaleFactor;
-        if      (dist < 0.25f) scaleFactor = 1;
-        else if (dist < 0.75f) scaleFactor = 2;
-        else                   scaleFactor = 5;
+        if      (dist < 0.25f) scaleFactor = 1.5;
+        else if (dist < 0.75f) scaleFactor = 3.5;
+        else                   scaleFactor = 7.5;
 
         plane->transform.scale = vec3(scaleFactor);
     }
@@ -274,15 +274,14 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
     auto pos = cameraControl->transform.position();
     auto centerDist = glm::length(pos);
 
-    const auto towardSpeed = centerDist - radius;
-    const auto lateralSpeed = 5.f;
+    const auto towardSpeed = (centerDist - radius) / centerDist;
 
     const bool shift = Keyboard::shiftDown();
     
     if (shift) {
         // move away from/towards the surface
-        if      (Keyboard::keyDown(Keyboard::Key::W)) cameraControl->transform.position += pos * (towardSpeed * dt / centerDist);
-        else if (Keyboard::keyDown(Keyboard::Key::S)) cameraControl->transform.position -= pos * (towardSpeed * dt / centerDist);
+        if      (Keyboard::keyDown(Keyboard::Key::W)) cameraControl->transform.position -= pos * (towardSpeed * dt);
+        else if (Keyboard::keyDown(Keyboard::Key::S)) cameraControl->transform.position += pos * (towardSpeed * dt);
 
         pos = camera->transform.getComputed()->position();
         auto dist = glm::length(pos) - radius;
@@ -290,6 +289,8 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
     }
     else {
         // move around the surface
+        const auto lateralSpeed = 5.f * towardSpeed;
+
         float dH = 0, dV = 0;
         bool moved = false;
 
