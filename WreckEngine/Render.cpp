@@ -160,6 +160,11 @@ void MaterialPass::Group::Helper::draw() {
 
     DrawCall::Params* offset = nullptr; // &params[0];
     for (const auto& drawCall : drawCalls) {
+		
+		const auto& prog = drawCall.material->shaders->program;
+		assert(!prog.tessControl.valid() || drawCall.tesselPrim == GL_PATCHES); // if using tessellation, the primitive type must be GL_PATCHES
+		assert(!prog.isCompute); // compute shaders may not be used for draw calls
+
         drawCall.render(offset);
         ++offset;
     }

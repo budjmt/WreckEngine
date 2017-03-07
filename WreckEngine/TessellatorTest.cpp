@@ -35,7 +35,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     tessProg->tessEval    = ShaderRes("Shaders/planet_te.glsl", GL_TESS_EVALUATION_SHADER);
     tessProg->fragment    = ShaderRes("Shaders/planet_f.glsl",  GL_FRAGMENT_SHADER);
     tessProg->setupProgram();
-    planetData.prog = tessProg->getProgram();
+    planetData.prog = tessProg->program();
     planetData.mat = planetData.prog.getUniform<mat4>("cameraMatrix");
     planetData.pos = planetData.prog.getUniform<vec3>("camPos");
 
@@ -45,21 +45,23 @@ TessellatorTest::TessellatorTest() : Game(6) {
     dm->tesselPrim = GL_PATCHES;
     dm->renderGroup = renderer.forward.objects.addGroup([] {
         GL_CHECK(glEnable(GL_CULL_FACE));
-        GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+        //GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
     }, [] {
         GL_CHECK(glDisable(GL_CULL_FACE));
-        GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+        //GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
     });
 
     planet = make_shared<Entity>(dm);
     planet->id = (void*)0xabc;
     mainState->addEntity(planet);
 
-    planeData.prog = loadProgram("Shaders/normalize_v.glsl", "Shaders/planet_f.glsl");
-    planeData.mat = planeData.prog.getUniform<mat4>("cameraMatrix");
+	planeData.prog = tessProg->program();
+    //planeData.prog = loadProgram("Shaders/normalize_v.glsl", "Shaders/planet_f.glsl");
+    //planeData.mat = planeData.prog.getUniform<mat4>("cameraMatrix");
 
     //genPlane("Assets/plane.obj", 5);
     dm = make_shared<DrawMesh>(&renderer.forward.objects, loadOBJ("Assets/plane.obj"), "Assets/texture.png", planeData.prog);
+	dm->tesselPrim = GL_PATCHES;
     dm->renderGroup = 1;
 
     plane = make_shared<Entity>(dm);
@@ -68,6 +70,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     cameraControl = make_shared<LogicEntity>([](LogicEntity*, double) {});
     cameraControl->transform.position = vec3(0, 0, 5);
+	cameraControl->transform.rotate(0, PI, 0);
     //cameraControl->transform.position = vec3(-3, 0, 0);
     mainState->addEntity(cameraControl);
 
@@ -133,7 +136,9 @@ void TessellatorTest::update(double delta) {
         plane->transform.rotation = quat(rotateBetween(vec3(0, 0, 1), n));
         
         auto forward = plane->transform.forward();
+		auto camUp   = Camera::main->transform.getComputed()->up();
         auto correctUp = vec3(-forward.x * forward.y, forward.x * forward.x + forward.z * forward.z, -forward.z * forward.y);
+		//auto correctUp = camUp - forward * (glm::dot(camUp, forward));
         plane->transform.rotation *= quat(rotateBetween(plane->transform.up(), correctUp));
 
         float scaleFactor;
@@ -162,8 +167,8 @@ void TessellatorTest::draw() {
     planetData.prog.use();
     planetData.mat.update(mat);
     planetData.pos.update(Camera::main->transform.getComputed()->position);
-    planeData.prog.use();
-    planeData.mat.update(mat);
+    //planeData.prog.use();
+    //planeData.mat.update(mat);
 
     controlData.prog.use();
     controlData.mat.update(mat);

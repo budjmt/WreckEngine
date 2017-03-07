@@ -31,7 +31,7 @@ CubemapTest::CubemapTest() : Game(6)
     material->fragment    = Shader("Shaders/cubemap_f.glsl",  GL_FRAGMENT_SHADER);
     material->setupProgram();
 
-    renderData.material = material->getProgram();
+    renderData.material = material->program();
     renderData.viewProjection = renderData.material.getUniform<mat4>("ViewProjection");
     renderData.tessLevelInner = GLresource<float>(renderData.material, "TessLevelInner");
     renderData.tessLevelOuter = GLresource<float>(renderData.material, "TessLevelOuter");
@@ -46,7 +46,7 @@ CubemapTest::CubemapTest() : Game(6)
     auto program = HotSwap::Shader::create();
     program->compute = Shader("Shaders/cubemap_c.glsl", GL_COMPUTE_SHADER);
     program->setupProgram();
-    renderData.program = program->getProgram();
+    renderData.program = program->program();
     renderData.program.use();
     renderData.compTime = renderData.program.getUniform<float>("Time");
     renderData.compZoom = renderData.program.getUniform<float>("Zoom");

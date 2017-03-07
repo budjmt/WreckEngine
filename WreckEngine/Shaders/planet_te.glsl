@@ -18,9 +18,11 @@ void main()
     vec3 p1 = gl_TessCoord.y * tcPosition[1];
     vec3 p2 = gl_TessCoord.z * tcPosition[2];
     tessCoord = gl_TessCoord;
-    vec3 pos = normalize(p0 + p1 + p2) * radius; // normalizing makes the c-sphere
+    
+    fragNormal = normalize(p0 + p1 + p2);
+    vec3 pos = fragNormal * radius; // normalizing makes the c-sphere
 
-    fragNormal = normalize((iTworldMatrix * vec4(pos, 0)).xyz);
+    //fragNormal = normalize((iTworldMatrix * vec4(pos, 0)).xyz);
 
     gl_Position = cameraMatrix * vec4(pos, 1);
 }

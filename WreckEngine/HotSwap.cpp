@@ -17,25 +17,25 @@ shared<Shader> Shader::create() {
 }
 
 void Shader::setupProgram() {
-    program.vertex      = vertex.get();
-    program.tessControl = tessControl.get();
-    program.tessEval    = tessEval.get();
-    program.geometry    = geometry.get();
-    program.fragment    = fragment.get();
-    program.compute     = compute.get();
+    _program.vertex      = vertex.get();
+    _program.tessControl = tessControl.get();
+    _program.tessEval    = tessEval.get();
+    _program.geometry    = geometry.get();
+    _program.fragment    = fragment.get();
+    _program.compute     = compute.get();
 
-    program.create();
-    program.link();
+    _program.create();
+    _program.link();
 }
 
 void Shader::update() {
     std::vector<std::pair<Resource<File::Extension::GLSL>&, GLshader&>> updates;
-    if (vertex.checkForUpdate())      updates.push_back({ vertex, program.vertex });
-    if (tessControl.checkForUpdate()) updates.push_back({ tessControl, program.tessControl });
-    if (tessEval.checkForUpdate())    updates.push_back({ tessEval, program.tessEval });
-    if (geometry.checkForUpdate())    updates.push_back({ geometry, program.geometry });
-    if (fragment.checkForUpdate())    updates.push_back({ fragment, program.fragment });
-    if (compute.checkForUpdate())     updates.push_back({ compute, program.compute });
+    if (vertex.checkForUpdate())      updates.push_back({ vertex,      _program.vertex });
+    if (tessControl.checkForUpdate()) updates.push_back({ tessControl, _program.tessControl });
+    if (tessEval.checkForUpdate())    updates.push_back({ tessEval,    _program.tessEval });
+    if (geometry.checkForUpdate())    updates.push_back({ geometry,    _program.geometry });
+    if (fragment.checkForUpdate())    updates.push_back({ fragment,    _program.fragment });
+    if (compute.checkForUpdate())     updates.push_back({ compute,     _program.compute });
 
     Thread::Render::runNextFrame([this, updates] {
         bool needsRelink = false;
@@ -43,8 +43,8 @@ void Shader::update() {
             needsRelink = u.first.getUpdate(u.second) || needsRelink;
         }
         if (needsRelink) {
-            program.refresh();
-            program.link();
+            _program.refresh();
+            _program.link();
         }
     });
 }

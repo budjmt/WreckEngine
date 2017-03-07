@@ -30,7 +30,7 @@ GLprogram loadProgram(const char* vertexFile, const char* fragmentFile) {
     }
     //cout << "Files read successfully." << endl;
     shaderProg->setupProgram();
-    auto prog = shaderProg->getProgram();
+    auto prog = shaderProg->program();
 
     if (prog.getVal(GL_LINK_STATUS) == GL_TRUE) {
         cout << "Successfully loaded " << vertexFile << " and " << fragmentFile << endl;

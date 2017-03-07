@@ -66,12 +66,11 @@ namespace HotSwap {
         static shared<Shader> create();
 
         Resource<File::Extension::GLSL> vertex, tessControl, tessEval, geometry, fragment, compute;
-        inline GLprogram getProgram() const { return program; }
 
         void setupProgram();
         void update() override;
     private:
         Shader() = default;
-        GLprogram program;
+		ACCS_G(public, GLprogram, program);
     };
 };

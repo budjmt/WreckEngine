@@ -22,7 +22,7 @@ GLprogram PostProcess::make_program(const GLshader& fragment, const char* path) 
     prog->vertex = defaultVertex;
     prog->fragment.set(fragment, path, GL_FRAGMENT_SHADER);
     prog->setupProgram();
-    return prog->getProgram();
+    return prog->program();
 }
 
 PostProcess* PostProcess::chainsTo(shared<PostProcess> p) { 
