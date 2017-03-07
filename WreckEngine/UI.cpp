@@ -171,8 +171,7 @@ namespace UI
         if (!fontTex()) return false;
         
         fontTex.bind();
-        fontTex.param(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        fontTex.param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        fontTex.param(GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         fontTex.set2D<GLubyte>(pixels, width, height);
 
         // Store our identifier

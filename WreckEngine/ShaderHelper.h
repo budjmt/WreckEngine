@@ -7,3 +7,5 @@
 GLshader loadShader(const char* file, GLenum shaderType);
 GLprogram loadProgram(const char* vertexFile, const char* fragmentFile);
 
+bool checkProgLinkError(const GLprogram& prog);
+

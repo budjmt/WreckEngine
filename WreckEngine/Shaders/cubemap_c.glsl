@@ -3,8 +3,6 @@
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform imageCube Tex;
 
-#define clamp01(val) clamp(val, 0.0, 1.0)
-
 #define USE_SIMPLEX 0
 #define USE_PERLIN 1
 #define USE_CELLULAR 0
@@ -62,8 +60,8 @@ void main()
     // "For cube maps, the size will be ivec2​; the third dimension would always be 6, so it is not returned"
 
     ivec3 coords = ivec3(gl_GlobalInvocationID);
-    ivec2 dims = imageSize(Tex);
-    vec2 uv = vec2(coords.xy) / vec2(dims);
+    vec2 dims = imageSize(Tex);
+    vec2 uv = vec2(coords.xy) / dims;
 
     vec3 normalizedDir = getCubeDirection(uv * 2.0 - 1.0);
     vec3 dir = normalizedDir * Zoom;
@@ -71,7 +69,7 @@ void main()
     vec2 n = noise3D(dir);
     vec4 color = vec4(0, n, 1.0);
 #else
-    float n = clamp01(noise3D(dir));
+    float n = clamp(noise3D(dir), 0., 1.);
     vec4 color = vec4(n, n, n, 1.0);
 #endif
 

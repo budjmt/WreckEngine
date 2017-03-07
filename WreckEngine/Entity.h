@@ -31,6 +31,11 @@ protected:
     shared<Drawable> shape;
 };
 
+class TransformEntity : public Entity {
+public:
+    void draw() override {}
+};
+
 class LogicEntity : public Entity {
     using update_func = void(*)(LogicEntity*, double);
 public:

@@ -5,6 +5,7 @@ layout(vertices = 3) out;
 
 in vec3 vPosition[];
 out vec3 tcPosition[];
+out float tcDist[];
 
 layout (location = 12) uniform vec3 camPos;
 layout (location = 13) uniform vec2 tessLevel = vec2(16,16);
@@ -13,11 +14,13 @@ const float MaxDist = 10.0;
 const float Radius = 2;
 
 patch out float radius;
+patch out vec3 teCamPos;
 
 void main()
 {
     tcPosition[ID] = vPosition[ID];
     radius = Radius;
+    teCamPos = camPos;
 
     vec3 p0 = tcPosition[0] * radius;
     vec3 p1 = tcPosition[1] * radius;

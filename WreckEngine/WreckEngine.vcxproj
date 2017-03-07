@@ -176,6 +176,7 @@
     <ClCompile Include="ColliderEntity.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="Color.cpp" />
+    <ClCompile Include="ComputeEntity.cpp" />
     <ClCompile Include="CubemapTest.cpp" />
     <ClCompile Include="Drawable.cpp" />
     <ClCompile Include="DrawDebug.cpp" />
@@ -201,6 +202,7 @@
     <ClCompile Include="UV.cpp" />
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="ComputeEntity.h" />
     <ClInclude Include="CubemapTest.h" />
     <ClInclude Include="DebugBenchmark.h" />
     <ClInclude Include="DrawDebug.h" />

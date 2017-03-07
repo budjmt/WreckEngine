@@ -3,13 +3,20 @@
 #include "ColliderEntity.h"
 #include "HotSwap.h"
 #include "TextEntity.h"
+#include "ComputeEntity.h"
 
 struct RenderData {
     GLprogram prog;
     GLuniform<mat4> mat;
     GLuniform<vec3> pos;
 };
-static RenderData planetData, planeData, controlData;
+static RenderData planetData, controlData;
+
+struct {
+    GLprogram prog;
+    GLuniform<float> time, zoom;
+    GLtexture cubemap;
+} cubemapData;
 
 static shared<TextEntity> controlText;
 static shared<Entity> me, planet, plane, cameraControl;
@@ -17,6 +24,20 @@ static shared<Entity> me, planet, plane, cameraControl;
 struct {
     vec3 forward;
 } cameraNav;
+
+void initCubemap(GLtexture& tex, GLenum type, GLuint width, GLuint height, GLenum from, GLenum to) {
+    tex.create(GL_TEXTURE_CUBE_MAP);
+    tex.bind();
+    tex.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    tex.param(GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_X, type, nullptr, width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, type, nullptr, width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, type, nullptr, width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, type, nullptr, width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, type, nullptr, width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, type, nullptr, width, height, from, to);
+}
 
 TessellatorTest::TessellatorTest() : Game(6) {
     auto mainState = make_shared<State>("main");
@@ -26,16 +47,45 @@ TessellatorTest::TessellatorTest() : Game(6) {
     controlText->transform.position = vec3(25, 50, 0);
     controlText->transform.scale = vec3(0.5f, 1, 1);
     mainState->addEntity(controlText);
+    
+    auto cubemapProg = HotSwap::Shader::create();
+    using ShaderRes = decltype(cubemapProg->vertex);
+    
+    cubemapProg->compute = ShaderRes("Shaders/cubemap_c.glsl", GL_COMPUTE_SHADER);
+    cubemapProg->setupProgram();
+    cubemapData.prog = cubemapProg->program();
+    cubemapData.prog.use();
+    cubemapData.time = cubemapData.prog.getUniform<float>("Time");
+    cubemapData.zoom = cubemapData.prog.getUniform<float>("Zoom");
+    cubemapData.zoom.update(6.0f);
+
+    constexpr size_t texSize = 256;
+    initCubemap(cubemapData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
+
+    auto computeEntity = make_shared<ComputeTextureEntity>();
+    computeEntity->program = cubemapData.prog;
+    computeEntity->dispatchSize = { texSize, texSize, 6 };
+    computeEntity->update_uniforms = [&]() {
+        cubemapData.time.update((float)Time::elapsed());
+        //cubemapData.zoom.update(cosRange(time * 0.375f, 1, 8));
+    };
+    computeEntity->texture = cubemapData.cubemap;
+    computeEntity->synchronize = false;
+    mainState->addEntity(computeEntity);
+
+    checkProgLinkError(cubemapData.prog);
 
     auto tessProg = HotSwap::Shader::create();
-    using ShaderRes = decltype(tessProg->vertex);
-
     tessProg->vertex      = ShaderRes("Shaders/planet_v.glsl",  GL_VERTEX_SHADER);
     tessProg->tessControl = ShaderRes("Shaders/planet_tc.glsl", GL_TESS_CONTROL_SHADER);
     tessProg->tessEval    = ShaderRes("Shaders/planet_te.glsl", GL_TESS_EVALUATION_SHADER);
     tessProg->fragment    = ShaderRes("Shaders/planet_f.glsl",  GL_FRAGMENT_SHADER);
     tessProg->setupProgram();
+
     planetData.prog = tessProg->program();
+    checkProgLinkError(planetData.prog);
+
+    planetData.prog.use();
     planetData.mat = planetData.prog.getUniform<mat4>("cameraMatrix");
     planetData.pos = planetData.prog.getUniform<vec3>("camPos");
 
@@ -46,31 +96,30 @@ TessellatorTest::TessellatorTest() : Game(6) {
     dm->renderGroup = renderer.forward.objects.addGroup([] {
         GL_CHECK(glEnable(GL_CULL_FACE));
         //GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+        GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }, [] {
         GL_CHECK(glDisable(GL_CULL_FACE));
         //GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
     });
+    dm->material.addTexture(cubemapData.cubemap);
 
     planet = make_shared<Entity>(dm);
     planet->id = (void*)0xabc;
     mainState->addEntity(planet);
 
-	planeData.prog = tessProg->program();
-    //planeData.prog = loadProgram("Shaders/normalize_v.glsl", "Shaders/planet_f.glsl");
-    //planeData.mat = planeData.prog.getUniform<mat4>("cameraMatrix");
-
     //genPlane("Assets/plane.obj", 5);
-    dm = make_shared<DrawMesh>(&renderer.forward.objects, loadOBJ("Assets/plane.obj"), "Assets/texture.png", planeData.prog);
-	dm->tesselPrim = GL_PATCHES;
+    dm = make_shared<DrawMesh>(&renderer.forward.objects, loadOBJ("Assets/plane.obj"), "Assets/texture.png", planetData.prog);
+    dm->tesselPrim = GL_PATCHES;
     dm->renderGroup = 1;
+    dm->material.addTexture(cubemapData.cubemap);
 
     plane = make_shared<Entity>(dm);
     plane->active = false;
     mainState->addEntity(plane);
 
-    cameraControl = make_shared<LogicEntity>([](LogicEntity*, double) {});
+    cameraControl = make_shared<TransformEntity>();
     cameraControl->transform.position = vec3(0, 0, 5);
-	cameraControl->transform.rotate(0, PI, 0);
+    cameraControl->transform.rotate(0, PI, 0);
     //cameraControl->transform.position = vec3(-3, 0, 0);
     mainState->addEntity(cameraControl);
 
@@ -136,9 +185,9 @@ void TessellatorTest::update(double delta) {
         plane->transform.rotation = quat(rotateBetween(vec3(0, 0, 1), n));
         
         auto forward = plane->transform.forward();
-		auto camUp   = Camera::main->transform.getComputed()->up();
+        auto camUp   = Camera::main->transform.getComputed()->up();
         auto correctUp = vec3(-forward.x * forward.y, forward.x * forward.x + forward.z * forward.z, -forward.z * forward.y);
-		//auto correctUp = camUp - forward * (glm::dot(camUp, forward));
+        //auto correctUp = camUp - forward * (glm::dot(camUp, forward));
         plane->transform.rotation *= quat(rotateBetween(plane->transform.up(), correctUp));
 
         float scaleFactor;
@@ -232,8 +281,8 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
     
     if (shift) {
         // move away from/towards the surface
-        if      (Keyboard::keyDown(Keyboard::Key::I))   cameraControl->transform.position += pos * (towardSpeed * dt / centerDist);
-        else if (Keyboard::keyDown(Keyboard::Key::K)) cameraControl->transform.position -= pos * (towardSpeed * dt / centerDist);
+        if      (Keyboard::keyDown(Keyboard::Key::W)) cameraControl->transform.position += pos * (towardSpeed * dt / centerDist);
+        else if (Keyboard::keyDown(Keyboard::Key::S)) cameraControl->transform.position -= pos * (towardSpeed * dt / centerDist);
 
         pos = camera->transform.getComputed()->position();
         auto dist = glm::length(pos) - radius;
@@ -244,10 +293,10 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
         float dH = 0, dV = 0;
         bool moved = false;
 
-        if      (Keyboard::keyDown(Keyboard::Key::I)) { dV =  lateralSpeed * dt; moved = true; }
-        else if (Keyboard::keyDown(Keyboard::Key::K)) { dV = -lateralSpeed * dt; moved = true; }
-        if      (Keyboard::keyDown(Keyboard::Key::J)) { dH = -lateralSpeed * dt; moved = true; }
-        else if (Keyboard::keyDown(Keyboard::Key::L)) { dH =  lateralSpeed * dt; moved = true; }
+        if      (Keyboard::keyDown(Keyboard::Key::W)) { dV =  lateralSpeed * dt; moved = true; }
+        else if (Keyboard::keyDown(Keyboard::Key::S)) { dV = -lateralSpeed * dt; moved = true; }
+        if      (Keyboard::keyDown(Keyboard::Key::A)) { dH = -lateralSpeed * dt; moved = true; }
+        else if (Keyboard::keyDown(Keyboard::Key::D)) { dH =  lateralSpeed * dt; moved = true; }
         
         const auto getRot = [](float d, float radius) {
             return 2 * asin(d * 0.5f / radius);
