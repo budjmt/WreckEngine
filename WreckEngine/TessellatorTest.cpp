@@ -11,7 +11,7 @@ struct RenderData {
     GLuniform<vec3> pos;
     GLuniform<float> radius;
 };
-static RenderData planetData, controlData;
+static RenderData planetData;
 
 struct {
     GLprogram prog;
@@ -20,7 +20,7 @@ struct {
 } cubemapData;
 
 static shared<TextEntity> controlText;
-static shared<Entity> me, cameraControl;
+static shared<Entity> cameraControl;
 
 struct TerrainPlane {
     vec3 center;
@@ -165,26 +165,12 @@ TessellatorTest::TessellatorTest() : Game(6) {
     cameraControl = make_shared<TransformEntity>();
     cameraControl->transform.position = vec3(0, 0, 5);
     cameraControl->transform.rotate(0, PI, 0);
-    //cameraControl->transform.position = vec3(-3, 0, 0);
     mainState->addEntity(cameraControl);
 
     auto camera = make_shared<Camera>();
     camera->id = (void*)0xcab;
-    //camera->transform.position = vec3(0, 0, 5);
-    //camera->transform.rotate(0, PI, 0);
     camera->transform.parent(&cameraControl->transform);
     mainState->addEntity(camera);
-
-    controlData.prog = loadProgram("Shaders/matvertexShader.glsl", "Shaders/dumb_f.glsl");
-    controlData.mat = controlData.prog.getUniform<mat4>("cameraMatrix");
-
-    auto cone = loadOBJ("Assets/cone.obj");
-    cone->rotate(quat::rotation(PI / 2, vec3(1, 0, 0)));
-    me = make_shared<Entity>(make_shared<DrawMesh>(&renderer.forward.objects, cone, "Assets/texture.png", controlData.prog));
-    me->transform.position = vec3(-3, 0, 0);
-    //me->transform.parent(&cameraControl->transform);
-    me->color = vec4(1,0,0,1);
-    mainState->addEntity(me);
 
     cameraNav.forward = camera->forward();
 
@@ -212,7 +198,6 @@ void TessellatorTest::update(double delta) {
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 1, 0));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 0, 1));
 
-    //auto cam = me.get();
     auto cam = Camera::main;
 
     moveCamera(cameraControl.get(), cam, RADIUS);
@@ -260,9 +245,6 @@ void TessellatorTest::draw() {
     planetData.mat.update(mat);
     planetData.pos.update(Camera::main->transform.getComputed()->position);
     planetData.radius.update(RADIUS); // in case of recompilation, this can be replaced later with a one-time set
-
-    controlData.prog.use();
-    controlData.mat.update(mat);
 
     Game::draw();
     Text::render(&renderer.forward.objects);

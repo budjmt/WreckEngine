@@ -1,5 +1,7 @@
 #version 450
 
+#include height.inc
+
 //layout(triangles, equal_spacing, ccw) in;
 layout(triangles, fractional_odd_spacing, ccw) in;
 
@@ -28,7 +30,7 @@ void main()
 
     float dist = distance(pos, teCamPos);
     float height = texture(heightMap, fragNormal).r;
-    pos += fragNormal * (height / dist);
+    pos += getHeight(fragNormal, height, dist);
     
     gl_Position = cameraMatrix * vec4(pos, 1);
 }

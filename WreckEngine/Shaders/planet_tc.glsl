@@ -18,7 +18,7 @@ patch out vec3 teCamPos;
 
 void main()
 {
-    tcPosition[ID] = vPosition[ID];
+    tcPosition[ID] = normalize(vPosition[ID]);
     radius = Radius;
     teCamPos = camPos;
 
