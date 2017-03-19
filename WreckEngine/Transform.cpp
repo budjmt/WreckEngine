@@ -45,6 +45,14 @@ void Transform::updateMats() const {
     mats->world = t * r * s;
 }
 
+// WARNING: this is guaranteed to be safe across threads, but the biggest danger is in a single thread
+// If the pointer is copied, then the transform is changed,
+// and then another call to get the pointer is made IN THE SAME THREAD before the old copy is destroyed
+// the program will deadlock because the shared lock will never be released
+// This can be avoided by:
+//   a) not calling getComputed() multiple times in the same (broad) scope (difficult)
+//   b) getting individual values from each getComputed() call (easy, but sometimes inefficient)
+//   c) declaring copy variables, then assigning them in a dedicated scope with a copy of the pointer (ugly, but most efficient for multiple values)
 Transform::safe_tf_ptr Transform::getComputed() const {
     //if there's no parent, this is already an accurate transform
     if (!_parent) return safe_tf_ptr(this, computedMut.object);

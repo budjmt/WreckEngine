@@ -9,6 +9,7 @@ struct RenderData {
     GLprogram prog;
     GLuniform<mat4> mat;
     GLuniform<vec3> pos;
+    GLuniform<float> radius;
 };
 static RenderData planetData, controlData;
 
@@ -19,24 +20,79 @@ struct {
 } cubemapData;
 
 static shared<TextEntity> controlText;
-static shared<Entity> me, planet, plane, cameraControl;
+static shared<Entity> me, cameraControl;
+
+struct TerrainPlane {
+    vec3 center;
+    float radius;
+    vec3 boundingPoint; // for horizon culling
+    Entity* entity;
+
+    TerrainPlane(Entity* e, const Mesh* mesh, const vec3 dir, const float radius) : entity(e) {
+        const auto& trans = e->transform;
+
+        auto& verts = mesh->data().verts;
+        std::vector<vec3> normalizedVerts(verts.size());
+        std::transform(verts.begin(), verts.end(), normalizedVerts.begin(), [&trans](const auto& v) {
+            return glm::normalize(trans.getTransformed(v));
+        });
+
+        this->center = Mesh::getCentroid(normalizedVerts) * radius;
+
+        const auto dims = Mesh::getPreciseDims(normalizedVerts);
+        this->radius = maxf(maxf(dims.x, dims.y), dims.z) * radius * 0.5f;
+
+        float maxLen = 0;
+        for (const auto& vn : normalizedVerts) {
+            const auto tLen = 1.f / glm::dot(vn, dir);
+            if (tLen > maxLen) {
+                maxLen = tLen;
+            }
+        }
+
+        const auto adjustedLen = maxLen * radius; // might need to compensate for height map
+        this->boundingPoint = dir * adjustedLen;
+    }
+};
+std::vector<TerrainPlane> planes;
 
 struct {
     vec3 forward;
 } cameraNav;
+
+bool wireframe = false;
+constexpr float RADIUS = 2;
 
 void initCubemap(GLtexture& tex, GLenum type, GLuint width, GLuint height, GLenum from, GLenum to) {
     tex.create(GL_TEXTURE_CUBE_MAP);
     tex.bind();
     tex.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     tex.param(GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    
+
     tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_X, type, nullptr, width, height, from, to);
     tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, type, nullptr, width, height, from, to);
     tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, type, nullptr, width, height, from, to);
     tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, type, nullptr, width, height, from, to);
     tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, type, nullptr, width, height, from, to);
     tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, type, nullptr, width, height, from, to);
+}
+
+shared<Entity> genPlanetPlane(const vec3 dir, const float radius, Render::MaterialPass* renderer, const size_t group) {
+    static auto planeMesh = loadOBJ("Assets/plane.obj");
+
+    auto dm = make_shared<DrawMesh>(renderer, planeMesh, "Assets/texture.png", planetData.prog);
+    dm->tesselPrim = GL_PATCHES;
+    dm->renderGroup = group;
+    dm->material.addTexture(cubemapData.cubemap);
+
+    auto plane = make_shared<Entity>(dm);
+    plane->active = false;
+    plane->transform.position = dir * radius;
+    plane->transform.rotation = quat(rotateBetween(vec3(0, 0, 1), dir));
+    const auto scale = radius * 2.02f;
+    plane->transform.scale = vec3(scale, scale, 1);
+    planes.push_back(TerrainPlane(plane.get(), planeMesh.get(), dir, radius));
+    return plane;
 }
 
 TessellatorTest::TessellatorTest() : Game(6) {
@@ -88,34 +144,23 @@ TessellatorTest::TessellatorTest() : Game(6) {
     planetData.prog.use();
     planetData.mat = planetData.prog.getUniform<mat4>("cameraMatrix");
     planetData.pos = planetData.prog.getUniform<vec3>("camPos");
+    planetData.radius = planetData.prog.getUniform<float>("Radius");
 
-    auto cube = loadOBJ("Assets/cube.obj");
-
-    auto dm = make_shared<DrawMesh>(&renderer.forward.objects, cube, "Assets/texture.png", planetData.prog);
-    dm->tesselPrim = GL_PATCHES;
-    dm->renderGroup = renderer.forward.objects.addGroup([] {
+    //genPlane("Assets/plane.obj", 5);
+    const auto planetGroup = renderer.forward.objects.addGroup([] {
         GL_CHECK(glEnable(GL_CULL_FACE));
-        //GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+        if(wireframe) GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
         GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }, [] {
         GL_CHECK(glDisable(GL_CULL_FACE));
-        //GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+        if(wireframe) GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
     });
-    dm->material.addTexture(cubemapData.cubemap);
 
-    planet = make_shared<Entity>(dm);
-    planet->id = (void*)0xabc;
-    mainState->addEntity(planet);
-
-    //genPlane("Assets/plane.obj", 5);
-    dm = make_shared<DrawMesh>(&renderer.forward.objects, loadOBJ("Assets/plane.obj"), "Assets/texture.png", planetData.prog);
-    dm->tesselPrim = GL_PATCHES;
-    dm->renderGroup = 1;
-    dm->material.addTexture(cubemapData.cubemap);
-
-    plane = make_shared<Entity>(dm);
-    plane->active = false;
-    mainState->addEntity(plane);
+    const vec3 cubeDirs[] = { vec3(0, 0, 1), vec3(0, 0, -1)
+                            , vec3(0, 1, 0), vec3(0, -1, 0)
+                            , vec3(1, 0, 0), vec3(-1, 0, 0) };
+    for(auto& dir : cubeDirs)
+        mainState->addEntity(genPlanetPlane(dir, RADIUS, &renderer.forward.objects, planetGroup));
 
     cameraControl = make_shared<TransformEntity>();
     cameraControl->transform.position = vec3(0, 0, 5);
@@ -149,7 +194,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
 }
 
-vec3 getClosestSphereDir(vec3, float, vec3, vec3);
+bool isVisibleHorizon(const vec3 view, const vec3 boundingPoint, const float radius);
 void moveCamera(Entity* cameraControl, Entity* camera, float radius);
 void adjustCamera(Entity* camera, float dist);
 
@@ -161,49 +206,47 @@ void TessellatorTest::update(double delta) {
     //quit the game
     //if (Keyboard::keyDown(Keyboard::Key::Code::Q)) Window::close(); // pretty broken in this game
 
+    if (Keyboard::keyPressed(Keyboard::Key::Code::Equal)) wireframe = !wireframe;
+
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 1, 0));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 0, 1));
 
-    const float radius = 2;
-
     //auto cam = me.get();
     auto cam = Camera::main;
 
-    moveCamera(cameraControl.get(), cam, radius);
+    moveCamera(cameraControl.get(), cam, RADIUS);
 
     auto pos = Camera::main->transform.getComputed()->position();
-    auto dist = glm::length(pos) - radius;
-    if (dist < 2) {
-        plane->active = true;
-        planet->active = false;
+    auto dist = glm::length(pos) - RADIUS;
 
-        auto n = getClosestSphereDir(vec3(), radius, pos, Camera::main->transform.getComputed()->forward());
-        auto closestToForward = radius * n;
-        plane->transform.position = closestToForward;
-        
-        plane->transform.rotation = quat(rotateBetween(vec3(0, 0, 1), n));
-        
-        auto forward = plane->transform.forward();
-        auto camUp   = Camera::main->transform.getComputed()->up();
-        auto correctUp = vec3(-forward.x * forward.y, forward.x * forward.x + forward.z * forward.z, -forward.z * forward.y);
-        //auto correctUp = camUp - forward * (glm::dot(camUp, forward));
-        plane->transform.rotation *= quat(rotateBetween(plane->transform.up(), correctUp));
-
-        float scaleFactor;
-        if      (dist < 0.25f) scaleFactor = 1.5;
-        else if (dist < 0.75f) scaleFactor = 3.5;
-        else                   scaleFactor = 7.5;
-
-        plane->transform.scale = vec3(scaleFactor);
+    int activeCounter = 0;
+    for (const auto& plane : planes) {
+        //DrawDebug::getInstance().drawDebugVector(plane.entity->transform.getComputed()->position(), plane.boundingPoint);
+        if (isVisibleHorizon(pos, plane.boundingPoint, RADIUS)) {
+            if (cam->sphereInFrustum(plane.center, plane.radius)) {
+                plane.entity->active = true;
+                ++activeCounter;
+            }
+            else goto NOT_VISIBLE;
+        }
+        else {
+        NOT_VISIBLE:
+            plane.entity->active = false;
+        }
     }
-    else {
-        planet->active = true;
-        plane->active = false;
-    }
+
+    // replace with higher res model swap in
+    // float scaleFactor;
+    // if      (dist < 0.25f) scaleFactor = 1.5;
+    // else if (dist < 0.75f) scaleFactor = 3.5;
+    // else                   scaleFactor = 7.5;
 
     pos = cam->transform.getComputed()->position();
-    controlText->setMessage(to_string(pos, 3) + "\n" + std::to_string(glm::length(pos)) + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation())));
+    controlText->setMessage(to_string(pos, 3) 
+                          + "\n" + std::to_string(glm::length(pos)) 
+                          + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation())) 
+                          + "\nPlanes Active: " + std::to_string(activeCounter));
 }
 
 void TessellatorTest::postUpdate() {
@@ -216,8 +259,7 @@ void TessellatorTest::draw() {
     planetData.prog.use();
     planetData.mat.update(mat);
     planetData.pos.update(Camera::main->transform.getComputed()->position);
-    //planeData.prog.use();
-    //planeData.mat.update(mat);
+    planetData.radius.update(RADIUS); // in case of recompilation, this can be replaced later with a one-time set
 
     controlData.prog.use();
     controlData.mat.update(mat);
@@ -226,24 +268,17 @@ void TessellatorTest::draw() {
     Text::render(&renderer.forward.objects);
 }
 
-vec3 getTangent(vec3 normal, vec3 forward) {
-    float parallel = glm::dot(forward, normal);
-    auto val = forward - parallel * normal;
-    auto len = glm::length(val);
-    return len ? val / len : glm::cross(normal, vec3(1,0,0));
-}
+// https://cesiumjs.org/2013/04/25/horizon-culling/
+// checks whether [boundingPoint] is visible around the horizon of a sphere with r = [radius] from a given [view] position
+bool isVisibleHorizon(const vec3 view, const vec3 boundingPoint, const float radius)
+{
+    const auto toCenter = -view, toPoint = boundingPoint - view;
 
-vec3 getClosestSphereDir(vec3 c, float r, vec3 p0, vec3 n) {
-    auto u = c - p0;
-    auto t = glm::dot(n, u); // normally divided by dot(n, n) == |n|^2, but n is a unit vector so it's unnecessary
-    auto s = t * t - glm::dot(u, u) + r * r;
-    // if the line intersects the sphere, the closest point to the origin isn't the closest pt to the surface
-    if (s >= 0) {
-        s = sqrt(s);
-        t = t - glm::sign(t) * s; // not 100% predictable when p0 is inside the sphere, but that's fine
-    }
-    auto closestLinePt = p0 + n * t;
-    return glm::normalize(closestLinePt - c); // to get closest pt on sphere, multiply by radius and add to center
+    const auto pdc = glm::dot(toPoint, toCenter);
+    const auto distFromHorizonSq = glm::dot(toCenter, toCenter) - radius * radius;
+
+    // first determine if in front of horizon, then check if inside the cone
+    return pdc < distFromHorizonSq || pdc * pdc / glm::dot(toPoint, toPoint) < distFromHorizonSq;
 }
 
 void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
@@ -277,7 +312,7 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
     const auto towardSpeed = (centerDist - radius) / centerDist;
 
     const bool shift = Keyboard::shiftDown();
-    
+
     if (shift) {
         // move away from/towards the surface
         if      (Keyboard::keyDown(Keyboard::Key::W)) cameraControl->transform.position -= pos * (towardSpeed * dt);
@@ -312,7 +347,7 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
 
 // adjusts the camera's forward vector based on distance from the surface
 void adjustCamera(Entity* camera, float dist) {
-    
+
     constexpr auto farCamDist = 2.f;
     constexpr auto nearCamDist = 0.05f;
 

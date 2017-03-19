@@ -13,8 +13,34 @@ mat4 Camera::getCamMat() { return projection * view; }
 void Camera::update(double dt) {
     auto t = transform.getComputed();
     view = glm::lookAt(t->position(), getLookAt(), t->up());
-    // update projection
-    // updateProjection();
+    updateFrustum();
+}
+
+//#include "DrawDebug.h"
+void Camera::updateFrustum() {
+    const auto vp = getCamMat();
+    const auto r3 = vec4(vp[0][3], vp[1][3], vp[2][3], vp[3][3]);
+
+    // 0 is left/right, 1 is bottom/top
+    for (int i = 0; i < 2; ++i) {
+        const auto rCurr = vec4(vp[0][i], vp[1][i], vp[2][i], vp[3][i]);
+        const auto index = i * 2 + 1;
+
+        const auto p1 = r3 + rCurr;
+        frustumPlanes[index] = p1 / glm::length(vec3(p1));
+
+        const auto p2 = r3 - rCurr;
+        frustumPlanes[index + 1] = p2 / glm::length(vec3(p2));
+    }
+
+    // 2 is near / far; their positions in the array are optimized for how useful their check is
+    const auto r2 = vec4(vp[0][2], vp[1][2], vp[2][2], vp[2][3]);
+    
+    const auto near = r3 + r2;
+    frustumPlanes[0] = near / glm::length(near);
+
+    const auto far = r3 - r2;
+    frustumPlanes[5] = far / glm::length(far);
 }
 
 void Camera::draw() {
@@ -33,14 +59,23 @@ vec3 Camera::getLookAt(float units) {
 }
 
 void Camera::updateProjection() {
-    constexpr auto znear = 0.01f;
-    constexpr auto zfar = 1000.f;
     projection = glm::perspective(CAM_FOV, Window::aspect, znear, zfar);
 }
 
 vec3 Camera::forward() { return transform.forward(); }
 vec3 Camera::up()      { return transform.up(); }
 vec3 Camera::right()   { return transform.right(); }
+
+bool Camera::sphereInFrustum(const vec3 center, const float radius) {
+    const auto center4 = vec4(center, 1);
+
+    for (const auto& plane : frustumPlanes) {
+        if (glm::dot(plane, center4) < -radius)
+            return false;
+    }
+
+    return true;
+}
 
 void Camera::mayaControl(Camera* camera, double delta, const float speed) {
 

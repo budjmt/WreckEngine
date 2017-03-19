@@ -11,7 +11,7 @@ layout (location = 12) uniform vec3 camPos;
 layout (location = 13) uniform vec2 tessLevel = vec2(16,16);
 
 const float MaxDist = 10.0;
-const float Radius = 2;
+layout(location = 14) uniform float Radius;
 
 patch out float radius;
 patch out vec3 teCamPos;

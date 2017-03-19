@@ -6,7 +6,7 @@
 using std::make_unique;
 using std::make_shared;
 
-// works the same as unique_ptr, but performs deep-copies instead of ownership transfer
+// Works the same as unique_ptr, but performs deep-copies instead of ownership transfer
 template<class T, class Deleter = std::default_delete<T>>
 struct alloc_ptr : public std::unique_ptr<T, Deleter> {
 	using unique_ptr::unique_ptr;
@@ -15,12 +15,16 @@ struct alloc_ptr : public std::unique_ptr<T, Deleter> {
 	alloc_ptr& operator=(const alloc_ptr& o) { reset(o ? new T(*o) : nullptr); return *this; }
 };
 
-// wrapper for thread-safe access to some resource; the wrapper must exist to access the object, and thus the lock persists
+// Wrapper for thread-safe access to some resource; the wrapper must exist to access the object, and thus the lock persists
+// Recommended usage guidelines for best performance:
+//   1. Don't recreate it unnecessarily, just save a copy locally (removes unnecessary locks/unlocks)
+//   2. Don't keep it alive longer than necessary; it retains the lock for it's entire lifetime (reduces retention)
+// These requirements can often be met with an additional level of scope around where it is used
 template<typename T, class Lock>
 struct safe_ptr {
-    using Mut = std::remove_pointer_t<decltype(std::declval<Lock>().mutex())>;
+    using mutex_t = std::remove_pointer_t<std::result_of_t<decltype(&Lock::mutex)(Lock)>>;
 
-    safe_ptr(T* ptr, Mut& mut) : value(ptr), lock(mut) {}
+    safe_ptr(T* ptr, mutex_t& mut) : value(ptr), lock(mut) {}
     template<typename = std::enable_if<std::is_copy_constructible<T>::value>>
     auto operator*() { return *value; }
     auto operator->() { return value; }
