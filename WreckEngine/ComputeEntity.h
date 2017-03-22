@@ -28,7 +28,8 @@ public:
     GLtexture texture;
     GLenum access = GL_WRITE_ONLY;
     GLenum format = GL_RGBA32F;
-    // TODO - index, level, layer
+    GLint index = 0;
+    // TODO - level, layer
 
     void draw() override;
 };
