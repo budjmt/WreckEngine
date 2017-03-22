@@ -11,15 +11,25 @@ public:
     void draw() override;
 private:
     struct RenderData {
-        GLprogram material, program;
-        GLtexture cubemap;
+        GLprogram material;
         GLuniform<mat4> viewProjection;
-        GLuniform<float> compTime;
-        GLuniform<float> compZoom;
         GLresource<float> tessLevelInner, tessLevelOuter, radius;
+    };
+    struct NoiseMapData {
+        GLtexture tex;
+        GLprogram prog;
+        GLuniform<float> zoom;
+    };
+    struct NormalMapData {
+        GLtexture tex;
+        GLprogram prog;
+        GLuniform<vec3> camPos;
+        GLuniform<float> radius;
     };
 
     RenderData renderData;
+    NoiseMapData noiseMap;
+    NormalMapData normalMap;
     shared<Camera> camera;
     shared<Entity> cube;
     float time = 0.0f;

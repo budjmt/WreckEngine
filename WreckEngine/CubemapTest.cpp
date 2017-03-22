@@ -8,6 +8,7 @@ static constexpr float viewDistance   = 10.0f;
 static constexpr float tessLevelInner = 16.0f;
 static constexpr float tessLevelOuter = 16.0f;
 static constexpr GLuint texSize = 256;
+static constexpr float radius = 5.0f;
 
 inline float cosRange(float val, float min, float max)
 {
@@ -46,34 +47,58 @@ CubemapTest::CubemapTest() : Game(6)
     // Set initial uniform values
     renderData.tessLevelInner.value = tessLevelInner;
     renderData.tessLevelOuter.value = tessLevelOuter;
-    renderData.radius.value = 5.0f;
+    renderData.radius.value = radius;
 
-    // Setup the compute material
+    // Setup the noise compute material
     auto program = HotSwap::Shader::create();
-    program->compute = Shader("Shaders/cubemap_c.glsl", GL_COMPUTE_SHADER);
+    program->compute = Shader("Shaders/noisemap_c.glsl", GL_COMPUTE_SHADER);
     program->setupProgram();
-    renderData.program = program->program();
-    renderData.program.use();
-    renderData.compTime = renderData.program.getUniform<float>("Time");
-    renderData.compZoom = renderData.program.getUniform<float>("Zoom");
-    renderData.compZoom.update(6.0f);
+    noiseMap.prog = program->program();
+    noiseMap.prog.use();
+    noiseMap.zoom = noiseMap.prog.getUniform<float>("Zoom");
+    noiseMap.zoom.update(6.0f);
 
-    // Setup the cubemap
-    renderData.cubemap.create(GL_TEXTURE_CUBE_MAP);
-    renderData.cubemap.bind();
-    renderData.cubemap.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    renderData.cubemap.param(GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    // Setup the normal map compute material
+    program = HotSwap::Shader::create();
+    program->compute = Shader("Shaders/normalmap_c.glsl", GL_COMPUTE_SHADER);
+    program->setupProgram();
+    normalMap.prog = program->program();
+    normalMap.prog.use();
+    normalMap.camPos = normalMap.prog.getUniform<vec3>("CameraPosition");
+    normalMap.radius = normalMap.prog.getUniform<float>("Radius");
+    normalMap.radius.update(radius);
 
-    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
-    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
-    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
-    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
-    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
-    renderData.cubemap.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    // TODO - Michael's going to want to make that genCubeMap function
+
+    // Setup the noise cubemap
+    noiseMap.tex.create(GL_TEXTURE_CUBE_MAP);
+    noiseMap.tex.bind();
+    noiseMap.tex.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    noiseMap.tex.param(GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    noiseMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    noiseMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    noiseMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    noiseMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    noiseMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    noiseMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+
+    // Setup the normal cubemap
+    normalMap.tex.create(GL_TEXTURE_CUBE_MAP);
+    normalMap.tex.bind();
+    normalMap.tex.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    normalMap.tex.param(GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    normalMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    normalMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    normalMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    normalMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    normalMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    normalMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
 
     // Setup the cube mesh
     auto cubeMesh = loadOBJ("Assets/cube.obj");
-    auto cubeDrawMesh = make_shared<DrawMesh>(&renderer.forward.objects, cubeMesh, renderData.cubemap, renderData.material);
+    auto cubeDrawMesh = make_shared<DrawMesh>(&renderer.forward.objects, cubeMesh, noiseMap.tex, renderData.material);
     cubeDrawMesh->tesselPrim = GL_PATCHES;
     cubeDrawMesh->renderGroup = renderer.forward.objects.addGroup([] {
         GL_CHECK(glEnable(GL_CULL_FACE));
@@ -87,16 +112,27 @@ CubemapTest::CubemapTest() : Game(6)
     cube = make_shared<Entity>(cubeDrawMesh);
     mainState->addEntity(cube);
 
-    // Setup the compute entity
-    auto computeEntity = make_shared<ComputeTextureEntity>();
-    computeEntity->program = renderData.program;
-    computeEntity->dispatchSize = {texSize, texSize, 6};
-    computeEntity->update_uniforms = [&]() {
-        renderData.compTime.update(time);
-        renderData.compZoom.update(cosRange(time * 0.375f, 1, 8));
+    // Setup the noise compute entity
+    auto noiseEntity = make_shared<ComputeTextureEntity>();
+    noiseEntity->program = noiseMap.prog;
+    noiseEntity->dispatchSize = { texSize, texSize, 6 };
+    noiseEntity->update_uniforms = [&]() {
+        noiseMap.zoom.update(cosRange(time * 0.375f, 1, 8));
     };
-    computeEntity->texture = renderData.cubemap;
-    mainState->addEntity(computeEntity);
+    noiseEntity->texture = noiseMap.tex;
+    noiseEntity->index = 0;
+    mainState->addEntity(noiseEntity);
+
+    // Setup the normal map compute entity
+    auto normalEntity = make_shared<ComputeTextureEntity>();
+    normalEntity->program = normalMap.prog;
+    normalEntity->dispatchSize = { texSize, texSize, 6 };
+    normalEntity->update_uniforms = [&]() {
+        normalMap.camPos.update(Camera::main->transform.position);
+    };
+    normalEntity->texture = normalMap.tex;
+    normalEntity->index = 1;
+    mainState->addEntity(normalEntity);
 
     renderer.lightingOn = false;
 
