@@ -96,23 +96,7 @@ CubemapTest::CubemapTest() : Game(6)
     normalMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
     normalMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
 
-    // Setup the cube mesh
-    auto cubeMesh = loadOBJ("Assets/cube.obj");
-    auto cubeDrawMesh = make_shared<DrawMesh>(&renderer.forward.objects, cubeMesh, noiseMap.tex, renderData.material);
-    cubeDrawMesh->tesselPrim = GL_PATCHES;
-    cubeDrawMesh->renderGroup = renderer.forward.objects.addGroup([] {
-        GL_CHECK(glEnable(GL_CULL_FACE));
-        //GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-    }, [] {
-        GL_CHECK(glDisable(GL_CULL_FACE));
-    });
-    cubeDrawMesh->material.addResource(&renderData.tessLevelInner);
-    cubeDrawMesh->material.addResource(&renderData.tessLevelOuter);
-    cubeDrawMesh->material.addResource(&renderData.radius);
-    cube = make_shared<Entity>(cubeDrawMesh);
-    mainState->addEntity(cube);
-
-    // Setup the noise compute entity
+    // Setup the noise map compute entity
     auto noiseEntity = make_shared<ComputeTextureEntity>();
     noiseEntity->program = noiseMap.prog;
     noiseEntity->dispatchSize = { texSize, texSize, 6 };
@@ -132,7 +116,25 @@ CubemapTest::CubemapTest() : Game(6)
     };
     normalEntity->texture = normalMap.tex;
     normalEntity->index = 1;
+    normalEntity->updateFreq = 0.0f;
     mainState->addEntity(normalEntity);
+
+    // Setup the cube mesh
+    auto cubeMesh = loadOBJ("Assets/cube.obj");
+    auto cubeDrawMesh = make_shared<DrawMesh>(&renderer.forward.objects, cubeMesh, noiseMap.tex, renderData.material);
+    cubeDrawMesh->tesselPrim = GL_PATCHES;
+    cubeDrawMesh->renderGroup = renderer.forward.objects.addGroup([] {
+        GL_CHECK(glEnable(GL_CULL_FACE));
+        GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    }, [] {
+        GL_CHECK(glDisable(GL_CULL_FACE));
+    });
+    cubeDrawMesh->material.addTexture(normalMap.tex);
+    cubeDrawMesh->material.addResource(&renderData.tessLevelInner);
+    cubeDrawMesh->material.addResource(&renderData.tessLevelOuter);
+    cubeDrawMesh->material.addResource(&renderData.radius);
+    cube = make_shared<Entity>(cubeDrawMesh);
+    mainState->addEntity(cube);
 
     renderer.lightingOn = false;
 

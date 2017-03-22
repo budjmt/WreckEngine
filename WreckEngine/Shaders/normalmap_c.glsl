@@ -108,11 +108,11 @@ ivec3 getOffsetCoords(in ivec2 coords, in ivec2 offset, in ivec2 dims, in int fa
                 oc.y += dims.y;
                 break;
             case FACE_POSITIVE_Z:
-                oc.z = FACE_NEGATIVE_Y;
+                oc.z = FACE_POSITIVE_Y;
                 oc.y += dims.y;
                 break;
             case FACE_NEGATIVE_Z:
-                oc.z = FACE_POSITIVE_Y;
+                oc.z = FACE_NEGATIVE_Y;
                 oc.y += dims.y;
                 break;
         }
@@ -137,11 +137,11 @@ ivec3 getOffsetCoords(in ivec2 coords, in ivec2 offset, in ivec2 dims, in int fa
                 oc.y -= dims.y;
                 break;
             case FACE_POSITIVE_Z:
-                oc.z = FACE_NEGATIVE_Y;
+                oc.z = FACE_POSITIVE_Y;
                 oc.y -= dims.y;
                 break;
             case FACE_NEGATIVE_Z:
-                oc.z = FACE_POSITIVE_Y;
+                oc.z = FACE_NEGATIVE_Y;
                 oc.y -= dims.y;
                 break;
         }
@@ -207,5 +207,6 @@ void main()
     normal += getTriNormal(l, at, d);
     normal = normalize(normal);
 
+    //normal = normal * 0.5 + 0.5;
     imageStore(NormalTex, ivec3(coords, face), vec4(normal, 0.0));
 }
