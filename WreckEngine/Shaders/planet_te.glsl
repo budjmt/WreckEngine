@@ -30,7 +30,7 @@ void main()
 
     float dist = distance(pos, teCamPos);
     float height = texture(heightMap, fragNormal).r;
-    pos += getHeight(fragNormal, height, dist);
+    pos += getHeight(fragNormal, max(height, 0), dist); // remove that clamp later?
     
     gl_Position = cameraMatrix * vec4(pos, 1);
 }
