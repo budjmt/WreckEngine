@@ -107,7 +107,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     auto cubemapProg = HotSwap::Shader::create();
     using ShaderRes = decltype(cubemapProg->vertex);
     
-    cubemapProg->compute = ShaderRes("Shaders/cubemap_c.glsl", GL_COMPUTE_SHADER);
+    cubemapProg->compute = ShaderRes("Shaders/noisemap_c.glsl", GL_COMPUTE_SHADER);
     cubemapProg->setupProgram();
     cubemapData.prog = cubemapProg->program();
     cubemapData.prog.use();

@@ -46,7 +46,8 @@ void main()
     vec2 n = noise3D(dir);
     vec4 color = vec4(0, n, 1.0);
 #else
-    float n = clamp(noise3D(dir), 0., 1.);
+    //float n = clamp(noise3D(dir), 0., 1.);
+    float n = noise3D(dir);
     vec4 color = vec4(n, n, n, 1.0);
 #endif
 
