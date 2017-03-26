@@ -40,6 +40,6 @@ void DrawMesh::setup(GLtexture tex, GLprogram shader) {
 }
 
 void DrawMesh::draw(const mat4& world) {
-    Drawable::draw(world);
+    Renderable::draw(world);
     renderer->scheduleDrawElements(renderGroup, &vArray, &material, tesselPrim, _mesh->getRenderData()->ebuffer.size(), GLtype<uint32_t>());
 }

@@ -63,6 +63,7 @@ namespace Render {
         }
 
         void apply() const {
+			assert(shaders && textures); // shaders and textures must be initialized
             shaders->update();
             textures->bind();
         }

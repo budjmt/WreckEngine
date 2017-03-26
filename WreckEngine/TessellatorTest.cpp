@@ -15,9 +15,16 @@ static RenderData planetData;
 
 struct {
     GLprogram prog;
-    GLuniform<float> time, zoom;
+    GLresource<float> zoom;
     GLtexture cubemap;
-} cubemapData;
+} noiseData;
+
+struct {
+	GLprogram prog;
+	GLresource<vec3, true> camPos;
+	GLresource<float> radius;
+	GLtexture cubemap;
+} normalData;
 
 static shared<TextEntity> controlText;
 static shared<Entity> cameraControl;
@@ -83,7 +90,8 @@ shared<Entity> genPlanetPlane(const vec3 dir, const float radius, Render::Materi
     auto dm = make_shared<DrawMesh>(renderer, planeMesh, "Assets/texture.png", planetData.prog);
     dm->tesselPrim = GL_PATCHES;
     dm->renderGroup = group;
-    dm->material.addTexture(cubemapData.cubemap);
+    dm->material.addTexture(noiseData.cubemap);
+	dm->material.addTexture(normalData.cubemap);
 
     auto plane = make_shared<Entity>(dm);
     plane->active = false;
@@ -109,27 +117,53 @@ TessellatorTest::TessellatorTest() : Game(6) {
     
     cubemapProg->compute = ShaderRes("Shaders/noisemap_c.glsl", GL_COMPUTE_SHADER);
     cubemapProg->setupProgram();
-    cubemapData.prog = cubemapProg->program();
-    cubemapData.prog.use();
-    cubemapData.time = cubemapData.prog.getUniform<float>("Time");
-    cubemapData.zoom = cubemapData.prog.getUniform<float>("Zoom");
-    cubemapData.zoom.update(6.0f);
+    noiseData.prog = cubemapProg->program();
+    noiseData.prog.use();
+    noiseData.zoom = noiseData.prog.getUniform<float>("Zoom");
+    noiseData.zoom.value = 6.0f;
 
     constexpr size_t texSize = 256;
-    initCubemap(cubemapData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    initCubemap(noiseData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
 
-    auto computeEntity = make_shared<ComputeTextureEntity>();
-    computeEntity->program = cubemapData.prog;
+	auto computeDispatcher = make_shared<GraphicsWorker>();
+	computeDispatcher->material.setShaders(noiseData.prog, &noiseData.zoom);
+	computeDispatcher->material.setTextures();
+
+    auto computeEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     computeEntity->dispatchSize = { texSize, texSize, 6 };
-    computeEntity->update_uniforms = [&]() {
-        cubemapData.time.update((float)Time::elapsed());
-        //cubemapData.zoom.update(cosRange(time * 0.375f, 1, 8));
-    };
-    computeEntity->texture = cubemapData.cubemap;
+    computeEntity->texture = noiseData.cubemap;
+	computeEntity->index = 0;
     computeEntity->synchronize = false;
     mainState->addEntity(computeEntity);
 
-    checkProgLinkError(cubemapData.prog);
+    checkProgLinkError(noiseData.prog);
+
+	auto normalmapProg = HotSwap::Shader::create();
+	normalmapProg->compute = ShaderRes("Shaders/normalmap_c.glsl", GL_COMPUTE_SHADER);
+	normalmapProg->setupProgram();
+	normalData.prog = normalmapProg->program();
+	normalData.prog.use();
+	normalData.camPos = GLresource<vec3, true>(normalData.prog, "CameraPosition", [&] {
+		return Camera::main->transform.getComputed()->position();
+	});
+	normalData.radius = normalData.prog.getUniform<float>("Radius");
+	normalData.radius.value = RADIUS;
+
+	initCubemap(normalData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
+
+	computeDispatcher = make_shared<GraphicsWorker>();
+	computeDispatcher->material.setShaders(normalData.prog, &normalData.camPos, &normalData.radius);
+	computeDispatcher->material.setTextures();
+
+	computeEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
+	computeEntity->dispatchSize = { texSize, texSize, 6 };
+	computeEntity->texture = normalData.cubemap;
+	computeEntity->index = 1;
+	computeEntity->updateFreq = 0.f;
+	computeEntity->synchronize = false;
+	mainState->addEntity(computeEntity);
+
+	checkProgLinkError(normalData.prog);
 
     auto tessProg = HotSwap::Shader::create();
     tessProg->vertex      = ShaderRes("Shaders/planet_v.glsl",  GL_VERTEX_SHADER);

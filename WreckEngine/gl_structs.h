@@ -591,7 +591,7 @@ namespace GLsynchro {
 
 struct GLres { virtual void update() const = 0; };
 
-template<typename T>
+template<typename T, bool custom = false>
 class GLresource : public GLres {
 public:
     GLresource() = default;
@@ -604,6 +604,20 @@ public:
 
 private:
     GLuniform<T> location;
+};
+
+template<typename T>
+class GLresource<T, true> : public GLres {
+public:
+	GLresource() = default;
+	GLresource(const GLuniform<T> loc, std::function<T()> update) : location(loc), update_func(update) {}
+	GLresource(const GLprogram& p, const char* name, std::function<T()> update) : GLresource(p.getUniform<T>(name), update) {}
+
+	void update() const override { location.update(update_func()); }
+
+private:
+	GLuniform<T> location;
+	std::function<T()> update_func;
 };
 
 struct GLtime;

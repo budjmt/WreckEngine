@@ -4,15 +4,15 @@
 
 #include "Random.h"
 
-#include "Drawable.h"
+#include "Renderable.h"
 #include "Transform.h"
 
 class Entity
 {
 public:
     Entity() = default;
-    Entity(shared<Drawable> s);
-    Entity(vec3 p, vec3 sc, vec3 rA, float r, shared<Drawable> s);
+    Entity(shared<GraphicsWorker> s);
+    Entity(vec3 p, vec3 sc, vec3 rA, float r, shared<GraphicsWorker> s);
     
     virtual ~Entity() = default;
     
@@ -20,7 +20,7 @@ public:
     bool active = true;
     vec4 color = vec4(1);
     
-    void* id = (void*)Random::get();//meant to identify the object for debugging purposes
+    void* id = (void*)Random::get(); // meant to identify the object for debugging purposes
     
     virtual void update(double dt) { };
     virtual void physicsUpdate(double dt) {};
@@ -28,7 +28,7 @@ public:
     
     template<class T> bool isType() const { return dynamic_cast<T*>(this) != nullptr; }
 protected:
-    shared<Drawable> shape;
+    shared<GraphicsWorker> shape;
 };
 
 class TransformEntity : public Entity {

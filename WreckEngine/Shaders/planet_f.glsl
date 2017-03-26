@@ -6,6 +6,7 @@ in vec3 fragNormal;
 in vec3 tessCoord;
 
 layout (binding = 1) uniform samplerCube heightMap;
+layout (binding = 2) uniform samplerCube normalMap;
 
 const vec3 LightDirection = normalize(vec3(-1,-1,0));
 const vec3 DiffuseMaterial = vec3(0, 0.5, 0.5);
@@ -22,14 +23,15 @@ float height(in vec3 coord) { return texture(heightMap, coord).r; }
 
 void main()
 {
-    vec3 N = fragNormal;
+    vec3 N = texture(normalMap, fragNormal).rgb;
     vec3 L = LightDirection;
     float df = abs(dot(N, L));
     //vec3 color = AmbientMaterial + df * DiffuseMaterial;
     
     vec3 elevationColor = getElevationColor(height(fragNormal));
-    //vec3 color = AmbientMaterial + df * elevationColor;
-    vec3 color = elevationColor;
+    vec3 color = AmbientMaterial + df * elevationColor;
+    //vec3 color = elevationColor;
+    //vec3 color = N;
     
     fragColor = vec4(color, 1.0);
 }

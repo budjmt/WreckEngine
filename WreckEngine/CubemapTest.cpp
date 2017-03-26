@@ -55,8 +55,9 @@ CubemapTest::CubemapTest() : Game(6)
     program->setupProgram();
     noiseMap.prog = program->program();
     noiseMap.prog.use();
-    noiseMap.zoom = noiseMap.prog.getUniform<float>("Zoom");
-    noiseMap.zoom.update(6.0f);
+	noiseMap.zoom = GLresource<float, true>(noiseMap.prog, "Zoom", [&] {
+		return cosRange(time * 0.375f, 1, 8);
+	});
 
     // Setup the normal map compute material
     program = HotSwap::Shader::create();
@@ -64,9 +65,11 @@ CubemapTest::CubemapTest() : Game(6)
     program->setupProgram();
     normalMap.prog = program->program();
     normalMap.prog.use();
-    normalMap.camPos = normalMap.prog.getUniform<vec3>("CameraPosition");
+	normalMap.camPos = GLresource<vec3, true>(normalMap.prog, "CameraPosition", [&] {
+		return Camera::main->transform.position();
+	});
     normalMap.radius = normalMap.prog.getUniform<float>("Radius");
-    normalMap.radius.update(radius);
+    normalMap.radius.value = radius;
 
     // TODO - Michael's going to want to make that genCubeMap function
 
@@ -97,23 +100,23 @@ CubemapTest::CubemapTest() : Game(6)
     normalMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
 
     // Setup the noise map compute entity
-    auto noiseEntity = make_shared<ComputeTextureEntity>();
-    noiseEntity->program = noiseMap.prog;
+	auto computeDispatcher = make_shared<GraphicsWorker>();
+	computeDispatcher->material.setShaders(noiseMap.prog, &noiseMap.zoom);
+	computeDispatcher->material.setTextures();
+
+    auto noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     noiseEntity->dispatchSize = { texSize, texSize, 6 };
-    noiseEntity->update_uniforms = [&]() {
-        noiseMap.zoom.update(cosRange(time * 0.375f, 1, 8));
-    };
     noiseEntity->texture = noiseMap.tex;
     noiseEntity->index = 0;
     mainState->addEntity(noiseEntity);
 
     // Setup the normal map compute entity
-    auto normalEntity = make_shared<ComputeTextureEntity>();
-    normalEntity->program = normalMap.prog;
+	computeDispatcher = make_shared<GraphicsWorker>();
+	computeDispatcher->material.setShaders(normalMap.prog, &normalMap.camPos);
+	computeDispatcher->material.setTextures();
+
+    auto normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
-    normalEntity->update_uniforms = [&]() {
-        normalMap.camPos.update(Camera::main->transform.position);
-    };
     normalEntity->texture = normalMap.tex;
     normalEntity->index = 1;
     normalEntity->updateFreq = 0.0f;

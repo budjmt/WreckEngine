@@ -178,7 +178,7 @@
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="ComputeEntity.cpp" />
     <ClCompile Include="CubemapTest.cpp" />
-    <ClCompile Include="Drawable.cpp" />
+    <ClCompile Include="Renderable.cpp" />
     <ClCompile Include="DrawDebug.cpp" />
     <ClCompile Include="DrawMesh.cpp" />
     <ClCompile Include="Entity.cpp" />
@@ -187,6 +187,7 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GLDebug.cpp" />
     <ClCompile Include="gl_structs.cpp" />
+    <ClCompile Include="GraphicsWorker.cpp" />
     <ClCompile Include="HotSwap.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -227,7 +228,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="ColliderEntity.h" />
-    <ClInclude Include="Drawable.h" />
+    <ClInclude Include="Renderable.h" />
     <ClInclude Include="DrawMesh.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Game.h" />
@@ -235,6 +236,7 @@
     <ClInclude Include="GLmanager.h" />
     <ClInclude Include="GLstate.h" />
     <ClInclude Include="gl_structs.h" />
+    <ClInclude Include="GraphicsWorker.h" />
     <ClInclude Include="TessellatorTest.h" />
     <ClInclude Include="HotSwap.h" />
     <ClInclude Include="Light.h" />

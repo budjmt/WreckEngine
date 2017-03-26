@@ -9,12 +9,8 @@ void ComputeEntity::draw()
 {
     if (timeSinceUpdate >= updateFreq)
     {
-        program.use();
-
-        if (update_uniforms)
-            update_uniforms();
-
-        program.dispatch(dispatchSize.x, dispatchSize.y, dispatchSize.z);
+		Entity::draw();
+        shape->material.shaders->program.dispatch(dispatchSize.x, dispatchSize.y, dispatchSize.z);
 
         if (synchronize)
             GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

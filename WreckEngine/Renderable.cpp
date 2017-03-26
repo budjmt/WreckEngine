@@ -1,33 +1,33 @@
-#include "Drawable.h"
+#include "Renderable.h"
 
 #include "glm/gtx/transform.hpp"
 
-void Drawable::draw(Transform* t) {
+void Renderable::draw(Transform* t) {
     draw(t->getMats()->world);
 }
-void Drawable::draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale) {
+void Renderable::draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale) {
     draw(vec3(x, y, 0), vec3(xScale, yScale, 1), vec3(0, 0, 1), 0);
 }
-void Drawable::draw(vec3 pos, vec3 scale, vec3 rotAxis, float rot) {
+void Renderable::draw(vec3 pos, vec3 scale, vec3 rotAxis, float rot) {
     draw(glm::translate(pos), glm::rotate(rot, rotAxis), glm::scale(scale));
 }
-void Drawable::draw(const mat4& translate, const mat4& rotate, const mat4& scale) {
+void Renderable::draw(const mat4& translate, const mat4& rotate, const mat4& scale) {
     draw(translate * rotate * scale);
 }
-void Drawable::draw(const mat4& world) {
+void Renderable::draw(const mat4& world) {
     setWorldMatrix(world);
 
     //actual draw call is reserved for children
 }
 
-void Drawable::setWorldMatrix(const mat4& world) {
+void Renderable::setWorldMatrix(const mat4& world) {
     worldMatrix.value = world;
     iTworldMatrix.value = inv_tp_tf(world);
 }
 
-std::unordered_map<const char*, GLtexture> Drawable::loadedTextures;
+std::unordered_map<const char*, GLtexture> Renderable::loadedTextures;
 
-void Drawable::unloadTextures() {
+void Renderable::unloadTextures() {
     for (auto& texture : loadedTextures) {
         texture.second.unload();
     }
@@ -36,7 +36,7 @@ void Drawable::unloadTextures() {
 
 #include "File.h"
 
-GLtexture Drawable::genTexture2D(const char* texFile) {
+GLtexture Renderable::genTexture2D(const char* texFile) {
     //check if the image was already loaded
     if (loadedTextures.find(texFile) != loadedTextures.end()) {
         return loadedTextures[texFile];

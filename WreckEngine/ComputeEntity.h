@@ -7,8 +7,7 @@
 class ComputeEntity : public Entity
 {
 public:
-    GLprogram program;
-    std::function<void()> update_uniforms;
+	using Entity::Entity;
     glm::ivec3 dispatchSize;
     // the compute shader will be run every "updateFreq" seconds
     // default is 16x / second
@@ -25,6 +24,7 @@ private:
 class ComputeTextureEntity : public ComputeEntity
 {
 public:
+	using ComputeEntity::ComputeEntity;
     GLtexture texture;
     GLenum access = GL_WRITE_ONLY;
     GLenum format = GL_RGBA32F;

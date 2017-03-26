@@ -111,9 +111,6 @@
     <ClCompile Include="Text.cpp">
       <Filter>Render</Filter>
     </ClCompile>
-    <ClCompile Include="Drawable.cpp">
-      <Filter>Render</Filter>
-    </ClCompile>
     <ClCompile Include="UI.cpp">
       <Filter>Render</Filter>
     </ClCompile>
@@ -155,6 +152,12 @@
     </ClCompile>
     <ClCompile Include="ComputeEntity.cpp">
       <Filter>Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderable.cpp">
+      <Filter>Render</Filter>
+    </ClCompile>
+    <ClCompile Include="GraphicsWorker.cpp">
+      <Filter>Render</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -248,9 +251,6 @@
     <ClInclude Include="Text.h">
       <Filter>Render</Filter>
     </ClInclude>
-    <ClInclude Include="Drawable.h">
-      <Filter>Render</Filter>
-    </ClInclude>
     <ClInclude Include="UI.h">
       <Filter>Render</Filter>
     </ClInclude>
@@ -304,6 +304,12 @@
     </ClInclude>
     <ClInclude Include="ComputeEntity.h">
       <Filter>Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderable.h">
+      <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="GraphicsWorker.h">
+      <Filter>Render</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Drawable.h"
+#include "Renderable.h"
 #include "Mesh.h"
 
-class DrawMesh : public Drawable {
+class DrawMesh : public Renderable {
 public:
     DrawMesh(Render::MaterialPass* r, shared<Mesh> m, const char* texFile, GLprogram shader);
     DrawMesh(Render::MaterialPass* r, shared<Mesh> m, GLtexture tex, GLprogram shader);
@@ -11,7 +11,7 @@ public:
     DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, GLtexture tex, GLprogram shader);
         
     void setup(GLtexture tex, GLprogram shader);
-    void draw(const mat4& world);
+    void draw(const mat4& world) override;
 
     GLenum tesselPrim = GL_TRIANGLES;
     size_t renderGroup = 0;

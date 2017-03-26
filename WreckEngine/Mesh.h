@@ -6,7 +6,7 @@
 
 #include "MarchMath.h"
 
-#include "Drawable.h"
+#include "Renderable.h"
 
 class Mesh {
 public:

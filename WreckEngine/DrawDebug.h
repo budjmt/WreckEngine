@@ -7,7 +7,7 @@
 
 #include "gl_structs.h"
 
-#include "Drawable.h"
+#include "Renderable.h"
 #include "Camera.h"
 #include "ShaderHelper.h"
 #include "ModelHelper.h"

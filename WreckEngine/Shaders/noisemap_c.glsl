@@ -28,7 +28,7 @@ float nullNoise3D(vec3 v) { return 0.0; }
 
 #include CubeDirection.inc
 
-uniform float Zoom;
+layout(location = 0) uniform float Zoom = 6;
 
 void main()
 {

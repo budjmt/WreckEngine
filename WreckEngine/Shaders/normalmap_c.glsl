@@ -3,8 +3,8 @@
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform imageCube NoiseTex;
 layout(rgba32f, binding = 1) uniform imageCube NormalTex;
-uniform vec3 CameraPosition;
-uniform float Radius;
+layout(location = 0) uniform vec3 CameraPosition;
+layout(location = 1) uniform float Radius;
 
 #if 1
 #include height.inc
