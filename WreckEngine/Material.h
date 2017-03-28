@@ -23,7 +23,7 @@ namespace Render {
             template<typename... Names>
             void setSamplers(GLprogram& prog, int baseIndex, Names... _names) {
                 assert(bindings.size() >= sizeof...(_names));
-                const char* names[sizeof...(_names)] = { _names... };
+                const char* names[] = { std::forward<Names>(_names)... };
                 for (int i = 0; i < sizeof...(_names); ++i)
                     prog.setOnce<GLsampler>(names[i], baseIndex + i);
             }
@@ -63,7 +63,7 @@ namespace Render {
         }
 
         void apply() const {
-			assert(shaders && textures); // shaders and textures must be initialized
+            assert(shaders && textures); // shaders and textures must be initialized
             shaders->update();
             textures->bind();
         }

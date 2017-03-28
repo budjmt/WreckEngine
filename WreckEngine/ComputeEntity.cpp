@@ -9,7 +9,7 @@ void ComputeEntity::draw()
 {
     if (timeSinceUpdate >= updateFreq)
     {
-		Entity::draw();
+        Entity::draw();
         shape->material.shaders->program.dispatch(dispatchSize.x, dispatchSize.y, dispatchSize.z);
 
         if (synchronize)

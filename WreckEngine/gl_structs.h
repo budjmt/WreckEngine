@@ -133,14 +133,14 @@ struct GLtexture {
     // last value must be an int or float
     template<typename... Args>
     inline void param(const GLenum name1, const GLenum name2, Args&&... args) {
-        auto tup = std::make_tuple(args...);
+        auto tup = std::make_tuple(std::forward<Args>(args)...);
 
         auto val = std::get<sizeof...(args) - 1>(tup);
         using val_t = std::decay_t<decltype(val)>;
         static_assert(std::is_same<val_t, int>::value || std::is_same<val_t, float>::value, "Texture parameter values must be int or float");
 
         param(name1, val);
-        param(name2, std::forward<Args>(args)...);
+        param(name2, std::forward<Args>(args)...); // this is undefined behavior as we've already moved the parameter pack; switch to std::apply in C++17
     }
 
     inline void param(const GLenum name, const int val) {
@@ -609,15 +609,15 @@ private:
 template<typename T>
 class GLresource<T, true> : public GLres {
 public:
-	GLresource() = default;
-	GLresource(const GLuniform<T> loc, std::function<T()> update) : location(loc), update_func(update) {}
-	GLresource(const GLprogram& p, const char* name, std::function<T()> update) : GLresource(p.getUniform<T>(name), update) {}
+    GLresource() = default;
+    GLresource(const GLuniform<T> loc, std::function<T()> update) : location(loc), update_func(update) {}
+    GLresource(const GLprogram& p, const char* name, std::function<T()> update) : GLresource(p.getUniform<T>(name), update) {}
 
-	void update() const override { location.update(update_func()); }
+    void update() const override { location.update(update_func()); }
 
 private:
-	GLuniform<T> location;
-	std::function<T()> update_func;
+    GLuniform<T> location;
+    std::function<T()> update_func;
 };
 
 struct GLtime;

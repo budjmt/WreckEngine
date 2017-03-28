@@ -24,6 +24,9 @@ float height(in vec3 coord) { return texture(heightMap, coord).r; }
 void main()
 {
     vec3 N = texture(normalMap, fragNormal).rgb;
+    // transforms the normal to fit the position on the sphere?
+    N = N - vec3(0, 1, 0) + fragNormal;
+    
     vec3 L = LightDirection;
     float df = abs(dot(N, L));
     //vec3 color = AmbientMaterial + df * DiffuseMaterial;

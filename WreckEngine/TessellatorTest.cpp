@@ -91,7 +91,7 @@ shared<Entity> genPlanetPlane(const vec3 dir, const float radius, Render::Materi
     dm->tesselPrim = GL_PATCHES;
     dm->renderGroup = group;
     dm->material.addTexture(noiseData.cubemap);
-	dm->material.addTexture(normalData.cubemap);
+    dm->material.addTexture(normalData.cubemap);
 
     auto plane = make_shared<Entity>(dm);
     plane->active = false;
@@ -125,45 +125,48 @@ TessellatorTest::TessellatorTest() : Game(6) {
     constexpr size_t texSize = 256;
     initCubemap(noiseData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
 
-	auto computeDispatcher = make_shared<GraphicsWorker>();
-	computeDispatcher->material.setShaders(noiseData.prog, &noiseData.zoom);
-	computeDispatcher->material.setTextures();
+    auto computeDispatcher = make_shared<GraphicsWorker>();
+    computeDispatcher->material.setShaders(noiseData.prog, &noiseData.zoom);
+    computeDispatcher->material.setTextures();
 
-    auto computeEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
-    computeEntity->dispatchSize = { texSize, texSize, 6 };
-    computeEntity->texture = noiseData.cubemap;
-	computeEntity->index = 0;
-    computeEntity->synchronize = false;
-    mainState->addEntity(computeEntity);
+    auto noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
+    noiseEntity->dispatchSize = { texSize, texSize, 6 };
+    noiseEntity->texture = noiseData.cubemap;
+    noiseEntity->index = 0;
+    //noiseEntity->synchronize = false;
+    //mainState->addEntity(noiseEntity);
+    noiseEntity->updateFreq = 0.f;
+    //noiseEntity->draw();
 
     checkProgLinkError(noiseData.prog);
 
-	auto normalmapProg = HotSwap::Shader::create();
-	normalmapProg->compute = ShaderRes("Shaders/normalmap_c.glsl", GL_COMPUTE_SHADER);
-	normalmapProg->setupProgram();
-	normalData.prog = normalmapProg->program();
-	normalData.prog.use();
-	normalData.camPos = GLresource<vec3, true>(normalData.prog, "CameraPosition", [&] {
-		return Camera::main->transform.getComputed()->position();
-	});
-	normalData.radius = normalData.prog.getUniform<float>("Radius");
-	normalData.radius.value = RADIUS;
+    auto normalmapProg = HotSwap::Shader::create();
+    normalmapProg->compute = ShaderRes("Shaders/normalmap_c.glsl", GL_COMPUTE_SHADER);
+    normalmapProg->setupProgram();
+    normalData.prog = normalmapProg->program();
+    normalData.prog.use();
+    normalData.camPos = GLresource<vec3, true>(normalData.prog, "CameraPosition", [&] {
+        return Camera::main->transform.getComputed()->position();
+    });
+    normalData.radius = normalData.prog.getUniform<float>("Radius");
+    normalData.radius.value = RADIUS;
+    
+    initCubemap(normalData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    
+    computeDispatcher = make_shared<GraphicsWorker>();
+    computeDispatcher->material.setShaders(normalData.prog, &normalData.camPos, &normalData.radius);
+    computeDispatcher->material.setTextures();
+    
+    auto normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
+    normalEntity->dispatchSize = { texSize, texSize, 6 };
+    normalEntity->texture = normalData.cubemap;
+    normalEntity->index = 1;
+    normalEntity->updateFreq = 0.f;
+    //normalEntity->synchronize = false;
+    //mainState->addEntity(normalEntity);
+    //normalEntity->draw();
 
-	initCubemap(normalData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
-
-	computeDispatcher = make_shared<GraphicsWorker>();
-	computeDispatcher->material.setShaders(normalData.prog, &normalData.camPos, &normalData.radius);
-	computeDispatcher->material.setTextures();
-
-	computeEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
-	computeEntity->dispatchSize = { texSize, texSize, 6 };
-	computeEntity->texture = normalData.cubemap;
-	computeEntity->index = 1;
-	computeEntity->updateFreq = 0.f;
-	computeEntity->synchronize = false;
-	mainState->addEntity(computeEntity);
-
-	checkProgLinkError(normalData.prog);
+    checkProgLinkError(normalData.prog);
 
     auto tessProg = HotSwap::Shader::create();
     tessProg->vertex      = ShaderRes("Shaders/planet_v.glsl",  GL_VERTEX_SHADER);
@@ -212,6 +215,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     
     if (DEBUG) DrawDebug::getInstance().camera(camera.get());
 
+    noiseEntity->draw();
+    normalEntity->draw();
 }
 
 bool isVisibleHorizon(const vec3 view, const vec3 boundingPoint, const float radius);
