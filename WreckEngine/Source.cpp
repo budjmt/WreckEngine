@@ -78,7 +78,7 @@ void initGraphics() {
     // alpha blending
     GL_CHECK(glEnable(GL_BLEND));
     GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-        
+
     // texture filtering
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
@@ -139,13 +139,13 @@ void updateFPS() {
 
 void draw() {
     updateFPS();
-    
+
     Thread::Render::executeFrameQueue();
-    
-    GLframebuffer::clear(); 
+
+    GLframebuffer::clear();
     game->draw();
     glfwSwapBuffers(Window::window);
-    
+
     Thread::Render::finishFrame();
 }
 

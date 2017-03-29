@@ -3,21 +3,10 @@
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform imageCube NoiseTex;
 layout(rgba32f, binding = 1) uniform imageCube NormalTex;
-layout(location = 0) uniform vec3 CameraPosition;
-layout(location = 1) uniform float Radius;
+layout(location = 0) uniform float Radius;
 
-#if 1
 #include height.inc
 #include CubeDirection.inc
-#else
-vec3 getHeight(in vec3 dirFromCenter, in float height, in float camDist) {
-    return vec3(0.0);
-}
-
-vec3 getCubeDirection(in ivec2 coords, in ivec2 dims, in int face) {
-    return vec3(0.0);
-}
-#endif
 
 const ivec2 OFF_NONE  = ivec2( 0,  0);
 const ivec2 OFF_UP    = ivec2( 0, -1);
@@ -25,10 +14,19 @@ const ivec2 OFF_DOWN  = ivec2( 0,  1);
 const ivec2 OFF_LEFT  = ivec2(-1,  0);
 const ivec2 OFF_RIGHT = ivec2( 1,  0);
 
+// Swaps X and Y of the given vector
+void swapXY(inout ivec3 vec)
+{
+    int temp = vec.x;
+    vec.x = vec.y;
+    vec.y = temp;
+}
+
 ivec3 getOffsetCoords(in ivec2 coords, in ivec2 offset, in ivec2 dims, in int face)
 {
     // oc == offset coordinates
     ivec3 oc = ivec3(coords + offset, face);
+    bool swap = false;
 
     if (oc.x == -1)
     {
@@ -36,7 +34,7 @@ ivec3 getOffsetCoords(in ivec2 coords, in ivec2 offset, in ivec2 dims, in int fa
         switch (face)
         {
             case FACE_POSITIVE_X:
-                oc.z = FACE_POSITIVE_Z; // Maybe negative?
+                oc.z = FACE_POSITIVE_Z;
                 oc.x += dims.x;
                 break;
             case FACE_NEGATIVE_X:
@@ -44,10 +42,16 @@ ivec3 getOffsetCoords(in ivec2 coords, in ivec2 offset, in ivec2 dims, in int fa
                 oc.x += dims.x;
                 break;
             case FACE_POSITIVE_Y:
-                // TODO - Move left from top
+                // Move left from top (left face)
+                oc.z = FACE_NEGATIVE_X;
+                oc.x += dims.x;
+                swap = true; /*swapXY(oc);*/
                 break;
             case FACE_NEGATIVE_Y:
-                // TODO - Move left from bottom
+                // Move left from bottom (right face)
+                oc.z = FACE_POSITIVE_X;
+                oc.x += dims.x;
+                swap = true; /*swapXY(oc);*/
                 break;
             case FACE_POSITIVE_Z:
                 oc.z = FACE_NEGATIVE_X;
@@ -73,10 +77,16 @@ ivec3 getOffsetCoords(in ivec2 coords, in ivec2 offset, in ivec2 dims, in int fa
                 oc.x -= dims.x;
                 break;
             case FACE_POSITIVE_Y:
-                // TODO - Move right from top
+                // Move right from top (right face)
+                oc.z = FACE_POSITIVE_X;
+                oc.x -= dims.x;
+                swap = true; /*swapXY(oc);*/
                 break;
             case FACE_NEGATIVE_Y:
-                // TODO - Move right from bottom
+                // Move right from bottom (left face)
+                oc.z = FACE_NEGATIVE_X;
+                oc.x -= dims.x;
+                swap = true; /*swapXY(oc);*/
                 break;
             case FACE_POSITIVE_Z:
                 oc.z = FACE_POSITIVE_X;
@@ -94,10 +104,16 @@ ivec3 getOffsetCoords(in ivec2 coords, in ivec2 offset, in ivec2 dims, in int fa
         switch (face)
         {
             case FACE_POSITIVE_X:
-                // TODO - Move up from right
+                // Move up from right (top face)
+                oc.z = FACE_POSITIVE_X;
+                oc.y += dims.y;
+                swap = true; /*swapXY(oc);*/
                 break;
             case FACE_NEGATIVE_X:
-                // TODO - Move up from left
+                // Move up from left (bottom face)
+                oc.z = FACE_NEGATIVE_Y;
+                oc.y += dims.y;
+                swap = true; /*swapXY(oc);*/
                 break;
             case FACE_POSITIVE_Y:
                 oc.z = FACE_NEGATIVE_Z;
@@ -123,10 +139,16 @@ ivec3 getOffsetCoords(in ivec2 coords, in ivec2 offset, in ivec2 dims, in int fa
         switch (face)
         {
             case FACE_POSITIVE_X:
-                // TODO - Move down from right
+                // Move down from right (bottom face)
+                oc.z = FACE_NEGATIVE_Y;
+                oc.y -= dims.y;
+                swap = true; /*swapXY(oc);*/
                 break;
             case FACE_NEGATIVE_X:
-                // TODO - Move down from left
+                // Move down from left (top face)
+                oc.z = FACE_POSITIVE_Y;
+                oc.y -= dims.y;
+                swap = true; /*swapXY(oc);*/
                 break;
             case FACE_POSITIVE_Y:
                 oc.z = FACE_NEGATIVE_Z;
@@ -157,11 +179,10 @@ vec3 getHeightVector(in ivec2 dims, in ivec2 offs, in int face)
     ivec3 coords = getOffsetCoords(originalCoords, offs, dims, face);
     vec3 dir = normalize(getCubeDirection(coords.xy, dims, coords.z));
     vec3 pos = dir * Radius;
-    float dist = distance(pos, CameraPosition);
     float noise = imageLoad(NoiseTex, coords).r;
     // NOTE - .r won't work if we're using cellular noise!
 
-    return getHeight(dir, noise, dist);
+    return getRawHeight(dir, noise);
 }
 
 vec3 getTriNormal(vec3 v0, vec3 v1, vec3 v2)
@@ -190,11 +211,13 @@ void main()
      */
 
     // Our height values
-    vec3 at  = getHeightVector(dims, OFF_NONE, face);
+    vec3 at = getHeightVector(dims, OFF_NONE, face);
     vec3 u  = getHeightVector(dims, OFF_UP, face);
     vec3 ul = getHeightVector(dims, OFF_UP + OFF_LEFT, face);
+    vec3 ur = getHeightVector(dims, OFF_UP + OFF_RIGHT, face);
     vec3 d  = getHeightVector(dims, OFF_DOWN, face);
     vec3 dr = getHeightVector(dims, OFF_DOWN + OFF_RIGHT, face);
+    vec3 dl = getHeightVector(dims, OFF_DOWN + OFF_LEFT, face);
     vec3 l  = getHeightVector(dims, OFF_LEFT, face);
     vec3 r  = getHeightVector(dims, OFF_RIGHT, face);
 
@@ -202,10 +225,16 @@ void main()
     normal += getTriNormal(ul, u, at);
     normal += getTriNormal(ul, at, l);
     normal += getTriNormal(u, r, at);
+    normal += getTriNormal(u, ur, r);
     normal += getTriNormal(at, r, dr);
     normal += getTriNormal(at, dr, d);
     normal += getTriNormal(l, at, d);
+    normal += getTriNormal(l, d, dl);
     normal = normalize(normal);
+
+    if (length(normal) <= 0.001) {
+        normal = vec3(0, 1, 0);
+    }
 
     //normal = normal * 0.5 + 0.5;
     imageStore(NormalTex, ivec3(coords, face), vec4(normal, 0.0));

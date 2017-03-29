@@ -7,7 +7,7 @@
 static constexpr float viewDistance   = 10.0f;
 static constexpr float tessLevelInner = 16.0f;
 static constexpr float tessLevelOuter = 16.0f;
-static constexpr GLuint texSize = 256;
+static constexpr GLuint texSize = 1024;
 static constexpr float radius = 5.0f;
 
 inline float cosRange(float val, float min, float max)
@@ -55,9 +55,9 @@ CubemapTest::CubemapTest() : Game(6)
     program->setupProgram();
     noiseMap.prog = program->program();
     noiseMap.prog.use();
-	noiseMap.zoom = GLresource<float, true>(noiseMap.prog, "Zoom", [&] {
-		return cosRange(time * 0.375f, 1, 8);
-	});
+    noiseMap.zoom = GLresource<float, true>(noiseMap.prog, "Zoom", [&] {
+        return cosRange(time * 0.375f, 1, 8);
+    });
 
     // Setup the normal map compute material
     program = HotSwap::Shader::create();
@@ -65,9 +65,9 @@ CubemapTest::CubemapTest() : Game(6)
     program->setupProgram();
     normalMap.prog = program->program();
     normalMap.prog.use();
-	normalMap.camPos = GLresource<vec3, true>(normalMap.prog, "CameraPosition", [&] {
-		return Camera::main->transform.position();
-	});
+    normalMap.camPos = GLresource<vec3, true>(normalMap.prog, "CameraPosition", [&] {
+        return Camera::main->transform.position();
+    });
     normalMap.radius = normalMap.prog.getUniform<float>("Radius");
     normalMap.radius.value = radius;
 
@@ -100,27 +100,28 @@ CubemapTest::CubemapTest() : Game(6)
     normalMap.tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, GL_FLOAT, nullptr, texSize, texSize, GL_RGBA, GL_RGBA32F);
 
     // Setup the noise map compute entity
-	auto computeDispatcher = make_shared<GraphicsWorker>();
-	computeDispatcher->material.setShaders(noiseMap.prog, &noiseMap.zoom);
-	computeDispatcher->material.setTextures();
+    auto computeDispatcher = make_shared<GraphicsWorker>();
+    computeDispatcher->material.setShaders(noiseMap.prog, &noiseMap.zoom);
+    computeDispatcher->material.setTextures();
 
     auto noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     noiseEntity->dispatchSize = { texSize, texSize, 6 };
     noiseEntity->texture = noiseMap.tex;
     noiseEntity->index = 0;
-    mainState->addEntity(noiseEntity);
+    noiseEntity->updateFreq = 0.0f;
+    //mainState->addEntity(noiseEntity);
 
     // Setup the normal map compute entity
-	computeDispatcher = make_shared<GraphicsWorker>();
-	computeDispatcher->material.setShaders(normalMap.prog, &normalMap.camPos);
-	computeDispatcher->material.setTextures();
+    computeDispatcher = make_shared<GraphicsWorker>();
+    computeDispatcher->material.setShaders(normalMap.prog, &normalMap.camPos);
+    computeDispatcher->material.setTextures();
 
     auto normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
     normalEntity->texture = normalMap.tex;
     normalEntity->index = 1;
     normalEntity->updateFreq = 0.0f;
-    mainState->addEntity(normalEntity);
+    //mainState->addEntity(normalEntity);
 
     // Setup the cube mesh
     auto cubeMesh = loadOBJ("Assets/cube.obj");
@@ -142,6 +143,9 @@ CubemapTest::CubemapTest() : Game(6)
     renderer.lightingOn = false;
 
     if (DEBUG) DrawDebug::getInstance().camera(camera.get());
+
+    noiseEntity->draw();
+    normalEntity->draw();
 }
 
 void CubemapTest::update(double dt)

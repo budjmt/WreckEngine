@@ -20,10 +20,10 @@ struct {
 } noiseData;
 
 struct {
-	GLprogram prog;
-	GLresource<vec3, true> camPos;
-	GLresource<float> radius;
-	GLtexture cubemap;
+    GLprogram prog;
+    GLresource<vec3, true> camPos;
+    GLresource<float> radius;
+    GLtexture cubemap;
 } normalData;
 
 static shared<TextEntity> controlText;
@@ -68,7 +68,7 @@ struct {
 } cameraNav;
 
 bool wireframe = false;
-constexpr float RADIUS = 2;
+constexpr float RADIUS = 8;
 
 void initCubemap(GLtexture& tex, GLenum type, GLuint width, GLuint height, GLenum from, GLenum to) {
     tex.create(GL_TEXTURE_CUBE_MAP);
@@ -111,10 +111,10 @@ TessellatorTest::TessellatorTest() : Game(6) {
     controlText->transform.position = vec3(25, 50, 0);
     controlText->transform.scale = vec3(0.5f, 1, 1);
     mainState->addEntity(controlText);
-    
+
     auto cubemapProg = HotSwap::Shader::create();
     using ShaderRes = decltype(cubemapProg->vertex);
-    
+
     cubemapProg->compute = ShaderRes("Shaders/noisemap_c.glsl", GL_COMPUTE_SHADER);
     cubemapProg->setupProgram();
     noiseData.prog = cubemapProg->program();
@@ -122,7 +122,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     noiseData.zoom = noiseData.prog.getUniform<float>("Zoom");
     noiseData.zoom.value = 6.0f;
 
-    constexpr size_t texSize = 256;
+    constexpr size_t texSize = 1024;
     initCubemap(noiseData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
 
     auto computeDispatcher = make_shared<GraphicsWorker>();
@@ -150,13 +150,13 @@ TessellatorTest::TessellatorTest() : Game(6) {
     });
     normalData.radius = normalData.prog.getUniform<float>("Radius");
     normalData.radius.value = RADIUS;
-    
+
     initCubemap(normalData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
-    
+
     computeDispatcher = make_shared<GraphicsWorker>();
     computeDispatcher->material.setShaders(normalData.prog, &normalData.camPos, &normalData.radius);
     computeDispatcher->material.setTextures();
-    
+
     auto normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
     normalEntity->texture = normalData.cubemap;
@@ -200,8 +200,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
         mainState->addEntity(genPlanetPlane(dir, RADIUS, &renderer.forward.objects, planetGroup));
 
     cameraControl = make_shared<TransformEntity>();
-    cameraControl->transform.position = vec3(0, 0, 5);
-    cameraControl->transform.rotate(0, PI, 0);
+    cameraControl->transform.position = vec3(0, 0, RADIUS * 2);
+    cameraControl->transform.rotate(0, -PI, 0);
     mainState->addEntity(cameraControl);
 
     auto camera = make_shared<Camera>();
@@ -212,7 +212,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     cameraNav.forward = camera->forward();
 
     renderer.lightingOn = false;
-    
+
     if (DEBUG) DrawDebug::getInstance().camera(camera.get());
 
     noiseEntity->draw();
@@ -267,9 +267,9 @@ void TessellatorTest::update(double delta) {
     // else                   scaleFactor = 7.5;
 
     pos = cam->transform.getComputed()->position();
-    controlText->setMessage(to_string(pos, 3) 
-                          + "\n" + std::to_string(glm::length(pos)) 
-                          + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation())) 
+    controlText->setMessage(to_string(pos, 3)
+                          + "\n" + std::to_string(glm::length(pos))
+                          + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation()))
                           + "\nPlanes Active: " + std::to_string(activeCounter));
 }
 
@@ -354,11 +354,11 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
         else if (Keyboard::keyDown(Keyboard::Key::S)) { dV = -lateralSpeed * dt; moved = true; }
         if      (Keyboard::keyDown(Keyboard::Key::A)) { dH = -lateralSpeed * dt; moved = true; }
         else if (Keyboard::keyDown(Keyboard::Key::D)) { dH =  lateralSpeed * dt; moved = true; }
-        
+
         const auto getRot = [](float d, float radius) {
             return 2 * asin(d * 0.5f / radius);
         };
-       
+
         if (moved) {
             cameraControl->transform.rotate(getRot(dV, centerDist), getRot(dH, centerDist), 0);
             cameraControl->transform.position = cameraControl->transform.forward() * -centerDist;
