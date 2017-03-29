@@ -29,6 +29,8 @@ struct {
 static shared<TextEntity> controlText;
 static shared<Entity> cameraControl;
 
+static shared<ComputeTextureEntity> noiseEntity, normalEntity;
+
 struct TerrainPlane {
     vec3 center;
     float radius;
@@ -112,7 +114,10 @@ TessellatorTest::TessellatorTest() : Game(6) {
     controlText->transform.scale = vec3(0.5f, 1, 1);
     mainState->addEntity(controlText);
 
-    auto cubemapProg = HotSwap::Shader::create();
+    auto cubemapProg = HotSwap::Shader::create([&] {
+        noiseEntity->draw();
+        normalEntity->draw();
+    });
     using ShaderRes = decltype(cubemapProg->vertex);
 
     cubemapProg->compute = ShaderRes("Shaders/noisemap_c.glsl", GL_COMPUTE_SHADER);
@@ -129,7 +134,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     computeDispatcher->material.setShaders(noiseData.prog, &noiseData.zoom);
     computeDispatcher->material.setTextures();
 
-    auto noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
+    noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     noiseEntity->dispatchSize = { texSize, texSize, 6 };
     noiseEntity->texture = noiseData.cubemap;
     noiseEntity->index = 0;
@@ -140,7 +145,9 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     checkProgLinkError(noiseData.prog);
 
-    auto normalmapProg = HotSwap::Shader::create();
+    auto normalmapProg = HotSwap::Shader::create([&] {
+        normalEntity->draw();
+    });
     normalmapProg->compute = ShaderRes("Shaders/normalmap_c.glsl", GL_COMPUTE_SHADER);
     normalmapProg->setupProgram();
     normalData.prog = normalmapProg->program();
@@ -157,7 +164,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     computeDispatcher->material.setShaders(normalData.prog, &normalData.camPos, &normalData.radius);
     computeDispatcher->material.setTextures();
 
-    auto normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
+    normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
     normalEntity->texture = normalData.cubemap;
     normalEntity->index = 1;

@@ -63,14 +63,15 @@ namespace HotSwap {
     // Any additions/removals of uniforms require, at minimum, a re-run of the program; sampler binding changes do not
     class Shader : public SwapResource {
     public:
-        static shared<Shader> create();
+        static shared<Shader> create(std::function<void()> callback = nullptr);
 
         Resource<File::Extension::GLSL> vertex, tessControl, tessEval, geometry, fragment, compute;
 
         void setupProgram();
         void update() override;
     private:
-        Shader() = default;
-		ACCS_G(public, GLprogram, program);
+        Shader(std::function<void()> _callback) : callback(_callback) {};
+        ACCS_G(public, GLprogram, program);
+        const std::function<void()> callback = nullptr;
     };
 };

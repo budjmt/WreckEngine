@@ -9,9 +9,9 @@ void HotSwap::main() {
         resource->update();
 }
 
-shared<Shader> Shader::create() {
-    struct Constructible_Shader : public Shader {};
-    auto s = make_shared<Constructible_Shader>();
+shared<Shader> Shader::create(std::function<void()> callback) {
+    struct Constructible_Shader : public Shader { Constructible_Shader(std::function<void()> c) : Shader(c) {}; };
+    auto s = make_shared<Constructible_Shader>(callback);
     resources.push_back(s);
     return s;
 }
@@ -45,6 +45,7 @@ void Shader::update() {
         if (needsRelink) {
             _program.refresh();
             _program.link();
+            if (callback) callback();
         }
     });
 }
