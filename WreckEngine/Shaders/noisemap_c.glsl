@@ -36,12 +36,12 @@ layout(location = 0) uniform float Zoom = 6; // Actually "octave"
 float getNoiseValue(in vec3 dir)
 {
     // Let's mix together some octaves of noise
-    float n1 = noise3D(dir * 2.0);
-    float n2 = noise3D(dir * 4.0);
-    float n3 = noise3D(dir * 8.0);
-    float n4 = noise3D(dir * 16.0);
+    float n1 = noise3D(dir * 1.0);
+    float n2 = noise3D(dir * 2.0);
+    float n3 = noise3D(dir * 4.0);
+    float n4 = noise3D(dir * 8.0);
 
-    float noise = (n1 * n4) + (n2 * n3) /*- (n1 * n3) + (n2 * n4)*/;
+    float noise = (n1 * n4) + (n2 * n3);
     return clamp(noise, -1.0, 1.0);
 }
 

@@ -155,12 +155,12 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     computeDispatcher = make_shared<GraphicsWorker>();
     computeDispatcher->material.setShaders(normalData.prog, &normalData.camPos, &normalData.radius);
-    computeDispatcher->material.setTextures();
+    computeDispatcher->material.setTextures(noiseData.cubemap);
 
     auto normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
     normalEntity->texture = normalData.cubemap;
-    normalEntity->index = 1;
+    normalEntity->index = 0;
     normalEntity->updateFreq = 0.f;
     //normalEntity->synchronize = false;
     //mainState->addEntity(normalEntity);
@@ -345,7 +345,7 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
     }
     else {
         // move around the surface
-        const auto lateralSpeed = 5.f * towardSpeed;
+        const auto lateralSpeed = 2.f * RADIUS * towardSpeed;
 
         float dH = 0, dV = 0;
         bool moved = false;
