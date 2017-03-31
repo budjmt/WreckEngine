@@ -70,7 +70,7 @@ struct {
 } cameraNav;
 
 bool wireframe = false;
-constexpr float RADIUS = 8;
+constexpr float RADIUS = 2;
 
 void initCubemap(GLtexture& tex, GLenum type, GLuint width, GLuint height, GLenum from, GLenum to) {
     tex.create(GL_TEXTURE_CUBE_MAP);
@@ -191,7 +191,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     planetData.radius = planetData.prog.getUniform<float>("Radius");
 
     //genPlane("Assets/plane.obj", 5);
-    const auto planetGroup = renderer.forward.objects.addGroup([] {
+    auto* rendererUsed = &renderer.deferred.objects;
+    const auto planetGroup = rendererUsed->addGroup([] {
         GL_CHECK(glEnable(GL_CULL_FACE));
         if(wireframe) GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
         GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -204,7 +205,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
                             , vec3(0, 1, 0), vec3(0, -1, 0)
                             , vec3(1, 0, 0), vec3(-1, 0, 0) };
     for(auto& dir : cubeDirs)
-        mainState->addEntity(genPlanetPlane(dir, RADIUS, &renderer.forward.objects, planetGroup));
+        mainState->addEntity(genPlanetPlane(dir, RADIUS, rendererUsed, planetGroup));
 
     cameraControl = make_shared<TransformEntity>();
     cameraControl->transform.position = vec3(0, 0, RADIUS * 2);
@@ -216,9 +217,16 @@ TessellatorTest::TessellatorTest() : Game(6) {
     camera->transform.parent(&cameraControl->transform);
     mainState->addEntity(camera);
 
-    cameraNav.forward = camera->forward();
+    Light::Group<Light::Directional> directional;
+    Light::Directional d;
+    d.direction = normalize(vec3(-1, -1, -0.5f));
+    d.color = vec3(1);
+    directional.addLight(d, Light::UpdateFreq::NEVER);
 
-    renderer.lightingOn = false;
+    renderer.lights.directionalLights.setGroups({ directional });
+    renderer.ambientColor.value = vec3(1);
+
+    cameraNav.forward = camera->forward();
 
     if (DEBUG) DrawDebug::getInstance().camera(camera.get());
 

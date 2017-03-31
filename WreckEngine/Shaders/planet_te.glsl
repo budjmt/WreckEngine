@@ -18,6 +18,8 @@ layout (binding = 1) uniform samplerCube heightMap;
 patch in float radius;
 patch in vec3 teCamPos;
 
+out vec3 position;
+
 void main()
 {
     vec3 p0 = gl_TessCoord.x * tcPosition[0];
@@ -26,11 +28,11 @@ void main()
     tessCoord = gl_TessCoord;
     
     fragNormal = normalize(p0 + p1 + p2);
-    vec3 pos = fragNormal * radius; // normalizing makes the c-sphere
+    position = fragNormal * radius; // normalizing makes the c-sphere
 
-    float dist = distance(pos, teCamPos);
+    float dist = distance(position, teCamPos);
     float height = texture(heightMap, fragNormal).r;
-    pos += getHeight(fragNormal, max(height, 0), dist); // remove that clamp later?
+    position += getHeight(fragNormal, max(height, 0), dist); // remove that clamp later?
     
-    gl_Position = cameraMatrix * vec4(pos, 1);
+    gl_Position = cameraMatrix * vec4(position, 1);
 }

@@ -93,12 +93,12 @@ void PostProcessChain::init() {
 
     triangle.create();
     triangle.bind();
-    
+
     fs_triangle.bind();
     GLattrarr attr;
     attr.add<vec2>(2);
     attr.apply();
-    
+
     triangle.unbind();
 }
 
@@ -115,11 +115,11 @@ void MaterialPass::scheduleDrawArrays(const size_t group, const GLVAO* vao, cons
     d.material = mat;
     d.call = DrawCall::Type::Arrays;
     d.tesselPrim = tesselPrim;
-    
+
     DrawCall::Params params{};
     params.count = count;
     params.instances = instances;
-    
+
     scheduleDraw(group, d, params);
 }
 
@@ -160,10 +160,10 @@ void MaterialPass::Group::Helper::draw() {
 
     DrawCall::Params* offset = nullptr; // &params[0];
     for (const auto& drawCall : drawCalls) {
-		
-		const auto& prog = drawCall.material->shaders->program;
-		assert(!prog.tessControl.valid() || drawCall.tesselPrim == GL_PATCHES); // if using tessellation, the primitive type must be GL_PATCHES
-		assert(!prog.isCompute); // compute shaders may not be used for draw calls
+
+        const auto& prog = drawCall.material->shaders->program;
+        assert(!prog.tessControl.valid() || drawCall.tesselPrim == GL_PATCHES); // if using tessellation, the primitive type must be GL_PATCHES
+        assert(!prog.isCompute); // compute shaders may not be used for draw calls
 
         drawCall.render(offset);
         ++offset;
