@@ -167,7 +167,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
     normalEntity->texture = normalData.cubemap;
-    normalEntity->index = 1;
+    normalEntity->index = 0;
     normalEntity->updateFreq = 0.f;
     //normalEntity->synchronize = false;
     //mainState->addEntity(normalEntity);
@@ -232,7 +232,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     //renderer.lights.pointLights.setGroups({ point });
     renderer.lights.directionalLights.setGroups({ directional });
-    renderer.ambientColor.value = vec3(1);
+    renderer.ambientColor.value = vec3(0.1f);
 
     cameraNav.forward = camera->forward();
 
@@ -288,12 +288,19 @@ void TessellatorTest::update(double delta) {
     // if      (dist < 0.25f) scaleFactor = 1.5;
     // else if (dist < 0.75f) scaleFactor = 3.5;
     // else                   scaleFactor = 7.5;
-
-    pos = cam->transform.getComputed()->position();
+    
+    vec3 forward;
+    {
+        auto t = cam->transform.getComputed();
+        pos = t->position();
+        forward = t->forward();
+    }
     controlText->setMessage(to_string(pos, 3)
                           + "\n" + std::to_string(glm::length(pos))
                           + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation()))
                           + "\nPlanes Active: " + std::to_string(activeCounter));
+
+    DrawDebug::getInstance().drawDebugVector(pos + forward, pos + forward + normalize(vec3(-1, -1, -0.5f)));
 }
 
 void TessellatorTest::postUpdate() {
