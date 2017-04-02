@@ -29,6 +29,8 @@ struct {
 static shared<TextEntity> controlText;
 static shared<Entity> cameraControl;
 
+static shared<ComputeTextureEntity> noiseEntity, normalEntity;
+
 struct TerrainPlane {
     vec3 center;
     float radius;
@@ -68,7 +70,7 @@ struct {
 } cameraNav;
 
 bool wireframe = false;
-constexpr float RADIUS = 8;
+constexpr float RADIUS = 2;
 
 void initCubemap(GLtexture& tex, GLenum type, GLuint width, GLuint height, GLenum from, GLenum to) {
     tex.create(GL_TEXTURE_CUBE_MAP);
@@ -112,7 +114,10 @@ TessellatorTest::TessellatorTest() : Game(6) {
     controlText->transform.scale = vec3(0.5f, 1, 1);
     mainState->addEntity(controlText);
 
-    auto cubemapProg = HotSwap::Shader::create();
+    auto cubemapProg = HotSwap::Shader::create([&] {
+        noiseEntity->draw();
+        normalEntity->draw();
+    });
     using ShaderRes = decltype(cubemapProg->vertex);
 
     cubemapProg->compute = ShaderRes("Shaders/noisemap_c.glsl", GL_COMPUTE_SHADER);
@@ -129,7 +134,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     computeDispatcher->material.setShaders(noiseData.prog, &noiseData.zoom);
     computeDispatcher->material.setTextures();
 
-    auto noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
+    noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     noiseEntity->dispatchSize = { texSize, texSize, 6 };
     noiseEntity->texture = noiseData.cubemap;
     noiseEntity->index = 0;
@@ -140,7 +145,9 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     checkProgLinkError(noiseData.prog);
 
-    auto normalmapProg = HotSwap::Shader::create();
+    auto normalmapProg = HotSwap::Shader::create([&] {
+        normalEntity->draw();
+    });
     normalmapProg->compute = ShaderRes("Shaders/normalmap_c.glsl", GL_COMPUTE_SHADER);
     normalmapProg->setupProgram();
     normalData.prog = normalmapProg->program();
@@ -157,7 +164,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     computeDispatcher->material.setShaders(normalData.prog, &normalData.camPos, &normalData.radius);
     computeDispatcher->material.setTextures(noiseData.cubemap);
 
-    auto normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
+    normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
     normalEntity->texture = normalData.cubemap;
     normalEntity->index = 0;
@@ -184,7 +191,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     planetData.radius = planetData.prog.getUniform<float>("Radius");
 
     //genPlane("Assets/plane.obj", 5);
-    const auto planetGroup = renderer.forward.objects.addGroup([] {
+    auto* rendererUsed = &renderer.deferred.objects;
+    const auto planetGroup = rendererUsed->addGroup([] {
         GL_CHECK(glEnable(GL_CULL_FACE));
         if(wireframe) GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
         GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -197,7 +205,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
                             , vec3(0, 1, 0), vec3(0, -1, 0)
                             , vec3(1, 0, 0), vec3(-1, 0, 0) };
     for(auto& dir : cubeDirs)
-        mainState->addEntity(genPlanetPlane(dir, RADIUS, &renderer.forward.objects, planetGroup));
+        mainState->addEntity(genPlanetPlane(dir, RADIUS, rendererUsed, planetGroup));
 
     cameraControl = make_shared<TransformEntity>();
     cameraControl->transform.position = vec3(0, 0, RADIUS * 2);
@@ -209,9 +217,24 @@ TessellatorTest::TessellatorTest() : Game(6) {
     camera->transform.parent(&cameraControl->transform);
     mainState->addEntity(camera);
 
-    cameraNav.forward = camera->forward();
+    //Light::Group<Light::Point> point;
+    //Light::Point p;
+    //p.position = vec3(-50, -100, -50);
+    //p.color = vec3(1);
+    //p.falloff = vec2(10, 1000);
+    //point.addLight(p, Light::UpdateFreq::NEVER);
 
-    renderer.lightingOn = false;
+    Light::Group <Light::Directional> directional;
+    Light::Directional d;
+    d.direction = normalize(vec3(-1, -1, -0.5f));
+    d.color = vec3(1);
+    directional.addLight(d, Light::UpdateFreq::NEVER);
+
+    //renderer.lights.pointLights.setGroups({ point });
+    renderer.lights.directionalLights.setGroups({ directional });
+    renderer.ambientColor.value = vec3(0.1f);
+
+    cameraNav.forward = camera->forward();
 
     if (DEBUG) DrawDebug::getInstance().camera(camera.get());
 
@@ -265,12 +288,19 @@ void TessellatorTest::update(double delta) {
     // if      (dist < 0.25f) scaleFactor = 1.5;
     // else if (dist < 0.75f) scaleFactor = 3.5;
     // else                   scaleFactor = 7.5;
-
-    pos = cam->transform.getComputed()->position();
+    
+    vec3 forward;
+    {
+        auto t = cam->transform.getComputed();
+        pos = t->position();
+        forward = t->forward();
+    }
     controlText->setMessage(to_string(pos, 3)
                           + "\n" + std::to_string(glm::length(pos))
                           + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation()))
                           + "\nPlanes Active: " + std::to_string(activeCounter));
+
+    DrawDebug::getInstance().drawDebugVector(pos + forward, pos + forward + normalize(vec3(-1, -1, -0.5f)));
 }
 
 void TessellatorTest::postUpdate() {

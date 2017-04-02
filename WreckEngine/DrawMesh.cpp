@@ -34,6 +34,7 @@ void DrawMesh::setup(GLtexture tex, GLprogram shader) {
     worldMatrix   = GLresource<mat4>(shader, "worldMatrix");
     iTworldMatrix = GLresource<mat4>(shader, "iTworldMatrix");
     _color = GLresource<vec4>(shader, "tint");
+    _color.value = vec4(1);
 
     material.setShaders(shader, &worldMatrix, &iTworldMatrix, &_color);
     material.setTextures(tex);

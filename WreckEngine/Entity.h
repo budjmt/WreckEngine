@@ -18,7 +18,6 @@ public:
     
     Transform transform;
     bool active = true;
-    vec4 color = vec4(1);
     
     void* id = (void*)Random::get(); // meant to identify the object for debugging purposes
     

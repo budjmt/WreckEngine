@@ -292,6 +292,7 @@ namespace Light {
         }
 
         void forward(const GLuint index) {
+            if (groups.size() == 0) return;
             forwardBlock.index = index;
             forwardBlock.bind();
         }

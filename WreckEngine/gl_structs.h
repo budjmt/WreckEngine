@@ -269,14 +269,14 @@ struct GLbuffer {
     // invalidates the buffer; used for streaming
     inline void invalidate() const {
         GL_CHECK(glBufferData(target, size, nullptr, usage));
+        //GL_CHECK(glInvalidateBufferData(*buffer));
     }
 
     // allocate the buffer after binding to contain [size] bytes from [_data].
     // IMPORTANT: the size of the array [_data] points to must match [size], or there will be access exceptions
     // calling these methods from an unbound buffer is allowed, but will have undefined results
     inline void data(const size_t size, const GLvoid* _data) {
-        GL_CHECK(glBufferData(target, size, _data, usage));
-        this->size = size;
+        GL_CHECK(glBufferData(target, this->size = size, _data, usage));
     }
 
     // this version is intended for updates, (for streams) not instantiations
@@ -290,6 +290,10 @@ struct GLbuffer {
     inline void subdata(const GLvoid* data, const GLuint _size, const GLuint offset = 0) const {
         assert(usage != GL_STATIC_DRAW && size); // a buffer allocated with static draw should not be updated / a buffer of size 0 shouldn't need updates
         GL_CHECK(glBufferSubData(target, offset, _size, data));
+    }
+
+    inline void storage(const size_t size, const GLvoid* data, const GLbitfield flags) {
+        GL_CHECK(glBufferStorage(target, this->size = size, data, flags));
     }
 };
 

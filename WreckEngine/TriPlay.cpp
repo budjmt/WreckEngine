@@ -102,9 +102,10 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     me = mesh;
 
     auto forwardProg = loadProgram("Shaders/forwardTest_v.glsl", "Shaders/forwardTest_f.glsl");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.forward.objects, sphere, "Assets/butt.png", forwardProg));
+    auto dm = make_shared<DrawMesh>(&renderer.forward.objects, sphere, "Assets/butt.png", forwardProg);
+    mesh = make_shared<ColliderEntity>(dm);
     renderer.lights.connectLightBlocks(forwardProg, "PointBlock", "SpotlightBlock", "DirectionalBlock");
-    mesh->color = vec4(0, 1, 0.5f, 0.5f);
+    dm->color = vec4(0, 1, 0.5f, 0.5f);
     mesh->transform.position = vec3(-5.f, 0, 0);
     mesh->rigidBody.floating(1);
     mainState->addEntity(mesh);
@@ -222,6 +223,12 @@ void TriPlay::setupPostProcess() {
     chromaticAberration->data.setShaders(PostProcess::make_program("Shaders/postProcess/CA.glsl"));
     chromaticAberration->data.setTextures(blurTarget);
     chromaticAberration->renderToTextures(colorRender);
+
+    // HDR; unused
+    auto hdr = make_shared<PostProcess>();
+    hdr->data.setShaders(PostProcess::make_program("Shaders/postProcess/hdr.glsl"));
+    hdr->data.setTextures(colorRender);
+    hdr->renderToTextures(blurTarget);
 
     // CRT
     auto crt = make_shared<PostProcess>();
