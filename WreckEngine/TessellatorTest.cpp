@@ -162,7 +162,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     computeDispatcher = make_shared<GraphicsWorker>();
     computeDispatcher->material.setShaders(normalData.prog, &normalData.camPos, &normalData.radius);
-    computeDispatcher->material.setTextures();
+    computeDispatcher->material.setTextures(noiseData.cubemap);
 
     normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
