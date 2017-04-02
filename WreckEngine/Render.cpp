@@ -157,6 +157,7 @@ void MaterialPass::Group::Helper::draw() {
     paramBuffer.bind();
     paramBuffer.invalidate();
     paramBuffer.data(group.params.size() * sizeof(DrawCall::Params), &params[0]);
+    // possible synchronization issue when param buffer does not complete upload before draw call?
 
     DrawCall::Params* offset = nullptr; // &params[0];
     for (const auto& drawCall : drawCalls) {

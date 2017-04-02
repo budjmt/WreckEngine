@@ -224,6 +224,12 @@ void TriPlay::setupPostProcess() {
     chromaticAberration->data.setTextures(blurTarget);
     chromaticAberration->renderToTextures(colorRender);
 
+    // HDR; unused
+    auto hdr = make_shared<PostProcess>();
+    hdr->data.setShaders(PostProcess::make_program("Shaders/postProcess/hdr.glsl"));
+    hdr->data.setTextures(colorRender);
+    hdr->renderToTextures(blurTarget);
+
     // CRT
     auto crt = make_shared<PostProcess>();
     crt->data.setShaders(PostProcess::make_program("Shaders/postProcess/crt.glsl"), &crtTime, &crtRes);

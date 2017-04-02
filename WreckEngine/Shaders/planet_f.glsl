@@ -32,6 +32,7 @@ void main()
     //vec3 color = elevationColor;
     //vec3 color = N;
     vec3 color = No;
+    //vec3 color = vec3(1);
 
     fragPosition = vec4(position, 1);
     fragNormalized = vec4(N, 1);

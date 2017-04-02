@@ -217,12 +217,20 @@ TessellatorTest::TessellatorTest() : Game(6) {
     camera->transform.parent(&cameraControl->transform);
     mainState->addEntity(camera);
 
-    Light::Group<Light::Directional> directional;
+    //Light::Group<Light::Point> point;
+    //Light::Point p;
+    //p.position = vec3(-50, -100, -50);
+    //p.color = vec3(1);
+    //p.falloff = vec2(10, 1000);
+    //point.addLight(p, Light::UpdateFreq::NEVER);
+
+    Light::Group <Light::Directional> directional;
     Light::Directional d;
     d.direction = normalize(vec3(-1, -1, -0.5f));
     d.color = vec3(1);
     directional.addLight(d, Light::UpdateFreq::NEVER);
 
+    //renderer.lights.pointLights.setGroups({ point });
     renderer.lights.directionalLights.setGroups({ directional });
     renderer.ambientColor.value = vec3(1);
 
