@@ -90,6 +90,8 @@ struct GLtexture {
     inline WR_GL_OP_PARENS(GLuint, texture);
     inline WR_GL_OP_EQEQ(GLtexture, texture);
 
+    static GLint getFormatPitch(GLenum format);
+
     inline bool valid() const { return *texture != def; }
 
     inline void create(const GLenum _type = GL_TEXTURE_2D, const GLint maxMipLevel = 0) {

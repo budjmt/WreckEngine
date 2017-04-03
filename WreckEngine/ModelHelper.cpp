@@ -53,10 +53,8 @@ void genOBJ(const char* file, Mesh::FaceData& data, Mesh::FaceIndex& indices) {
 
 	//cout << "Writing..." << endl;
 	//write fileContents to the file, overwrite its contents
-	std::ofstream ofile;
-	ofile.open(file, ios::out | ios::trunc);
+	std::ofstream ofile(file, ios::out | ios::trunc);
 	ofile.write(fileContents.c_str(), fileContents.length());
-	ofile.close();
 	//cout << "File successfully generated." << endl;
 }
 

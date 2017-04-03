@@ -38,7 +38,7 @@ namespace File {
         void unload() { if (image) FreeImage_Unload(image); }
     };
 
-    template<Extension E> class resource {};
+    template<Extension E> struct resource {};
     template<> struct resource<Extension::TXT>  { typedef std::string type; };
     template<> struct resource<Extension::GLSL> { typedef GLshader type; };
     template<> struct resource<Extension::PNG>  { typedef ImageData type; };
@@ -46,8 +46,28 @@ namespace File {
 
     template<Extension E> using resource_t = typename resource<E>::type;
 
+    template<Extension E> struct blob {};
+    template<> struct blob<Extension::TXT>  { typedef unique<unsigned char[]> type; };
+    template<> struct blob<Extension::PNG>  { typedef GLtexture type; };
+    template<> struct blob<Extension::OBJ>  { typedef blob<Extension::TXT>::type type; };
+    
+    template<Extension E> using blob_t = typename blob<E>::type;
+
+    template<Extension E> struct options {};
+    template<> struct options<Extension::TXT> { size_t size; uint32_t flags; };
+    template<> struct options<Extension::PNG> { 
+        int width, height;
+        GLenum target, format = GL_RGBA, level = 0;
+        uint32_t flags;
+        std::function<void(bool)> callback;
+    };
+    template<> struct options<Extension::OBJ> : public options<Extension::TXT> {};
+
     template<Extension E>
     inline resource_t<E> load(const char* path, const uint32_t options = 0) {}
+
+    template<Extension E>
+    inline void save(const char* path, blob_t<E> data, const options<E> options) {}
 
     template<Extension E> inline bool isValid(const resource_t<E>&) { return false; }
     template<> inline bool isValid<Extension::TXT>  (const resource_t<Extension::TXT>&  res) { return res.length() > 0; }
@@ -168,5 +188,41 @@ namespace File {
 
         printf("Complete!\n");
         return make_shared<Mesh>(data, indices);
+    }
+
+    template<>
+    inline void save<Extension::TXT>(const char* path, blob_t<Extension::TXT> data, const options<Extension::TXT> options) {
+        std::ofstream os(path, options.flags);
+        os.write((char*) data.get(), options.size);
+    }
+
+    template<>
+    inline void save<Extension::OBJ>(const char* path, blob_t<Extension::OBJ> data, const options<Extension::OBJ> options) {
+        static_assert(std::is_same<blob_t<Extension::OBJ>, blob_t<Extension::TXT>>::value , "This method is now invalid because txt and obj are not using the same type");
+        save<Extension::TXT>(path, std::move(data), options);
+    }
+
+    template<>
+    inline void save<Extension::PNG>(const char* path, const blob_t<Extension::PNG> data, const options<Extension::PNG> options) {
+        Thread::Render::runNextFrame([=] {
+            data.bind();
+
+            GLint width, height;
+            GLenum format;
+            GL_CHECK(glGetTexParameteriv(data.target, GL_TEXTURE_WIDTH, &width));
+            GL_CHECK(glGetTexParameteriv(data.target, GL_TEXTURE_HEIGHT, &height));
+            GL_CHECK(glGetTexParameteriv(data.target, GL_TEXTURE_INTERNAL_FORMAT, (GLint*) &format));
+
+            auto pitch = GLtexture::getFormatPitch(format);
+            auto pixels = make_unique<unsigned char[]>(width * height * pitch);
+
+            GL_CHECK(glGetTexImage(options.target, options.level, options.format, GL_UNSIGNED_BYTE, pixels.get()));
+
+            // TODO move to jobs thread when it exists
+            auto bitmap = FreeImage_ConvertFromRawBits(pixels.get(), options.width, options.height, pitch, pitch * 8, 0, 0, 0);
+            bool success = FreeImage_Save(FIF_PNG, bitmap, path, options.flags) != 0;
+
+            if (options.callback) options.callback(success);
+        });
     }
 };

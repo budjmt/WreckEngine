@@ -51,7 +51,7 @@ public:
     }
 
     inline void update(double dt) override {
-        duration -= Time::delta;
+        duration -= (float) Time::delta;
         if (duration <= 0.0f) {
             active = false;
         }

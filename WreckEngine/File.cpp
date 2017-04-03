@@ -61,7 +61,7 @@ void File::processShaderSource(const char* path, resource_t<Extension::TXT>& res
 
         if (startsWith(line, includeDirective))
         {
-            const char* includeFileName = &line[9];
+            const char* includeFileName = &line[9]; // TODO switch to tokenize
             includeFilePath = directory + includeFileName;
 
             includeFileContent = File::load<Extension::TXT>(includeFilePath.c_str());

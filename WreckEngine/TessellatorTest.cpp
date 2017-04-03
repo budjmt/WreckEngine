@@ -127,7 +127,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     noiseData.zoom = noiseData.prog.getUniform<float>("Zoom");
     noiseData.zoom.value = 6.0f;
 
-    constexpr size_t texSize = 1024;
+    constexpr size_t texSize = 1024; // guaranteed minimum max texture size by GL 4 is 1024
     initCubemap(noiseData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
 
     auto computeDispatcher = make_shared<GraphicsWorker>();
