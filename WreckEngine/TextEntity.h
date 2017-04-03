@@ -18,7 +18,7 @@ public:
         inst->setText(message);
     }
 
-    inline void update(double dt) {
+    inline virtual void update(double dt) {
         //Text::draw(message, font.get(), vertical, horizontal, transform.position().x, transform.position().y, transform.scale().x, color);
         auto position = transform.getComputed()->position();
         auto scale = transform.getComputed()->scale();
@@ -36,3 +36,30 @@ private:
     shared<Text::Instance> inst;
 };
 
+class TimedTextEntity : public TextEntity {
+public:
+    using TextEntity::TextEntity;
+
+    inline void setDuration(float dur) {
+        duration = dur;
+        active = true;
+    }
+
+    inline void show(float dur, const std::string& message) {
+        setDuration(dur);
+        setMessage(message);
+    }
+
+    inline void update(double dt) override {
+        duration -= Time::delta;
+        if (duration <= 0.0f) {
+            active = false;
+        }
+        else {
+            TextEntity::update(dt);
+        }
+    }
+
+private:
+    float duration = 0.0f;
+};

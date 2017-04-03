@@ -159,6 +159,9 @@
     <ClCompile Include="GraphicsWorker.cpp">
       <Filter>Render</Filter>
     </ClCompile>
+    <ClCompile Include="TextureRead.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="unique_id.h">
@@ -310,6 +313,9 @@
     </ClInclude>
     <ClInclude Include="GraphicsWorker.h">
       <Filter>Render</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureRead.h">
+      <Filter>Utilities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

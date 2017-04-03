@@ -195,6 +195,7 @@
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="TessellatorTest.cpp" />
+    <ClCompile Include="TextureRead.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui_demo.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui_draw.cpp" />
@@ -256,6 +257,7 @@
     <ClInclude Include="State.h" />
     <ClInclude Include="Text.h" />
     <ClInclude Include="TextEntity.h" />
+    <ClInclude Include="TextureRead.h" />
     <ClInclude Include="ThirdParty\Include\imconfig.h" />
     <ClInclude Include="Time.h" />
     <ClInclude Include="Transform.h" />
