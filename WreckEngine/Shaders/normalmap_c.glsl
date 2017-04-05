@@ -25,7 +25,7 @@ vec3 getOffsetCubeDirection(in ivec2 dims, in ivec2 offs, in int face)
 vec3 getOffsetHeightVector(in ivec2 dims, in ivec2 offs, in int face)
 {
     vec3 dir = getOffsetCubeDirection(dims, offs, face);
-    float noise = texture(NoiseTex, dir).r;
+    float noise = texture(NoiseTex, dir).r * 2.0 - 1.0;
 
     return getRawHeight(dir, noise);
 }
@@ -33,10 +33,8 @@ vec3 getOffsetHeightVector(in ivec2 dims, in ivec2 offs, in int face)
 // Gets a normal from the given points representing a triangle
 vec3 getTriNormal(in vec3 v0, in vec3 v1, in vec3 v2)
 {
-    //vec3 s1 = v1 - v0;
-    //vec3 s2 = v2 - v0;
-    vec3 s1 = v0 - v1;
-    vec3 s2 = v0 - v2;
+    vec3 s1 = v1 - v0;
+    vec3 s2 = v2 - v0;
     return normalize(cross(s1, s2));
 }
 
@@ -50,13 +48,13 @@ void main()
 #if 1
     /**
      * +--+--+
-     * |\*|\ |
-     * |*\|*\|
+     * | /|\ |
+     * |/0|0\|
      * +--+--+
-     * |\*|\*|
-     * | \|*\|
+     * |\0|0/|
+     * | \|/ |
      * +--+--+
-     * The six triangles with stars contribute to the
+     * The four triangles with zeros contribute to the
      * current point's normal
      */
 

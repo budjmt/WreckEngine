@@ -36,7 +36,7 @@ void main()
     vec2 uv = vec2(imageCoords.xy) / vec2(dims);
 
     vec3 dir = getCubeDirection(uv, face);
-    float n = getNoiseValue(dir);
+    float n = getNoiseValue(dir) * 0.5 + 0.5;
     vec4 color = vec4(n, n, n, 1.0);
 
     imageStore(Tex, imageCoords, color);

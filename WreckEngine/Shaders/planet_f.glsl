@@ -19,7 +19,7 @@ vec3 getElevationColor(in float h) {
 }
 
 float height(in vec3 coord) {
-    return texture(heightMap, coord).r;
+    return texture(heightMap, coord).r * 2.0 - 1.0;
 }
 
 void main()
