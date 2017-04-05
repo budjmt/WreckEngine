@@ -1,8 +1,6 @@
 #pragma once
 
 #include "Time.h"
-#include "noise/noise.h"
-#include "noise/noiseutils.h"
 
 #include <random>
 
@@ -33,14 +31,14 @@ namespace Random {
     typedef well512 engine_t;
     extern thread_local engine_t engine;
 
-	inline auto seed() { 
-        return engine_t::seed((engine_t::result_type) Time::ctime()); 
+	inline auto seed() {
+        return engine_t::seed((engine_t::result_type) Time::ctime());
     }
 
-	inline unsigned get() { 
-        static auto do_seed = seed(); 
+	inline unsigned get() {
+        static auto do_seed = seed();
         static std::uniform_int_distribution<engine_t::result_type> dist(engine_t::min(), engine_t::max());
-        return dist(engine); 
+        return dist(engine);
     }
     inline int getRange(engine_t::result_type start, engine_t::result_type end) { return std::uniform_int_distribution<engine_t::result_type>(start, end)(engine); }
 	inline int getRangeFast(engine_t::result_type start, engine_t::result_type end) { return get() % (end - start) + start; }
@@ -48,13 +46,13 @@ namespace Random {
     inline float  getf() { return std::uniform_real_distribution<float> (0.f, 1.f)(engine); }
     inline double getd() { return std::uniform_real_distribution<double>(0.0, 1.0)(engine); }
 
-	inline float  getfFast() { 
-        constexpr float  inv_max_range = 1.f / engine_t::max(); 
-        return get() * inv_max_range; 
+	inline float  getfFast() {
+        constexpr float  inv_max_range = 1.f / engine_t::max();
+        return get() * inv_max_range;
     }
-	inline double getdFast() { 
-        constexpr double inv_max_range = 1. / engine_t::max(); 
-        return get() * inv_max_range; 
+	inline double getdFast() {
+        constexpr double inv_max_range = 1. / engine_t::max();
+        return get() * inv_max_range;
     }
 
     // TODO incorporate lib noise
