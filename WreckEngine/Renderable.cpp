@@ -41,17 +41,24 @@ GLtexture Renderable::genTexture2D(const char* texFile) {
     if (loadedTextures.find(texFile) != loadedTextures.end()) {
         return loadedTextures[texFile];
     }
-    
+
     GLtexture texture;
     auto image = File::load<File::Extension::PNG>(texFile);
-    if (!image.image) return texture;
-    
+    if (!image) return texture;
+
     texture.create(GL_TEXTURE_2D, 0);
     texture.bind();
+#if WR_USE_FREEIMAGE
     //the texture is loaded in BGRA format
     texture.set2D<GLubyte>(image.bytes, image.width, image.height, GL_BGRA);
+#else
+    texture.set2D<GLubyte>(image.bytes.get(), image.width, image.height, GL_RGBA);
+#endif
     texture.genMipMap();
+
+#if WR_USE_FREEIMAGE
     image.unload();
+#endif
 
     loadedTextures[texFile] = texture;
     return texture;

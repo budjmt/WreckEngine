@@ -5,7 +5,8 @@
 #include "gl_structs.h"
 #include "Mesh.h"
 
-#include "FreeImage.h"
+#include <stb_image.h>
+#include <stb_image_write.h>
 
 // tokenizes [str] on any character present in [delimiter]
 inline std::vector<std::string> tokenize(std::string str, std::string delimiter) {
@@ -30,12 +31,17 @@ namespace File {
         PNG,
         OBJ
     };
-    
+
     struct ImageData {
+#if WR_USE_FREEIMAGE
         unsigned char* bytes;
         FIBITMAP* image;
-        size_t width, height;
         void unload() { if (image) FreeImage_Unload(image); }
+#else
+        shared<unsigned char> bytes;
+#endif
+        size_t width, height;
+        inline operator bool() const { return static_cast<bool>(bytes); }
     };
 
     template<Extension E> struct resource {};
@@ -50,12 +56,12 @@ namespace File {
     template<> struct blob<Extension::TXT>  { typedef unique<unsigned char[]> type; };
     template<> struct blob<Extension::PNG>  { typedef GLtexture type; };
     template<> struct blob<Extension::OBJ>  { typedef blob<Extension::TXT>::type type; };
-    
+
     template<Extension E> using blob_t = typename blob<E>::type;
 
     template<Extension E> struct options {};
     template<> struct options<Extension::TXT> { size_t size; uint32_t flags; };
-    template<> struct options<Extension::PNG> { 
+    template<> struct options<Extension::PNG> {
         int width, height;
         GLenum target, format = GL_RGBA, level = 0;
         uint32_t flags;
@@ -72,7 +78,7 @@ namespace File {
     template<Extension E> inline bool isValid(const resource_t<E>&) { return false; }
     template<> inline bool isValid<Extension::TXT>  (const resource_t<Extension::TXT>&  res) { return res.length() > 0; }
     template<> inline bool isValid<Extension::GLSL> (const resource_t<Extension::GLSL>& res) { return res.valid(); }
-    template<> inline bool isValid<Extension::PNG>  (const resource_t<Extension::PNG>&  res) { return res.image != nullptr; }
+    template<> inline bool isValid<Extension::PNG>  (const resource_t<Extension::PNG>&  res) { return res; }
     template<> inline bool isValid<Extension::OBJ>  (const resource_t<Extension::OBJ>&  res) { return res != nullptr; }
 
     template<>
@@ -121,6 +127,8 @@ namespace File {
     template<>
     inline resource_t<Extension::PNG> load<Extension::PNG>(const char* path, const uint32_t) {
         ImageData data{};
+
+#if WR_USE_FREEIMAGE
         auto bitmap = FreeImage_Load(FreeImage_GetFileType(path), path);
         if (!bitmap) {
             return data;
@@ -132,11 +140,21 @@ namespace File {
         if (!image) {
             return data;
         }
-        
+
         data.image  = image;
         data.width  = FreeImage_GetWidth(image);
         data.height = FreeImage_GetHeight(image);
         data.bytes  = FreeImage_GetBits(image);
+#else
+        constexpr auto requiredFormat = STBI_rgb_alpha;
+        int w, h, channels;
+        auto bytes = stbi_load(path, &w, &h, &channels, requiredFormat);
+
+        data.bytes = shared<unsigned char>(std::move(bytes), [](void* mem) { stbi_image_free(mem); });
+        data.width = static_cast<size_t>(w);
+        data.height = static_cast<size_t>(h);
+#endif
+
         return data;
     }
 
@@ -219,8 +237,12 @@ namespace File {
             GL_CHECK(glGetTexImage(options.target, options.level, options.format, GL_UNSIGNED_BYTE, pixels.get()));
 
             // TODO move to jobs thread when it exists
+#if WR_USE_FREEIMAGE
             auto bitmap = FreeImage_ConvertFromRawBits(pixels.get(), options.width, options.height, pitch, pitch * 8, 0, 0, 0);
             bool success = FreeImage_Save(FIF_PNG, bitmap, path, options.flags) != 0;
+#else
+            bool success = 0 != stbi_write_png(path, width, height, pitch, pixels.get(), width * pitch);
+#endif
 
             if (options.callback) options.callback(success);
         });

@@ -159,6 +159,9 @@
     <ClCompile Include="GraphicsWorker.cpp">
       <Filter>Render</Filter>
     </ClCompile>
+    <ClCompile Include="stb.cpp">
+      <Filter>ThirdParty</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="unique_id.h">
