@@ -11,7 +11,7 @@ namespace Render {
         GLresource<vec3> ambientColor;
         bool lightingOn = true;
 
-        LitRenderer(const size_t gBufferSize) : deferred({ 0, 1, 2 }), forward(gBufferSize), lightR({ 3, 4 }) {
+        LitRenderer(const size_t gBufferSize) : deferred({ 0, 1, 2, 3 }), forward(gBufferSize), lightR({ 4, 5 }) {
             deferred.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
             };
@@ -49,9 +49,10 @@ namespace Render {
             // GBuffer layout:
             // 0: position -> lit color
             // 1: normals
-            // 2: deferred color
-            // 3: diffuse  light accumulation
-            // 4: specular light accumulation
+            // 2: deferred diffuse color
+            // 3: deferred specular color
+            // 4: diffuse  light accumulation
+            // 5: specular light accumulation
             lightR.postProcess.output = gBuffer[0];
 
             auto accumulate = make_shared<PostProcess>();
@@ -59,10 +60,10 @@ namespace Render {
             accProg.use();
             ambientColor = accProg.getUniform<vec3>("ambient");
             accumulate->data.setShaders(accProg, &ambientColor);
-            accumulate->data.setTextures(gBuffer[2], gBuffer[3], gBuffer[4]);
+            accumulate->data.setTextures(gBuffer[2], gBuffer[3], gBuffer[4], gBuffer[5]);
             accumulate->renderToTextures(lightR.postProcess.output);
-            accumulate->data.shaders->program.use();
-            accumulate->data.setSamplers(0, "color", "diffuse", "specular");
+            //accumulate->data.shaders->program.use();
+            //accumulate->data.setSamplers(0, "diffuseColor", "specularColor", "diffuseLight", "specularLight");
 
             lightR.postProcess.entry.chainsTo(accumulate);
 

@@ -11,7 +11,8 @@ in float ftime;
 
 layout (location = 0) out vec4 fragPosition;
 layout (location = 1) out vec4 fragNormalized;
-layout (location = 2) out vec4 fragColor;
+layout (location = 2) out vec4 diffColor;
+layout (location = 3) out vec4 specColor;
 
 void main() {
 
@@ -21,9 +22,10 @@ void main() {
 	
 	fragPosition   = fragPos;
 	fragNormalized = vec4(fragNormal, 1);
-	fragColor      = color;
+	diffColor      = color;
+  specColor      = vec4(1);
 	
 	//float unique = (gl_FragCoord.x + 1) * 2 + (gl_FragCoord.y + 1) * 4;
 	//if(int(ftime * unique) % 2 == 0)
-	//	fragColor = vec4(gl_FragColor.rgb, 0);
+	//	diffColor = vec4(gl_FragColor.rgb, 0);
 }

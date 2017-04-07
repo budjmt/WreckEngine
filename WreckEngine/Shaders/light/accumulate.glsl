@@ -2,9 +2,10 @@
 
 in vec2 uv;
 
-uniform sampler2D color;
-uniform sampler2D diffuse;
-uniform sampler2D specular;
+layout (binding = 0) uniform sampler2D diffuseColor;
+layout (binding = 1) uniform sampler2D specularColor;
+layout (binding = 2) uniform sampler2D diffuseLight;
+layout (binding = 3) uniform sampler2D specularLight;
 
 uniform vec3 ambient;
 uniform float exposure = 1;
@@ -20,7 +21,8 @@ vec4 tonemap(in vec4 color) {
 }
 
 void main() {
-	fragColor = texture(color, uv) * (texture(diffuse, uv) + vec4(ambient,0)) + texture(specular, uv);
-	//fragColor = texture(color, uv);
-    //fragColor = tonemap(fragColor);
+	fragColor = texture(diffuseColor, uv) * (texture(diffuseLight, uv) + vec4(ambient,0)) 
+            + texture(specularColor, uv) * texture(specularLight, uv);
+	//fragColor = texture(diffuseColor, uv);
+  //fragColor = tonemap(fragColor);
 }
