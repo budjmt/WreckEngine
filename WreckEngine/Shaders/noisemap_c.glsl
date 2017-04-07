@@ -32,12 +32,9 @@ void main()
 
     ivec3 imageCoords = ivec3(gl_GlobalInvocationID);
     ivec2 dims = ivec2(imageSize(Tex));
-    int face = imageCoords.z;
-    vec2 uv = vec2(imageCoords.xy) / vec2(dims);
 
-    vec3 dir = getCubeDirection(uv, face);
-    float n = getNoiseValue(dir) * 0.5 + 0.5;
-    vec4 color = vec4(n, n, n, 1.0);
+    vec3 dir = getCubeDirection(imageCoords, dims);
+    vec3 n = vec3(getNoiseValue(dir));
 
-    imageStore(Tex, imageCoords, color);
+    imageStore(Tex, imageCoords, vec4(n, 0));
 }

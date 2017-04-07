@@ -10,8 +10,8 @@
 vec3 getCubeDirection(in vec2 uv, in int face)
 {
     // Remap UV to be in the [-1, 1] range
-    float x = (uv.x * 2.0 - 1.0);
-    float y = (uv.y * 2.0 - 1.0);
+    uv = uv * 2 - 1;
+    float x = uv.x, y = uv.y;
 
     vec3 dir = vec3(0, 0, 0);
     switch (face)

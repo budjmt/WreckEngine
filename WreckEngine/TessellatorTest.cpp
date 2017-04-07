@@ -21,7 +21,6 @@ struct {
 
 struct {
     GLprogram prog;
-    GLresource<vec3, true> camPos;
     GLresource<float> radius;
     GLtexture cubemap;
 } normalData;
@@ -152,16 +151,13 @@ TessellatorTest::TessellatorTest() : Game(6) {
     normalmapProg->setupProgram();
     normalData.prog = normalmapProg->program();
     normalData.prog.use();
-    normalData.camPos = GLresource<vec3, true>(normalData.prog, "CameraPosition", [&] {
-        return Camera::main->transform.getComputed()->position();
-    });
     normalData.radius = normalData.prog.getUniform<float>("Radius");
     normalData.radius.value = RADIUS;
 
     initCubemap(normalData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
 
     computeDispatcher = make_shared<GraphicsWorker>();
-    computeDispatcher->material.setShaders(normalData.prog, &normalData.camPos, &normalData.radius);
+    computeDispatcher->material.setShaders(normalData.prog, &normalData.radius);
     computeDispatcher->material.setTextures(noiseData.cubemap);
 
     normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
@@ -217,21 +213,28 @@ TessellatorTest::TessellatorTest() : Game(6) {
     camera->transform.parent(&cameraControl->transform);
     mainState->addEntity(camera);
 
-    //Light::Group<Light::Point> point;
-    //Light::Point p;
-    //p.position = vec3(-50, -100, -50);
-    //p.color = vec3(1);
-    //p.falloff = vec2(10, 1000);
-    //point.addLight(p, Light::UpdateFreq::NEVER);
+    Light::Group<Light::Point> point;
+    Light::Point p;
+    p.position = vec3(-50, -100, -50);
+    p.color = vec3(1);
+    p.falloff = vec2(10, 500);
+    point.addLight(p, Light::UpdateFreq::NEVER);
 
-    Light::Group <Light::Directional> directional;
-    Light::Directional d;
-    d.direction = normalize(vec3(-1, -1, -0.5f));
-    d.color = vec3(1);
-    directional.addLight(d, Light::UpdateFreq::NEVER);
+    // shut the performance warning from the point/spot only bug up for now
+    Light::Group<Light::Spotlight> spot;
+    Light::Spotlight s;
+    s.isOff = true;
+    spot.addLight(s, Light::UpdateFreq::NEVER);
+    renderer.lights.spotLights.setGroups({ spot });
 
-    //renderer.lights.pointLights.setGroups({ point });
-    renderer.lights.directionalLights.setGroups({ directional });
+    //Light::Group <Light::Directional> directional;
+    //Light::Directional d;
+    //d.direction = normalize(vec3(-1, -1, -0.5f));
+    //d.color = vec3(1);
+    //directional.addLight(d, Light::UpdateFreq::NEVER);
+
+    renderer.lights.pointLights.setGroups({ point });
+    //renderer.lights.directionalLights.setGroups({ directional });
     renderer.ambientColor.value = vec3(0.1f);
 
     cameraNav.forward = camera->forward();
@@ -300,7 +303,7 @@ void TessellatorTest::update(double delta) {
                           + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation()))
                           + "\nPlanes Active: " + std::to_string(activeCounter));
 
-    DrawDebug::getInstance().drawDebugVector(pos + forward, pos + forward + normalize(vec3(-1, -1, -0.5f)));
+    //DrawDebug::getInstance().drawDebugVector(pos + forward, pos + forward + normalize(vec3(-1, -1, -0.5f)));
 }
 
 void TessellatorTest::postUpdate() {

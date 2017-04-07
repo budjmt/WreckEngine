@@ -19,12 +19,13 @@ vec3 getElevationColor(in float h) {
 }
 
 float height(in vec3 coord) {
-    return texture(heightMap, coord).r * 2.0 - 1.0;
+    return texture(heightMap, coord).r;
 }
 
 void main()
 {
     vec3 N = texture(normalMap, fragNormal).rgb;
+    vec3 No = N;
     // transforms the normal to fit the position on the sphere?
     //N = N - vec3(0, 1, 0) + fragNormal;
     //N = vec3(0);

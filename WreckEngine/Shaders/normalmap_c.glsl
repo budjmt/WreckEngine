@@ -4,6 +4,8 @@ layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform imageCube NormalTex;
 layout(binding = 0) uniform samplerCube NoiseTex;
 
+layout(location = 0) uniform float Radius;
+
 #include height.inc
 #include CubeDirection.inc
 
@@ -25,9 +27,11 @@ vec3 getOffsetCubeDirection(in ivec2 dims, in ivec2 offs, in int face)
 vec3 getOffsetHeightVector(in ivec2 dims, in ivec2 offs, in int face)
 {
     vec3 dir = getOffsetCubeDirection(dims, offs, face);
-    float noise = texture(NoiseTex, dir).r * 2.0 - 1.0;
+    float noise = texture(NoiseTex, dir).r;
 
-    return getRawHeight(dir, noise);
+    // height values must be >= 0 so the normal doesn't invert
+    // that's why we add radius, to ensure accuracy + that not happening for noise < 0
+    return getRawHeight(dir, noise + Radius);
 }
 
 // Gets a normal from the given points representing a triangle
@@ -77,5 +81,5 @@ void main()
 #endif
 
     normal = normalize(normal);
-    imageStore(NormalTex, imageCoords, vec4(normal, 0.0));
+    imageStore(NormalTex, imageCoords, vec4(normal, 0));
 }
