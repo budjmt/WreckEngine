@@ -330,6 +330,9 @@ void Text::Instance::updateAlignment() {
     if (!dirtyAlign)
         return;
 
+    // Put a lock on the text
+    std::lock_guard<std::mutex> textLock(textMutex);
+
     alignOffset = vec2(0);
 
     if (vert != START || horiz != START) {
@@ -365,6 +368,9 @@ void Text::Instance::updateBuffer() {
     if (!dirtyBuffer || !font) {
         return;
     }
+
+    // Put a lock on the text
+    std::lock_guard<std::mutex> textLock(textMutex);
 
     // Get some helper variables
     const uint32_t packedColor = Color::pack(color);

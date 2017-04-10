@@ -99,6 +99,9 @@ namespace Text
             }
         }
         inline void setText(const std::string& _text) {
+            // Put a lock on the text
+            std::lock_guard<std::mutex> textLock(textMutex);
+
             if (text != _text) {
                 text = _text;
                 dirtyBuffer = true;
@@ -113,6 +116,7 @@ namespace Text
         FontFace* font = nullptr;
         std::string text;
         vec4 color;
+        std::mutex textMutex;
 
         GLresource<vec2> fullOffset;
         vec2 offset, alignOffset;

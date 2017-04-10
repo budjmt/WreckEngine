@@ -150,7 +150,7 @@ void draw() {
 }
 
 int main(int argc, char** argv) {
-    glfw = make_unique<GLFWmanager>(800, 600);
+    glfw = make_unique<GLFWmanager>(1280, 720);
     glew = make_unique<GLEWmanager>();
 
     init();
