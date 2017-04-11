@@ -25,7 +25,7 @@ float getNoiseValue(in vec3 dir)
 
     float noise = (s1 * s1 * p1 * s4);// - (s1 * p3) - (s3 * p1) + (p4 * s1);
     noise -= s1 * p3 + s3 * p1;
-    noise += p4 * s1 + s1l
+    noise += p4 * s1 + s1;
     noise += s1;
     noise *= p1;
 #else
