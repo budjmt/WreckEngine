@@ -45,7 +45,7 @@ protected:
     ACCS_GS_T(protected, FaceData, const FaceData&, const FaceData&, data);
     ACCS_GS_T(protected, FaceIndex, const FaceIndex&, const FaceIndex&, indices);
 
-    shared<RenderData> renderData = shared<RenderData>(nullptr);
+    shared<RenderData> renderData;
 
     vec3 h_dims = vec3(-1);
     friend class DrawMesh;

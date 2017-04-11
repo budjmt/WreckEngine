@@ -72,6 +72,6 @@ namespace HotSwap {
     private:
         Shader(std::function<void()> _callback) : callback(_callback) {};
         ACCS_G(public, GLprogram, program);
-        const std::function<void()> callback = nullptr;
+        const std::function<void()> callback;
     };
 };

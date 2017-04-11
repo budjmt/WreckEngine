@@ -70,7 +70,7 @@ Transform* Transform::computeTransform() const {
         std::unique_lock<std::shared_mutex> lock(computedMut.object);
         auto p = _parent->getComputed();
         computed->_position = p->_position + _position;
-        computed->_scale = p->_scale * _scale;
+        computed->_scale    = p->_scale    * _scale;
         computed->_rotation = p->_rotation * _rotation;
         computed->updateRot();
     }
