@@ -90,7 +90,7 @@ public:
     void drawDebugBox(vec3 pos, float l, vec3 color = vec3(1.f), float opacity = 1.f) { drawDebugBox(pos, l, l, l, color, opacity); };
     void drawDebugBox(vec3 pos, float w, float h, float d, vec3 color = vec3(1.f), float opacity = 1.f);
 
-    uint32_t wireframeIndex;
+    uint32_t fillIndex, wireframeIndex;
 private:
     DrawDebug();
     DrawDebug(const DrawDebug&) = delete;

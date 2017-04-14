@@ -218,6 +218,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     auto camera = make_shared<Camera>();
     camera->id = (void*)0xcab;
+	camera->zfar = 2000.f;
     camera->transform.parent(&cameraControl->transform);
     mainState->addEntity(camera);
 
