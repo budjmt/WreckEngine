@@ -106,8 +106,7 @@ CubemapTest::CubemapTest() : Game(6)
 
     auto noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     noiseEntity->dispatchSize = { texSize, texSize, 6 };
-    noiseEntity->texture = noiseMap.tex;
-    noiseEntity->index = 0;
+    noiseEntity->addImage(noiseMap.tex);
     noiseEntity->updateFreq = 0.0f;
     //mainState->addEntity(noiseEntity);
 
@@ -118,8 +117,8 @@ CubemapTest::CubemapTest() : Game(6)
 
     auto normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
-    normalEntity->texture = normalMap.tex;
-    normalEntity->index = 1;
+    normalEntity->addImage(noiseMap.tex, GL_READ_ONLY);
+    normalEntity->addImage(normalMap.tex);
     normalEntity->updateFreq = 0.0f;
     //mainState->addEntity(normalEntity);
 

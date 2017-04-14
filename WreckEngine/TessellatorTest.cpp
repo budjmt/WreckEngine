@@ -127,7 +127,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     noiseData.zoom.value = 6.0f;
 
     constexpr size_t texSize = 1024; // guaranteed minimum max texture size by GL 4 is 1024
-    initCubemap(noiseData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    constexpr GLenum noiseCubemapFormat = GL_RGBA32F;
+    initCubemap(noiseData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, noiseCubemapFormat);
 
     auto computeDispatcher = make_shared<GraphicsWorker>();
     computeDispatcher->material.setShaders(noiseData.prog, &noiseData.zoom);
@@ -135,8 +136,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     noiseEntity->dispatchSize = { texSize, texSize, 6 };
-    noiseEntity->texture = noiseData.cubemap;
-    noiseEntity->index = 0;
+    noiseEntity->addImage(noiseData.cubemap, GL_WRITE_ONLY, noiseCubemapFormat);
     //noiseEntity->synchronize = false;
     //mainState->addEntity(noiseEntity);
     noiseEntity->updateFreq = 0.f;
@@ -154,7 +154,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     normalData.radius = normalData.prog.getUniform<float>("Radius");
     normalData.radius.value = RADIUS;
 
-    initCubemap(normalData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, GL_RGBA32F);
+    constexpr GLenum normalCubemapFormat = GL_RGBA32F;
+    initCubemap(normalData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, normalCubemapFormat);
 
     computeDispatcher = make_shared<GraphicsWorker>();
     computeDispatcher->material.setShaders(normalData.prog, &normalData.radius);
@@ -162,8 +163,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
-    normalEntity->texture = normalData.cubemap;
-    normalEntity->index = 0;
+    normalEntity->addImage(normalData.cubemap, GL_WRITE_ONLY, normalCubemapFormat);
     normalEntity->updateFreq = 0.f;
     //normalEntity->synchronize = false;
     //mainState->addEntity(normalEntity);

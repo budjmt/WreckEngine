@@ -21,8 +21,11 @@ void ComputeEntity::draw()
 
 void ComputeTextureEntity::draw()
 {
-    const GLboolean layered = texture.target == GL_TEXTURE_CUBE_MAP || texture.target == GL_TEXTURE_CUBE_MAP_ARRAY;
+    GLint index = 0;
+    for (auto& image : images) {
+        image.tex.bindImage(image.access, image.format, index, 0, image.layered());
+        ++index;
+    }
 
-    texture.bindImage(access, format, index, 0, layered);
     ComputeEntity::draw();
 }
