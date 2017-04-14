@@ -30,6 +30,14 @@ static shared<Entity> cameraControl;
 
 static shared<ComputeTextureEntity> noiseEntity, normalEntity;
 
+struct LightData {
+    Light::Point light;
+    Transform helper;
+    uint32_t index;
+    Light::Group<Light::Point>* group;
+};
+static LightData sun;
+
 struct TerrainPlane {
     vec3 center;
     float radius;
@@ -214,11 +222,12 @@ TessellatorTest::TessellatorTest() : Game(6) {
     mainState->addEntity(camera);
 
     Light::Group<Light::Point> point;
-    Light::Point p;
-    p.position = vec3(-50, -100, -50);
-    p.color = vec3(1);
-    p.falloff = vec2(10, 500);
-    point.addLight(p, Light::UpdateFreq::NEVER);
+    sun.light.position = sun.helper.position = vec3(-50, -100, -50);
+    //sun.helper.rotate(0, -PI, 0); // need to rotate to face the direction
+    sun.light.color = vec3(1);
+    sun.light.falloff = vec2(10, 500);
+    sun.light.tag = 1;
+    point.addLight(sun.light, Light::UpdateFreq::SOMETIMES);
 
     // shut the performance warning from the point/spot only bug up for now
     Light::Group<Light::Spotlight> spot;
@@ -237,6 +246,9 @@ TessellatorTest::TessellatorTest() : Game(6) {
     //renderer.lights.directionalLights.setGroups({ directional });
     renderer.ambientColor.value = vec3(0.1f);
 
+    sun.index = point.getLightIndexByTag(1, Light::UpdateFreq::SOMETIMES);
+    sun.group = &renderer.lights.pointLights.getGroup(0);
+
     cameraNav.forward = camera->forward();
 
     if (DEBUG) DrawDebug::getInstance().camera(camera.get());
@@ -248,6 +260,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 bool isVisibleHorizon(const vec3 view, const vec3 boundingPoint, const float radius);
 void moveCamera(Entity* cameraControl, Entity* camera, float radius);
 void adjustCamera(Entity* camera, float dist);
+void moveSun(float radius);
 
 void TessellatorTest::update(double delta) {
     const auto dt = (float)delta;
@@ -266,6 +279,7 @@ void TessellatorTest::update(double delta) {
     auto cam = Camera::main;
 
     moveCamera(cameraControl.get(), cam, RADIUS);
+    moveSun(RADIUS);
 
     auto pos = Camera::main->transform.getComputed()->position();
     auto dist = glm::length(pos) - RADIUS;
@@ -335,6 +349,30 @@ bool isVisibleHorizon(const vec3 view, const vec3 boundingPoint, const float rad
     return pdc < distFromHorizonSq || pdc * pdc / glm::dot(toPoint, toPoint) < distFromHorizonSq;
 }
 
+bool controlAroundPlanet(Transform& transform, const float centerDist, const float towardSpeed, const float dt,
+    Keyboard::Key::Code upKey, Keyboard::Key::Code downKey, Keyboard::Key::Code leftKey, Keyboard::Key::Code rightKey) {
+    // move around the surface
+    const auto lateralSpeed = 2.f * RADIUS * towardSpeed;
+
+    float dH = 0, dV = 0;
+    bool moved = false;
+
+    if      (Keyboard::keyDown(upKey))    { dV =  lateralSpeed * dt; moved = true; }
+    else if (Keyboard::keyDown(downKey))  { dV = -lateralSpeed * dt; moved = true; }
+    if      (Keyboard::keyDown(leftKey))  { dH = -lateralSpeed * dt; moved = true; }
+    else if (Keyboard::keyDown(rightKey)) { dH =  lateralSpeed * dt; moved = true; }
+
+    const auto getRot = [](float d, float radius) {
+        return 2 * asin(d * 0.5f / radius);
+    };
+
+    if (moved) {
+        transform.rotate(getRot(dV, centerDist), getRot(dH, centerDist), 0);
+        transform.position = transform.forward() * -centerDist;
+    }
+    return moved;
+}
+
 void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
     auto dt = (float)Time::delta;
 
@@ -369,33 +407,20 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
 
     if (shift) {
         // move away from/towards the surface
-        if      (Keyboard::keyDown(Keyboard::Key::W)) cameraControl->transform.position -= pos * (towardSpeed * dt);
-        else if (Keyboard::keyDown(Keyboard::Key::S)) cameraControl->transform.position += pos * (towardSpeed * dt);
+        bool camMoved = false;
+        
+        if      (Keyboard::keyDown(Keyboard::Key::W)) { cameraControl->transform.position -= pos * (towardSpeed * dt); camMoved = true; }
+        else if (Keyboard::keyDown(Keyboard::Key::S)) { cameraControl->transform.position += pos * (towardSpeed * dt); camMoved = true; }
 
-        pos = camera->transform.getComputed()->position();
-        auto dist = glm::length(pos) - radius;
-        adjustCamera(camera, dist);
+        if (camMoved) {
+            pos = camera->transform.getComputed()->position();
+            auto dist = glm::length(pos) - radius;
+            adjustCamera(camera, dist);
+        }
     }
     else {
-        // move around the surface
-        const auto lateralSpeed = 2.f * RADIUS * towardSpeed;
-
-        float dH = 0, dV = 0;
-        bool moved = false;
-
-        if      (Keyboard::keyDown(Keyboard::Key::W)) { dV =  lateralSpeed * dt; moved = true; }
-        else if (Keyboard::keyDown(Keyboard::Key::S)) { dV = -lateralSpeed * dt; moved = true; }
-        if      (Keyboard::keyDown(Keyboard::Key::A)) { dH = -lateralSpeed * dt; moved = true; }
-        else if (Keyboard::keyDown(Keyboard::Key::D)) { dH =  lateralSpeed * dt; moved = true; }
-
-        const auto getRot = [](float d, float radius) {
-            return 2 * asin(d * 0.5f / radius);
-        };
-
-        if (moved) {
-            cameraControl->transform.rotate(getRot(dV, centerDist), getRot(dH, centerDist), 0);
-            cameraControl->transform.position = cameraControl->transform.forward() * -centerDist;
-        }
+        controlAroundPlanet(cameraControl->transform, centerDist, towardSpeed, dt
+                          , Keyboard::Key::Code::W, Keyboard::Key::Code::S, Keyboard::Key::Code::A, Keyboard::Key::Code::D);
     }
 }
 
@@ -408,4 +433,32 @@ void adjustCamera(Entity* camera, float dist) {
     // lerp between no rotation and orthogonal rotation; this translates to facing the surface to facing tangent to the surface when combined with the parent
     auto faceRot = glm::mix(0.f, PI * 0.5f, clampf((farCamDist - dist) / (farCamDist - nearCamDist), 0.f, 1.f));
     camera->transform.rotation = quat::rotation(faceRot, vec3(-1, 0, 0));
+}
+
+void moveSun(float radius) {
+    auto dt = (float)Time::delta;
+
+    auto pos = sun.helper.position();
+    auto centerDist = glm::length(pos);
+
+    const auto towardSpeed = (centerDist - radius) / centerDist;
+
+    const bool shift = Keyboard::shiftDown();
+    bool moved = false;
+
+    if (shift) {
+        // move away from/towards the surface
+        moved = true;
+        if      (Keyboard::keyDown(Keyboard::Key::I)) sun.light.position = sun.helper.position -= pos * (towardSpeed * dt);
+        else if (Keyboard::keyDown(Keyboard::Key::K)) sun.light.position = sun.helper.position += pos * (towardSpeed * dt);
+        else moved = false;
+    }
+    else {
+        moved = controlAroundPlanet(sun.helper, centerDist, towardSpeed, dt
+            , Keyboard::Key::Code::I, Keyboard::Key::Code::K, Keyboard::Key::Code::J, Keyboard::Key::Code::L);
+        if (moved)
+            sun.light.position = sun.helper.position();
+    }
+
+    if (moved) Thread::Render::runNextFrame([] { sun.group->updateLight(sun.index, Light::UpdateFreq::SOMETIMES, sun.light); });
 }
