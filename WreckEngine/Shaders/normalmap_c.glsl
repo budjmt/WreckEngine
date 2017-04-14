@@ -18,8 +18,9 @@ const ivec2 OFF_RIGHT = ivec2( 1,  0);
 // Gets an offset cube direction
 vec3 getOffsetCubeDirection(in ivec2 dims, in ivec2 offs, in int face)
 {
-    ivec2 coords = ivec2(gl_GlobalInvocationID.xy) + offs;
-    vec3 dir = getCubeDirection(coords, dims, face);
+    vec2 coords = vec2(gl_GlobalInvocationID.xy) + vec2(offs) * 1.05;
+    vec2 uv = coords / vec2(dims);
+    vec3 dir = getCubeDirection(uv, face);
     return dir;
 }
 
