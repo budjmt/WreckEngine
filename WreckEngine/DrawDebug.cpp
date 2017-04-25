@@ -70,6 +70,11 @@ void DrawDebug::camera(Camera* c) { cam = c; }
 void DrawDebug::setRenderers(Render::MaterialPass* deferred, Render::MaterialPass* forward) {
     struct X { 
         X(DrawDebug* d, Render::MaterialPass* r) { 
+			d->fillIndex = r->addGroup([] {
+				//GL_CHECK(glEnable(GL_CULL_FACE));
+			}, [] {
+				//GL_CHECK(glDisable(GL_CULL_FACE));
+			});
             d->wireframeIndex = r->addGroup([]() { 
                 GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)); 
                 GL_CHECK(glEnable(GL_CULL_FACE));
@@ -142,7 +147,7 @@ void DrawDebug::drawVectors() {
     vecsAdded -= arrows.instances.size(); // the number of complete vectors == the number of arrows rendered (vectorInsts.size() / 2)
 
     arrows.update();
-    arrows.draw(forward, &meshMat, 0);
+    arrows.draw(forward, &meshMat, fillIndex);
     arrows.instances.clear();
 }
 
@@ -156,7 +161,7 @@ void DrawDebug::drawSpheres() {
     });
 
     spheres.update();
-    spheres.draw(forward, &meshMat, 0);
+    spheres.draw(forward, &meshMat, fillIndex);
     
     auto spheresRendered = spheres.instances.size();
     spheres.instances.clear();

@@ -20,7 +20,8 @@ public:
     void update(double dt);
     void draw();
 
-    float zoom;
+	float znear = 0.01f, zfar = 500.f;
+
     vec3 forward();
     vec3 up();
     vec3 right();
@@ -34,7 +35,6 @@ public:
 
 private:
     mat4 projection, view;
-    float znear = 0.01f, zfar = 1000.f;
     vec4 frustumPlanes[6];
 
     void updateFrustum();

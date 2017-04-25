@@ -553,10 +553,23 @@ void Text::postUpdate() {
     instances.seal();
 }
 
+uint32_t textIndex;
+
 void Text::render(Render::MaterialPass* matRenderer)
 {
     if (Text::active)
     {
+		struct X {
+			X(Render::MaterialPass* r) {
+				textIndex = r->addGroup([] {
+					GL_CHECK(glDisable(GL_DEPTH_TEST));
+				}, [] {
+					GL_CHECK(glEnable(GL_DEPTH_TEST));
+				});
+			}
+		};
+		static X addText(matRenderer);
+
         renderer.renderer = matRenderer;
         renderer.draw();
     }
@@ -577,7 +590,7 @@ void Text::Renderer::draw() {
 
             inst->fullOffset.value = inst->offset + inst->alignOffset;
 
-            this->renderer->scheduleDrawArrays(0, &inst->vao, &inst->renderInfo, GL_TRIANGLES, inst->arrayCount);
+            this->renderer->scheduleDrawArrays(textIndex, &inst->vao, &inst->renderInfo, GL_TRIANGLES, inst->arrayCount);
         }
     });
 }

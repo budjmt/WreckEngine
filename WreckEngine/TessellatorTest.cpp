@@ -223,14 +223,16 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     auto camera = make_shared<Camera>();
     camera->id = (void*)0xcab;
+	camera->zfar = 2000.f;
     camera->transform.parent(&cameraControl->transform);
     mainState->addEntity(camera);
 
     Light::Group<Light::Point> point;
     sun.light.position = sun.helper.position = vec3(-50, -100, -50);
     //sun.helper.rotate(0, -PI, 0); // need to rotate to face the direction
+    sun.helper.rotation *= quat(rotateBetween(vec3(0, 0, 1), -glm::normalize(sun.helper.position())));
     sun.light.color = vec3(1);
-    sun.light.falloff = vec2(10, 500);
+    sun.light.falloff = vec2(100, 500);
     sun.light.tag = 1;
     point.addLight(sun.light, Light::UpdateFreq::SOMETIMES);
 
@@ -467,11 +469,13 @@ void moveSun(float radius) {
         else moved = false;
     }
     else {
-        moved = controlAroundPlanet(sun.helper, centerDist, towardSpeed, dt
+        moved = controlAroundPlanet(sun.helper, centerDist, towardSpeed * 50, dt
             , Keyboard::Key::Code::I, Keyboard::Key::Code::K, Keyboard::Key::Code::J, Keyboard::Key::Code::L);
         if (moved)
             sun.light.position = sun.helper.position();
     }
 
     if (moved) Thread::Render::runNextFrame([] { sun.group->updateLight(sun.index, Light::UpdateFreq::SOMETIMES, sun.light); });
+    DrawDebug::getInstance().drawDebugSphere(sun.helper.position, sun.light.falloff.x, vec3(1));
+    DrawDebug::getInstance().drawDebugSphere(sun.helper.position, sun.light.falloff.y, vec3(1,1,0));
 }
