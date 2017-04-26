@@ -21,6 +21,13 @@ struct PlanetCSphere {
                 , State* state, Render::MaterialPass* renderer, const size_t group, std::function<void(DrawMesh*)> drawSetup);
     int update(const vec3& pos, const Camera* cam);
 
+    void setActive(bool a) { 
+        active = a; 
+        for (auto& tp : planes) 
+            tp.entity->active = active; 
+    }
+
+    bool active = true;
     const float radius;
     GLprogram prog;
 

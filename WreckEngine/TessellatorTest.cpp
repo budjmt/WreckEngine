@@ -147,6 +147,8 @@ PlanetCSphere::PlanetCSphere(const float _radius, GLprogram _prog
 
 // returns the number of active planes
 int PlanetCSphere::update(const vec3& pos, const Camera* cam) {
+    if (!active) return 0;
+
     int activeCounter = 0;
     for (auto& plane : planes) {
         //DrawDebug::getInstance().drawDebugVector(plane.entity->transform.getComputed()->position(), plane.boundingPoint);
@@ -301,7 +303,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     atmosData.camMat = atmosData.prog.getUniform<mat4>("cameraMatrix");
 
     atmosData.tessRadius  = atmosData.prog.getUniform<float>("Radius");
-    atmosData.K           = atmosData.prog.getUniform<vec2>("K_rm"); // optimizing this and the sun vars out for some reason
+    atmosData.K           = atmosData.prog.getUniform<vec2>("K_rm");
     atmosData.atmosRadius = atmosData.prog.getUniform<vec2>("atmosRadius");
     atmosData.sunPos      = atmosData.prog.getUniform<vec3>("sunPos");
     atmosData.sunColor    = atmosData.prog.getUniform<vec3>("sunColor");
@@ -333,7 +335,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     auto camera = make_shared<Camera>();
     camera->id = (void*)0xcab;
-	camera->zfar = 2000.f;
+    camera->zfar = 2000.f;
     camera->transform.parent(&cameraControl->transform);
     mainState->addEntity(camera);
 
@@ -441,6 +443,8 @@ void TessellatorTest::update(double delta) {
     
     if (Keyboard::keyDown(Keyboard::Key::Code::RBracket)) exposure.value += 10 * dt;
     if (Keyboard::keyDown(Keyboard::Key::Code::LBracket)) exposure.value -= 10 * dt;
+
+    if (Keyboard::keyPressed(Keyboard::Key::Code::F1)) atmosphere->setActive(!atmosphere->active);
 
     vec3 forward;
     {
