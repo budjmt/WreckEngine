@@ -37,6 +37,7 @@ struct {
 struct {
     GLprogram prog;
     GLresource<float> zoom;
+    GLresource<int> seed;
     GLtexture cubemap;
 } noiseData;
 
@@ -154,12 +155,14 @@ int PlanetCSphere::update(const vec3& pos, const Camera* cam) {
     return activeCounter;
 }
 
+inline int genPlanetSeed() { return static_cast<int>(Random::get()); }
+
 TessellatorTest::TessellatorTest() : Game(6) {
     auto mainState = make_shared<State>("main");
     addState(mainState);
 
     controlText = make_shared<TextEntity>("", "arial.ttf", Text::Justify::MIDDLE, Text::Justify::START, 48);
-    controlText->transform.position = vec3(25, 50, 0);
+    controlText->transform.position = vec3(25, 80, 0);
     controlText->transform.scale = vec3(0.5f, 1, 1);
     mainState->addEntity(controlText);
 
@@ -173,15 +176,15 @@ TessellatorTest::TessellatorTest() : Game(6) {
     cubemapProg->setupProgram();
     noiseData.prog = cubemapProg->program();
     noiseData.prog.use();
-    noiseData.zoom = noiseData.prog.getUniform<float>("Zoom");
-    noiseData.zoom.value = 6.0f;
+    noiseData.seed = noiseData.prog.getUniform<int>("Seed");
+    noiseData.seed.value = genPlanetSeed();
 
     constexpr size_t texSize = 1024; // guaranteed minimum max texture size by GL 4 is 1024
     constexpr GLenum noiseCubemapFormat = GL_RGBA32F;
     initCubemap(noiseData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, noiseCubemapFormat);
 
     auto computeDispatcher = make_shared<GraphicsWorker>();
-    computeDispatcher->material.setShaders(noiseData.prog, &noiseData.zoom);
+    computeDispatcher->material.setShaders(noiseData.prog, &noiseData.seed);
     computeDispatcher->material.setTextures();
 
     noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
@@ -405,6 +408,13 @@ void TessellatorTest::update(double delta) {
     //if (Keyboard::keyDown(Keyboard::Key::Code::Q)) Window::close(); // pretty broken in this game
 
     if (Keyboard::keyPressed(Keyboard::Key::Code::Equal)) wireframe = !wireframe;
+    if (Keyboard::keyPressed(Keyboard::Key::Code::Space)) {
+        noiseData.seed.value = genPlanetSeed();
+        Thread::Render::runNextFrame([]() {
+            noiseEntity->draw();
+            normalEntity->draw();
+        });
+    }
 
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
     DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 1, 0));
@@ -442,6 +452,7 @@ void TessellatorTest::update(double delta) {
                           + "\n" + std::to_string(glm::length(pos))
                           + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation()))
                           + "\nPlanes Active: " + std::to_string(activeCounter)
+                          + "\nSeed: " + std::to_string(noiseData.seed.value)
                           + "\nExposure: " + std::to_string(exposure.value));
 
     //DrawDebug::getInstance().drawDebugVector(pos + forward, pos + forward + normalize(vec3(-1, -1, -0.5f)));
@@ -538,7 +549,7 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
     if (shift) {
         // move away from/towards the surface
         bool camMoved = false;
-        
+
         if      (Keyboard::keyDown(Keyboard::Key::W)) { cameraControl->transform.position -= pos * (towardSpeed * dt); camMoved = true; }
         else if (Keyboard::keyDown(Keyboard::Key::S)) { cameraControl->transform.position += pos * (towardSpeed * dt); camMoved = true; }
 
