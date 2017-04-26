@@ -29,7 +29,7 @@ public:
     vec3 getLookAt(float units = 1.f);
     void updateProjection();
 
-    bool sphereInFrustum(const vec3 objPos, const float objRadius);
+    bool sphereInFrustum(const vec3 objPos, const float objRadius) const;
 
     static void mayaControl(Camera* camera, double dt, const float speed = 5.f);
 

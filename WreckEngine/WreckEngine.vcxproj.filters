@@ -22,14 +22,14 @@
     <Filter Include="Utilities">
       <UniqueIdentifier>{a992f258-3045-47b8-8658-66bcce393788}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Debug">
-      <UniqueIdentifier>{70d161f0-d047-43c8-ade9-036bfe428dc5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Render">
       <UniqueIdentifier>{39cc6575-67eb-4652-a78d-4a1c30752488}</UniqueIdentifier>
     </Filter>
     <Filter Include="Threading">
       <UniqueIdentifier>{425898cc-a80a-45d3-b514-0c8f84c7354b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Debug">
+      <UniqueIdentifier>{70d161f0-d047-43c8-ade9-036bfe428dc5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -103,10 +103,10 @@
       <Filter>Misc</Filter>
     </ClCompile>
     <ClCompile Include="GLDebug.cpp">
-      <Filter>Debug</Filter>
+      <Filter>Core\Debug</Filter>
     </ClCompile>
     <ClCompile Include="DrawDebug.cpp">
-      <Filter>Debug</Filter>
+      <Filter>Core\Debug</Filter>
     </ClCompile>
     <ClCompile Include="Text.cpp">
       <Filter>Render</Filter>
@@ -240,16 +240,16 @@
       <Filter>Misc</Filter>
     </ClInclude>
     <ClInclude Include="GLError.h">
-      <Filter>Debug</Filter>
+      <Filter>Core\Debug</Filter>
     </ClInclude>
     <ClInclude Include="GLDebug.h">
-      <Filter>Debug</Filter>
+      <Filter>Core\Debug</Filter>
     </ClInclude>
     <ClInclude Include="DebugBenchmark.h">
-      <Filter>Debug</Filter>
+      <Filter>Core\Debug</Filter>
     </ClInclude>
     <ClInclude Include="DrawDebug.h">
-      <Filter>Debug</Filter>
+      <Filter>Core\Debug</Filter>
     </ClInclude>
     <ClInclude Include="Text.h">
       <Filter>Render</Filter>

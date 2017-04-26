@@ -15,8 +15,8 @@ layout (location = 0) out vec4 fragColor;
 vec4 tonemap(in vec4 color) {
     const vec3 inv_gamma = vec3(1 / 2.2);
     vec3 hdr = color.rgb;
-    hdr = vec3(1) - exp(-hdr * exposure);
-    hdr = pow(hdr, inv_gamma);
+    hdr = vec3(1) - exp(hdr * -exposure);
+    //hdr = pow(hdr, inv_gamma);
     return vec4(hdr, color.a);
 }
 
@@ -24,5 +24,5 @@ void main() {
 	fragColor = texture(diffuseColor, uv) * (texture(diffuseLight, uv) + vec4(ambient,0)) 
             + texture(specularColor, uv) * texture(specularLight, uv);
 	//fragColor = texture(diffuseColor, uv);
-  //fragColor = tonemap(fragColor);
+    //fragColor = tonemap(fragColor);
 }

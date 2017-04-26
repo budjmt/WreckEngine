@@ -66,7 +66,7 @@ vec3 Camera::forward() { return transform.forward(); }
 vec3 Camera::up()      { return transform.up(); }
 vec3 Camera::right()   { return transform.right(); }
 
-bool Camera::sphereInFrustum(const vec3 center, const float radius) {
+bool Camera::sphereInFrustum(const vec3 center, const float radius) const {
     const auto center4 = vec4(center, 1);
 
     for (const auto& plane : frustumPlanes) {
