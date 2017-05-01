@@ -31,11 +31,12 @@ void main() {
     vec2 inc = ray * len;
 
     vec2 data = vec2(atmosDensity(h), 0);
-    data.y *= len; // multiply for the scaling factor in the integral
 
     vec2 start = vec2(0, hr), curr = start + inc;
     for(int i = 1; i < numSamples; ++i, curr += inc) {
+        // multiply for the scaling factor in the integral
         data.y += len * atmosDensity(atmosHeight(curr));
     }
+    data.y *= 4 * pi;
     imageStore(lookupTex, coords, vec4(data,0,0));
 }

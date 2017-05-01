@@ -91,8 +91,9 @@ PlanetCSphere::TerrainPlane::TerrainPlane(Entity* e, const Mesh* mesh, const vec
 }
 
 // returns 1 if visible, 0 otherwise
-int PlanetCSphere::TerrainPlane::update(const vec3& pos, const Camera* cam, const float radius) {
-    if (isVisibleHorizon(pos, boundingPoint, radius)) {
+int PlanetCSphere::TerrainPlane::update(const vec3& pos, const Camera* cam, const float radius, const bool translucent) {
+    // if inside the planet, horizon culling is irrelevant
+    if (translucent || length(pos) < radius || isVisibleHorizon(pos, boundingPoint, radius)) {
         if (cam->sphereInFrustum(boundingSphere.center, boundingSphere.radius)) {
             entity->active = true;
             return 1;
@@ -152,7 +153,7 @@ int PlanetCSphere::update(const vec3& pos, const Camera* cam) {
     int activeCounter = 0;
     for (auto& plane : planes) {
         //DrawDebug::getInstance().drawDebugVector(plane.entity->transform.getComputed()->position(), plane.boundingPoint);
-        activeCounter += plane.update(pos, cam, radius);
+        activeCounter += plane.update(pos, cam, radius, translucent);
     }
     return activeCounter;
 }
@@ -226,10 +227,12 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     checkProgLinkError(normalData.prog);
 
+    constexpr int lookupSize = 512;
     atmosLookupData.depthLookup.create(GL_TEXTURE_2D);
     atmosLookupData.depthLookup.bind();
-    atmosLookupData.depthLookup.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_TEXTURE_WRAP_R, GL_REPEAT);
+    atmosLookupData.depthLookup.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_REPEAT);
     atmosLookupData.depthLookup.param(GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    atmosLookupData.depthLookup.set2D<float>(nullptr, lookupSize, lookupSize, GL_RG, GL_RG32F);
 
     auto atmosLookupProg = HotSwap::Shader::create([&] {
         atmosLookupEntity->draw();
@@ -246,7 +249,6 @@ TessellatorTest::TessellatorTest() : Game(6) {
     computeDispatcher->material.setShaders(atmosLookupData.prog, &atmosLookupData.atmosRadius);
     computeDispatcher->material.setTextures();
 
-    constexpr int lookupSize = 512;
     atmosLookupEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     atmosLookupEntity->dispatchSize = { lookupSize, lookupSize, 1 };
     atmosLookupEntity->addImage(atmosLookupData.depthLookup, GL_WRITE_ONLY, GL_RG32F);
@@ -312,11 +314,12 @@ TessellatorTest::TessellatorTest() : Game(6) {
     atmosData.atmosRadius.value = atmosLookupData.atmosRadius.value;
     atmosData.tessRadius.value = atmosData.atmosRadius.value.y;
 
-    
     const auto atmosGroup = renderer.forward.objects.addGroup([] {
-        GL_CHECK(glDisable(GL_CULL_FACE)); // this should really save state and restore afterward
+        //GL_CHECK(glDisable(GL_CULL_FACE)); // this should really save state and restore afterward
+        GL_CHECK(glDepthMask(GL_FALSE));
         GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }, [] {
+        GL_CHECK(glDepthMask(GL_TRUE));
     });
     atmosphere = make_unique<PlanetCSphere>(RADIUS + 2, atmosData.prog
         , mainState.get(), &renderer.forward.objects, atmosGroup, [](DrawMesh* dm) {
@@ -327,6 +330,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
         dm->material.addResource(&atmosData.sunColor);
         dm->material.addTexture(atmosLookupData.depthLookup);
     });
+    atmosphere->translucent = true;
 
     cameraControl = make_shared<TransformEntity>();
     cameraControl->transform.position = vec3(0, 0, RADIUS * 2);

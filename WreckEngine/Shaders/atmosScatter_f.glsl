@@ -23,7 +23,7 @@ void main() {
     float c = dot(sunDir, fragNormal), c2 = c * c;
     const float g = -0.8;
     
-    vec3 scatterColor = phaseApprox(c2) * rayleighColor + phaseExact(c, c2, g);
+    vec3 scatterColor = phaseApprox(c2) * rayleighColor + phaseExact(c, c2, g) * mieColor;
     color = vec4(scatterColor, scatterColor.b);
     //color = vec4(scatterColor, 1);
 }

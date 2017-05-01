@@ -14,7 +14,7 @@ layout (location = 52) uniform vec3 sunPos;
 layout (location = 53) uniform vec3 sunColor;
 
 layout (location = 54) uniform mat4 cameraMatrix;
-layout (binding = 0) uniform sampler2D lookupTex;
+layout (binding = 1) uniform sampler2D lookupTex;
 
 const float heightScale = 1 / (atmosRadius.y - atmosRadius.x);
 
@@ -38,10 +38,10 @@ vec2 getPtRadHeight(in vec3 point) {
     return vec2(rad, scaleHeight(rad));
 }
 
-float getInScatter(in vec3 samplePt, in vec2 radheight, in vec2 segOpticalDepth) {
+vec2 getInScatter(in vec3 samplePt, in vec2 radheight, in vec2 segOpticalDepth) {
     float sunAngle = getLookupAngle(sunDir, samplePt, radheight.x);
     vec2 sunLookup = lookup(vec2(radheight.y, sunAngle)); 
-    return segOpticalDepth.x * exp(-(sunLookup.y + segOpticalDepth.y));
+    return segOpticalDepth.x * exp(K_rm * -(sunLookup.y + segOpticalDepth.y));
 }
 
 // writes to intersects if there are intersections
@@ -87,21 +87,21 @@ void main() {
     
     vec3 end = (vertHeight > 1) ? camPos + intersect.y * ray : vertPos; // B
 
-    float inScatterInt = 0;
+    vec2 inScatterInt = vec2(0);
     if(camHeight > 1) {
         vec3 start = camPos + intersect.x; // A
         float camAngle = getLookupAngle(ray, start, atmosRadius.y); // consistent across the ray
         
         float scaledLen = length(end - start) / float(numSamples);
-        float currLen = scaledLen;
         
         vec3 samplePt = start, inc = ray * scaledLen;
-        for(int i = 0; i < numSamples; ++i, currLen += scaledLen, samplePt += inc) { // numSamples is probably about 5
+        for(int i = 0; i < numSamples; ++i, samplePt += inc) { // numSamples is probably about 5
             vec2 radheight = getPtRadHeight(samplePt);
             vec2 camLookup = lookup(vec2(radheight.y, camAngle));
             
-            inScatterInt += currLen * getInScatter(samplePt, radheight, camLookup);
+            inScatterInt += scaledLen * getInScatter(samplePt, radheight, camLookup);
         }
+        inScatterInt *= exp(-lookup(vec2(atmosHeight(start), camAngle)).y);
     }
     else {
         vec3 start = camPos; // A
@@ -109,18 +109,18 @@ void main() {
         float camAngle = getLookupAngle(ray * outerSign, start, atmosRadius.y); // consistent across the ray
         
         float scaledLen = length(end - start) / float(numSamples);
-        float currLen = scaledLen;
         
         vec3 samplePt = start, inc = ray * scaledLen;
-        for(int i = 0; i < numSamples; ++i, currLen += scaledLen) { // numSamples is probably about 5
+        for(int i = 0; i < numSamples; ++i, samplePt += inc) { // numSamples is probably about 5
             vec2 radheight = getPtRadHeight(samplePt);
             vec2 sampleLookup = lookup(vec2(radheight.y, camAngle));
             vec2 camLookup = lookup(vec2(camHeight, camAngle));
             
             // it doesn't matter whether the sun or sample lookup's x is used
             vec2 segOpticalDepth = vec2(sampleLookup.x, outerSign * (sampleLookup.y - camLookup.y));
-            inScatterInt += currLen * getInScatter(samplePt, radheight, segOpticalDepth);
+            inScatterInt += scaledLen * getInScatter(samplePt, radheight, segOpticalDepth);
         }
+        inScatterInt *= exp(-lookup(vec2(camHeight, camAngle)).y);
     }
 
     const float brightness = 1;
@@ -128,6 +128,6 @@ void main() {
     vec2 inScatter = inScatterInt * K_rm; // K contains the constants for Rayleigh and Mie scattering
     
     vec3 invWavelength = 1 / pow(sunColor, vec3(4));
-    rayleighColor = inScatter.x * invWavelength;
-    mieColor      = inScatter.y * invWavelength;
+    rayleighColor = inScatter.x * vec3(1);// * invWavelength;
+    mieColor      = inScatter.y * vec3(1);// * invWavelength;
 }

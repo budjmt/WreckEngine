@@ -13,7 +13,7 @@ struct PlanetCSphere {
         Entity* entity;
 
         TerrainPlane(Entity* e, const Mesh* mesh, const vec3 dir, const float radius);
-        int update(const vec3& pos, const Camera* cam, const float radius);
+        int update(const vec3& pos, const Camera* cam, const float radius, const bool translucent);
     };
     std::vector<TerrainPlane> planes;
 
@@ -28,6 +28,7 @@ struct PlanetCSphere {
     }
 
     bool active = true;
+    bool translucent = false;
     const float radius;
     GLprogram prog;
 
