@@ -33,7 +33,7 @@ float getLookupAngle(in vec3 dir, in vec3 point, float pointLen) {
     return 0.5 - 0.5 * angle;
 }
 
-vec2 getPtRadHeight(in vec3 point) {
+vec2 getRadHeight(in vec3 point) {
     float rad = length(point);
     return vec2(rad, scaleHeight(rad));
 }
@@ -89,32 +89,33 @@ void main() {
 
     vec2 inScatterInt = vec2(0);
     if(camHeight > 1) {
-        vec3 start = camPos + intersect.x; // A
+        vec3 start = camPos + intersect.x * ray; // A
         float camAngle = getLookupAngle(ray, start, atmosRadius.y); // consistent across the ray
         
         float scaledLen = length(end - start) / float(numSamples);
         
         vec3 samplePt = start, inc = ray * scaledLen;
         for(int i = 0; i < numSamples; ++i, samplePt += inc) { // numSamples is probably about 5
-            vec2 radheight = getPtRadHeight(samplePt);
-            vec2 camLookup = lookup(vec2(radheight.y, camAngle));
+            vec2 radheight = getRadHeight(samplePt);
+            vec2 sampleLookup = lookup(vec2(radheight.y, camAngle));
             
-            inScatterInt += scaledLen * getInScatter(samplePt, radheight, camLookup);
+            inScatterInt += scaledLen * getInScatter(samplePt, radheight, sampleLookup);
         }
-        inScatterInt *= exp(-lookup(vec2(atmosHeight(start), camAngle)).y);
+        // height of start is always top of atmosphere in this case
+        inScatterInt *= exp(-lookup(vec2(1, camAngle)).y);
     }
     else {
         vec3 start = camPos; // A
         float outerSign = (vertHeight > camHeight) ? -1 : 1; // consistent when clamped to atmosphere
         float camAngle = getLookupAngle(ray * outerSign, start, atmosRadius.y); // consistent across the ray
+        vec2 camLookup = lookup(vec2(camHeight, camAngle));
         
         float scaledLen = length(end - start) / float(numSamples);
         
         vec3 samplePt = start, inc = ray * scaledLen;
         for(int i = 0; i < numSamples; ++i, samplePt += inc) { // numSamples is probably about 5
-            vec2 radheight = getPtRadHeight(samplePt);
+            vec2 radheight = getRadHeight(samplePt);
             vec2 sampleLookup = lookup(vec2(radheight.y, camAngle));
-            vec2 camLookup = lookup(vec2(camHeight, camAngle));
             
             // it doesn't matter whether the sun or sample lookup's x is used
             vec2 segOpticalDepth = vec2(sampleLookup.x, outerSign * (sampleLookup.y - camLookup.y));
