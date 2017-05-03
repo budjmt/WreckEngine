@@ -9,15 +9,15 @@ in vec2 tcUV[];
 
 out vec3 fragNormal;
 out vec2 fragUV;
+out vec3 fragPosition;
 out vec3 tessCoord;
 
 layout(location = 3) uniform mat4 iTworldMatrix;
 layout(location = 4) uniform mat4 cameraMatrix;
+layout(location = 5) uniform float time;
 
 patch in float radius;
 patch in vec3 teCamPos;
-
-out vec3 position;
 
 void main()
 {
@@ -32,11 +32,13 @@ void main()
     fragUV = u0 + u1 + u2;
 
     fragNormal = normalize(p0 + p1 + p2);
-    position = fragNormal * radius; // normalizing makes the c-sphere
+    vec3 position = fragNormal * radius; // normalizing makes the c-sphere
 
     float dist = distance(position, teCamPos);
     float height = radius - 1.97;
     position += getHeight(fragNormal, max(height, 0), dist); // remove that clamp later?
 
     gl_Position = cameraMatrix * vec4(position, 1);
+
+    fragPosition = gl_Position.xyz / gl_Position.w;
 }

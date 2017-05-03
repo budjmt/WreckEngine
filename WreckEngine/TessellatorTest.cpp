@@ -38,6 +38,7 @@ struct {
 
 struct WaterRenderData {
     GLprogram prog;
+    GLresource<vec3> sunDir;
     GLresource<float> time;
     GLresource<float> radius;
     GLuniform<mat4> mat;
@@ -71,6 +72,10 @@ struct LightData {
     Light::Group<Light::Point>* group;
 };
 static LightData sun;
+
+inline vec3 getSunDirection() {
+    return glm::normalize(-sun.light.position);
+}
 
 struct {
     vec3 forward;
@@ -334,6 +339,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     waterData.radius.value = RADIUS;
     waterData.time = waterData.prog.getUniform<float>("time");
     waterData.time.value = 0.0f;
+    waterData.sunDir = waterData.prog.getUniform<vec3>("sunDir");
 
     // Get the water renderer and the water group
     auto waterRenderer = &renderer.forward.objects;
@@ -344,6 +350,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
         [](DrawMesh* dm) {
             dm->material.addResource(&waterData.radius);
             dm->material.addResource(&waterData.time);
+            dm->material.addResource(&waterData.sunDir);
             dm->material.addTexture(waterData.normalMap);
         });
 
@@ -409,6 +416,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     sun.light.falloff = vec2(100, 500);
     sun.light.tag = 1;
     point.addLight(sun.light, Light::UpdateFreq::SOMETIMES);
+
+    waterData.sunDir.value = getSunDirection();
 
     // shut the performance warning from the point/spot only bug up for now
     Light::Group<Light::Spotlight> spot;
@@ -670,8 +679,10 @@ void moveSun(float radius) {
     else {
         moved = controlAroundPlanet(sun.helper, centerDist, towardSpeed * 50, dt
             , Keyboard::Key::Code::I, Keyboard::Key::Code::K, Keyboard::Key::Code::J, Keyboard::Key::Code::L);
-        if (moved)
+        if (moved) {
             sun.light.position = sun.helper.position();
+            waterData.sunDir.value = getSunDirection();
+        }
     }
 
     if (moved) Thread::Render::runNextFrame([] { sun.group->updateLight(sun.index, Light::UpdateFreq::SOMETIMES, sun.light); });
