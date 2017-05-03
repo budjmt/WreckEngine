@@ -10,9 +10,8 @@ in vec3 vPosition[];
 in vec2 vUV[];
 out vec3 tcPosition[];
 out float tcDist[];
+out vec2 tcUV[];
 
-patch out vec2 tcUV;
-patch out int id;
 patch out float radius;
 patch out vec3 teCamPos;
 
@@ -22,7 +21,7 @@ const vec2 tessLevel = vec2(16, 16);
 void main()
 {
     tcPosition[ID] = normalize(vPosition[ID]);
-    tcUV = vUV[ID];
+    tcUV[ID] = vUV[ID];
 
     radius = Radius;
     teCamPos = camPos;

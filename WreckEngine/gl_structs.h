@@ -107,7 +107,7 @@ struct GLtexture {
     inline void genMipMap() {
         GL_CHECK(glGenerateMipmap(target));
     }
-    
+
     inline void bind(const GLint index = 0) const {
         assert(index < MAX_TEXTURES);
         GL_CHECK(glActiveTexture(GL_TEXTURE0 + index));
@@ -116,7 +116,7 @@ struct GLtexture {
     inline void unbind() {
         GL_CHECK(glBindTexture(target, 0));
     }
-    
+
     inline void bindImage(const GLenum access = GL_READ_WRITE, const GLenum format = GL_RGBA, const GLint index = 0, const GLuint level = 0, const GLboolean layered = GL_FALSE, const GLint layer = 0) {
         // don't need to make the texture active to bind an image
         GL_CHECK(glBindImageTexture(index, *texture, level, layered, layer, access, format)); // doesn't support 3D/array/layered textures right now
@@ -307,7 +307,7 @@ struct GLVAO {
     inline bool valid() const { return *vao != def; }
 
     inline void create() const {
-        if (valid()) return; 
+        if (valid()) return;
         GL_CHECK(glGenVertexArrays(1, vao.get()));
     }
     inline void bind() const {
@@ -318,7 +318,7 @@ struct GLVAO {
     }
 };
 
-// a uniform block variable in GLSL, 
+// a uniform block variable in GLSL,
 template<typename T>
 struct GLuniformblock : public GLuniform<T> {
     GLuint index;
@@ -415,7 +415,7 @@ struct GLprogram {
     inline void use() const {
         GL_CHECK(glUseProgram(*program));
     }
-    
+
     inline void dispatch(GLuint xGroups = 1, GLuint yGroups = 1, GLuint zGroups = 1) const {
         assert(isCompute); // only compute shaders may be dispatched
         assert(xGroups < MAX_COMPUTE_WORK_GROUPS.x && yGroups < MAX_COMPUTE_WORK_GROUPS.y && zGroups < MAX_COMPUTE_WORK_GROUPS.z);
@@ -429,9 +429,9 @@ struct GLprogram {
     }
 
     // used for retrieving uniform variables (of type T)
-    template<typename T> 
+    template<typename T>
     inline GLuniform<T> getUniform(const char* name) const {
-        GLuniform<T> u; 
+        GLuniform<T> u;
         u.location = getUniformLocation(name);
         return u;
     }
@@ -457,8 +457,8 @@ struct GLprogram {
         return u;
     }
 
-    // convenience function for setting a one time uniform value, e.g. a GLsampler 
-    template<typename T> 
+    // convenience function for setting a one time uniform value, e.g. a GLsampler
+    template<typename T>
     inline void setOnce(const char* name, const T& value) const { getUniform<T>(name).update(value); }
 
     inline size_t getUniformOffset(const char* name) {
@@ -470,7 +470,7 @@ struct GLprogram {
         GL_CHECK(glGetProgramResourceiv(*program, GL_UNIFORM, index, 1, &prop, sizeof(GLuint), &length, &param));
         return param;
     }
-    
+
     private:
         struct uivec3 { GLuint x, y, z; };
         static uivec3 MAX_COMPUTE_WORK_GROUPS;
@@ -509,14 +509,14 @@ struct GLframebuffer {
     static inline void setClearColor(GLclampf r, GLclampf g, GLclampf b, GLclampf a) { GL_CHECK(glClearColor(r, g, b, a)); }
 
     static inline void clear() { GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)); }
-    
-    static inline void clearPartial(GLenum buffer, GLint drawBuffer, const GLfloat* value) { 
-        assert(buffer == GL_COLOR || drawBuffer == 0); 
-        GL_CHECK(glClearBufferfv(buffer, drawBuffer, value)); 
+
+    static inline void clearPartial(GLenum buffer, GLint drawBuffer, const GLfloat* value) {
+        assert(buffer == GL_COLOR || drawBuffer == 0);
+        GL_CHECK(glClearBufferfv(buffer, drawBuffer, value));
     }
 
-    static inline void clearPartial(GLfloat depth = 1.f, GLint stencil = 0) { 
-        GL_CHECK(glClearBufferfi(GL_DEPTH_STENCIL, 0, depth, stencil)); 
+    static inline void clearPartial(GLfloat depth = 1.f, GLint stencil = 0) {
+        GL_CHECK(glClearBufferfi(GL_DEPTH_STENCIL, 0, depth, stencil));
     }
 
     inline void create(const GLenum target = GL_FRAMEBUFFER) {
@@ -524,26 +524,26 @@ struct GLframebuffer {
         GL_CHECK(glGenFramebuffers(1, framebuffer.get()));
         type = target;
     }
-    
-    inline void bindPartial() const { 
-        boundFBO = *framebuffer; 
-        GL_CHECK(glBindFramebuffer(type, *framebuffer)); 
+
+    inline void bindPartial() const {
+        boundFBO = *framebuffer;
+        GL_CHECK(glBindFramebuffer(type, *framebuffer));
     }
 
     static inline void setDrawBuffers(const size_t size, const GLenum* drawBuffers) {
         GL_CHECK(glDrawBuffers(size, drawBuffers));
     }
 
-    inline void bind() const { 
+    inline void bind() const {
         bindPartial();
-        setDrawBuffers(colorBuffers.size(), &colorBuffers[0]); 
+        setDrawBuffers(colorBuffers.size(), &colorBuffers[0]);
     }
 
-    enum Attachment : GLenum { 
-        Color        = GL_COLOR_ATTACHMENT0, 
-        Depth        = GL_DEPTH_ATTACHMENT, 
-        Stencil      = GL_STENCIL_ATTACHMENT, 
-        DepthStencil = GL_DEPTH_STENCIL_ATTACHMENT 
+    enum Attachment : GLenum {
+        Color        = GL_COLOR_ATTACHMENT0,
+        Depth        = GL_DEPTH_ATTACHMENT,
+        Stencil      = GL_STENCIL_ATTACHMENT,
+        DepthStencil = GL_DEPTH_STENCIL_ATTACHMENT
     };
     // attaches a texture to the frame buffer for the specified output.
     // note that textures attached to depth and/or stencil should use the correct internal format, e.g. GL_DEPTH24_STENCIL8
@@ -603,7 +603,7 @@ public:
     GLresource() = default;
     GLresource(const GLuniform<T> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : location(p.getUniform<T>(name)) {}
-    
+
     T value;
 
     void update() const override { location.update(value); }
@@ -636,9 +636,9 @@ public:
     GLresource(const GLuniform<float> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : GLresource(p.getUniform<float>(name)) {}
 
-    void update() const override { 
+    void update() const override {
         value += (float) Time::delta;
-        location.update(value); 
+        location.update(value);
     }
 
 private:
@@ -722,7 +722,7 @@ public:
             const auto attr = attrs[i];
             GL_CHECK(glEnableVertexAttribArray(i + baseIndex));
             if (attr.castToFloat) {
-            FLOATCAST: 
+            FLOATCAST:
                 GL_CHECK(glVertexAttribPointer(i + baseIndex, attr.size, attr.type, attr.normalize, stride, offset));
             }
             else {

@@ -10,7 +10,7 @@ layout(location = 5) uniform float time;
 
 void main()
 {
-    vec2 uv = fragUV + (time * 0.0225);
+    vec2 uv = fragUV + vec2(cos(time * 0.05), sin(time * 0.1));
 
     vec3 N = fragNormal;
     vec4 sampledNormal = texture(normalMap, uv);

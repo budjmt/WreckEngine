@@ -6,7 +6,7 @@
 class TextEntity : public Entity {
 public:
     TextEntity(const std::string _message, const std::string& _font, Text::Justify _vertical, Text::Justify _horizontal, const uint32_t height, const uint32_t width = 0);
-    
+
     Text::Justify vertical = Text::Justify::START,
                   horizontal = Text::Justify::START;
     void setFont(const std::string& _font, const uint32_t height, const uint32_t width = 0);
@@ -22,7 +22,7 @@ public:
         //Text::draw(message, font.get(), vertical, horizontal, transform.position().x, transform.position().y, transform.scale().x, color);
         auto position = transform.getComputed()->position();
         auto scale = transform.getComputed()->scale();
-        
+
         inst->alignHorizontal(horizontal);
         inst->alignVertical(vertical);
         inst->setPosition(position.x, position.y);

@@ -13,18 +13,18 @@ public:
     Entity() = default;
     Entity(shared<GraphicsWorker> s);
     Entity(vec3 p, vec3 sc, vec3 rA, float r, shared<GraphicsWorker> s);
-    
+
     virtual ~Entity() = default;
-    
+
     Transform transform;
     bool active = true;
-    
+
     void* id = (void*)Random::get(); // meant to identify the object for debugging purposes
-    
+
     virtual void update(double dt) { };
     virtual void physicsUpdate(double dt) {};
     virtual void draw();
-    
+
     template<class T> bool isType() const { return dynamic_cast<T*>(this) != nullptr; }
 protected:
     shared<GraphicsWorker> shape;
