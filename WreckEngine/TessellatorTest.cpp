@@ -332,6 +332,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     waterData.pos = waterData.prog.getUniform<vec3>("camPos");
     waterData.radius = waterData.prog.getUniform<float>("Radius");
     waterData.radius.value = RADIUS;
+    waterData.time = waterData.prog.getUniform<float>("time");
+    waterData.time.value = 0.0f;
 
     // Get the water renderer and the water group
     auto waterRenderer = &renderer.forward.objects;
@@ -341,6 +343,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     water = make_unique<PlanetCSphere>(RADIUS, waterData.prog, mainState.get(), waterRenderer, waterGroup,
         [](DrawMesh* dm) {
             dm->material.addResource(&waterData.radius);
+            dm->material.addResource(&waterData.time);
             dm->material.addTexture(waterData.normalMap);
         });
 

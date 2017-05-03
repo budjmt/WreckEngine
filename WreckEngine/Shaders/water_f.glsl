@@ -10,10 +10,11 @@ layout(location = 5) uniform float time;
 
 void main()
 {
+    vec2 uv = fragUV + (time * 0.0225);
+
     vec3 N = fragNormal;
-    vec4 sampledNormal = texture(normalMap, fragUV);
+    vec4 sampledNormal = texture(normalMap, uv);
     vec3 color = sampledNormal.rgb * 2.0 - 1.0;
 
-    color = vec3(fragUV, 0);
     fragColor = vec4(color, 1);
 }

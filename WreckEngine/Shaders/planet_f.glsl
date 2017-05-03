@@ -13,10 +13,10 @@ layout (binding = 1) uniform samplerCube heightMap;
 layout (binding = 2) uniform samplerCube normalMap;
 
 vec3 getElevationColor(in float h) {
-    if(h > 0.65) return vec3(1);
-    if(h > 0.30) return vec3(0.45, 0.25, 0);
-    if(h > 0.05) return vec3(0, 1, 0);
-                 return vec3(0, 0.2, 1) * ((h + 1) / 1.05);
+    if(h > 0.650) return vec3(1);
+    if(h > 0.275) return vec3(0.45, 0.25, 0);
+    if(h > 0.020) return vec3(0, 1, 0);
+                  return vec3(0, 0.2, 1) * ((h + 1) / 1.05);
 }
 
 float height(in vec3 coord) {
