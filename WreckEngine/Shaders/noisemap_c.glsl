@@ -10,7 +10,7 @@ layout(location = 1) uniform int Seed;
 #include Perlin.inc
 //#include ClassicPerlin.inc
 //#include SeededPerlin.inc
-#include Simplex.inc
+//#include Simplex.inc
 #include CubeDirection.inc
 
 float getNoiseValue(in vec3 dir)
@@ -22,8 +22,7 @@ float getNoiseValue(in vec3 dir)
     float n4 = seededPerlin3D(dir * 8.0, Seed);
 
     float noise = (n1 * n4) + (n2 * n3);
-#elif 0
-#  if 0
+#else
     float p1 = perlin3D(dir);
     float p2 = perlin3D(dir * 2.0);
     float p3 = perlin3D(dir * 4.0);
@@ -33,31 +32,14 @@ float getNoiseValue(in vec3 dir)
     float s2 = simplex3D(dir * 2.0);
     float s3 = simplex3D(dir * 4.0);
     float s4 = simplex3D(dir * 8.0);
-#  else
-    float p1 = seededPerlin3D(dir, Seed);
-    float p2 = seededPerlin3D(dir * 2.0, Seed);
-    float p3 = seededPerlin3D(dir * 4.0, Seed);
-    float p4 = seededPerlin3D(dir * 8.0, Seed);
-
-    float s1 = seededSimplex3D(dir, Seed);
-    float s2 = seededSimplex3D(dir * 2.0, Seed);
-    float s3 = seededSimplex3D(dir * 4.0, Seed);
-    float s4 = seededSimplex3D(dir * 8.0, Seed);
-#  endif
 
     float noise = (s1 * s1 * p1 * s4);// - (s1 * p3) - (s3 * p1) + (p4 * s1);
     noise -= s1 * p3 + s3 * p1;
     noise += p4 * s1 + s1;
     noise += s1;
     noise *= p1;
-#else
-    // Let's mix together some octaves of noise
-    float n1 = perlin3D(dir * 1.0);
-    float n2 = perlin3D(dir * 2.0);
-    float n3 = perlin3D(dir * 4.0);
-    float n4 = perlin3D(dir * 8.0);
-    float noise = (n1 * n4) + (n2 * n3);
 #endif
+
     return clamp(noise, -1.0, 1.0);
 }
 

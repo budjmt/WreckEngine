@@ -5,6 +5,8 @@
 #include "TextEntity.h"
 #include "ComputeEntity.h"
 
+using ImageData = File::resource_t<File::Extension::PNG>;
+
 bool isVisibleHorizon(const vec3 view, const vec3 boundingPoint, const float radius);
 
 constexpr float RADIUS = 2;
@@ -33,6 +35,16 @@ struct {
     GLresource<vec2> atmosRadius;
     GLtexture depthLookup;
 } atmosLookupData;
+
+struct WaterRenderData {
+    GLprogram prog;
+    GLresource<float> time;
+    GLresource<float> radius;
+    GLuniform<mat4> mat;
+    GLuniform<vec3> pos;
+    GLtexture normalMap;
+};
+static WaterRenderData waterData;
 
 struct {
     GLprogram prog;
@@ -127,7 +139,7 @@ shared<Entity> PlanetCSphere::genPlane(const vec3 dir, Render::MaterialPass* ren
 
     auto plane = make_shared<Entity>(dm);
     plane->active = false;
-    
+
     plane->transform.position = dir * radius;
     plane->transform.rotation = quat(rotateBetween(vec3(0, 0, 1), dir));
     const auto scale = radius * 2.02f;
@@ -290,6 +302,50 @@ TessellatorTest::TessellatorTest() : Game(6) {
             dm->material.addTexture(normalData.cubemap);
         });
 
+    ///////////////////////////////////////////////////////////////////////////
+    //
+    // Setup the water
+    //
+
+    // Load the water normal map
+    auto waterMapData = File::load<File::Extension::PNG>("Assets/water.jpg");
+    waterData.normalMap.create(GL_TEXTURE_2D);
+    waterData.normalMap.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    waterData.normalMap.param(GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    waterData.normalMap.set2D<unsigned char>(waterMapData.bytes.get(), waterMapData.width, waterMapData.height);
+
+    // Setup the water program
+    auto waterProg = HotSwap::Shader::create();
+    waterProg->vertex       = ShaderRes("Shaders/water_v.glsl", GL_VERTEX_SHADER);
+    waterProg->tessControl  = ShaderRes("Shaders/water_tc.glsl", GL_TESS_CONTROL_SHADER);
+    waterProg->tessEval     = ShaderRes("Shaders/water_te.glsl", GL_TESS_EVALUATION_SHADER);
+    waterProg->fragment     = ShaderRes("Shaders/water_f.glsl", GL_FRAGMENT_SHADER);
+    waterProg->setupProgram();
+
+    // Check the program for compiler errors
+    waterData.prog = waterProg->program();
+    checkProgLinkError(waterData.prog);
+
+    // Initialize some water shader variables
+    waterData.prog.use();
+    waterData.mat = waterData.prog.getUniform<mat4>("cameraMatrix");
+    waterData.pos = waterData.prog.getUniform<vec3>("camPos");
+    waterData.radius = waterData.prog.getUniform<float>("Radius");
+    waterData.radius.value = RADIUS;
+
+    // Get the water renderer and the water group
+    auto waterRenderer = &renderer.forward.objects;
+    const auto waterGroup = waterRenderer->addGroup([] {}, [] {});
+
+    // Create the water c-sphere
+    water = make_unique<PlanetCSphere>(RADIUS, waterData.prog, mainState.get(), waterRenderer, waterGroup,
+        [](DrawMesh* dm) {
+            dm->material.addResource(&waterData.radius);
+            dm->material.addTexture(waterData.normalMap);
+        });
+
+    ///////////////////////////////////////////////////////////////////////////
+
     auto atmosProg = HotSwap::Shader::create();
     atmosProg->vertex      = tessProg->vertex;
     atmosProg->tessControl = tessProg->tessControl;
@@ -438,13 +494,16 @@ void TessellatorTest::update(double delta) {
 
     int activeCounter = surface->update(pos, cam);
     atmosphere->update(pos, cam);
+    water->update(pos, cam);
+
+    waterData.time.value += static_cast<float>(Time::delta);
 
     // replace with higher res model swap in
     // float scaleFactor;
     // if      (dist < 0.25f) scaleFactor = 1.5;
     // else if (dist < 0.75f) scaleFactor = 3.5;
     // else                   scaleFactor = 7.5;
-    
+
     if (Keyboard::keyDown(Keyboard::Key::Code::RBracket)) exposure.value += 10 * dt;
     if (Keyboard::keyDown(Keyboard::Key::Code::LBracket)) exposure.value -= 10 * dt;
 
@@ -477,6 +536,9 @@ void TessellatorTest::draw() {
     planetData.prog.use();
     planetData.mat.update(mat);
     planetData.pos.update(pos);
+    waterData.prog.use();
+    waterData.mat.update(mat);
+    waterData.pos.update(pos);
     atmosData.prog.use();
     atmosData.camMat.update(mat);
     atmosData.camPos.update(pos);

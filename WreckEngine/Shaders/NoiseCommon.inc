@@ -32,7 +32,7 @@ vec4 permute(in vec4 x)
 vec3 seededPermute(in vec3 x, in int seed)
 {
     float mult = float((seed % 17) + 17);
-    float shft = seed / 0.3141592654;
+    float shft = seed * 0.3141592654;
     return mod289((x * mult + fract(shft)) * x);
 }
 
