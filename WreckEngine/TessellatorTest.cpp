@@ -43,6 +43,7 @@ struct WaterRenderData {
     GLresource<float> radius;
     GLuniform<mat4> mat;
     GLuniform<vec3> pos;
+    GLuniform<vec3> viewDir;
     GLtexture normalMap;
 };
 static WaterRenderData waterData;
@@ -75,6 +76,12 @@ static LightData sun;
 
 inline vec3 getSunDirection() {
     return glm::normalize(-sun.light.position);
+}
+
+inline vec3 getViewDirection() {
+    const vec3 forward = {0, 0, 1};
+    auto cam = Camera::main;
+    return glm::normalize(cam->transform.getTransformed(forward));
 }
 
 struct {
@@ -340,6 +347,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     waterData.time = waterData.prog.getUniform<float>("time");
     waterData.time.value = 0.0f;
     waterData.sunDir = waterData.prog.getUniform<vec3>("sunDir");
+    waterData.viewDir = waterData.prog.getUniform<vec3>("viewDir");
 
     // Get the water renderer and the water group
     auto waterRenderer = &renderer.forward.objects;
@@ -551,6 +559,7 @@ void TessellatorTest::draw() {
     waterData.prog.use();
     waterData.mat.update(mat);
     waterData.pos.update(pos);
+    waterData.viewDir.update(getViewDirection());
     atmosData.prog.use();
     atmosData.camMat.update(mat);
     atmosData.camPos.update(pos);
