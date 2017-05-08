@@ -13,6 +13,26 @@ constexpr float RADIUS = 2;
 bool wireframe = false;
 static GLresource<float> exposure;
 
+struct CubemapData {
+    File::ImageData front, back, up, down, left, right;
+
+    inline bool valid() const {
+        const auto width = front.width;
+        const auto height = front.height;
+
+        return (back.width == width &&
+                up.width == width &&
+                down.width == width &&
+                left.width == width &&
+                right.width == width) &&
+               (back.height == height &&
+                up.height == height &&
+                down.height == height &&
+                left.height == height &&
+                right.height == height);
+    }
+};
+
 struct RenderData {
     GLprogram prog;
     GLuniform<mat4> mat;
@@ -47,6 +67,14 @@ struct WaterRenderData {
     GLtexture normalMap;
 };
 static WaterRenderData waterData;
+
+struct SkyboxRenderData {
+    GLprogram prog;
+    GLuniform<mat4> viewProjection;
+    GLtexture planetTex;
+    GLtexture spaceTex;
+};
+static SkyboxRenderData skyboxData;
 
 struct {
     GLprogram prog;
@@ -139,6 +167,57 @@ void initCubemap(GLtexture& tex, GLenum type, GLuint width, GLuint height, GLenu
     tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, type, nullptr, width, height, from, to);
     tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, type, nullptr, width, height, from, to);
     tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, type, nullptr, width, height, from, to);
+}
+
+void initCubemap(GLtexture& tex, const CubemapData& data) {
+    // TODO - Michael, idk if you want to do anything differently here
+    if (!data.valid()) {
+        fprintf(stderr, "ERR: Cubemap data is not valid!\n");
+        return;
+    }
+
+    tex.create(GL_TEXTURE_CUBE_MAP);
+    tex.bind();
+    tex.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    tex.param(GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    constexpr GLenum type = GL_UNSIGNED_BYTE;
+    constexpr GLenum from = GL_RGBA;
+    constexpr GLenum to = GL_RGBA;
+
+    const auto width = data.front.width;
+    const auto height = data.front.height;
+
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_X, type, data.right.bytes.get(), width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, type, data.left.bytes.get(), width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, type, data.up.bytes.get(), width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, type, data.down.bytes.get(), width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, type, data.front.bytes.get(), width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, type, data.back.bytes.get(), width, height, from, to);
+}
+
+GLtexture loadSkybox(const std::string& prefix) {
+    printf("Loading skybox '%s'\n", prefix.c_str());
+
+    auto backPath = "Assets/Skyboxes/" + prefix + "_back.png";
+    auto downPath = "Assets/Skyboxes/" + prefix + "_down.png";
+    auto frontPath = "Assets/Skyboxes/" + prefix + "_front.png";
+    auto leftPath = "Assets/Skyboxes/" + prefix + "_left.png";
+    auto rightPath = "Assets/Skyboxes/" + prefix + "_right.png";
+    auto upPath = "Assets/Skyboxes/" + prefix + "_up.png";
+
+    CubemapData data;
+    data.back = File::load<File::Extension::PNG>(backPath.c_str());
+    data.down = File::load<File::Extension::PNG>(downPath.c_str());
+    data.front = File::load<File::Extension::PNG>(frontPath.c_str());
+    data.left = File::load<File::Extension::PNG>(leftPath.c_str());
+    data.right = File::load<File::Extension::PNG>(rightPath.c_str());
+    data.up = File::load<File::Extension::PNG>(upPath.c_str());
+
+    GLtexture tex;
+    initCubemap(tex, data);
+
+    return tex;
 }
 
 shared<Entity> PlanetCSphere::genPlane(const vec3 dir, Render::MaterialPass* renderer, const size_t group, std::function<void(DrawMesh*)>& drawSetup) {
@@ -363,6 +442,44 @@ TessellatorTest::TessellatorTest() : Game(6) {
         });
 
     ///////////////////////////////////////////////////////////////////////////
+    //
+    // Setup the skyboxes
+    //
+
+    // Load the two skyboxes
+    skyboxData.planetTex = loadSkybox("planet/sunny");
+    skyboxData.spaceTex = loadSkybox("space/space");
+
+    // Load the skybox shaders
+    auto skyboxProg = HotSwap::Shader::create();
+    skyboxProg->vertex = ShaderRes("Shaders/skybox_v.glsl", GL_VERTEX_SHADER);
+    skyboxProg->fragment = ShaderRes("Shaders/skybox_f.glsl", GL_FRAGMENT_SHADER);
+    skyboxProg->setupProgram();
+
+    // Check the program for errors
+    skyboxData.prog = skyboxProg->program();
+    checkProgLinkError(skyboxData.prog);
+
+    skyboxData.prog.use();
+    skyboxData.viewProjection = skyboxData.prog.getUniform<mat4>("viewProjection");
+
+    auto skyboxRenderer = &renderer.forward.objects;
+    const auto skyboxGroup = skyboxRenderer->addGroup([] {
+        GL_CHECK(glDepthMask(GL_FALSE));
+        GL_CHECK(glFrontFace(GL_CW));
+    }, [] {
+        GL_CHECK(glFrontFace(GL_CCW));
+        GL_CHECK(glDepthMask(GL_TRUE));
+    });
+
+    auto skyboxMesh = loadOBJ("Assets/cube.obj");
+    auto skyboxDM = make_shared<DrawMesh>(skyboxRenderer, skyboxMesh, skyboxData.spaceTex, skyboxData.prog);
+    skyboxDM->material.addTexture(skyboxData.planetTex);
+    skyboxDM->renderGroup = skyboxGroup;
+    auto skyboxEntity = make_shared<Entity>(skyboxDM);
+    mainState->addEntity(skyboxEntity);
+
+    ///////////////////////////////////////////////////////////////////////////
 
     auto atmosProg = HotSwap::Shader::create();
     atmosProg->vertex      = tessProg->vertex;
@@ -560,6 +677,8 @@ void TessellatorTest::draw() {
     waterData.mat.update(mat);
     waterData.pos.update(pos);
     waterData.viewDir.update(getViewDirection());
+    skyboxData.prog.use();
+    skyboxData.viewProjection.update(mat);
     atmosData.prog.use();
     atmosData.camMat.update(mat);
     atmosData.camPos.update(pos);
