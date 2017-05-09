@@ -17,18 +17,19 @@ struct CubemapData {
     File::ImageData front, back, up, down, left, right;
 
     inline bool valid() const {
-        const auto width = front.width;
+        const auto width  = front.width;
         const auto height = front.height;
-
-        return (back.width == width &&
-                up.width == width &&
-                down.width == width &&
-                left.width == width &&
+        
+        return (back.width  == width &&
+                up.width    == width &&
+                down.width  == width &&
+                left.width  == width &&
                 right.width == width) &&
-               (back.height == height &&
-                up.height == height &&
-                down.height == height &&
-                left.height == height &&
+               
+               (back.height  == height &&
+                up.height    == height &&
+                down.height  == height &&
+                left.height  == height &&
                 right.height == height);
     }
 };
@@ -106,12 +107,6 @@ inline vec3 getSunDirection() {
     return glm::normalize(-sun.light.position);
 }
 
-inline vec3 getViewDirection() {
-    const vec3 forward = {0, 0, 1};
-    auto cam = Camera::main;
-    return glm::normalize(cam->transform.getTransformed(forward));
-}
-
 struct {
     vec3 forward;
 } cameraNav;
@@ -170,9 +165,8 @@ void initCubemap(GLtexture& tex, GLenum type, GLuint width, GLuint height, GLenu
 }
 
 void initCubemap(GLtexture& tex, const CubemapData& data) {
-    // TODO - Michael, idk if you want to do anything differently here
     if (!data.valid()) {
-        fprintf(stderr, "ERR: Cubemap data is not valid!\n");
+        printf("ERR: Cubemap data is not valid!\n");
         return;
     }
 
@@ -188,31 +182,32 @@ void initCubemap(GLtexture& tex, const CubemapData& data) {
     const auto width = data.front.width;
     const auto height = data.front.height;
 
-    tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_X, type, data.right.bytes.get(), width, height, from, to);
-    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, type, data.left.bytes.get(), width, height, from, to);
-    tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, type, data.up.bytes.get(), width, height, from, to);
-    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, type, data.down.bytes.get(), width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_X, type, data.left.bytes.get(), width, height, from, to); // from the perspective of facing "front"
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, type, data.right.bytes.get(),  width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, type, data.up.bytes.get(),    width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, type, data.down.bytes.get(),  width, height, from, to);
     tex.set2DAs(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, type, data.front.bytes.get(), width, height, from, to);
-    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, type, data.back.bytes.get(), width, height, from, to);
+    tex.set2DAs(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, type, data.back.bytes.get(),  width, height, from, to);
 }
 
-GLtexture loadSkybox(const std::string& prefix) {
-    printf("Loading skybox '%s'\n", prefix.c_str());
+GLtexture loadSkybox(const std::string& name) {
+    printf("Loading skybox '%s'\n", name.c_str());
 
-    auto backPath = "Assets/Skyboxes/" + prefix + "_back.png";
-    auto downPath = "Assets/Skyboxes/" + prefix + "_down.png";
-    auto frontPath = "Assets/Skyboxes/" + prefix + "_front.png";
-    auto leftPath = "Assets/Skyboxes/" + prefix + "_left.png";
-    auto rightPath = "Assets/Skyboxes/" + prefix + "_right.png";
-    auto upPath = "Assets/Skyboxes/" + prefix + "_up.png";
+    const auto prefix = "Assets/Skyboxes/" + name;
+    auto backPath  = prefix + "_back.png";
+    auto downPath  = prefix + "_down.png";
+    auto frontPath = prefix + "_front.png";
+    auto leftPath  = prefix + "_left.png";
+    auto rightPath = prefix + "_right.png";
+    auto upPath    = prefix + "_up.png";
 
     CubemapData data;
-    data.back = File::load<File::Extension::PNG>(backPath.c_str());
-    data.down = File::load<File::Extension::PNG>(downPath.c_str());
+    data.back  = File::load<File::Extension::PNG>(backPath.c_str());
+    data.down  = File::load<File::Extension::PNG>(downPath.c_str());
     data.front = File::load<File::Extension::PNG>(frontPath.c_str());
-    data.left = File::load<File::Extension::PNG>(leftPath.c_str());
+    data.left  = File::load<File::Extension::PNG>(leftPath.c_str());
     data.right = File::load<File::Extension::PNG>(rightPath.c_str());
-    data.up = File::load<File::Extension::PNG>(upPath.c_str());
+    data.up    = File::load<File::Extension::PNG>(upPath.c_str());
 
     GLtexture tex;
     initCubemap(tex, data);
@@ -669,19 +664,25 @@ void TessellatorTest::postUpdate() {
 
 void TessellatorTest::draw() {
     auto mat = Camera::main->getCamMat();
-    auto pos = Camera::main->transform.getComputed()->position;
+    auto pos = Camera::main->transform.getComputed()->position();
     planetData.prog.use();
     planetData.mat.update(mat);
     planetData.pos.update(pos);
     waterData.prog.use();
     waterData.mat.update(mat);
     waterData.pos.update(pos);
-    waterData.viewDir.update(getViewDirection());
-    skyboxData.prog.use();
-    skyboxData.viewProjection.update(mat);
+    waterData.viewDir.update(Camera::main->transform.getComputed()->forward());
     atmosData.prog.use();
     atmosData.camMat.update(mat);
     atmosData.camPos.update(pos);
+
+    auto originView = Camera::main->view();
+    originView[3] = vec4(0, 0, 0, 1);
+    originView[0][3] = 0;
+    originView[1][3] = 0;
+    originView[2][3] = 0;
+    skyboxData.prog.use();
+    skyboxData.viewProjection.update(Camera::main->projection() * originView);
 
     Game::draw();
     Text::render(&renderer.forward.objects);

@@ -34,7 +34,8 @@ public:
     static void mayaControl(Camera* camera, double dt, const float speed = 5.f);
 
 private:
-    mat4 projection, view;
+    ACCS_G (public, mat4, projection);
+    ACCS_G (public, mat4, view);
     vec4 frustumPlanes[6];
 
     void updateFrustum();

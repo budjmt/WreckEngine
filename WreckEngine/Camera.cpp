@@ -8,11 +8,11 @@ Camera::Camera()
     updateProjection();
 }
 
-mat4 Camera::getCamMat() { return projection * view; }
+mat4 Camera::getCamMat() { return _projection * _view; }
 
 void Camera::update(double dt) {
     auto t = transform.getComputed();
-    view = glm::lookAt(t->position(), getLookAt(), t->up());
+    _view = glm::lookAt(t->position(), getLookAt(), t->up());
     updateFrustum();
 }
 
@@ -59,7 +59,7 @@ vec3 Camera::getLookAt(float units) {
 }
 
 void Camera::updateProjection() {
-    projection = glm::perspective(CAM_FOV, Window::aspect, znear, zfar);
+    _projection = glm::perspective(CAM_FOV, Window::aspect, znear, zfar);
 }
 
 vec3 Camera::forward() { return transform.forward(); }
