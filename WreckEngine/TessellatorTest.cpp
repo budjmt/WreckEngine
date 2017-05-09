@@ -71,7 +71,9 @@ static WaterRenderData waterData;
 
 struct SkyboxRenderData {
     GLprogram prog;
+    GLresource<vec2> atmosRadius;
     GLuniform<mat4> viewProjection;
+    GLuniform<float> camHeight;
     GLtexture planetTex;
     GLtexture spaceTex;
 };
@@ -457,6 +459,9 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     skyboxData.prog.use();
     skyboxData.viewProjection = skyboxData.prog.getUniform<mat4>("viewProjection");
+    skyboxData.camHeight   = skyboxData.prog.getUniform<float>("camHeight");
+    skyboxData.atmosRadius = skyboxData.prog.getUniform<vec2>("atmosRadius");
+    skyboxData.atmosRadius.value = atmosLookupData.atmosRadius.value;
 
     auto skyboxRenderer = &renderer.forward.objects;
     const auto skyboxGroup = skyboxRenderer->addGroup([] {
@@ -469,6 +474,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     auto skyboxMesh = loadOBJ("Assets/cube.obj");
     auto skyboxDM = make_shared<DrawMesh>(skyboxRenderer, skyboxMesh, skyboxData.spaceTex, skyboxData.prog);
+    skyboxDM->material.addResource(&skyboxData.atmosRadius);
     skyboxDM->material.addTexture(skyboxData.planetTex);
     skyboxDM->renderGroup = skyboxGroup;
     auto skyboxEntity = make_shared<Entity>(skyboxDM);
@@ -683,6 +689,7 @@ void TessellatorTest::draw() {
     originView[2][3] = 0;
     skyboxData.prog.use();
     skyboxData.viewProjection.update(Camera::main->projection() * originView);
+    skyboxData.camHeight.update(length(pos));
 
     Game::draw();
     Text::render(&renderer.forward.objects);
