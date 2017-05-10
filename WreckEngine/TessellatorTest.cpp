@@ -19,13 +19,13 @@ struct CubemapData {
     inline bool valid() const {
         const auto width  = front.width;
         const auto height = front.height;
-        
+
         return (back.width  == width &&
                 up.width    == width &&
                 down.width  == width &&
                 left.width  == width &&
                 right.width == width) &&
-               
+
                (back.height  == height &&
                 up.height    == height &&
                 down.height  == height &&
@@ -392,6 +392,48 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     ///////////////////////////////////////////////////////////////////////////
     //
+    // Setup the skyboxes
+    //
+
+    // Load the two skyboxes (one is used by the water)
+    skyboxData.planetTex = loadSkybox("planet/sunny");
+    skyboxData.spaceTex = loadSkybox("space/space");
+
+    // Load the skybox shaders
+    auto skyboxProg = HotSwap::Shader::create();
+    skyboxProg->vertex = ShaderRes("Shaders/skybox_v.glsl", GL_VERTEX_SHADER);
+    skyboxProg->fragment = ShaderRes("Shaders/skybox_f.glsl", GL_FRAGMENT_SHADER);
+    skyboxProg->setupProgram();
+
+    // Check the program for errors
+    skyboxData.prog = skyboxProg->program();
+    checkProgLinkError(skyboxData.prog);
+
+    skyboxData.prog.use();
+    skyboxData.viewProjection = skyboxData.prog.getUniform<mat4>("viewProjection");
+    skyboxData.camHeight = skyboxData.prog.getUniform<float>("camHeight");
+    skyboxData.atmosRadius = skyboxData.prog.getUniform<vec2>("atmosRadius");
+    skyboxData.atmosRadius.value = atmosLookupData.atmosRadius.value;
+
+    auto skyboxRenderer = &renderer.forward.objects;
+    const auto skyboxGroup = skyboxRenderer->addGroup([] {
+        GL_CHECK(glDepthMask(GL_FALSE));
+        GL_CHECK(glFrontFace(GL_CW));
+    }, [] {
+        GL_CHECK(glFrontFace(GL_CCW));
+        GL_CHECK(glDepthMask(GL_TRUE));
+    });
+
+    auto skyboxMesh = loadOBJ("Assets/cube.obj");
+    auto skyboxDM = make_shared<DrawMesh>(skyboxRenderer, skyboxMesh, skyboxData.spaceTex, skyboxData.prog);
+    skyboxDM->material.addResource(&skyboxData.atmosRadius);
+    skyboxDM->material.addTexture(skyboxData.planetTex);
+    skyboxDM->renderGroup = skyboxGroup;
+    auto skyboxEntity = make_shared<Entity>(skyboxDM);
+    mainState->addEntity(skyboxEntity);
+
+    ///////////////////////////////////////////////////////////////////////////
+    //
     // Setup the water
     //
 
@@ -436,49 +478,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
             dm->material.addResource(&waterData.time);
             dm->material.addResource(&waterData.sunDir);
             dm->material.addTexture(waterData.normalMap);
+            dm->material.addTexture(skyboxData.planetTex);
         });
-
-    ///////////////////////////////////////////////////////////////////////////
-    //
-    // Setup the skyboxes
-    //
-
-    // Load the two skyboxes
-    skyboxData.planetTex = loadSkybox("planet/sunny");
-    skyboxData.spaceTex = loadSkybox("space/space");
-
-    // Load the skybox shaders
-    auto skyboxProg = HotSwap::Shader::create();
-    skyboxProg->vertex = ShaderRes("Shaders/skybox_v.glsl", GL_VERTEX_SHADER);
-    skyboxProg->fragment = ShaderRes("Shaders/skybox_f.glsl", GL_FRAGMENT_SHADER);
-    skyboxProg->setupProgram();
-
-    // Check the program for errors
-    skyboxData.prog = skyboxProg->program();
-    checkProgLinkError(skyboxData.prog);
-
-    skyboxData.prog.use();
-    skyboxData.viewProjection = skyboxData.prog.getUniform<mat4>("viewProjection");
-    skyboxData.camHeight   = skyboxData.prog.getUniform<float>("camHeight");
-    skyboxData.atmosRadius = skyboxData.prog.getUniform<vec2>("atmosRadius");
-    skyboxData.atmosRadius.value = atmosLookupData.atmosRadius.value;
-
-    auto skyboxRenderer = &renderer.forward.objects;
-    const auto skyboxGroup = skyboxRenderer->addGroup([] {
-        GL_CHECK(glDepthMask(GL_FALSE));
-        GL_CHECK(glFrontFace(GL_CW));
-    }, [] {
-        GL_CHECK(glFrontFace(GL_CCW));
-        GL_CHECK(glDepthMask(GL_TRUE));
-    });
-
-    auto skyboxMesh = loadOBJ("Assets/cube.obj");
-    auto skyboxDM = make_shared<DrawMesh>(skyboxRenderer, skyboxMesh, skyboxData.spaceTex, skyboxData.prog);
-    skyboxDM->material.addResource(&skyboxData.atmosRadius);
-    skyboxDM->material.addTexture(skyboxData.planetTex);
-    skyboxDM->renderGroup = skyboxGroup;
-    auto skyboxEntity = make_shared<Entity>(skyboxDM);
-    mainState->addEntity(skyboxEntity);
 
     ///////////////////////////////////////////////////////////////////////////
 

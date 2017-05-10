@@ -7,14 +7,16 @@ in vec2 fragUV;
 in vec3 fragPosition;
 
 layout(binding = 0) uniform sampler2D normalMap;
+layout(binding = 1) uniform samplerCube skyBox;
 layout(location = 1) uniform vec3 camPos;
 layout(location = 5) uniform float time;
 layout(location = 6) uniform vec3 sunDir;
-layout(location = 7) uniform vec3 viewDir;
+//layout(location = 7) uniform vec3 viewDir;
 
 const vec3 waterColor = vec3(0.0, 0.1, 0.5);
 const float waveSpeed = 0.0625;
-const float specularPower = 512.0;
+const float specularPower = 16.0;
+const float reflectAmount = 0.15;
 
 void main()
 {
@@ -25,11 +27,15 @@ void main()
     vec4 sampledNormal = texture(normalMap, uv);
     vec3 normal = sampledNormal.rgb * 2.0 - 1.0;
 
-    //vec3 viewDir = normalize(fragPosition - camPos);
+    vec3 viewDir = normalize(camPos - fragPosition);
     vec3 specularVector = reflect(-sunDir, normal);
-    float specular = max(0, dot(normalize(specularVector), viewDir));
+    float specular = dot(normalize(specularVector), viewDir);
     specular = pow(specular, specularPower);
+    //specular = max(specular, 0);
 
+    vec3 skyColor = texture(skyBox, normalize(N)).rgb;
     vec3 color = waterColor * (specular + 1.0);
+
+    vec3 finalColor = mix(color, skyColor, reflectAmount);
     fragColor = vec4(color, 0.9);
 }
