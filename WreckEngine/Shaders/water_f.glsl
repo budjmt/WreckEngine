@@ -34,7 +34,7 @@ void main()
     //specular = max(specular, 0);
 
     vec3 skyColor = texture(skyBox, normalize(N)).rgb;
-    vec3 color = waterColor * (specular + 1.0);
+    vec3 color = max(waterColor, waterColor * (specular + 1.0));
 
     vec3 finalColor = mix(color, skyColor, reflectAmount);
     fragColor = vec4(color, 0.9);
