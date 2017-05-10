@@ -59,12 +59,11 @@ struct {
 
 struct WaterRenderData {
     GLprogram prog;
-    GLresource<vec3> sunDir;
     GLresource<float> time;
     GLresource<float> radius;
     GLuniform<mat4> mat;
-    GLuniform<vec3> pos;
-    GLuniform<vec3> viewDir;
+    GLuniform<vec3> camPos;
+    GLuniform<vec3> sunPos;
     GLtexture normalMap;
 };
 static WaterRenderData waterData;
@@ -104,10 +103,6 @@ struct LightData {
     Light::Group<Light::Point>* group;
 };
 static LightData sun;
-
-inline vec3 getSunDirection() {
-    return glm::normalize(-sun.light.position);
-}
 
 struct {
     vec3 forward;
@@ -459,13 +454,12 @@ TessellatorTest::TessellatorTest() : Game(6) {
     // Initialize some water shader variables
     waterData.prog.use();
     waterData.mat = waterData.prog.getUniform<mat4>("cameraMatrix");
-    waterData.pos = waterData.prog.getUniform<vec3>("camPos");
+    waterData.camPos = waterData.prog.getUniform<vec3>("camPos");
+    waterData.sunPos = waterData.prog.getUniform<vec3>("sunPos");
     waterData.radius = waterData.prog.getUniform<float>("Radius");
     waterData.radius.value = RADIUS;
     waterData.time = waterData.prog.getUniform<float>("time");
     waterData.time.value = 0.0f;
-    waterData.sunDir = waterData.prog.getUniform<vec3>("sunDir");
-    waterData.viewDir = waterData.prog.getUniform<vec3>("viewDir");
 
     // Get the water renderer and the water group
     auto waterRenderer = &renderer.forward.objects;
@@ -476,7 +470,6 @@ TessellatorTest::TessellatorTest() : Game(6) {
         [](DrawMesh* dm) {
             dm->material.addResource(&waterData.radius);
             dm->material.addResource(&waterData.time);
-            dm->material.addResource(&waterData.sunDir);
             dm->material.addTexture(waterData.normalMap);
             dm->material.addTexture(skyboxData.planetTex);
         });
@@ -514,16 +507,16 @@ TessellatorTest::TessellatorTest() : Game(6) {
     }, [] {
         GL_CHECK(glDepthMask(GL_TRUE));
     });
-    atmosphere = make_unique<PlanetCSphere>(RADIUS + 2, atmosData.prog
-        , mainState.get(), &renderer.forward.objects, atmosGroup, [](DrawMesh* dm) {
-        dm->material.addResource(&atmosData.tessRadius);
-        dm->material.addResource(&atmosData.atmosRadius);
-        dm->material.addResource(&atmosData.K);
-        dm->material.addResource(&atmosData.sunPos);
-        dm->material.addResource(&atmosData.sunColor);
-        dm->material.addTexture(atmosLookupData.depthLookup);
-    });
-    atmosphere->translucent = true;
+    //atmosphere = make_unique<PlanetCSphere>(RADIUS + 2, atmosData.prog
+    //    , mainState.get(), &renderer.forward.objects, atmosGroup, [](DrawMesh* dm) {
+    //    dm->material.addResource(&atmosData.tessRadius);
+    //    dm->material.addResource(&atmosData.atmosRadius);
+    //    dm->material.addResource(&atmosData.K);
+    //    dm->material.addResource(&atmosData.sunPos);
+    //    dm->material.addResource(&atmosData.sunColor);
+    //    dm->material.addTexture(atmosLookupData.depthLookup);
+    //});
+    //atmosphere->translucent = true;
 
     cameraControl = make_shared<TransformEntity>();
     cameraControl->transform.position = vec3(0, 0, RADIUS * 2);
@@ -543,8 +536,6 @@ TessellatorTest::TessellatorTest() : Game(6) {
     sun.light.falloff = vec2(100, 500);
     sun.light.tag = 1;
     point.addLight(sun.light, Light::UpdateFreq::SOMETIMES);
-
-    waterData.sunDir.value = getSunDirection();
 
     // shut the performance warning from the point/spot only bug up for now
     Light::Group<Light::Spotlight> spot;
@@ -632,7 +623,7 @@ void TessellatorTest::update(double delta) {
     auto dist = glm::length(pos) - RADIUS;
 
     int activeCounter = surface->update(pos, cam);
-    atmosphere->update(pos, cam);
+    //atmosphere->update(pos, cam);
     water->update(pos, cam);
 
     waterData.time.value += static_cast<float>(Time::delta);
@@ -677,8 +668,8 @@ void TessellatorTest::draw() {
     planetData.pos.update(pos);
     waterData.prog.use();
     waterData.mat.update(mat);
-    waterData.pos.update(pos);
-    waterData.viewDir.update(Camera::main->transform.getComputed()->forward());
+    waterData.camPos.update(pos);
+    waterData.sunPos.update(sun.light.position);
     atmosData.prog.use();
     atmosData.camMat.update(mat);
     atmosData.camPos.update(pos);
@@ -816,10 +807,7 @@ void moveSun(float radius) {
     else {
         moved = controlAroundPlanet(sun.helper, centerDist, towardSpeed * 50, dt
             , Keyboard::Key::Code::I, Keyboard::Key::Code::K, Keyboard::Key::Code::J, Keyboard::Key::Code::L);
-        if (moved) {
-            sun.light.position = sun.helper.position();
-            waterData.sunDir.value = getSunDirection();
-        }
+        if (moved) sun.light.position = sun.helper.position();
     }
 
     if (moved) Thread::Render::runNextFrame([] { sun.group->updateLight(sun.index, Light::UpdateFreq::SOMETIMES, sun.light); });
