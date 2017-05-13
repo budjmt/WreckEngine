@@ -6,8 +6,8 @@ in vec3 fragNormal;
 in vec2 fragUV;
 in vec3 fragPosition;
 
-layout(binding = 0) uniform sampler2D normalMap;
-layout(binding = 1) uniform samplerCube skyBox;
+layout(binding = 1) uniform sampler2D normalMap;
+layout(binding = 2) uniform samplerCube skyBox;
 layout(location = 1) uniform vec3 camPos;
 layout(location = 5) uniform float time;
 layout(location = 6) uniform vec3 sunPos;

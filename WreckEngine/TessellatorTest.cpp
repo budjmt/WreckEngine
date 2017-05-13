@@ -383,6 +383,9 @@ TessellatorTest::TessellatorTest() : Game(6) {
             dm->material.addResource(&planetData.radius);
             dm->material.addTexture(noiseData.cubemap);
             dm->material.addTexture(normalData.cubemap);
+            dm->material.addTexture(Renderable::genTexture2D("Assets/grass.jpg"));
+            dm->material.addTexture(Renderable::genTexture2D("Assets/mountain.jpg"));
+            dm->material.addTexture(Renderable::genTexture2D("Assets/snow.jpg"));
         });
 
     ///////////////////////////////////////////////////////////////////////////
@@ -433,11 +436,9 @@ TessellatorTest::TessellatorTest() : Game(6) {
     //
 
     // Load the water normal map
-    auto waterMapData = File::load<File::Extension::PNG>("Assets/water.jpg");
-    waterData.normalMap.create(GL_TEXTURE_2D);
+    waterData.normalMap = Renderable::genTexture2D("Assets/water.jpg");
     waterData.normalMap.param(GL_TEXTURE_WRAP_S, GL_TEXTURE_WRAP_T, GL_REPEAT);
     waterData.normalMap.param(GL_TEXTURE_MAG_FILTER, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    waterData.normalMap.set2D<unsigned char>(waterMapData.bytes.get(), waterMapData.width, waterMapData.height);
 
     // Setup the water program
     auto waterProg = HotSwap::Shader::create();
