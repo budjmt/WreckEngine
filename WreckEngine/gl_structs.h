@@ -15,12 +15,28 @@
 
 typedef GLint GLsampler;
 
-#define WR_GL_OP_PARENS(propType, propName) propType& operator()() const { return *propName; }
-#define WR_GL_OP_EQEQ(type, propName) bool operator==(const type& other) const { return *propName == *other.propName; }
+#define WR_GL_OP_PARENS(handleIdType, handleName) handleIdType& operator()() const { return handleName->id; }
+#define WR_GL_OP_EQEQ(type, handleName) bool operator==(const type& other) const { return handleName->id == other.handleName->id; }
 
 inline GLint getGLVal(GLenum value) { GLint val; GL_CHECK(glGetIntegerv(value, &val)); return val; }
 
 #define CHECK_GL_VERSION(major, minor) glewIsSupported("GL_VERSION_" #major "_" #minor)
+
+#define GL_HANDLE_DEF(delete_code) \
+struct handle { \
+    GLuint id; \
+    handle() = default; \
+    handle(GLuint _id) : id(_id) {} \
+    ~handle() { \
+        if (GLFWmanager::initialized && id != def) \
+            GL_CHECK(delete_code); \
+    } \
+    handle(const handle&) = default; \
+    handle& operator=(const handle&) = default; \
+    handle(handle&&) = default; \
+    handle& operator=(handle&&) = default; \
+    inline bool valid() const { return id != def; } \
+};
 
 namespace {
     // default value used to represent "uninitialized" resources
@@ -30,13 +46,6 @@ namespace {
 
     GET_GL_CONSTANT_FUNC(getMaxNumTextures, GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     GET_GL_CONSTANT_FUNC(getMaxColorAttachments, GL_MAX_COLOR_ATTACHMENTS);
-
-    void local(delTexture)    (GLuint* t) { if (GLFWmanager::initialized && *t != def) GL_CHECK(glDeleteTextures(1, t));     delete t; }
-    void local(delBuffer)     (GLuint* b) { if (GLFWmanager::initialized && *b != def) GL_CHECK(glDeleteBuffers(1, b));      delete b; }
-    void local(delVAO)        (GLuint* a) { if (GLFWmanager::initialized && *a != def) GL_CHECK(glDeleteVertexArrays(1, a)); delete a; }
-    void local(delShader)     (GLuint* s) { if (GLFWmanager::initialized && *s != def) GL_CHECK(glDeleteShader(*s));         delete s; }
-    void local(delShaderProg) (GLuint* p) { if (GLFWmanager::initialized && *p != def) GL_CHECK(glDeleteProgram(*p));        delete p; }
-    void local(delFrameBuffer)(GLuint* f) { if (GLFWmanager::initialized && *f != def) GL_CHECK(glDeleteFramebuffers(1, f)); delete f; }
 }
 
 struct GLtexture;
@@ -85,19 +94,22 @@ template<> struct GLuniform<mat4>      : public GLuniform_t { inline void update
 // wraps a texture. [type] reflects what type of sampler it needs.
 // https://www.opengl.org/wiki/Sampler_(GLSL)
 struct GLtexture {
-    shared<GLuint> texture = shared<GLuint>(new GLuint(def), local(delTexture));
+private:
+    GL_HANDLE_DEF(glDeleteTextures(1, &id));
+public:
+    shared<handle> texture = make_shared<handle>(def);
     GLenum target;
     inline WR_GL_OP_PARENS(GLuint, texture);
     inline WR_GL_OP_EQEQ(GLtexture, texture);
 
     static GLint getFormatPitch(GLenum format);
 
-    inline bool valid() const { return *texture != def; }
+    inline bool valid() const { return texture->valid(); }
 
     inline void create(const GLenum _type = GL_TEXTURE_2D, const GLint maxMipLevel = 0) {
         if (valid()) return;
         target = _type;
-        GL_CHECK(glGenTextures(1, texture.get()));
+        GL_CHECK(glGenTextures(1, &texture->id));
         // these are globally bound, so technically this line affects every texture [of the type] each time the value changes
         // this can be fixed with immutable textures in 4.3+
         param(GL_TEXTURE_BASE_LEVEL, 0);
@@ -111,7 +123,7 @@ struct GLtexture {
     inline void bind(const GLint index = 0) const {
         assert(index < MAX_TEXTURES);
         GL_CHECK(glActiveTexture(GL_TEXTURE0 + index));
-        GL_CHECK(glBindTexture(target, *texture));
+        GL_CHECK(glBindTexture(target, texture->id));
     }
     inline void unbind() {
         GL_CHECK(glBindTexture(target, 0));
@@ -119,17 +131,15 @@ struct GLtexture {
 
     inline void bindImage(const GLenum access = GL_READ_WRITE, const GLenum format = GL_RGBA, const GLint index = 0, const GLuint level = 0, const GLboolean layered = GL_FALSE, const GLint layer = 0) {
         // don't need to make the texture active to bind an image
-        GL_CHECK(glBindImageTexture(index, *texture, level, layered, layer, access, format)); // doesn't support 3D/array/layered textures right now
+        GL_CHECK(glBindImageTexture(index, texture->id, level, layered, layer, access, format)); // doesn't support 3D/array/layered textures right now
     }
     inline void unbindImage(const GLint index = 0) {
         GL_CHECK(glBindImageTexture(index, 0, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGB)); // values besides index and the first 0 are irrelevant
     }
 
     inline void unload() {
-        if (*texture != def) {
-            GL_CHECK(glDeleteTextures(1, texture.get()));
-            *texture = def;
-        }
+        texture->~handle();
+        texture->id = def;
     }
 
     // last value must be an int or float
@@ -199,7 +209,7 @@ struct GLtexture {
     }
 
     inline void view(const GLtexture& tex, const GLenum format = GL_RGBA, const GLint mipLevels = 1, const GLint baseMip = 0) {
-        GL_CHECK(glTextureView(*texture, target, tex(), format, baseMip, mipLevels, 0, 1));
+        GL_CHECK(glTextureView(texture->id, target, tex(), format, baseMip, mipLevels, 0, 1));
     }
 
 private:
@@ -212,12 +222,15 @@ private:
 
 // wraps a buffer object on the GPU.
 struct GLbuffer {
-    shared<GLuint> buffer {new GLuint(def), local(delBuffer)};
+private:
+    GL_HANDLE_DEF(glDeleteBuffers(1, &id));
+public:
+    shared<handle> buffer = make_shared<handle>(def);
     GLenum target, usage;
     size_t size = 0;
     inline WR_GL_OP_PARENS(GLuint, buffer);
 
-    inline bool valid() const { return *buffer != def; }
+    inline bool valid() const { return buffer->valid(); }
 
     inline GLint getVal(GLenum value) const {
         GLint val;
@@ -234,13 +247,13 @@ struct GLbuffer {
     // usage: GL_STATIC_DRAW by default, also can be GL_STREAM_DRAW or GL_DYNAMIC_DRAW
     inline void create(const GLenum target, const GLenum usage = GL_STATIC_DRAW) {
         if (valid()) return;
-        GL_CHECK(glGenBuffers(1, buffer.get()));
+        GL_CHECK(glGenBuffers(1, &buffer->id));
         set(target, usage);
     }
 
     // allows for binding buffer as alternative target
     inline void bindAs(GLenum _target) const {
-        GL_CHECK(glBindBuffer(_target, *buffer));
+        GL_CHECK(glBindBuffer(_target, buffer->id));
     }
 
     // call to bind the buffer to its target
@@ -253,7 +266,7 @@ struct GLbuffer {
 
     // binds to an index, which resizes when the buffer is resized
     inline void bindBase(GLuint index) const {
-        GL_CHECK(glBindBufferBase(target, index, *buffer));
+        GL_CHECK(glBindBufferBase(target, index, buffer->id));
     }
     inline void unbindBase(GLuint index) const {
         GL_CHECK(glBindBufferBase(target, index, 0));
@@ -262,7 +275,7 @@ struct GLbuffer {
     // binds to an index with an optional offset, must be manually resized
     inline void bindRange(GLuint index, GLintptr offset = 0) const {
         assert(size > 0); // can't bind a range of length 0
-        GL_CHECK(glBindBufferRange(target, index, *buffer, offset, size));
+        GL_CHECK(glBindBufferRange(target, index, buffer->id, offset, size));
     }
     inline void unbindRange(GLuint index) const {
         unbindBase(index); // equivalent operation, provided for convenience
@@ -271,7 +284,7 @@ struct GLbuffer {
     // invalidates the buffer; used for streaming
     inline void invalidate() const {
         GL_CHECK(glBufferData(target, size, nullptr, usage));
-        //GL_CHECK(glInvalidateBufferData(*buffer));
+        //GL_CHECK(glInvalidateBufferData(buffer->id));
     }
 
     // allocate the buffer after binding to contain [size] bytes from [_data].
@@ -301,17 +314,20 @@ struct GLbuffer {
 
 // wraps a VAO, stores bindings for attributes and buffers after binding
 struct GLVAO {
-    shared<GLuint> vao {new GLuint(def), local(delVAO)};
+private:
+    GL_HANDLE_DEF(glDeleteVertexArrays(1, &id));
+public:
+    shared<handle> vao = make_shared<handle>(def);
     inline WR_GL_OP_PARENS(GLuint, vao);
 
-    inline bool valid() const { return *vao != def; }
+    inline bool valid() const { return vao->valid(); }
 
     inline void create() const {
         if (valid()) return;
-        GL_CHECK(glGenVertexArrays(1, vao.get()));
+        GL_CHECK(glGenVertexArrays(1, &vao->id));
     }
     inline void bind() const {
-        GL_CHECK(glBindVertexArray(*vao));
+        GL_CHECK(glBindVertexArray(vao->id));
     }
     static inline void unbind() {
         GL_CHECK(glBindVertexArray(0));
@@ -336,63 +352,67 @@ struct GLuniformblock : public GLuniform<T> {
 
 // wraps a compiled shader
 struct GLshader {
+private:
+    GL_HANDLE_DEF(glDeleteShader(id));
+public:
     GLenum type = def;
     inline WR_GL_OP_PARENS(const GLuint, shader);
 
-    inline bool valid() const { return *shader != def; }
+    inline bool valid() const { return shader->valid(); }
 
     // creates and compiles a shader of [type] from [body] and stores it
     inline void create(const char* body, const GLenum type) {
         if (valid()) return;
         this->type = type;
-        GL_CHECK(*shader = glCreateShader(type));
-        GL_CHECK(glShaderSource(*shader, 1, &body, 0));
-        GL_CHECK(glCompileShader(*shader));
+        GL_CHECK(shader->id = glCreateShader(type));
+        GL_CHECK(glShaderSource(shader->id, 1, &body, 0));
+        GL_CHECK(glCompileShader(shader->id));
     }
 
     inline GLint getVal(const GLenum value) const {
         GLint res;
-        GL_CHECK(glGetShaderiv(*shader, value, &res));
+        GL_CHECK(glGetShaderiv(shader->id, value, &res));
         return res;
     }
 private:
-    shared<GLuint> shader {new GLuint(def), local(delShader)};
+    shared<handle> shader = make_shared<handle>(def);
     friend struct GLprogram;
 };
 
 // wraps a shader program [linked from several shaders]
 struct GLprogram {
+private:
+    GL_HANDLE_DEF(glDeleteProgram(id));
+public:
     GLshader vertex, tessControl, tessEval, geometry, fragment;
     GLshader compute; // this must be by itself
     bool isCompute = false;
-    shared<GLuint> program {new GLuint(def), local(delShaderProg)};
+    shared<handle> program = make_shared<handle>(def);
     inline WR_GL_OP_PARENS(GLuint, program);
 
-    inline bool valid() const { return *program != def; }
+    inline bool valid() const { return program->valid(); }
 
     // deletes the program if it exists and creates a new one; this preserves the shaders used without resetting the pointer
     inline void refresh() {
-        if (GLFWmanager::initialized && valid()) {
-            GL_CHECK(glDeleteProgram(*program));
-            *program = def;
-        }
+        program->~handle();
+        program->id = def;
         create();
     }
 
     inline void create() {
         if (valid()) return;
-        GL_CHECK(*program = glCreateProgram());
+        GL_CHECK(program->id = glCreateProgram());
     }
 
     inline GLint getVal(const GLenum value) const {
         GLint res;
-        GL_CHECK(glGetProgramiv(*program, value, &res));
+        GL_CHECK(glGetProgramiv(program->id, value, &res));
         return res;
     }
 
-    inline void attach(const GLshader& shader) const { GL_CHECK(glAttachShader(*program, shader())); }
+    inline void attach(const GLshader& shader) const { GL_CHECK(glAttachShader(program->id, shader())); }
 
-    inline void relink() const { GL_CHECK(glLinkProgram(*program)); }
+    inline void relink() const { GL_CHECK(glLinkProgram(program->id)); }
 
     // properly sets up the program once the shaders are set
     inline void link() {
@@ -413,7 +433,7 @@ struct GLprogram {
     }
 
     inline void use() const {
-        GL_CHECK(glUseProgram(*program));
+        GL_CHECK(glUseProgram(program->id));
     }
 
     inline void dispatch(GLuint xGroups = 1, GLuint yGroups = 1, GLuint zGroups = 1) const {
@@ -424,7 +444,7 @@ struct GLprogram {
 
     inline GLuint getUniformLocation(const char* name) const {
         GLuint l;
-        GL_CHECK(l = glGetUniformLocation(*program, name));
+        GL_CHECK(l = glGetUniformLocation(program->id, name));
         return l;
     }
 
@@ -438,14 +458,14 @@ struct GLprogram {
 
     // binds a uniform block index to a slot index (must be called before use)
     inline void bindUniformBlock(const uint32_t location, const uint32_t index) const {
-        GL_CHECK(glUniformBlockBinding(*program, location, index));
+        GL_CHECK(glUniformBlockBinding(program->id, location, index));
     }
 
     // used for retrieving uniform block variables (of type T)
     template<typename T>
     inline GLuniformblock<T> getUniformBlock(const char* name) const {
         GLuniformblock<T> u;
-        GL_CHECK(u.location = glGetUniformBlockIndex(*program, name));
+        GL_CHECK(u.location = glGetUniformBlockIndex(program->id, name));
         return u;
     }
 
@@ -463,11 +483,11 @@ struct GLprogram {
 
     inline size_t getUniformOffset(const char* name) {
         GLuint index;
-        GL_CHECK(index = glGetProgramResourceIndex(*program, GL_UNIFORM, name));
+        GL_CHECK(index = glGetProgramResourceIndex(program->id, GL_UNIFORM, name));
 
         GLenum prop = GL_OFFSET;
         GLint length, param;
-        GL_CHECK(glGetProgramResourceiv(*program, GL_UNIFORM, index, 1, &prop, sizeof(GLuint), &length, &param));
+        GL_CHECK(glGetProgramResourceiv(program->id, GL_UNIFORM, index, 1, &prop, sizeof(GLuint), &length, &param));
         return param;
     }
 
@@ -489,15 +509,18 @@ struct GLprogram {
 //   - All attachments are complete
 //   - All attachments have the same number of multi-samples
 struct GLframebuffer {
-    shared<GLuint> framebuffer{ new GLuint(def), local(delFrameBuffer) };
+private:
+    GL_HANDLE_DEF(glDeleteFramebuffers(1, &id));;
+public:
+    shared<handle> framebuffer = make_shared<handle>(def);
     GLenum type = GL_FRAMEBUFFER;
     inline WR_GL_OP_PARENS(GLuint, framebuffer);
 
-    inline bool valid() const { return *framebuffer != def; }
+    inline bool valid() const { return framebuffer->valid(); }
 
     inline GLenum check() const { GLenum res; GL_CHECK(res = glCheckFramebufferStatus(type)); return res; }
     inline bool checkComplete() const { return check() == GL_FRAMEBUFFER_COMPLETE; }
-    inline bool isBound() const { return *framebuffer == boundFBO; }
+    inline bool isBound() const { return framebuffer->id == boundFBO; }
     inline size_t numOutputs() const { return colorBuffers.size(); }
 
     static inline vec4 getClearColor() {
@@ -521,13 +544,13 @@ struct GLframebuffer {
 
     inline void create(const GLenum target = GL_FRAMEBUFFER) {
         if (valid()) return;
-        GL_CHECK(glGenFramebuffers(1, framebuffer.get()));
+        GL_CHECK(glGenFramebuffers(1, &framebuffer->id));
         type = target;
     }
 
     inline void bindPartial() const {
-        boundFBO = *framebuffer;
-        GL_CHECK(glBindFramebuffer(type, *framebuffer));
+        boundFBO = framebuffer->id;
+        GL_CHECK(glBindFramebuffer(type, framebuffer->id));
     }
 
     static inline void setDrawBuffers(const size_t size, const GLenum* drawBuffers) {
@@ -753,3 +776,5 @@ public:
         return finalIndex;
     }
 };
+
+#undef GL_HANDLE_DEF

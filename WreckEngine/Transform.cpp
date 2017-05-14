@@ -2,7 +2,7 @@
 
 Transform::Transform() { updateRot(); }
 
-void Transform::makeDirty() const {
+void Transform::makeDirty() {
     dirtyComp = dirtyMats = true;
     for (auto child : children)
         child->makeDirty();
@@ -39,9 +39,9 @@ void Transform::updateMats() const {
     const auto t = glm::translate(_position);
     const auto r = glm::rotate(_rotAngle, _rotAxis);
     const auto s = glm::scale(_scale);
-    mats->translate = t;
-    mats->rotate = r;
     mats->scale = s;
+    mats->rotate = r;
+    mats->translate = t;
     mats->world = t * r * s;
 }
 
@@ -66,15 +66,55 @@ Transform::safe_tf_ptr Transform::getComputed() const {
 }
 
 Transform* Transform::computeTransform() const {
+    vec3 compPos, compScale;
+    quat compRot;
+    {
+        auto p = _parent->getComputed();
+        compPos   = p->_position;
+        compScale = p->_scale;
+        compRot   = p->_rotation;
+    }
+    compRot   *= _rotation;
+    compScale *= _scale;
+    compPos   += _position;
     {
         std::unique_lock<std::shared_mutex> lock(computedMut.object);
-        auto p = _parent->getComputed();
-        computed->_position = p->_position + _position;
-        computed->_scale    = p->_scale    * _scale;
-        computed->_rotation = p->_rotation * _rotation;
+        computed->_position = compPos;
+        computed->_scale    = compScale;
+        computed->_rotation = compRot;
         computed->updateRot();
     }
     return computed.get();
+}
+
+void Transform::setComputedPosition(const vec3& compPos) {
+    if (_parent) {
+        const auto parentPos = _parent->getComputed()->position();
+        position = compPos - parentPos;
+    }
+    else {
+        position = compPos;
+    }
+}
+
+void Transform::setComputedRotation(const quat& compRot) {
+    if (_parent) {
+        const auto parentRot = _parent->getComputed()->rotation();
+        rotation = quat::inverse(parentRot) * compRot;
+    }
+    else {
+        rotation = compRot;
+    }
+}
+
+void Transform::setComputedScale(const vec3& compScale) {
+    if (_parent) {
+        const auto parentScale = _parent->getComputed()->scale();
+        scale = compScale / parentScale;
+    }
+    else {
+        scale = compScale;
+    }
 }
 
 void Transform::setBaseDirections(const vec3 t_forward, const vec3 t_up) {
@@ -86,8 +126,8 @@ void Transform::setBaseDirections(const vec3 t_forward, const vec3 t_up) {
 void Transform::updateDirections() {
     const auto r = glm::rotate(_rotAngle, _rotAxis);
     _forward = (vec3)(r * vec4(base_forward, 1));
-    _up = (vec3)(r * vec4(base_up, 1));
-    _right = glm::cross(_up, _forward);
+    _up      = (vec3)(r * vec4(base_up, 1));
+    _right   = glm::cross(_up, _forward);
 }
 
 void Transform::updateRot() {

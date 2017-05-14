@@ -12,6 +12,8 @@ namespace {
     }
 }
 
+static GLresource<float> exposure;
+
 TriPlay::TriPlay(GLprogram prog) : Game(6)
 {
     auto menuState = make_shared<State>("menu");
@@ -218,17 +220,20 @@ void TriPlay::setupPostProcess() {
     bloom->data.shaders->program.use();
     bloom->data.setSamplers(1, "brightBlur");
 
+    // HDR
+    auto hdr = make_shared<PostProcess>();
+    auto hdrProg = PostProcess::make_program("Shaders/postProcess/hdr.glsl");
+    exposure = hdrProg.getUniform<float>("exposure");
+    exposure.value = 2;
+    hdr->data.setShaders(hdrProg, &exposure);
+    hdr->data.setTextures(blurTarget);
+    hdr->renderToTextures(brightRender);
+
     // CA
     auto chromaticAberration = make_shared<PostProcess>();
     chromaticAberration->data.setShaders(PostProcess::make_program("Shaders/postProcess/CA.glsl"));
     chromaticAberration->data.setTextures(blurTarget);
     chromaticAberration->renderToTextures(colorRender);
-
-    // HDR; unused
-    auto hdr = make_shared<PostProcess>();
-    hdr->data.setShaders(PostProcess::make_program("Shaders/postProcess/hdr.glsl"));
-    hdr->data.setTextures(colorRender);
-    hdr->renderToTextures(blurTarget);
 
     // CRT
     auto crt = make_shared<PostProcess>();
@@ -254,6 +259,9 @@ void TriPlay::update(double delta) {
 
     bool shift = Keyboard::shiftDown();
     bool ctrl  = Keyboard::controlDown();
+
+    if (Keyboard::keyDown(Keyboard::Key::Code::RBracket)) exposure.value += 10 * dt;
+    if (Keyboard::keyDown(Keyboard::Key::Code::LBracket)) exposure.value -= 10 * dt;
 
     if (Keyboard::keyDown(Keyboard::Key::Code::I)) {
         if (shift)

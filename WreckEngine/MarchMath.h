@@ -15,10 +15,10 @@ template<typename T> constexpr T pi = T(3.14159265358979323846);
 #define NaN_CHECK(x) std::isnan(x)
 
 //use for floating point error correction
-inline bool epsCheck(float x)  { return x < FLT_EPSILON && x > -FLT_EPSILON; }
+inline bool epsCheck(float x) { return x < FLT_EPSILON && x > -FLT_EPSILON; }
 inline bool epsCheck(double x) { return x < DBL_EPSILON && x > -DBL_EPSILON; }
 
-int sign(int i); 
+int sign(int i);
 int bitsign(int i);
 float signf(float f);
 inline float maxf(float a, float b);
@@ -49,31 +49,41 @@ mat4 rotateBetween(const vec3 from, const vec3 to);
 class quat {
 public:
     quat() : v(), v0(1) {};
-	quat(float _x, float _y, float _z, float _w);
-	quat(float v0, vec3 _v); quat(vec3 a, float t);
+    quat(float _x, float _y, float _z, float _w);
+    quat(float v0, vec3 _v);
+    quat(vec4 _v);
+    quat(vec3 a, float t);
     quat(const mat4& rot);
-	
+
+    quat(const quat&) = default;
+    quat& operator=(const quat&) = default;
+    quat(quat&&) = default;
+    quat& operator=(quat&&) = default;
+
     union {
+        struct { vec4 vals; };
         struct { vec3 v; float v0; };
         struct { float x, y, z, w; };
     };
 
-	float theta() const; void theta(float t);
-	vec3 axis() const; void axis(vec3 a);
+    float theta() const; void theta(float t);
+    vec3 axis() const; void axis(vec3 a);
 
-	quat operator+(const quat& other); quat operator-(const quat& other);
-	quat operator*(float f); quat operator/(float f);
-	quat operator*(const quat& other) const;
+    quat& operator+=(const quat& other);
+    quat& operator-=(const quat& other);
+    quat& operator*=(float f);
+    quat& operator/=(float f);
+    quat& operator*=(const quat& other);
 
-	static float length(const quat& q);
+    static float length(const quat& q);
 
-	static quat pow(const quat& q, float e);
-	static quat inverse(const quat& q);
-	static quat rotate(const quat& q, float theta, vec3 axis);
+    static quat pow(const quat& q, float e);
+    static quat inverse(const quat& q);
+    static quat rotate(const quat& q, float theta, vec3 axis);
 
-	static quat slerp(const quat& a, const quat& b, float t);
-	static quat rotation(float theta, vec3 axis);
-	static quat point(float x, float y, float z);
+    static quat slerp(const quat& a, const quat& b, float t);
+    static quat rotation(float theta, vec3 axis);
+    static quat point(float x, float y, float z);
 
     static vec3 getEuler(const quat& q);
     static float getEulerX(const quat& q);
@@ -81,8 +91,16 @@ public:
     static float getEulerZ(const quat& q);
 
 private:
-	float _theta = 0, sin_t_half = 0; vec3 _axis = vec3(0, 0, 1);
+    float _theta = 0, sin_t_half = 0;
+    vec3 _axis = vec3(0, 0, 1);
 
-	inline void updateAngles();
-	inline void updateValues(vec3& a, float t);
+    inline void updateAngles();
+    inline void updateValues(const vec3& a, float t);
 };
+
+quat operator+(const quat& a, const quat& b);
+quat operator-(const quat& a, const quat& b);
+quat operator*(const quat& q, float f);
+inline quat operator*(float f, const quat& q) { return q * f; }
+quat operator/(const quat& q, float f);
+quat operator*(const quat& a, const quat& b);

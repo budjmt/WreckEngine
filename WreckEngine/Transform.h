@@ -21,12 +21,16 @@ public:
         void operator delete(void* p) { _aligned_free(p); }
     };
 
-    void makeDirty() const;
+    void makeDirty();
 
     Transform* parent() const; void parent(Transform* p);
     std::unordered_set<Transform*> children;
     safe_tf_ptr getComputed() const;
     mat_cache* getMats() const;
+
+    void setComputedPosition(const vec3& compPos);
+    void setComputedRotation(const quat& compRot);
+    void setComputedScale(const vec3& compScale);
 
     void setBaseDirections(const vec3 t_forward, const vec3 t_up);
     void rotate(const float x, const float y, const float z);
@@ -35,17 +39,17 @@ public:
 
     vec3 getTransformed(const vec3 v) const;
 private:
-    PROP_GS(private, Transform, vec3, position, { return _position; }, { makeDirty(); return _position = value; });
-    PROP_GS(private, Transform, vec3, scale, { return _scale; }, { makeDirty(); return _scale = value; }) = vec3(1);
-    PROP_GS(private, Transform, quat, rotation, { return _rotation; }, { makeDirty(); _rotation = value; updateRot(); return _rotation; });
-    ACCS_G(private, vec3, rotAxis);
-    ACCS_G(private, float, rotAngle);
+    PROP_GS (private, Transform, vec3, position, { return _position; }, { makeDirty(); return _position = value; });
+    PROP_GS (private, Transform, vec3, scale,    { return _scale; },    { makeDirty(); return _scale = value; }) = vec3(1);
+    PROP_GS (private, Transform, quat, rotation, { return _rotation; }, { makeDirty(); _rotation = value; updateRot(); return _rotation; });
+    ACCS_G  (private, vec3, rotAxis);
+    ACCS_G  (private, float, rotAngle);
 
     vec3 base_forward = vec3(0, 0, 1)
        , base_up = vec3(0, 1, 0);
-    ACCS_G(private, vec3, forward);
-    ACCS_G(private, vec3, up);
-    ACCS_G(private, vec3, right);
+    ACCS_G (private, vec3, forward);
+    ACCS_G (private, vec3, up);
+    ACCS_G (private, vec3, right);
 
     // computes are const, so these must be mutable
     mutable bool dirtyComp, dirtyMats;

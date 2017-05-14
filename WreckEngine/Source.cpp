@@ -113,6 +113,11 @@ void update() {
 
     if (Keyboard::keyPressed(Keyboard::Key::F11))
         Thread::Main::runAsync([] { Window::toggleFullScreen(); });
+    if (Keyboard::keyPressed(Keyboard::Key::F10)) {
+        static bool vsync = true;
+        vsync = !vsync;
+        Thread::Render::runNextFrame([=]() { Window::setVsync(vsync); });
+    }
 
     if (Keyboard::altDown()) {
         if (Keyboard::keyPressed(Keyboard::Key::_0))

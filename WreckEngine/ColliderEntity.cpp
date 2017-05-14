@@ -83,26 +83,27 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 
 //Given a collision force F, calculates the change in angular acceleration it causes
 vec3 ColliderEntity::calcAngularAccel(Manifold& m, vec3 F) {
-	vec3 torque;
-	if (!m.colPoints.size())
-		return torque;
+    vec3 torque;
+    if (!m.colPoints.size())
+        return torque;
+    
+    mat3 C(0); // mass-weighted covariance
+    // assumes uniform mass distribution; we can account for non-uniform distributions with constraints
+    const auto m_n = body.mass() / m.colPoints.size();
+    for (auto& colPoint : m.colPoints) {
+        const auto r = colPoint - _collider->framePos(); // vector from the center of mass to the collision point
+        torque += glm::cross(r, F); // torque = r x F = |r||F|sin(theta)
+        C += mat3(m_n * r.x * r, m_n * r.y * r, m_n * r.z * r); // m_n * r * r_transpose
+    }
+    const auto trace_C = C[0][0] + C[1][1] + C[2][2];
+    
+    const auto iT = mat3(trace_C) - C; // inertia tensor = Id_3x3 * trace(C) - C
 
-	auto C = mat3(0);// mass-weighted covariance
-	//assumes uniform mass distribution; we can account for non-uniform distributions with constraints
-	auto m_n = body.mass() / m.colPoints.size();
-	for (auto& colPoint : m.colPoints) {
-		auto r = colPoint - _collider->framePos();//vector from the center of mass to the collision point
-		torque += glm::cross(r, F);//torque = r x F = |r||F|sin(theta)
-		C += m_n * mat3(r.x * r, r.y * r, r.z * r);//m_n * r * r_transpose
-	}
-	auto trace_C = C[0][0] + C[1][1] + C[2][2];
+    const auto iT0 = iT[0], iT1 = iT[1], iT2 = iT[2];
+    const auto at_iT = m.axis * vec3(iT0[0] + iT0[1] + iT0[2]
+                                   , iT1[0] + iT1[1] + iT1[2]
+                                   , iT2[0] + iT2[1] + iT2[2]); // axis_transpose * inertia tensor (matrices are column major)
 
-	auto iT = mat3() * trace_C - C;//inertia tensor = Id_3x3 * trace(C) - C
-
-	auto at_iT = vec3(m.axis.x * (iT[0][0] + iT[0][1] + iT[0][2])
-		            , m.axis.y * (iT[1][0] + iT[1][1] + iT[1][2])
-		            , m.axis.z * (iT[2][0] + iT[2][1] + iT[2][2]));//axis_transpose * inertia tensor (matrices are column major)
-
-	auto inertia = glm::dot(at_iT, m.axis);//axis_transpose * iT * axis = (axis_transpose * inertia tensor) . axis
-	return (inertia) ? torque / inertia : vec3();
+    const auto inertia = glm::dot(at_iT, m.axis); // axis_transpose * iT * axis = (axis_transpose * inertia tensor) . axis
+    return (inertia) ? torque / inertia : vec3();
 }

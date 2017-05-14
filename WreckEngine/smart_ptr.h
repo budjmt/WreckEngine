@@ -39,10 +39,10 @@ private:
 };
 
 template<class T, class... Args>
-alloc_ptr<T> make_alloc(Args&&... args) { return alloc_ptr<T>(make_unique<T>(args)); }
+alloc_ptr<T> make_alloc(Args&&... args) { return alloc_ptr<T>{make_unique<T>(args)}; }
 
 template<class T>
-alloc_ptr<T> make_alloc(size_t size) { return alloc_ptr<T>(make_unique(size)); }
+alloc_ptr<T> make_alloc(size_t size) { return alloc_ptr<T>{make_unique(size)}; }
 
 template<class T, class Deleter = std::default_delete<T>>
 using unique = std::unique_ptr<T, Deleter>;

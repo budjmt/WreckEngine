@@ -81,7 +81,6 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     Window::window = glfwCreateWindow(width, height, "Wreck Engine", nullptr, nullptr);
     if (!Window::window) exit('w');
     glfwMakeContextCurrent(Window::window);
-    //glfwSwapInterval(0);
     Window::defaultResize(Window::window, width, height);
 
     // Center the window
