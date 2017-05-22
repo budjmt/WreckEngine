@@ -44,12 +44,12 @@ namespace Render {
 
     class MaterialPass {
     public:
-        MaterialPass(const size_t gBufferSize);
-        MaterialPass(const std::vector<GLuint>& targets);
+        MaterialPass(size_t gBufferSize);
+        explicit MaterialPass(const std::vector<GLuint>& targets);
 
-        void scheduleDraw(const size_t group, const DrawCall d, const DrawCall::Params p);
-        void scheduleDrawArrays  (const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const uint32_t instances = 1);
-        void scheduleDrawElements(const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const GLenum element_t, const uint32_t instances = 1);
+        void scheduleDraw(size_t group, DrawCall d, DrawCall::Params p);
+        void scheduleDrawArrays  (size_t group, const GLVAO* vao, const Info* mat, GLenum tesselPrim, uint32_t count, uint32_t instances = 1);
+        void scheduleDrawElements(size_t group, const GLVAO* vao, const Info* mat, GLenum tesselPrim, uint32_t count, GLenum element_t, uint32_t instances = 1);
         
         void render();
 
@@ -75,7 +75,7 @@ namespace Render {
 
             // RAII helper
             struct Helper {
-                Helper(Group& g) : group(g) { group.setup(); }
+                explicit Helper(Group& g) : group(g) { group.setup(); }
                 ~Helper() { group.cleanup(); }
                 void draw();
             private:
@@ -112,10 +112,10 @@ namespace Render {
         Renderer* next = nullptr;
         std::function<void()> setup = [](){};
 
-        static void init(const size_t max_gBufferSize);
+        static void init(size_t max_gBufferSize);
 
-        Renderer(const size_t gBufferSize) : objects(gBufferSize) {}
-        Renderer(const std::vector<GLuint>& targets) : objects(targets) {}
+        Renderer(size_t gBufferSize) : objects(gBufferSize) {}
+        explicit Renderer(const std::vector<GLuint>& targets) : objects(targets) {}
 
         void render();
         void renderChildren();

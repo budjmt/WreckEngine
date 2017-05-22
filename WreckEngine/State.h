@@ -18,7 +18,7 @@
 //-----------------------------------------
 class State {
 public:
-    State(const std::string _name) 
+    State(std::string _name) 
         : name(_name), handler(Event::Handler(this, Event::Handler::add(name + "_state"), nullptr)) {}
 
     Event::Handler::func_t& handler_func = handler.handler;

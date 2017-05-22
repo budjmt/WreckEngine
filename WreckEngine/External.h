@@ -14,8 +14,8 @@ namespace Thread {
     // they can be run synchronously or asynchronously, depending on the requirements, 
     // e.g. input polling must be synchronous while full screening doesn't need to be
     namespace Main {
-        std::future<void> runAsync(std::function<void()> func);
-        inline void run(std::function<void()> func) { runAsync(func).wait(); }
+        std::future<void> runAsync(const std::function<void()>& func);
+        inline void run(const std::function<void()>& func) { runAsync(func).wait(); }
         void tryExecute(); // intended only to be executed by the main thread
         void flush(); // flushes the remainder of the command queue to free up any pending calls
     };

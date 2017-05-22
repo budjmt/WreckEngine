@@ -52,7 +52,7 @@ private:
     ACCS_G (private, vec3, right);
 
     // computes are const, so these must be mutable
-    mutable bool dirtyComp, dirtyMats;
+    mutable bool dirtyComp = true, dirtyMats = true;
     mutable copy_wrap<std::shared_mutex> computedMut;
     mutable alloc<Transform> computed;
     mutable alloc<mat_cache> mats;

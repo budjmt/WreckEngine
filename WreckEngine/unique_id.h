@@ -9,8 +9,8 @@
 #include "Random.h"
 
 #define UNIQUE_NAMES(access, type) \
-static uint32_t get(const std::string name) { return names.get(name); } \
-static uint32_t add(const std::string name) { return names.add(name); } \
+static uint32_t get(const std::string& name) { return names.get(name); } \
+static uint32_t add(const std::string& name) { return names.add(name); } \
 access: static unique_name<type> names; public: 
 
 template<typename T>
@@ -26,12 +26,12 @@ public:
 template<typename T>
 class unique_name : public unique_counter<T> {
 public:
-	static uint32_t get(const std::string name) { 
+	static uint32_t get(const std::string& name) { 
 		assert(ids.count(name)); // the name wasn't added before it was used
 		return ids.at(name); 
 	}
 
-	static uint32_t add(const std::string name) {
+	static uint32_t add(const std::string& name) {
 		const auto res = ids.insert({ name, counter() + 1 });
 		if (!res.second) throw "The name \"" + name + "\" is already in use; ID: " + std::to_string(ids[name]);
 		return ++counter();

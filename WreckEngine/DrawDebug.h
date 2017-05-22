@@ -31,7 +31,7 @@ struct InstMesh {
     std::vector<T> instances;
 
     InstMesh() = default;
-    InstMesh(const Mesh* mesh, const size_t numInsts, const size_t baseIndex, const std::function<void(GLattrarr&)> attrs) {
+    InstMesh(const Mesh* mesh, const size_t numInsts, const size_t baseIndex, const std::function<void(GLattrarr&)>& attrs) {
         GLattrarr attrSetup;
 
         vao.create();

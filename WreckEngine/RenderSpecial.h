@@ -11,7 +11,7 @@ namespace Render {
         GLresource<vec3> ambientColor;
         bool lightingOn = true;
 
-        LitRenderer(const size_t gBufferSize) : deferred({ 0, 1, 2, 3 }), forward(gBufferSize), lightR({ 4, 5 }) {
+        explicit LitRenderer(size_t gBufferSize) : deferred({ 0, 1, 2, 3 }), forward(gBufferSize), lightR({ 4, 5 }) {
             deferred.setup = []() {
                 GL_CHECK(glDisable(GL_BLEND));
             };

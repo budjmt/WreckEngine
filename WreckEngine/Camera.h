@@ -20,7 +20,7 @@ public:
     void update(double dt);
     void draw();
 
-	float znear = 0.01f, zfar = 500.f;
+    float znear = 0.01f, zfar = 500.f;
 
     vec3 forward();
     vec3 up();

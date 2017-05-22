@@ -23,8 +23,8 @@ struct Adj { std::pair<GLuint, GLuint> faces, edge; };
 struct GaussMap {
 	//keys are untransformed normals, adjacencies use indices because of rotations
 	std::unordered_map<std::string, std::vector<Adj>> adjacencies;
-	void addAdj(const vec3 v, const Adj a);
-	const std::vector<Adj>& getAdjs(const vec3 v) const;
+	void addAdj(vec3 v, Adj a);
+	const std::vector<Adj>& getAdjs(vec3 v) const;
 };
 
 struct SupportPoint { vec3 point; float proj; };

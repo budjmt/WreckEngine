@@ -248,7 +248,7 @@ namespace Light {
         }
 
         // equivalent to using resetGroups, addGroup (for each lightGroup), and then finishGroups
-        void setGroups(std::vector<Group<T>> lightGroups) {
+        void setGroups(std::vector<Group<T>>&& lightGroups) {
             groups = lightGroups;
             forwardBlock.block.size = 0;
             for (auto& group : groups) {
@@ -264,7 +264,7 @@ namespace Light {
         }
 
         // adds a group to the set
-        void addGroup(Group<T> lightGroup) {
+        void addGroup(Group<T>&& lightGroup) {
             addGroupImpl(lightGroup);
             groups.push_back(lightGroup);
         }

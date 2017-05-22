@@ -27,7 +27,7 @@ struct safe_ptr {
     using mutex_t = std::remove_pointer_t<std::result_of_t<decltype(&Lock::mutex)(Lock)>>;
 
     safe_ptr(T* ptr, mutex_t& mut) : value(ptr), lock(mut) {}
-    template<typename = std::enable_if<std::is_copy_constructible<T>::value>>
+    template<typename = std::enable_if_t<std::is_copy_constructible<T>::value>>
     auto operator*() { return *value; }
     auto operator->() { return value; }
 
@@ -75,7 +75,7 @@ template<class T, class Lock> using safe = safe_ptr<T, Lock>;
 struct void_array {
     const size_t capacity;
 
-    void_array(const size_t _capacity) : capacity(_capacity), data(make_unique<shared<void>[]>(_capacity)) {}
+    explicit void_array(size_t _capacity) : capacity(_capacity), data(make_unique<shared<void>[]>(_capacity)) {}
 
     // peeks at/gets the data [index] elements into the structure and puts it on the stack as a variable of type T
     template<typename T> inline T peek(const size_t index) const { return *(T*)data[index].get(); }

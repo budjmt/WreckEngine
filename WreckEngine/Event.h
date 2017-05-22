@@ -34,8 +34,8 @@ namespace Event {
     // These are the *real* events
     struct Message {
         // [members] = the number of pieces of data that get sent with the event
-        Message(const std::string name, const EndpointData triggerData, const size_t _members = 0) : Message(get(name), triggerData, _members) {}
-        Message(const uint32_t _id, const EndpointData triggerData, const size_t _members = 0) : id(_id), trigger(triggerData), data(void_array(_members)) {}
+        Message(const std::string& name, EndpointData triggerData, size_t _members = 0) : Message(get(name), triggerData, _members) {}
+        Message(uint32_t _id, EndpointData triggerData, size_t _members = 0) : id(_id), trigger(triggerData), data(void_array(_members)) {}
 
         // the actual id of the event, indicates what data should be extracted
         // e.g. id == Message::get("explode")
@@ -58,11 +58,11 @@ namespace Event {
         static std::unordered_map<uint32_t, std::vector<Handler*>> handlerTypes;
 
     public:
-        static void sendToHandler(const uint32_t handler_id, Message e);
+        static void sendToHandler(uint32_t handler_id, Message e);
         // for standard dispatch, nothing special is required, just pass UNIQUE_TYPE_ID(T)
         // for polymorphic dispatch, either add the PARENT_TYPE macro below the child definition or the CHILD_TYPE macro below the parent definition
         // this will enable the association at runtime
-        static void sendToType(const uint32_t type_id, Message e);
+        static void sendToType(uint32_t type_id, Message e);
 
         // useful if the event isn't triggered by any object in particular, like input events
         static Trigger central_trigger;
@@ -76,12 +76,12 @@ namespace Event {
         const EndpointData info;
 
         template<class Owner> Trigger(Owner* _this) : Trigger(_this, Random::get()) {}
-        template<class Owner> Trigger(Owner* _this, const std::string name) : Trigger(_this, get(name)) {}
-        template<class Owner> Trigger(Owner* _this, const uint32_t _id) : info(EndpointData(_id, _this)) { }
+        template<class Owner> Trigger(Owner* _this, const std::string& name) : Trigger(_this, get(name)) {}
+        template<class Owner> Trigger(Owner* _this, uint32_t _id) : info(EndpointData(_id, _this)) { }
 
         // sends an event to a single handler
         template<typename... Args>
-        void sendEvent(const uint32_t handler_id, const uint32_t event_id, Args&&... messageConstructArgs) {
+        void sendEvent(uint32_t handler_id, uint32_t event_id, Args&&... messageConstructArgs) {
             Message e(event_id, info, sizeof...(Args));
             e.data.construct(std::forward<Args>(messageConstructArgs)...);
             Dispatcher::sendToHandler(handler_id, std::move(e));
@@ -89,7 +89,7 @@ namespace Event {
 
         // sends an event to a group of handlers registered with the same type
         template<typename handler_t, typename... Args>
-        void sendBulkEvent(const uint32_t event_id, Args&&... messageConstructArgs) {
+        void sendBulkEvent(uint32_t event_id, Args&&... messageConstructArgs) {
             Message e(event_id, info, sizeof...(Args));
             e.data.construct(std::forward<Args>(messageConstructArgs)...);
             Dispatcher::sendToType(UNIQUE_TYPE_ID(handler_t), std::move(e));
@@ -105,16 +105,17 @@ namespace Event {
         typedef std::function<void(param_t)> func_t;
 
         const EndpointData info;
+        func_t handler;
 
-        template<class Owner> Handler(Owner* _this, const func_t f) : Handler(_this, Random::get(), f) {}
-        template<class Owner> Handler(Owner* _this, const std::string name, const func_t f) : Handler(_this, get(name), f) {}
-        template<class Owner> Handler(Owner* _this, const uint32_t _id, const func_t f) : info(EndpointData(_id, _this)), handler(f) { register_self(); }
+        template<class Owner> Handler(Owner* _this, func_t f) : Handler(_this, Random::get(), f) {}
+        template<class Owner> Handler(Owner* _this, const std::string& name, func_t f) : Handler(_this, get(name), f) {}
+        template<class Owner> Handler(Owner* _this, uint32_t _id, func_t f) : info(EndpointData(_id, _this)), handler(f) { register_self(); }
 
         Handler(const Handler& other) : info(other.info), handler(other.handler) { register_self(); }
-        Handler(Handler&& other) : info(other.info), handler(other.handler) { register_self(); }
+        Handler(Handler&& other)      : info(other.info), handler(other.handler) { register_self(); }
         ~Handler() { unregister_self(); }
-
-        func_t handler;
+        Handler& operator=(const Handler& other) = delete;
+        Handler& operator=(Handler&& other) = delete;
 
         // processes a Message received from the Dispatcher through the handler function
         inline void process(const Message& e) { handler(e); }

@@ -9,7 +9,7 @@
 
 struct UpdateBase {
 
-    UpdateBase(std::thread* thread) { updateThreads.push_back(thread); }
+    explicit UpdateBase(std::thread* thread) { updateThreads.push_back(thread); }
     static void join() { 
         exitCondition.notify_all(); 
         for (auto thread : updateThreads) thread->join(); 

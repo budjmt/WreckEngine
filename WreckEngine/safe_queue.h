@@ -91,7 +91,7 @@ public:
     }
 
     // [func] is a function that iterates over the list, "consuming" it
-    void consume(std::function<void(std::vector<T>&)> func) {
+    void consume(const std::function<void(std::vector<T>&)>& func) {
         if (numSealed == 0) return;
         
         auto& oldest = getOldest();
@@ -131,7 +131,7 @@ public:
     }
 
     // consumes all threads' frame_vectors one at a time
-    void consumeAll(std::function<void(std::vector<T>&)> func) { 
+    void consumeAll(const std::function<void(std::vector<T>&)>& func) { 
         for (auto& frameVec : vectors) {
             frameVec.second.consume(func);
         }

@@ -15,27 +15,30 @@
 
 typedef GLint GLsampler;
 
-#define WR_GL_OP_PARENS(handleIdType, handleName) handleIdType& operator()() const { return handleName->id; }
-#define WR_GL_OP_EQEQ(type, handleName) bool operator==(const type& other) const { return handleName->id == other.handleName->id; }
+#define WR_GL_OP_PARENS(handleName) GLuint& operator()() { return handleName->id; } WR_GL_OP_PARENS_CONST(handleName)
+#define WR_GL_OP_PARENS_CONST(handleName) const GLuint& operator()() const { return handleName->id; }
+#define WR_GL_OP_EQEQ(type, handleName) bool operator==(const type& other) const { return *handleName == *other.handleName; }
 
 inline GLint getGLVal(GLenum value) { GLint val; GL_CHECK(glGetIntegerv(value, &val)); return val; }
 
 #define CHECK_GL_VERSION(major, minor) glewIsSupported("GL_VERSION_" #major "_" #minor)
 
-#define GL_HANDLE_DEF(delete_code) \
-struct handle { \
-    GLuint id; \
-    handle() = default; \
-    handle(GLuint _id) : id(_id) {} \
-    ~handle() { \
-        if (GLFWmanager::initialized && id != def) \
-            GL_CHECK(delete_code); \
-    } \
-    handle(const handle&) = default; \
-    handle& operator=(const handle&) = default; \
-    handle(handle&&) = default; \
-    handle& operator=(handle&&) = default; \
-    inline bool valid() const { return id != def; } \
+template<typename T>
+struct GLhandle {
+    GLuint id;
+    GLhandle() = default;
+    explicit GLhandle(GLuint _id) : id(_id) {}
+    ~GLhandle() { 
+        if (GLFWmanager::initialized && id != def)
+            T::deleter(id);
+    }
+    GLhandle(const GLhandle&) = default;
+    GLhandle& operator=(const GLhandle&) = default;
+    GLhandle(GLhandle&&) = default;
+    GLhandle& operator=(GLhandle&&) = default;
+
+    inline bool operator==(const GLhandle& other) { return id == other.id; }
+    inline bool valid() const { return id != def; } 
 };
 
 namespace {
@@ -94,16 +97,15 @@ template<> struct GLuniform<mat4>      : public GLuniform_t { inline void update
 // wraps a texture. [type] reflects what type of sampler it needs.
 // https://www.opengl.org/wiki/Sampler_(GLSL)
 struct GLtexture {
-private:
-    GL_HANDLE_DEF(glDeleteTextures(1, &id));
-public:
-    shared<handle> texture = make_shared<handle>(def);
+    using handle_t = GLhandle<GLtexture>;
+    shared<handle_t> texture = make_shared<handle_t>(def);
     GLenum target;
-    inline WR_GL_OP_PARENS(GLuint, texture);
+    inline WR_GL_OP_PARENS(texture);
     inline WR_GL_OP_EQEQ(GLtexture, texture);
 
     static GLint getFormatPitch(GLenum format);
 
+    static void deleter(const GLuint& id) { GL_CHECK(glDeleteTextures(1, &id)); }
     inline bool valid() const { return texture->valid(); }
 
     inline void create(const GLenum _type = GL_TEXTURE_2D, const GLint maxMipLevel = 0) {
@@ -138,7 +140,7 @@ public:
     }
 
     inline void unload() {
-        texture->~handle();
+        texture->~GLhandle();
         texture->id = def;
     }
 
@@ -222,14 +224,13 @@ private:
 
 // wraps a buffer object on the GPU.
 struct GLbuffer {
-private:
-    GL_HANDLE_DEF(glDeleteBuffers(1, &id));
-public:
-    shared<handle> buffer = make_shared<handle>(def);
+    using handle_t = GLhandle<GLbuffer>;
+    shared<handle_t> buffer = make_shared <handle_t>(def);
     GLenum target, usage;
     size_t size = 0;
-    inline WR_GL_OP_PARENS(GLuint, buffer);
+    inline WR_GL_OP_PARENS(buffer);
 
+    static void deleter(const GLuint& id) { GL_CHECK(glDeleteBuffers(1, &id)); }
     inline bool valid() const { return buffer->valid(); }
 
     inline GLint getVal(GLenum value) const {
@@ -314,12 +315,11 @@ public:
 
 // wraps a VAO, stores bindings for attributes and buffers after binding
 struct GLVAO {
-private:
-    GL_HANDLE_DEF(glDeleteVertexArrays(1, &id));
-public:
-    shared<handle> vao = make_shared<handle>(def);
-    inline WR_GL_OP_PARENS(GLuint, vao);
+    using handle_t = GLhandle<GLVAO>;
+    shared<handle_t> vao = make_shared<handle_t>(def);
+    inline WR_GL_OP_PARENS(vao);
 
+    static void deleter(const GLuint& id) { GL_CHECK(glDeleteVertexArrays(1, &id)); }
     inline bool valid() const { return vao->valid(); }
 
     inline void create() const {
@@ -352,12 +352,11 @@ struct GLuniformblock : public GLuniform<T> {
 
 // wraps a compiled shader
 struct GLshader {
-private:
-    GL_HANDLE_DEF(glDeleteShader(id));
-public:
+    using handle_t = GLhandle<GLshader>;
     GLenum type = def;
-    inline WR_GL_OP_PARENS(const GLuint, shader);
+    inline WR_GL_OP_PARENS_CONST(shader);
 
+    static void deleter(const GLuint& id) { GL_CHECK(glDeleteShader(id)); }
     inline bool valid() const { return shader->valid(); }
 
     // creates and compiles a shader of [type] from [body] and stores it
@@ -375,26 +374,26 @@ public:
         return res;
     }
 private:
-    shared<handle> shader = make_shared<handle>(def);
+    shared<handle_t> shader = make_shared<handle_t>(def);
     friend struct GLprogram;
 };
 
 // wraps a shader program [linked from several shaders]
 struct GLprogram {
-private:
-    GL_HANDLE_DEF(glDeleteProgram(id));
-public:
     GLshader vertex, tessControl, tessEval, geometry, fragment;
     GLshader compute; // this must be by itself
     bool isCompute = false;
-    shared<handle> program = make_shared<handle>(def);
-    inline WR_GL_OP_PARENS(GLuint, program);
 
+    using handle_t = GLhandle<GLprogram>;
+    shared<handle_t> program = make_shared<handle_t>(def);
+    inline WR_GL_OP_PARENS(program);
+
+    static void deleter(const GLuint& id) { GL_CHECK(glDeleteProgram(id)); }
     inline bool valid() const { return program->valid(); }
 
     // deletes the program if it exists and creates a new one; this preserves the shaders used without resetting the pointer
     inline void refresh() {
-        program->~handle();
+        program->~GLhandle();
         program->id = def;
         create();
     }
@@ -509,13 +508,12 @@ public:
 //   - All attachments are complete
 //   - All attachments have the same number of multi-samples
 struct GLframebuffer {
-private:
-    GL_HANDLE_DEF(glDeleteFramebuffers(1, &id));;
-public:
-    shared<handle> framebuffer = make_shared<handle>(def);
+    using handle_t = GLhandle<GLframebuffer>;
+    shared<handle_t> framebuffer = make_shared<handle_t>(def);
     GLenum type = GL_FRAMEBUFFER;
-    inline WR_GL_OP_PARENS(GLuint, framebuffer);
+    inline WR_GL_OP_PARENS(framebuffer);
 
+    static void deleter(const GLuint& id) { GL_CHECK(glDeleteFramebuffers(1, &id)); }
     inline bool valid() const { return framebuffer->valid(); }
 
     inline GLenum check() const { GLenum res; GL_CHECK(res = glCheckFramebufferStatus(type)); return res; }
@@ -624,10 +622,10 @@ template<typename T, bool custom = false>
 class GLresource : public GLres {
 public:
     GLresource() = default;
-    GLresource(const GLuniform<T> loc) : location(loc) {}
+    GLresource(GLuniform<T> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : location(p.getUniform<T>(name)) {}
 
-    T value;
+    T value{};
 
     void update() const override { location.update(value); }
 
@@ -639,8 +637,8 @@ template<typename T>
 class GLresource<T, true> : public GLres {
 public:
     GLresource() = default;
-    GLresource(const GLuniform<T> loc, std::function<T()> update) : location(loc), update_func(update) {}
-    GLresource(const GLprogram& p, const char* name, std::function<T()> update) : GLresource(p.getUniform<T>(name), update) {}
+    GLresource(GLuniform<T> loc, const std::function<T()>& update) : location(loc), update_func(update) {}
+    GLresource(const GLprogram& p, const char* name, const std::function<T()>& update) : GLresource(p.getUniform<T>(name), update) {}
 
     void update() const override { location.update(update_func()); }
 
@@ -656,7 +654,7 @@ template<>
 class GLresource<GLtime> : public GLres {
 public:
     GLresource() = default;
-    GLresource(const GLuniform<float> loc) : location(loc) {}
+    GLresource(GLuniform<float> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : GLresource(p.getUniform<float>(name)) {}
 
     void update() const override {
@@ -673,7 +671,7 @@ template<>
 class GLresource<GLresolution> : public GLres {
 public:
     GLresource() = default;
-    GLresource(const GLuniform<vec2> loc) : location(loc) {}
+    GLresource(GLuniform<vec2> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : location(p.getUniform<vec2>(name)) {}
 
     void update() const override { location.update(vec2(Window::width, Window::height)); }

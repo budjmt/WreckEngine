@@ -102,14 +102,14 @@ void PostProcessChain::init() {
     triangle.unbind();
 }
 
-void MaterialPass::scheduleDraw(const size_t group, const DrawCall d, const DrawCall::Params p) { 
+void MaterialPass::scheduleDraw(size_t group, DrawCall d, DrawCall::Params p) { 
     assert(renderGroups.size() > group);
     auto& renderGroup = renderGroups[group];
     renderGroup.drawCalls.push_back(d); 
     renderGroup.params.push_back(p);
 }
 
-void MaterialPass::scheduleDrawArrays(const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const uint32_t instances) {
+void MaterialPass::scheduleDrawArrays(size_t group, const GLVAO* vao, const Info* mat, GLenum tesselPrim, uint32_t count, uint32_t instances) {
     DrawCall d;
     d.vao = vao;
     d.material = mat;

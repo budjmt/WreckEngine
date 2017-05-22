@@ -104,7 +104,7 @@ void Mesh::scaleTo(const vec3 s) {
     if (!(epsCheck(d.x) && epsCheck(d.y) && epsCheck(d.z))) scale(s / old_s);
 }
 
-void Mesh::rotate(const quat q) {
+void Mesh::rotate(const quat& q) {
     const auto rot = glm::rotate(q.theta(), q.axis());
     for (auto& vert : _data.verts) vert = (vec3)(rot * vec4(vert, 0));
     for (auto& normal : _data.normals) normal = (vec3)(rot * vec4(normal, 0));

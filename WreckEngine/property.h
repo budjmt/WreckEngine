@@ -153,13 +153,13 @@ template<class P, class T>
 struct property<P, T, GET_SET> : prop_g<P, T>, prop_s<P, T> {
 	property<P, T, GET_SET>(P* parent, T(P::*getter)() const, const T&(P::*setter)(T)) : prop_g(parent, getter), prop_s(parent, setter) { }
 	inline const T& operator=(T value) { return (s_parent->*set)(value); }
-	inline const T& operator+=(const T value) { return operator=(g() + value); }
-	inline const T& operator-=(const T value) { return operator=(g() - value); }
-	inline const T& operator*=(const T value) { return operator=(g() * value); }
-	inline const T& operator/=(const T value) { return operator=(g() / value); }
-	inline const T& operator&=(const T value) { return operator=(g() & value); }
-	inline const T& operator|=(const T value) { return operator=(g() | value); }
-	inline const T& operator^=(const T value) { return operator=(g() ^ value); }
-	inline const T& operator>>=(const size_t value) { return operator=(g() >> value); }
-	inline const T& operator<<=(const size_t value) { return operator=(g() << value); }
+	inline const T& operator+=(T value) { return operator=(g() + value); }
+	inline const T& operator-=(T value) { return operator=(g() - value); }
+	inline const T& operator*=(T value) { return operator=(g() * value); }
+	inline const T& operator/=(T value) { return operator=(g() / value); }
+	inline const T& operator&=(T value) { return operator=(g() & value); }
+	inline const T& operator|=(T value) { return operator=(g() | value); }
+	inline const T& operator^=(T value) { return operator=(g() ^ value); }
+	inline const T& operator>>=(size_t value) { return operator=(g() >> value); }
+	inline const T& operator<<=(size_t value) { return operator=(g() << value); }
 };

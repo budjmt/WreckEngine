@@ -111,7 +111,7 @@ quat operator*(const quat& q, float f) { return quat(q) *= f; }
 quat operator/(const quat& q, float f) { return quat(q) /= f; }
 quat operator*(const quat& a, const quat& b) { return quat(a) *= b; }
 
-float quat::length(const quat& q) { return length(q.vals); }
+float quat::length(const quat& q) { return glm::length(q.vals); }
 
 quat quat::pow(const quat& q, float e) { return quat::rotation(q._theta * e, q._axis); }
 quat quat::inverse(const quat& q) { return quat(q.v0, -q.v); }

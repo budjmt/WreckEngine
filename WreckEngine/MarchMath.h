@@ -51,9 +51,9 @@ public:
     quat() : v(), v0(1) {};
     quat(float _x, float _y, float _z, float _w);
     quat(float v0, vec3 _v);
-    quat(vec4 _v);
+    explicit quat(vec4 _v);
     quat(vec3 a, float t);
-    quat(const mat4& rot);
+    explicit quat(const mat4& rot);
 
     quat(const quat&) = default;
     quat& operator=(const quat&) = default;

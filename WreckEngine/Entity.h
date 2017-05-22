@@ -11,7 +11,7 @@ class Entity
 {
 public:
     Entity() = default;
-    Entity(shared<GraphicsWorker> s);
+    explicit Entity(shared<GraphicsWorker> s);
     Entity(vec3 p, vec3 sc, vec3 rA, float r, shared<GraphicsWorker> s);
 
     virtual ~Entity() = default;
@@ -38,7 +38,7 @@ public:
 class LogicEntity : public Entity {
     using update_func = void(*)(LogicEntity*, double);
 public:
-    LogicEntity(update_func f) : Entity(), custom_update(f) { }
+    explicit LogicEntity(update_func f) : Entity(), custom_update(f) { }
     update_func custom_update;
     void update(double dt) { custom_update(this, dt); }
     void draw() {}

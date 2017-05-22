@@ -118,7 +118,7 @@ std::future<void> completed_future() {
     return temp.get_future();
 }
 
-std::future<void> Thread::Main::runAsync(std::function<void()> func) { 
+std::future<void> Thread::Main::runAsync(const std::function<void()>& func) { 
     // return a completed future if the program is exiting
     if (exiting) {
         return completed_future();

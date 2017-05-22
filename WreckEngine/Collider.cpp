@@ -765,8 +765,8 @@ void Collider::setEdge(std::pair<GLuint, GLuint> e, const GLuint index) {
 
 const GaussMap& Collider::getGaussMap() const { return gauss; }
 
-const std::vector<Adj>& GaussMap::getAdjs(const vec3 v) const { return adjacencies.at(to_string(v)); }
-void GaussMap::addAdj(const vec3 v, const Adj a) { adjacencies[to_string(v)].push_back(a); }
+const std::vector<Adj>& GaussMap::getAdjs(vec3 v) const { return adjacencies.at(to_string(v)); }
+void GaussMap::addAdj(vec3 v, Adj a) { adjacencies[to_string(v)].push_back(a); }
 
 bool AABB::intersects(const AABB& other) const {
 	auto xSeparate = (center.x - halfDims.x > other.center.x + other.halfDims.x) || (center.x + halfDims.x < other.center.x - other.halfDims.x);

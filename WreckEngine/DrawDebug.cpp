@@ -70,11 +70,11 @@ void DrawDebug::camera(Camera* c) { cam = c; }
 void DrawDebug::setRenderers(Render::MaterialPass* deferred, Render::MaterialPass* forward) {
     struct X { 
         X(DrawDebug* d, Render::MaterialPass* r) { 
-			d->fillIndex = r->addGroup([] {
-				//GL_CHECK(glEnable(GL_CULL_FACE));
-			}, [] {
-				//GL_CHECK(glDisable(GL_CULL_FACE));
-			});
+            d->fillIndex = r->addGroup([] {
+                //GL_CHECK(glEnable(GL_CULL_FACE));
+            }, [] {
+                //GL_CHECK(glDisable(GL_CULL_FACE));
+            });
             d->wireframeIndex = r->addGroup([]() { 
                 GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)); 
                 GL_CHECK(glEnable(GL_CULL_FACE));

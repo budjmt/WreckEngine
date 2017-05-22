@@ -37,7 +37,7 @@ public:
     void translateTo(const vec3 t);
     void scale(const vec3 s);
     void scaleTo(const vec3 s);
-    void rotate(const quat q);
+    void rotate(const quat& q);
 
     shared<RenderData> getRenderData();
 
