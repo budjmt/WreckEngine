@@ -7,6 +7,7 @@
 
 struct GLFWmanager {
     static bool initialized;
+    static GLFWwindow* hidden_context; // hidden context meant for handling non-rendering api calls
     ~GLFWmanager() {
         if (initialized) {
             initialized = false;

@@ -20,6 +20,14 @@ namespace Thread {
         void flush(); // flushes the remainder of the command queue to free up any pending calls
     };
 
+    // job thread specifically for GL calls that must be called immediately
+    namespace JobGfx {
+        std::future<void> runAsync(const std::function<void()>& func);
+        inline void run(const std::function<void()>& func) { runAsync(func).wait(); }
+        void tryExecute();
+        void flush(); // flushes the remainder of the command queue to free up any pending calls
+    }
+
     // the rendering thread has a pre-frame hook for external threads to push GL state changes
     // the commands cannot be awaited, as their potential execution timing doesn't make sense in that context
     // the waitForFrame() function can be used externally to delay execution until a render frame completes

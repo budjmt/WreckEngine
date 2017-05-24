@@ -138,7 +138,6 @@ void DrawDebug::drawVectors() {
         }
     });
 
-    vecVAO.bind();
     vecBuffer.bind();
     vecBuffer.data(vectorInsts.data());
     forward->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, vectorInsts.size());

@@ -51,6 +51,8 @@ std::condition_variable UpdateBase::exitCondition;
 std::vector<std::thread*> UpdateBase::updateThreads;
 
 bool GLFWmanager::initialized = false;
+GLFWwindow* GLFWmanager::hidden_context = nullptr;
+
 bool GLEWmanager::initialized = false;
 
 GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
@@ -83,6 +85,9 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     glfwMakeContextCurrent(Window::window);
     Window::defaultResize(Window::window, width, height);
 
+    hidden_context = glfwCreateWindow(1, 1, "", nullptr, Window::window);
+    if (!hidden_context) exit('h');
+
     // Center the window
     glfwSetWindowPos(Window::window, (vm->width - width) / 2, (vm->height - height) / 2);
 
@@ -105,6 +110,8 @@ void GLEWmanager::initGLValues() {
 namespace {
     safe_queue<std::packaged_task<void()>> mainCommands;
     
+    safe_queue<std::packaged_task<void()>> gfxCommands;
+
     safe_queue<std::function<void()>> preRenderCommands;
     std::mutex frameMutex;
     std::condition_variable frameEndCondition;
@@ -142,6 +149,32 @@ void Thread::Main::flush() {
     exiting = true;
     while (!mainCommands.empty())
         mainCommands.pop()();
+}
+
+std::future<void> Thread::JobGfx::runAsync(const std::function<void()>& func) { 
+    // return a completed future if the program is exiting
+    if (exiting) {
+        return completed_future();
+    }
+    std::packaged_task<void()> task(func);
+    auto future = task.get_future();
+    gfxCommands.push(std::move(task)); 
+    return future;
+}
+
+void Thread::JobGfx::tryExecute() {
+    using namespace std::chrono_literals;
+    constexpr auto duration = 10ms;
+
+    std::packaged_task<void()> command;
+    if (gfxCommands.tryPop(command, duration))
+        command();
+}
+
+void Thread::JobGfx::flush() {
+    exiting = true;
+    while (!gfxCommands.empty())
+        gfxCommands.pop()();
 }
 
 void Thread::Render::runNextFrame(std::function<void()> func) { preRenderCommands.push(func); }

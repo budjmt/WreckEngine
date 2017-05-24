@@ -44,8 +44,6 @@ struct {
 
 unique<Game> game;
 
-using namespace std;
-
 void init() {
     if (DEBUG)
         initDebug();
@@ -65,9 +63,9 @@ void init() {
     Render::Renderer::init(6);
 
     // this won't be initialized until after GLFW/GLEW are
-    //game = make_unique<TriPlay>(shaderProg);
+    game = make_unique<TriPlay>(shaderProg);
     //game = make_unique<UiTest>();
-    game = make_unique<TessellatorTest>();
+    //game = make_unique<TessellatorTest>();
     //game = make_unique<CubemapTest>();
 
     DrawDebug::getInstance().flush();
@@ -163,6 +161,8 @@ int main(int argc, char** argv) {
     // nullify context so it can be moved to the render thread
     glfwMakeContextCurrent(nullptr);
 
+    Update<0>   glJobs(&Thread::JobGfx::tryExecute, [] { glfwMakeContextCurrent(GLFWmanager::hidden_context); });
+
     Update<0>   regUpdate     (&update);
     Update<120> physicsUpdate (&physicsUpdate);
     Update<0>   render        (&draw, [] { glfwMakeContextCurrent(Window::window); });
@@ -173,6 +173,7 @@ int main(int argc, char** argv) {
         Thread::Main::tryExecute();
     }
     Thread::Main::flush();
+    Thread::JobGfx::flush();
 
     UpdateBase::join(); // join all the update threads to ensure destruction
     glfwMakeContextCurrent(Window::window); // ensure that the context is current for global destructors

@@ -59,7 +59,6 @@ struct InstMesh {
     }
     
     inline void update() const {
-        vao.bind();
         insts.bind();
         insts.data(instances.data());
     }
