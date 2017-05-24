@@ -1,13 +1,13 @@
 #include "DrawMesh.h"
 
-DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, const char* texFile, GLprogram shader) : DrawMesh(r, m, genTexture2D(texFile), shader) {}
-DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, GLtexture tex, GLprogram shader) : _mesh(m) { renderer = r; setup(tex, shader); }
-DrawMesh::DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, const char* texFile, GLprogram shader) : DrawMesh(r, make_shared<Mesh>(fd, fi), texFile, shader) {}
-DrawMesh::DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, GLtexture tex, GLprogram shader) : DrawMesh(r, make_shared<Mesh>(fd, fi), tex, shader) {}
+DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, const char* texFile, GLprogram shader, bool hasTangent) : DrawMesh(r, m, genTexture2D(texFile), shader, hasTangent) {}
+DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, GLtexture tex, GLprogram shader, bool hasTangent) : _mesh(m) { renderer = r; setup(tex, shader, hasTangent); }
+DrawMesh::DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, const char* texFile, GLprogram shader, bool hasTangent) : DrawMesh(r, make_shared<Mesh>(fd, fi), texFile, shader, hasTangent) {}
+DrawMesh::DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, GLtexture tex, GLprogram shader, bool hasTangent) : DrawMesh(r, make_shared<Mesh>(fd, fi), tex, shader, hasTangent) {}
 
-void DrawMesh::setup(GLtexture tex, GLprogram shader) {
+void DrawMesh::setup(GLtexture tex, GLprogram shader, bool hasTangent) {
     
-    auto renderData = _mesh->getRenderData();
+    auto renderData = _mesh->getRenderData(hasTangent);
 
     vArray.create();
     vArray.bind();
@@ -25,6 +25,7 @@ void DrawMesh::setup(GLtexture tex, GLprogram shader) {
     attrSetup.add<GLfloat>(FLOATS_PER_VERT);
     attrSetup.add<GLfloat>(FLOATS_PER_UV);
     attrSetup.add<GLfloat>(FLOATS_PER_NORM);
+    if (hasTangent) attrSetup.add<GLfloat>(FLOATS_PER_NORM);
     //enable attributes
     attrSetup.apply();
 

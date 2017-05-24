@@ -12,6 +12,14 @@ namespace {
     }
 }
 
+struct RenderData {
+    GLprogram prog;
+    GLuniform<mat4> mat;
+    GLuniform<vec3> pos;
+};
+
+RenderData objectData, normalMapData, forwardData;
+
 static GLresource<float> exposure;
 
 TriPlay::TriPlay(GLprogram prog) : Game(6)
@@ -96,7 +104,20 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     mesh->rigidBody.mass(100000);
     mainState->addEntity(mesh);
 
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cube, "Assets/butt.png", prog));
+    normalMapData.prog = loadProgram("Shaders/normalMapTest_v.glsl", "Shaders/normalMapTest_f.glsl");
+    //normalMapData.prog = prog;
+    normalMapData.mat = normalMapData.prog.getUniform<mat4>("cameraMatrix");
+
+    //auto cube2 = make_shared<Mesh>(*cube);
+    //auto cube2 = make_shared<Mesh>(*cylinder);
+    //cube2->resetRenderData();
+    auto cube2 = loadOBJ("Assets/phone.obj");
+    cube2->scaleTo(vec3(1.0f));
+    auto dm = make_shared<DrawMesh>(&renderer.deferred.objects, cube2, "Assets/butt.png", normalMapData.prog, true);
+    //dm->material.addTexture(Renderable::genTexture2D("Assets/face_nm.png"));
+    dm->material.addTexture(Renderable::genTexture2D("Assets/phone_nm.png"));
+    
+    mesh = make_shared<ColliderEntity>(dm);
     mesh->id = (void*)0xc2;
     mesh->transform.position = vec3(-2.5f, -2.5f, 0);
     mesh->rigidBody.floating(1);
@@ -104,7 +125,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     me = mesh;
 
     auto forwardProg = loadProgram("Shaders/forwardTest_v.glsl", "Shaders/forwardTest_f.glsl");
-    auto dm = make_shared<DrawMesh>(&renderer.forward.objects, sphere, "Assets/butt.png", forwardProg);
+    dm = make_shared<DrawMesh>(&renderer.forward.objects, sphere, "Assets/butt.png", forwardProg);
     mesh = make_shared<ColliderEntity>(dm);
     renderer.lights.connectLightBlocks(forwardProg, "PointBlock", "SpotlightBlock", "DirectionalBlock");
     dm->color = vec4(0, 1, 0.5f, 0.5f);
@@ -335,6 +356,8 @@ void TriPlay::draw() {
     auto mat = Camera::main->getCamMat();
     objectData.prog.use();
     objectData.mat.update(mat);
+    normalMapData.prog.use();
+    normalMapData.mat.update(mat);
     forwardData.prog.use();
     forwardData.mat.update(mat);
     forwardData.pos.update(Camera::main->transform.getComputed()->position);

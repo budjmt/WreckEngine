@@ -23,13 +23,6 @@ public:
     void draw();
 private:
     shared<Entity> me;
-    struct RenderData {
-        GLprogram prog;
-        GLuniform<mat4> mat;
-        GLuniform<vec3> pos;
-    };
-
-    RenderData objectData, forwardData;
 
     struct LightData {
         Light::Point light;

@@ -18,7 +18,7 @@ public:
     template<typename T> struct Face { std::vector<T> verts, uvs, normals; };
     typedef Face<vec3> FaceData;
     struct FaceIndex : Face<GLuint> {
-        std::vector<vec3> combinations;//all the unique v/u/n index combinations
+        std::vector<glm::ivec3> combinations; // all the unique v/u/n index combinations
     };
 
     Mesh(FaceData fd, FaceIndex fi);
@@ -39,14 +39,15 @@ public:
     void scaleTo(const vec3 s);
     void rotate(const quat& q);
 
-    shared<RenderData> getRenderData();
+    shared<RenderData> getRenderData(bool needsTangents = false);
+    void resetRenderData() { renderData.reset(); _indices.combinations.clear(); }
 
 protected:
-    ACCS_GS_T(protected, FaceData, const FaceData&, const FaceData&, data);
-    ACCS_GS_T(protected, FaceIndex, const FaceIndex&, const FaceIndex&, indices);
+    ACCS_GS_T (protected, FaceData, const FaceData&, const FaceData&, data);
+    ACCS_GS_T (protected, FaceIndex, const FaceIndex&, const FaceIndex&, indices);
 
     shared<RenderData> renderData;
 
-    vec3 h_dims = vec3(-1);
+    vec3 h_dims{ -1 };
     friend class DrawMesh;
 };

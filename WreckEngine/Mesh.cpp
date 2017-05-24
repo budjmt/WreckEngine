@@ -111,29 +111,61 @@ void Mesh::rotate(const quat& q) {
     renderData.reset();
 }
 
-shared<Mesh::RenderData> Mesh::getRenderData() {
+shared<Mesh::RenderData> Mesh::getRenderData(bool needsTangents) {
     if (renderData)
         return renderData;
+    
+    std::vector<vec3> tangents;
+    if (needsTangents) {
+        tangents.reserve(_indices.verts.size() / 3);
+        for (size_t i = 0, numVerts = _indices.verts.size(); i < numVerts; i += 3) {
+            const auto v0 = _data.verts[_indices.verts[i]]
+                     , v1 = _data.verts[_indices.verts[i + 1]]
+                     , v2 = _data.verts[_indices.verts[i + 2]];
+            const auto e1 = v1 - v0, e2 = v2 - v0;
+
+            const vec2 u0 = _data.uvs[_indices.uvs[i]]
+                     , u1 = _data.uvs[_indices.uvs[i + 1]]
+                     , u2 = _data.uvs[_indices.uvs[i + 2]];
+            const auto du1 = u1 - u0, du2 = u2 - u0;
+
+            auto tangent = du2.y * e1 - du1.y * e2;
+            tangent *= 1.f / (du1.x * du2.y + du2.x * du1.y);
+            //printf("Combo: %s, Tangent: %s\n", to_string(vec3(_indices.verts[i], _indices.verts[i + 1], _indices.verts[i + 2])).c_str(), to_string(tangent).c_str());
+            tangents.push_back(tangent);
+        }
+    }
+    const auto floatsPerVert = needsTangents ? 11 : 8;
+
+    const auto getCombIndex = [&](GLuint v, GLuint u, GLuint n) -> uint32_t {
+        uint32_t index = 0;
+        //TODO: fix this bottleneck! It's super duper slow!
+        for (const auto f : _indices.combinations) {
+            if (f.x == v && f.y == u && f.z == n) {
+                break;
+            }
+            ++index;
+        }
+        return index;
+    };
 
     RenderData render;
     for (size_t i = 0, numVerts = _indices.verts.size(); i < numVerts; ++i) {
-        bool inArr = false;
-        size_t index = 0;
         const auto v = _indices.verts[i], u = _indices.uvs[i], n = _indices.normals[i];
-        //TODO: fix this bottleneck! It's super duper slow!
-        for (const auto numCombs = _indices.combinations.size(); !inArr && index < numCombs; ++index) {
-            const auto f = _indices.combinations[index];
-            if (f.x == v && f.y == u && f.z == n) {
-                inArr = true;
-                --index;
-            }
-        }
-        if (!inArr) {
+        auto index = getCombIndex(v, u, n);
+
+        if (index == _indices.combinations.size()) {
+            _indices.combinations.push_back({ v, u, n });
+            render.vbuffer.reserve(render.vbuffer.size() + floatsPerVert);
             const auto vert = _data.verts[v], uv = _data.uvs[u], norm = _data.normals[n];
-            _indices.combinations.push_back(vec3(v, u, n));
             render.vbuffer.push_back(vert.x); render.vbuffer.push_back(vert.y); render.vbuffer.push_back(vert.z);
             render.vbuffer.push_back(uv.x); render.vbuffer.push_back(uv.y);
             render.vbuffer.push_back(norm.x); render.vbuffer.push_back(norm.y); render.vbuffer.push_back(norm.z);
+            if (needsTangents) {
+                const auto tangent = tangents[v / 3];
+                //printf("Vert: %s, Tangent: %s\n", to_string(vert).c_str(), to_string(tangent).c_str());
+                render.vbuffer.push_back(tangent.x); render.vbuffer.push_back(tangent.y); render.vbuffer.push_back(tangent.z);
+            }
         }
         render.ebuffer.push_back(index);
     }
