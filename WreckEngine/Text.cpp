@@ -321,8 +321,9 @@ Text::Instance::Instance() {
     renderInfo.setShaders(shader.program, &shader.cam, &fullOffset, &scale);
 }
 
-void Text::Instance::queueForDraw()
+void Text::Instance::queueForDraw(Entity* entity)
 {
+    this->entity = entity;
     instances.get().push_back(this);
 }
 
@@ -590,7 +591,7 @@ void Text::Renderer::draw() {
 
             inst->fullOffset.value = inst->offset + inst->alignOffset;
 
-            this->renderer->scheduleDrawArrays(textIndex, &inst->vao, &inst->renderInfo, GL_TRIANGLES, inst->arrayCount);
+            this->renderer->scheduleDrawArrays(textIndex, inst->entity, &inst->vao, &inst->renderInfo, GL_TRIANGLES, inst->arrayCount);
         }
     });
 }

@@ -616,69 +616,7 @@ namespace GLsynchro {
     static inline void barrierByRegion(GLbitfield barrier) { GL_CHECK(glMemoryBarrierByRegion(barrier)); }
 };
 
-struct GLres { virtual void update() const = 0; };
-
-template<typename T, bool custom = false>
-class GLresource : public GLres {
-public:
-    GLresource() = default;
-    GLresource(GLuniform<T> loc) : location(loc) {}
-    GLresource(const GLprogram& p, const char* name) : location(p.getUniform<T>(name)) {}
-
-    T value{};
-
-    void update() const override { location.update(value); }
-
-private:
-    GLuniform<T> location;
-};
-
-template<typename T>
-class GLresource<T, true> : public GLres {
-public:
-    GLresource() = default;
-    GLresource(GLuniform<T> loc, const std::function<T()>& update) : location(loc), update_func(update) {}
-    GLresource(const GLprogram& p, const char* name, const std::function<T()>& update) : GLresource(p.getUniform<T>(name), update) {}
-
-    void update() const override { location.update(update_func()); }
-
-private:
-    GLuniform<T> location;
-    std::function<T()> update_func;
-};
-
-struct GLtime;
-struct GLresolution;
-
-template<>
-class GLresource<GLtime> : public GLres {
-public:
-    GLresource() = default;
-    GLresource(GLuniform<float> loc) : location(loc) {}
-    GLresource(const GLprogram& p, const char* name) : GLresource(p.getUniform<float>(name)) {}
-
-    void update() const override {
-        value += (float) Time::delta;
-        location.update(value);
-    }
-
-private:
-    GLuniform<float> location;
-    mutable float value = 0;
-};
-
-template<>
-class GLresource<GLresolution> : public GLres {
-public:
-    GLresource() = default;
-    GLresource(GLuniform<vec2> loc) : location(loc) {}
-    GLresource(const GLprogram& p, const char* name) : location(p.getUniform<vec2>(name)) {}
-
-    void update() const override { location.update(vec2(Window::width, Window::height)); }
-
-private:
-    GLuniform<vec2> location;
-};
+#include "GLresource.h"
 
 // helper class, used to assist in creating vertex array attribute bindings (create and use locally, DO NOT STORE!)
 class GLattrarr {

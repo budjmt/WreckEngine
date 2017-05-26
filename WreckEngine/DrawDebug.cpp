@@ -140,7 +140,7 @@ void DrawDebug::drawVectors() {
 
     vecBuffer.bind();
     vecBuffer.data(vectorInsts.data());
-    forward->scheduleDrawArrays(wireframeIndex, &vecVAO, &vecMat, GL_LINES, vectorInsts.size());
+    forward->scheduleDrawArrays(wireframeIndex, nullptr, &vecVAO, &vecMat, GL_LINES, vectorInsts.size());
     
     vectorInsts.clear();
     vecsAdded -= arrows.instances.size(); // the number of complete vectors == the number of arrows rendered (vectorInsts.size() / 2)

@@ -2,19 +2,11 @@
 
 #include "glm/gtx/transform.hpp"
 
-void Renderable::draw(Transform* t) {
-    draw(t->getMats()->world);
+void Renderable::draw(Transform* t, Entity* entity) {
+    draw(t->getMats()->world, entity);
 }
-void Renderable::draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale) {
-    draw(vec3(x, y, 0), vec3(xScale, yScale, 1), vec3(0, 0, 1), 0);
-}
-void Renderable::draw(vec3 pos, vec3 scale, vec3 rotAxis, float rot) {
-    draw(glm::translate(pos), glm::rotate(rot, rotAxis), glm::scale(scale));
-}
-void Renderable::draw(const mat4& translate, const mat4& rotate, const mat4& scale) {
-    draw(translate * rotate * scale);
-}
-void Renderable::draw(const mat4& world) {
+
+void Renderable::draw(const mat4& world, Entity* entity) {
     setWorldMatrix(world);
 
     //actual draw call is reserved for children

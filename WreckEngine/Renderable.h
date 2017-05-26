@@ -15,11 +15,8 @@ public:
     Render::MaterialPass* renderer;
     vec4& color = _color.value;
 
-    void draw(GLfloat x, GLfloat y, GLfloat xScale, GLfloat yScale);
-    void draw(vec3 pos, vec3 scale, vec3 rotAxis, float rot);
-    void draw(const mat4& translate, const mat4& rotate, const mat4& scale);
-    void draw(Transform* t) override;
-    virtual void draw(const mat4& world);
+    void draw(Transform* t, Entity* entity) override;
+    virtual void draw(const mat4& world, Entity* entity);
     void setWorldMatrix(const mat4& world);
 
     static GLtexture genTexture2D(const char* texFile);

@@ -3,10 +3,21 @@
 #include "External.h"
 
 #include "ShaderHelper.h"
+#include "Camera.h"
 
 #include "GLstate.h"
 
 using namespace Render;
+
+CameraData::CameraData(Camera* c) : cam(c) {
+    if (!cam) return;
+    viewProjection = cam->getCamMat();
+    {
+        auto t = cam->transform.getComputed();
+        position = t->position();
+        forward = t->forward();
+    }
+}
 
 Event::Handler Target::resizeHandler = Event::make_handler<Window::ResizeHandler>(&resizeTargets);
 std::vector<Target> Target::targets;
@@ -82,6 +93,18 @@ MaterialPass::MaterialPass(const std::vector<GLuint>& targets) {
     frameBuffer.unbind();
 }
 
+MaterialPass::MaterialPass(const std::vector<GLtexture>& colorTargets, const GLtexture& depthstencilTarget) {
+    frameBuffer.create();
+    frameBuffer.bindPartial();
+    frameBuffer.attachTexture(depthstencilTarget, GLframebuffer::Attachment::DepthStencil);
+
+    for (const auto& target : colorTargets) {
+        frameBuffer.attachTexture(target, GLframebuffer::Attachment::Color);
+    }
+
+    frameBuffer.unbind();
+}
+
 GLVAO PostProcessChain::triangle;
 GLprogram PostProcessChain::finalize;
 
@@ -105,12 +128,12 @@ void PostProcessChain::init() {
 void MaterialPass::scheduleDraw(size_t group, DrawCall d, DrawCall::Params p) { 
     assert(renderGroups.size() > group);
     auto& renderGroup = renderGroups[group];
-    renderGroup.drawCalls.push_back(d); 
-    renderGroup.params.push_back(p);
+    renderGroup.drawCalls.push_back({ d, p });
 }
 
-void MaterialPass::scheduleDrawArrays(size_t group, const GLVAO* vao, const Info* mat, GLenum tesselPrim, uint32_t count, uint32_t instances) {
+void MaterialPass::scheduleDrawArrays(size_t group, const Entity* entity, const GLVAO* vao, const Info* mat, GLenum tesselPrim, uint32_t count, uint32_t instances) {
     DrawCall d;
+    d.entity = entity;
     d.vao = vao;
     d.material = mat;
     d.call = DrawCall::Type::Arrays;
@@ -123,8 +146,9 @@ void MaterialPass::scheduleDrawArrays(size_t group, const GLVAO* vao, const Info
     scheduleDraw(group, d, params);
 }
 
-void MaterialPass::scheduleDrawElements(const size_t group, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const GLenum element_t, const uint32_t instances) {
+void MaterialPass::scheduleDrawElements(const size_t group, const Entity* entity, const GLVAO* vao, const Info* mat, const GLenum tesselPrim, const uint32_t count, const GLenum element_t, const uint32_t instances) {
     DrawCall d;
+    d.entity = entity;
     d.vao = vao;
     d.material = mat;
     d.call = DrawCall::Type::Elements;
@@ -150,28 +174,31 @@ void MaterialPass::Group::Helper::draw() {
     if (drawCalls.empty())
         return;
 
-    auto& params = group.params;
-    assert(drawCalls.size() == params.size());
+    // copy the raw draw params to the buffer
+    auto& rawDrawParams = group.rawDrawParams;
+    rawDrawParams.reserve(drawCalls.size());
+    for (auto& drawCall : drawCalls)
+        rawDrawParams.push_back(drawCall.params);
 
     auto& paramBuffer = group.paramBuffer;
     paramBuffer.bind();
     paramBuffer.invalidate();
-    paramBuffer.data(group.params.size() * sizeof(DrawCall::Params), &params[0]);
+    paramBuffer.data(rawDrawParams.size() * sizeof(DrawCall::Params), &rawDrawParams[0]);
     // possible synchronization issue when param buffer does not complete upload before draw call?
 
     DrawCall::Params* offset = nullptr; // &params[0];
     for (const auto& drawCall : drawCalls) {
 
-        const auto& prog = drawCall.material->shaders->program;
+        const auto& prog = drawCall.data.material->shaders->program;
         assert(!prog.tessControl.valid() || drawCall.tesselPrim == GL_PATCHES); // if using tessellation, the primitive type must be GL_PATCHES
         assert(!prog.isCompute); // compute shaders may not be used for draw calls
 
-        drawCall.render(offset);
+        drawCall.data.render(offset);
         ++offset;
     }
 
-    group.drawCalls.clear();
-    group.params.clear();
+    drawCalls.clear();
+    rawDrawParams.clear();
 }
 
 void PostProcessChain::apply() {
@@ -207,6 +234,9 @@ void PostProcessChain::render() const {
     GL_CHECK(glDrawArrays(GL_TRIANGLES, 0, 3));
 }
 
+static CameraData currRenderCamData;
+const CameraData& Renderer::getCamData() { return currRenderCamData; }
+
 GLframebuffer genClearFB() {
     GLframebuffer f;
     f.create();
@@ -239,6 +269,7 @@ void Renderer::render() {
 }
 
 void Renderer::renderChildren() {
+    currRenderCamData = CameraData(renderCam ? renderCam : Camera::main); // happens before setup for any dependent code
     setup();
     objects.render();
     postProcess.apply();

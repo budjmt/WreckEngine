@@ -1,4 +1,5 @@
 #include "Material.h"
+#include "Entity.h"
 
 using namespace Render;
 

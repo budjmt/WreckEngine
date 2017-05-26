@@ -4,6 +4,8 @@
 
 #include "gl_structs.h"
 
+class Entity;
+
 namespace Render {
 
     struct Info {
@@ -70,6 +72,7 @@ namespace Render {
     };
 
     struct DrawCall {
+        const Entity* entity;
         const Info* material;
         const GLVAO* vao;
 
@@ -91,6 +94,11 @@ namespace Render {
     private:
         void render(const void* offset) const;
         friend class MaterialPass;
+    };
+
+    struct DrawCallInfo {
+        DrawCall data;
+        DrawCall::Params params;
     };
 
 };

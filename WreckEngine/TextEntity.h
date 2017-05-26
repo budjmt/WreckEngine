@@ -28,7 +28,7 @@ public:
         inst->setPosition(position.x, position.y);
         inst->setScale(scale.x);
 
-        inst->queueForDraw();
+        inst->queueForDraw(this);
     }
     void draw() {}
 private:

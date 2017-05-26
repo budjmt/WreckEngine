@@ -61,7 +61,7 @@ namespace Text
     struct Instance {
         Instance();
         
-        void queueForDraw();
+        void queueForDraw(Entity* entity);
 
         inline void alignHorizontal(Justify justify) {
             if (horiz != justify) {
@@ -108,6 +108,7 @@ namespace Text
             }
         }
 
+        Entity* entity = nullptr;
     private:
         Render::Info renderInfo;
         GLVAO vao;

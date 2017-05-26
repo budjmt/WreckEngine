@@ -14,11 +14,11 @@ namespace {
 
 struct RenderData {
     GLprogram prog;
-    GLuniform<mat4> mat;
-    GLuniform<vec3> pos;
+    GLresource<GLcamera::matrix> mat;
+    GLresource<GLcamera::position> pos;
 };
 
-RenderData objectData, normalMapData, forwardData;
+static RenderData objectData, normalMapData, forwardData;
 
 static GLresource<float> exposure;
 
@@ -51,9 +51,14 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     };
     addState(mainState);
 
+    objectData.prog = prog;
+    objectData.mat = prog.getUniform<mat4>("cameraMatrix");
+
     auto m = loadOBJ("Assets/basic.obj");
     m->translateTo(vec3());
-    auto mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, m, "Assets/texture.png", prog));
+    auto ndm = make_shared<DrawMesh>(&renderer.deferred.objects, m, "Assets/texture.png", objectData.prog);
+    auto mesh = make_shared<ColliderEntity>(ndm);
+    ndm->material.addResource(&objectData.mat);
     mesh->id = (void*)0xcaca;
     mainState->addEntity(mesh);
     //me = mesh;
@@ -72,7 +77,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     //genCone("Assets/cone.obj", 8);
     //auto bezier = loadOBJ("Assets/bezier.obj");
     auto cone = loadOBJ("Assets/cone.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cone, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cone, "Assets/texture.png", objectData.prog));
     mesh->transform.position = vec3(2.5f, 0, 0);
     //mesh->id = (void*)0xb;
     mesh->id = (void*)0xc1;
@@ -80,7 +85,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     //genCylinder("Assets/cylinder.obj", 64);
     auto cylinder = loadOBJ("Assets/cylinder.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cylinder, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cylinder, "Assets/texture.png", objectData.prog));
     mesh->id = (void*)0xc;
     mesh->transform.position = vec3(-2.5f, 0, 0);
     mainState->addEntity(mesh);
@@ -88,7 +93,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     //genSphere("Assets/sphere.obj", 16);
     auto sphere = loadOBJ("Assets/sphere.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, sphere, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, sphere, "Assets/texture.png", objectData.prog));
     mesh->id = (void*)0xcc;
     mesh->transform.position = vec3(0, 2.5f, 0);
     mainState->addEntity(mesh);
@@ -96,7 +101,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     //genCube("Assets/cube.obj");
     auto cube = loadOBJ("Assets/cube.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cube, "Assets/texture.png", prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cube, "Assets/texture.png", objectData.prog));
     mesh->id = (void*)0xc2fb;
     mesh->transform.position = vec3(0, -5.f, 0);
     mesh->transform.scale = vec3(64, 1.5f, 64);
@@ -109,11 +114,12 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     normalMapData.mat = normalMapData.prog.getUniform<mat4>("cameraMatrix");
 
     //auto cube2 = make_shared<Mesh>(*cube);
-    //auto cube2 = make_shared<Mesh>(*cylinder);
-    //cube2->resetRenderData();
-    auto cube2 = loadOBJ("Assets/phone.obj");
+    auto cube2 = make_shared<Mesh>(*cylinder);
+    cube2->resetRenderData();
+    //auto cube2 = loadOBJ("Assets/phone.obj");
     cube2->scaleTo(vec3(1.0f));
     auto dm = make_shared<DrawMesh>(&renderer.deferred.objects, cube2, "Assets/butt.png", normalMapData.prog, true);
+    dm->material.addResource(&normalMapData.mat);
     //dm->material.addTexture(Renderable::genTexture2D("Assets/face_nm.png"));
     dm->material.addTexture(Renderable::genTexture2D("Assets/phone_nm.png"));
     
@@ -124,27 +130,25 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     mainState->addEntity(mesh);
     me = mesh;
 
-    auto forwardProg = loadProgram("Shaders/forwardTest_v.glsl", "Shaders/forwardTest_f.glsl");
-    dm = make_shared<DrawMesh>(&renderer.forward.objects, sphere, "Assets/butt.png", forwardProg);
+    forwardData.prog = loadProgram("Shaders/forwardTest_v.glsl", "Shaders/forwardTest_f.glsl");
+    forwardData.mat = forwardData.prog.getUniform<mat4>("cameraMatrix");
+    forwardData.pos = forwardData.prog.getUniform<vec3>("camPos");
+
+    dm = make_shared<DrawMesh>(&renderer.forward.objects, sphere, "Assets/butt.png", forwardData.prog);
     mesh = make_shared<ColliderEntity>(dm);
-    renderer.lights.connectLightBlocks(forwardProg, "PointBlock", "SpotlightBlock", "DirectionalBlock");
+    renderer.lights.connectLightBlocks(forwardData.prog, "PointBlock", "SpotlightBlock", "DirectionalBlock");
     dm->color = vec4(0, 1, 0.5f, 0.5f);
+    dm->material.addResource(&forwardData.mat);
+    dm->material.addResource(&forwardData.pos);
     mesh->transform.position = vec3(-5.f, 0, 0);
     mesh->rigidBody.floating(1);
     mainState->addEntity(mesh);
-
-    forwardData.prog = forwardProg;
-    forwardData.mat = forwardProg.getUniform<mat4>("cameraMatrix");
-    forwardData.pos = forwardProg.getUniform<vec3>("camPos");
 
     auto camera = make_shared<Camera>();
     camera->id = (void*)0xcab;
     camera->transform.position = vec3(0, 0, 1);
     camera->transform.rotate(0, PI, 0);
     mainState->addEntity(camera);
-
-    objectData.prog = prog;
-    objectData.mat = prog.getUniform<mat4>("cameraMatrix");
 
     if(DEBUG) DrawDebug::getInstance().camera(camera.get());
 
@@ -352,16 +356,6 @@ void TriPlay::physicsUpdate(double dt) {
 }
 
 void TriPlay::draw() {
-
-    auto mat = Camera::main->getCamMat();
-    objectData.prog.use();
-    objectData.mat.update(mat);
-    normalMapData.prog.use();
-    normalMapData.mat.update(mat);
-    forwardData.prog.use();
-    forwardData.mat.update(mat);
-    forwardData.pos.update(Camera::main->transform.getComputed()->position);
-
     Game::draw();
     Text::render(&renderer.forward.objects);
 }

@@ -272,6 +272,9 @@
     <ClInclude Include="UV.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GLresource.h">
+      <FileType>Document</FileType>
+    </ClInclude>
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

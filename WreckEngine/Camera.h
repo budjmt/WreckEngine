@@ -45,4 +45,3 @@ private:
     }
     Event::Handler resizeHandler = Event::make_handler<Window::ResizeHandler>(Event::Handler::wrap_member_func(this, &Camera::resizeFunc));
 };
-

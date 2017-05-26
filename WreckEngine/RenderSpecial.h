@@ -12,8 +12,18 @@ namespace Render {
         bool lightingOn = true;
 
         explicit LitRenderer(size_t gBufferSize) : deferred({ 0, 1, 2, 3 }), forward(gBufferSize), lightR({ 4, 5 }) {
-            deferred.setup = []() {
+            deferred.setup = [this]() {
                 GL_CHECK(glDisable(GL_BLEND));
+
+                const auto camDir = Renderer::getCamData().forward;
+                deferred.objects.preprocess([&](auto& drawCalls) {
+                    std::sort(begin(drawCalls), end(drawCalls), [camDir](DrawCallInfo& drawA, DrawCallInfo& drawB) {
+                        if (!(drawA.data.entity && drawB.data.entity)) return true;
+                        float aProj = glm::dot(camDir, drawA.data.entity->transform.getComputed()->position()); 
+                        float bProj = glm::dot(camDir, drawA.data.entity->transform.getComputed()->position());
+                        return aProj < bProj; // closer objects come first
+                    });
+                });
             };
             
             lightR.setup = []() {
@@ -44,6 +54,16 @@ namespace Render {
                 // re-enable blend after the accumulation PP and change blend func
                 GL_CHECK(glEnable(GL_BLEND));
                 GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+
+                const auto camDir = Renderer::getCamData().forward;
+                deferred.objects.preprocess([&](auto& drawCalls) {
+                    std::sort(begin(drawCalls), end(drawCalls), [camDir](DrawCallInfo& drawA, DrawCallInfo& drawB) {
+                        if (!(drawA.data.entity && drawB.data.entity)) return true;
+                        float aProj = glm::dot(camDir, drawA.data.entity->transform.getComputed()->position());
+                        float bProj = glm::dot(camDir, drawA.data.entity->transform.getComputed()->position());
+                        return aProj > bProj; // further objects come first
+                    });
+                });
             };
 
             // GBuffer layout:

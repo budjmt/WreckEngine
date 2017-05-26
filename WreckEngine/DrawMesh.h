@@ -11,7 +11,7 @@ public:
     DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, GLtexture tex, GLprogram shader, bool hasTangent = false);
         
     void setup(GLtexture tex, GLprogram shader, bool hasTangent);
-    void draw(const mat4& world) override;
+    void draw(const mat4& world, Entity* entity) override;
 
     GLenum tesselPrim = GL_TRIANGLES;
     size_t renderGroup = 0;

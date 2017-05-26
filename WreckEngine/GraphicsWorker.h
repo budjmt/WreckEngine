@@ -6,7 +6,8 @@
 // Anything that interacts with the GPU is a graphics worker; they should only do work on the render thread
 class GraphicsWorker {
 public:
-	Render::Info material;
-	// updates/binds material data at draw-time; intended for dispatch
-	virtual void draw(Transform* t);
+    Render::Info material;
+    // updates/binds material data at draw-time; intended for dispatch
+    // pass an Entity pointer if applicable, otherwise nullptr
+    virtual void draw(Transform* t, Entity* entity);
 };

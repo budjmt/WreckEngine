@@ -317,5 +317,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="GLresource.tpp">
+      <Filter>Utilities</Filter>
+    </None>
   </ItemGroup>
 </Project>

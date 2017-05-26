@@ -36,8 +36,8 @@ struct CubemapData {
 
 struct RenderData {
     GLprogram prog;
-    GLuniform<mat4> mat;
-    GLuniform<vec3> pos;
+    GLresource<GLcamera::matrix> mat;
+    GLresource<GLcamera::position> pos;
     GLresource<float> radius;
 };
 static RenderData planetData;
@@ -47,8 +47,8 @@ struct {
     GLresource<float> tessRadius;
     GLresource<vec2> atmosRadius, K;
     GLresource<vec3> sunPos, sunColor;
-    GLuniform<vec3> camPos;
-    GLuniform<mat4> camMat;
+    GLresource<GLcamera::position> camPos;
+    GLresource<GLcamera::matrix> camMat;
 } atmosData;
 
 struct {
@@ -61,8 +61,8 @@ struct WaterRenderData {
     GLprogram prog;
     GLresource<float> time;
     GLresource<float> radius;
-    GLuniform<mat4> mat;
-    GLuniform<vec3> camPos;
+    GLresource<GLcamera::matrix> mat;
+    GLresource<GLcamera::position> camPos;
     GLuniform<vec3> sunPos;
     GLtexture normalMap;
 };
@@ -380,6 +380,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     surface = make_unique<PlanetCSphere>(RADIUS, planetData.prog
         , mainState.get(), rendererUsed, planetGroup, [](DrawMesh* dm) {
+            dm->material.addResource(&planetData.mat);
+            dm->material.addResource(&planetData.pos);
             dm->material.addResource(&planetData.radius);
             dm->material.addTexture(noiseData.cubemap);
             dm->material.addTexture(normalData.cubemap);
@@ -469,6 +471,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     // Create the water c-sphere
     water = make_unique<PlanetCSphere>(RADIUS, waterData.prog, mainState.get(), waterRenderer, waterGroup,
         [](DrawMesh* dm) {
+            dm->material.addResource(&waterData.mat);
+            dm->material.addResource(&waterData.camPos);
             dm->material.addResource(&waterData.radius);
             dm->material.addResource(&waterData.time);
             dm->material.addTexture(waterData.normalMap);
@@ -510,6 +514,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     });
     //atmosphere = make_unique<PlanetCSphere>(RADIUS + 2, atmosData.prog
     //    , mainState.get(), &renderer.forward.objects, atmosGroup, [](DrawMesh* dm) {
+    //    dm->material.addResource(&atmosData.camMat);
+    //    dm->material.addResource(&atmosData.camPos);
     //    dm->material.addResource(&atmosData.tessRadius);
     //    dm->material.addResource(&atmosData.atmosRadius);
     //    dm->material.addResource(&atmosData.K);
@@ -662,18 +668,9 @@ void TessellatorTest::postUpdate() {
 }
 
 void TessellatorTest::draw() {
-    auto mat = Camera::main->getCamMat();
     auto pos = Camera::main->transform.getComputed()->position();
-    planetData.prog.use();
-    planetData.mat.update(mat);
-    planetData.pos.update(pos);
     waterData.prog.use();
-    waterData.mat.update(mat);
-    waterData.camPos.update(pos);
     waterData.sunPos.update(sun.light.position);
-    atmosData.prog.use();
-    atmosData.camMat.update(mat);
-    atmosData.camPos.update(pos);
 
     auto originView = Camera::main->view();
     originView[3] = vec4(0, 0, 0, 1);

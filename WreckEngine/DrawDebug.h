@@ -63,7 +63,7 @@ struct InstMesh {
         insts.data(instances.data());
     }
     inline void draw(Render::MaterialPass* renderer, Render::Info* mat, const size_t group) const {
-        renderer->scheduleDrawElements(group, &vao, mat, GL_TRIANGLES, numVerts, GLtype<uint32_t>(), instances.size());
+        renderer->scheduleDrawElements(group, nullptr, &vao, mat, GL_TRIANGLES, numVerts, GLtype<uint32_t>(), instances.size());
     }
 
 private:

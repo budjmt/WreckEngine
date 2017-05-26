@@ -41,7 +41,7 @@ void DrawMesh::setup(GLtexture tex, GLprogram shader, bool hasTangent) {
     material.setTextures(tex);
 }
 
-void DrawMesh::draw(const mat4& world) {
-    Renderable::draw(world);
-    renderer->scheduleDrawElements(renderGroup, &vArray, &material, tesselPrim, _mesh->getRenderData()->ebuffer.size(), GLtype<uint32_t>());
+void DrawMesh::draw(const mat4& world, Entity* entity) {
+    Renderable::draw(world, entity);
+    renderer->scheduleDrawElements(renderGroup, entity, &vArray, &material, tesselPrim, _mesh->getRenderData()->ebuffer.size(), GLtype<uint32_t>());
 }

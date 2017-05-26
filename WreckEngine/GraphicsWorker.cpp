@@ -1,5 +1,5 @@
 #include "GraphicsWorker.h"
 
-void GraphicsWorker::draw(Transform* t) {
-	material.apply();
+void GraphicsWorker::draw(Transform* t, Entity* entity) {
+    material.apply();
 }
