@@ -114,9 +114,9 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     normalMapData.mat = normalMapData.prog.getUniform<mat4>("cameraMatrix");
 
     //auto cube2 = make_shared<Mesh>(*cube);
-    auto cube2 = make_shared<Mesh>(*cylinder);
-    cube2->resetRenderData();
-    //auto cube2 = loadOBJ("Assets/phone.obj");
+    //auto cube2 = make_shared<Mesh>(*cylinder);
+    //cube2->resetRenderData();
+    auto cube2 = loadOBJ("Assets/phone.obj");
     cube2->scaleTo(vec3(1.0f));
     auto dm = make_shared<DrawMesh>(&renderer.deferred.objects, cube2, "Assets/butt.png", normalMapData.prog, true);
     dm->material.addResource(&normalMapData.mat);

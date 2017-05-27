@@ -10,6 +10,6 @@ namespace Time {
     std::chrono::high_resolution_clock::time_point now();
     std::chrono::system_clock::time_point system_now();
     long long ctime();
-    double elapsed();
+    double elapsed(); // returns elapsed seconds
     void updateDelta();
 };

@@ -6,7 +6,7 @@ layout (binding = 0) uniform sampler2D uniformTex;
 layout (binding = 1) uniform sampler2D normalMap;
 in vec4 fragPos;
 in vec2 fragUV;
-in mat3 TBN;
+in vec3 TBN; // consider switching this computation to frag shader
 
 in float ftime;
 

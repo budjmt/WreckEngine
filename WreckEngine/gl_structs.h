@@ -25,7 +25,7 @@ inline GLint getGLVal(GLenum value) { GLint val; GL_CHECK(glGetIntegerv(value, &
 
 template<typename T>
 struct GLhandle {
-    GLuint id;
+    GLuint id = def;
     GLhandle() = default;
     explicit GLhandle(GLuint _id) : id(_id) {}
     ~GLhandle() { 
@@ -98,7 +98,7 @@ template<> struct GLuniform<mat4>      : public GLuniform_t { inline void update
 // https://www.opengl.org/wiki/Sampler_(GLSL)
 struct GLtexture {
     using handle_t = GLhandle<GLtexture>;
-    shared<handle_t> texture = make_shared<handle_t>(def);
+    shared<handle_t> texture = make_shared<handle_t>();
     GLenum target;
     inline WR_GL_OP_PARENS(texture);
     inline WR_GL_OP_EQEQ(GLtexture, texture);
@@ -225,7 +225,7 @@ private:
 // wraps a buffer object on the GPU.
 struct GLbuffer {
     using handle_t = GLhandle<GLbuffer>;
-    shared<handle_t> buffer = make_shared <handle_t>(def);
+    shared<handle_t> buffer = make_shared<handle_t>();
     GLenum target, usage;
     size_t size = 0;
     inline WR_GL_OP_PARENS(buffer);
@@ -316,7 +316,7 @@ struct GLbuffer {
 // wraps a VAO, stores bindings for attributes and buffers after binding
 struct GLVAO {
     using handle_t = GLhandle<GLVAO>;
-    shared<handle_t> vao = make_shared<handle_t>(def);
+    shared<handle_t> vao = make_shared<handle_t>();
     inline WR_GL_OP_PARENS(vao);
 
     static void deleter(const GLuint& id) { GL_CHECK(glDeleteVertexArrays(1, &id)); }
@@ -374,7 +374,7 @@ struct GLshader {
         return res;
     }
 private:
-    shared<handle_t> shader = make_shared<handle_t>(def);
+    shared<handle_t> shader = make_shared<handle_t>();
     friend struct GLprogram;
 };
 
@@ -385,7 +385,7 @@ struct GLprogram {
     bool isCompute = false;
 
     using handle_t = GLhandle<GLprogram>;
-    shared<handle_t> program = make_shared<handle_t>(def);
+    shared<handle_t> program = make_shared<handle_t>();
     inline WR_GL_OP_PARENS(program);
 
     static void deleter(const GLuint& id) { GL_CHECK(glDeleteProgram(id)); }
@@ -509,7 +509,7 @@ struct GLprogram {
 //   - All attachments have the same number of multi-samples
 struct GLframebuffer {
     using handle_t = GLhandle<GLframebuffer>;
-    shared<handle_t> framebuffer = make_shared<handle_t>(def);
+    shared<handle_t> framebuffer = make_shared<handle_t>();
     GLenum type = GL_FRAMEBUFFER;
     inline WR_GL_OP_PARENS(framebuffer);
 
@@ -609,6 +609,59 @@ private:
         MAX_COLOR_ATTACHMENTS = local(getMaxColorAttachments)();
     }
     friend struct GLEWmanager;
+};
+
+struct GLquery {
+    using handle_t = GLhandle<GLquery>;
+    shared<handle_t> query = make_shared<handle_t>();
+
+    enum Target : GLenum {
+        SamplesPassed                      = GL_SAMPLES_PASSED, // the samples passed queries refer to how many samples passed the depth test
+        AnySamplesPassed                   = GL_ANY_SAMPLES_PASSED,
+        AnySamplesPassedFast               = GL_ANY_SAMPLES_PASSED_CONSERVATIVE, // the original name is dumb/inaccurate
+        PrimitivesGenerated                = GL_PRIMITIVES_GENERATED,
+        TransformFeedbackPrimitivesWritten = GL_TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN,
+        TimeElapsed                        = GL_TIME_ELAPSED,
+        Timestamp                          = GL_TIMESTAMP
+    };
+
+    Target target;
+    inline WR_GL_OP_PARENS(query);
+
+    static void deleter(const GLuint& id) { GL_CHECK(glDeleteQueries(1, &id)); }
+    inline bool valid() const { return query->valid(); }
+
+    inline void create(Target target) {
+        GL_CHECK(glGenQueries(1, &query->id));
+        this->target = target;
+    }
+
+    inline void execute() { 
+        assert(state != IN_PROGRESS);
+        if (target == Target::Timestamp) {
+            GL_CHECK(glQueryCounter(target, query->id));
+            state = DONE;
+        }
+        else {
+            GL_CHECK(glBeginQuery(target, query->id));
+            state = IN_PROGRESS;
+        }
+    }
+    inline void finish() { 
+        assert(state == IN_PROGRESS);
+        GL_CHECK(glEndQuery(target));
+        state = DONE;
+    }
+
+    // synchronous with GPU; TODO make async version with callback
+    int64_t getResult() {
+        assert(state == DONE);
+        int64_t val;
+        GL_CHECK(glGetQueryObjecti64v(target, GL_QUERY_RESULT, &val));
+        return val;
+    }
+private:
+    enum { PENDING, IN_PROGRESS, DONE } state = PENDING;
 };
 
 namespace GLsynchro {

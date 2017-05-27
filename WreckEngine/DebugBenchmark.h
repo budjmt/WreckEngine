@@ -5,16 +5,16 @@
 class DebugBenchmark
 {
 public:
-	static void start() { 
-		timer = Time::elapsed(); 
-	}
+    static void start() { 
+        timer = Time::elapsed(); 
+    }
 
-	static double end() { 
-		auto time = Time::elapsed() - timer;
-		return time * 1000;
-	}
+    static double end() { 
+        auto time = Time::elapsed() - timer;
+        return time * 1000;
+    }
 private:
-	static double timer;
+    static thread_local double timer;
 };
 
-double DebugBenchmark::timer = Time::elapsed();
+thread_local double DebugBenchmark::timer = Time::elapsed();
