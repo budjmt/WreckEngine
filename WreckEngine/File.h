@@ -112,13 +112,13 @@ namespace File {
 
         processShaderSource(path, fileContents);
 
-        shader.create(fileContents.c_str(), shaderType);
+        shader.create(fileContents.c_str(), (GLshader::Type) shaderType);
 
         if (shader.getVal(GL_COMPILE_STATUS) == GL_TRUE)
             return shader;
 
         auto logLength = shader.getVal(GL_INFO_LOG_LENGTH);
-        auto log = std::vector<char>(logLength);
+        std::vector<char> log(logLength);
         glGetShaderInfoLog(shader(), logLength, 0, &log[0]);
         printf("Error in file %s: \n%s\n", path, &log[0]);
         return GLshader();
@@ -180,13 +180,13 @@ namespace File {
             case 'v':
                 switch (line[1]) {
                 case ' ': // vertices
-                    data.verts.push_back(vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
+                    data.verts.push_back({ stof(tokens[1]), stof(tokens[2]), stof(tokens[3]) });
                     break;
                 case 'n': // normals
-                    data.normals.push_back(vec3(stof(tokens[1]), stof(tokens[2]), stof(tokens[3])));
+                    data.normals.push_back({ stof(tokens[1]), stof(tokens[2]), stof(tokens[3]) });
                     break;
                 case 't': // UVs
-                    data.uvs.push_back(vec3(stof(tokens[1]), stof(tokens[2]), 0));
+                    data.uvs.push_back({ stof(tokens[1]), stof(tokens[2]), 0 });
                     break;
                 }
                 break;

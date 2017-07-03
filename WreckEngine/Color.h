@@ -11,12 +11,12 @@ namespace Color
 
     inline value_type fromRgb(int r, int g, int b)
     {
-        return value_type(r * inv255, g * inv255, b * inv255, 1.0f);
+        return { r * inv255, g * inv255, b * inv255, 1.0f };
     }
 
     inline value_type fromRgba(int r, int g, int b, int a)
     {
-        return value_type(r * inv255, g * inv255, b * inv255, a * inv255);
+        return { r * inv255, g * inv255, b * inv255, a * inv255 };
     }
 
     packed_type pack(const value_type& color);

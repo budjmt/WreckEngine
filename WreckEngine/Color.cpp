@@ -29,10 +29,7 @@ namespace Color
              g = (color >> 16) & 255,
              b = (color >>  8) & 255,
              a = (color >>  0) & 255;
-        return value_type(unpackFloat(r),
-                          unpackFloat(g),
-                          unpackFloat(b),
-                          unpackFloat(a));
+        return { unpackFloat(r), unpackFloat(g), unpackFloat(b), unpackFloat(a) };
     }
 
     #pragma region Pre-defined Colors

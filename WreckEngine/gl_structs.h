@@ -17,7 +17,11 @@ typedef GLint GLsampler;
 
 #define WR_GL_OP_PARENS(handleName) GLuint& operator()() { return handleName->id; } WR_GL_OP_PARENS_CONST(handleName)
 #define WR_GL_OP_PARENS_CONST(handleName) const GLuint& operator()() const { return handleName->id; }
-#define WR_GL_OP_EQEQ(type, handleName) bool operator==(const type& other) const { return *handleName == *other.handleName; }
+
+#define WR_GL_OP_EQEQ(type, handleName) bool operator==(const type& other) const { return handleName->id == other.handleName->id; }
+#define WR_GL_RAW_OP_EQEQ(type, handleName) \
+inline bool operator==(const type& it, GLuint id) { return it.handleName->id == id; } \
+inline bool operator==(GLuint id, const type& it) { return it == id; }
 
 inline GLint getGLVal(GLenum value) { GLint val; GL_CHECK(glGetIntegerv(value, &val)); return val; }
 
@@ -49,6 +53,7 @@ namespace {
 
     GET_GL_CONSTANT_FUNC(getMaxNumTextures, GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);
     GET_GL_CONSTANT_FUNC(getMaxColorAttachments, GL_MAX_COLOR_ATTACHMENTS);
+    GET_GL_CONSTANT_FUNC(getMaxVertexAttribs, GL_MAX_VERTEX_ATTRIBS);
 }
 
 struct GLtexture;
@@ -352,18 +357,29 @@ struct GLuniformblock : public GLuniform<T> {
 
 // wraps a compiled shader
 struct GLshader {
+
+    enum class Type : GLenum {
+        Vertex      = GL_VERTEX_SHADER,
+        TessControl = GL_TESS_CONTROL_SHADER,
+        TessEval    = GL_TESS_EVALUATION_SHADER,
+        Geometry    = GL_GEOMETRY_SHADER,
+        Fragment    = GL_FRAGMENT_SHADER,
+        Compute     = GL_COMPUTE_SHADER
+    };
+
     using handle_t = GLhandle<GLshader>;
-    GLenum type = def;
+    Type type;
     inline WR_GL_OP_PARENS_CONST(shader);
+    inline WR_GL_OP_EQEQ(GLshader, shader);
 
     static void deleter(const GLuint& id) { GL_CHECK(glDeleteShader(id)); }
     inline bool valid() const { return shader->valid(); }
 
     // creates and compiles a shader of [type] from [body] and stores it
-    inline void create(const char* body, const GLenum type) {
+    inline void create(const char* body, Type type) {
         if (valid()) return;
         this->type = type;
-        GL_CHECK(shader->id = glCreateShader(type));
+        GL_CHECK(shader->id = glCreateShader((GLenum)type));
         GL_CHECK(glShaderSource(shader->id, 1, &body, 0));
         GL_CHECK(glCompileShader(shader->id));
     }
@@ -390,6 +406,23 @@ struct GLprogram {
 
     static void deleter(const GLuint& id) { GL_CHECK(glDeleteProgram(id)); }
     inline bool valid() const { return program->valid(); }
+
+    inline const GLshader& getShaderByType(GLshader::Type type) {
+        switch (type) {
+        case GLshader::Type::Vertex:
+            return vertex;
+        case GLshader::Type::TessControl:
+            return tessControl;
+        case GLshader::Type::TessEval:
+            return tessEval;
+        case GLshader::Type::Geometry:
+            return geometry;
+        case GLshader::Type::Fragment:
+            return fragment;
+        case GLshader::Type::Compute:
+            return compute;
+        }
+    }
 
     // deletes the program if it exists and creates a new one; this preserves the shaders used without resetting the pointer
     inline void refresh() {
@@ -680,6 +713,11 @@ class GLattrarr {
         attrs = std::vector<GLattr>();
     }
 
+    static GLint MAX_VERTEX_ATTRIBS;
+    static void setMaxColorAttachments() {
+        MAX_VERTEX_ATTRIBS = local(getMaxVertexAttribs)();
+    }
+    friend struct GLEWmanager;
 public:
     std::vector<GLattr> attrs;
 
@@ -732,6 +770,7 @@ public:
         auto offset = (char*) startOffset;
         for (size_t i = 0, entries = attrs.size(); i < entries; ++i) {
             const auto attr = attrs[i];
+            assert(i + baseIndex < (size_t)MAX_VERTEX_ATTRIBS); // the index exceeded the max available attributes
             GL_CHECK(glEnableVertexAttribArray(i + baseIndex));
             if (attr.castToFloat) {
             FLOATCAST:

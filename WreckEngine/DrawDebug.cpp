@@ -200,7 +200,7 @@ void DrawDebug::drawDebugSphere(vec3 pos, float rad, vec3 color, float opacity) 
 #if DEBUG
     if (spheresAdded > MAX_SPHERES) return;
     auto& s = debugSpheres.get();
-    s.push_back({ vec4(color, opacity), pos, rad });
+    s.push_back({ { color, opacity }, pos, rad });
     ++spheresAdded;
 #endif
 }
@@ -209,9 +209,9 @@ void DrawDebug::drawDebugBox(vec3 pos, float w, float h, float d, vec3 color, fl
 #if DEBUG
     if (boxesAdded > MAX_BOXES) return;
     auto& b = debugBoxes.get();
-    b.push_back(vec4(pos, 0));
-    b.push_back(vec4(w, h, d, 0));
-    b.push_back(vec4(color, opacity));
+    b.push_back({ pos, 0 });
+    b.push_back({ w, h, d, 0 });
+    b.push_back({ color, opacity });
     ++boxesAdded;
 #endif
 }

@@ -188,10 +188,10 @@ namespace UI
         auto& io = ImGui::GetIO();
         io.KeysDown[key] = action != GLFW_RELEASE;
 
-        io.KeyCtrl = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
-        io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT] || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
-        io.KeyAlt = io.KeysDown[GLFW_KEY_LEFT_ALT] || io.KeysDown[GLFW_KEY_RIGHT_ALT];
-        io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER] || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
+        io.KeyCtrl  = io.KeysDown[GLFW_KEY_LEFT_CONTROL] || io.KeysDown[GLFW_KEY_RIGHT_CONTROL];
+        io.KeyShift = io.KeysDown[GLFW_KEY_LEFT_SHIFT]   || io.KeysDown[GLFW_KEY_RIGHT_SHIFT];
+        io.KeyAlt   = io.KeysDown[GLFW_KEY_LEFT_ALT]     || io.KeysDown[GLFW_KEY_RIGHT_ALT];
+        io.KeySuper = io.KeysDown[GLFW_KEY_LEFT_SUPER]   || io.KeysDown[GLFW_KEY_RIGHT_SUPER];
     }
 
     /**
@@ -214,8 +214,8 @@ namespace UI
         GLsavestate glStateHelper;
 
         shader.create();
-        shader.vertex.create(ImGuiVertexShader, GL_VERTEX_SHADER);
-        shader.fragment.create(ImGuiFragmentShader, GL_FRAGMENT_SHADER);
+        shader.vertex.create(ImGuiVertexShader, GLshader::Type::Vertex);
+        shader.fragment.create(ImGuiFragmentShader, GLshader::Type::Fragment);
         shader.link();
 
         texLoc  = shader.getUniform<GLsampler>("Texture");

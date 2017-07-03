@@ -40,13 +40,13 @@ public:
     vec3 getTransformed(const vec3 v) const;
 private:
     PROP_GS (private, Transform, vec3, position, { return _position; }, { makeDirty(); return _position = value; });
-    PROP_GS (private, Transform, vec3, scale,    { return _scale; },    { makeDirty(); return _scale = value; }) = vec3(1);
+    PROP_GS (private, Transform, vec3, scale,    { return _scale; },    { makeDirty(); return _scale = value; }) { 1 };
     PROP_GS (private, Transform, quat, rotation, { return _rotation; }, { makeDirty(); _rotation = value; updateRot(); return _rotation; });
     ACCS_G  (private, vec3, rotAxis);
     ACCS_G  (private, float, rotAngle);
 
-    vec3 base_forward = vec3(0, 0, 1)
-       , base_up = vec3(0, 1, 0);
+    vec3 base_forward { 0, 0, 1 }
+       , base_up      { 0, 1, 0 };
     ACCS_G (private, vec3, forward);
     ACCS_G (private, vec3, up);
     ACCS_G (private, vec3, right);

@@ -6,15 +6,16 @@
 using std::make_unique;
 using std::make_shared;
 
-// Works the same as unique_ptr, but performs deep-copies instead of ownership transfer
+// Works the same as unique_ptr, but performs deep-copies instead of ownership transfer; type must be copyable
+// it's ok to inherit in this context because the destructor behaves identically and there are no new members
 template<class T, class Deleter = std::default_delete<T>>
 struct alloc_ptr : public std::unique_ptr<T, Deleter> {
     using unique_ptr::unique_ptr;
     alloc_ptr() = default;
     alloc_ptr(alloc_ptr&&) = default;
     alloc_ptr& operator=(alloc_ptr&&) = default;
-    alloc_ptr(const alloc_ptr& o) : unique_ptr<T, Deleter>() { reset(o ? new T(*o) : nullptr); }
-    alloc_ptr& operator=(const alloc_ptr& o) { reset(o ? new T(*o) : nullptr); return *this; }
+    alloc_ptr(const alloc_ptr& o) { reset(o ? new T(*o) : nullptr); }
+    alloc_ptr& operator=(const alloc_ptr& o) { alloc_ptr<T> tmp(o); return *this = std::move(tmp); }
 };
 
 // Wrapper for thread-safe access to some resource; the wrapper must exist to access the object, and thus the lock persists

@@ -105,6 +105,7 @@ void GLEWmanager::initGLValues() {
     GLtexture::setMaxTextures();
     GLprogram::setMaxWorkGroups();
     GLframebuffer::setMaxColorAttachments();
+    GLattrarr::setMaxColorAttachments();
 }
 
 namespace {

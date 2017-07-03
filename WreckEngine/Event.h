@@ -141,7 +141,7 @@ namespace Event {
         void unregister_self() {
             Dispatcher::handlers.erase(info.id);
             auto& t_handlers = Dispatcher::handlerTypes[info.type];
-            t_handlers.erase(std::find(t_handlers.begin(), t_handlers.end(), this));
+            t_handlers.erase(std::find(begin(t_handlers), end(t_handlers), this));
         }
 
     };

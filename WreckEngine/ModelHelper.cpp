@@ -153,9 +153,10 @@ void genCylinder(const char* file, size_t res) {
 
 	for (size_t i = 1; i < res; ++i) {
 		auto a = (float)(i * PI * 2 / res);
-		tcurr = vec3(cosf(a),  1.0f, sinf(a)) * 0.5f;
-		bcurr = vec3(cosf(a), -1.0f, sinf(a)) * 0.5f;
-		
+		tcurr = vec3(cosf(a), 1.0f, sinf(a)) * 0.5f;
+		bcurr = tcurr;
+		bcurr.y = -0.5f;
+
 		data.verts.push_back(tcurr);
 		data.verts.push_back(bcurr);
 
@@ -248,7 +249,7 @@ void genSphere(const char* file, size_t res) {
 	//top vert index is 0, bottom index is res
 	const auto pi_res = PI / res, pi_res2 = 2 * pi_res;
 	for (size_t j = 0; j < res; ++j) {
-		data.verts.push_back(vec3(cosf(pi_res * j) * 0.5f, sinf(pi_res * j) * 0.5f, 0.f));
+        data.verts.push_back({ cosf(pi_res * j) * 0.5f, sinf(pi_res * j) * 0.5f, 0.f });
 	}
 
 	const auto numVerts = (res - 1) * res + 1;
@@ -263,7 +264,7 @@ void genSphere(const char* file, size_t res) {
 		size_t indp  = 0; // prev half circle, begins at top and moves down
 		size_t indp1 = (i - 1) * (res - 1) + 1; // one notch down prev half circle
 		
-		data.verts.push_back(vec3(x1, y1, z1));
+        data.verts.push_back({ x1, y1, z1 });
 		indices.verts.push_back(indp1 + 1); indices.verts.push_back(ind1 + 1); indices.verts.push_back(ind + 1);
 
 		indp = indp1; ind = ind1;
@@ -279,7 +280,7 @@ void genSphere(const char* file, size_t res) {
 			indp1 = (i - 1) * (res - 1) + 1 + j;//one notch down on previous half circle
 
 			//add only the next verts, as current ones will always be already added
-			data.verts.push_back(vec3(x1, y1, z1));
+            data.verts.push_back({ x1, y1, z1 });
 			
 			/*
 			indp	---		ind
@@ -347,7 +348,7 @@ void genBezierSurface(const char* file, size_t ures, size_t vres, std::vector<st
 		auto v0 = (float)vi / vres;
 		auto a = bezierSurface(0, v0, k);//c is no longer a thing, as this handles it
 		data.verts.push_back(a);
-		data.uvs.push_back(vec3(0, v0, 0));
+        data.uvs.push_back({ 0, v0, 0 });
 	}
 	for (size_t ui = 0; ui < ures; ++ui) {
 		auto u1 = (float)(ui + 1) / ures;
@@ -355,7 +356,7 @@ void genBezierSurface(const char* file, size_t ures, size_t vres, std::vector<st
 		auto b = bezierSurface(u1, 0, k);
 		data.verts.push_back(b);
 
-		data.uvs.push_back(vec3(u1, 0, 0));
+        data.uvs.push_back({ u1, 0, 0 });
 
 		for (size_t vi = 0; vi < vres; ++vi) {
 			auto v1 = (float)(vi + 1) / vres;
@@ -368,7 +369,7 @@ void genBezierSurface(const char* file, size_t ures, size_t vres, std::vector<st
 			indices.verts.push_back(curr + 1);     indices.verts.push_back(prev + 1);     indices.verts.push_back(prev + 1 + 1);
 			indices.verts.push_back(prev + 1 + 1); indices.verts.push_back(curr + 1 + 1); indices.verts.push_back(curr + 1);
 
-			data.uvs.push_back(vec3(u1, v1, 0));
+            data.uvs.push_back({ u1, v1, 0 });
 
 			indices.uvs.push_back(curr + 1);     indices.uvs.push_back(prev + 1);     indices.uvs.push_back(prev + 1 + 1);
 			indices.uvs.push_back(prev + 1 + 1); indices.uvs.push_back(curr + 1 + 1); indices.uvs.push_back(curr + 1);

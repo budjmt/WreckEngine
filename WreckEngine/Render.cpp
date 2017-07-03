@@ -190,7 +190,7 @@ void MaterialPass::Group::Helper::draw() {
     for (const auto& drawCall : drawCalls) {
 
         const auto& prog = drawCall.data.material->shaders->program;
-        assert(!prog.tessControl.valid() || drawCall.tesselPrim == GL_PATCHES); // if using tessellation, the primitive type must be GL_PATCHES
+        assert(!prog.tessControl.valid() || drawCall.data.tesselPrim == GL_PATCHES); // if using tessellation, the primitive type must be GL_PATCHES
         assert(!prog.isCompute); // compute shaders may not be used for draw calls
 
         drawCall.data.render(offset);

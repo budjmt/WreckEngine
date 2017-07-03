@@ -212,7 +212,7 @@ namespace Keyboard {
     };
 
     struct Info {
-        Key::Info keys[Key::Code::Last - Key::Code::First] = {};
+        Key::Info keys[Key::Code::Last - Key::Code::First]{}; // TODO this doesn't give the correct value
     };
     extern Info info;
 

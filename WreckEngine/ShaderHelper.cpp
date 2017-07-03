@@ -47,7 +47,7 @@ bool checkProgLinkError(const GLprogram& prog) {
         return false;
 
     auto logLength = prog.getVal(GL_INFO_LOG_LENGTH);
-    auto log = std::vector<char>(logLength);
+    std::vector<char> log(logLength);
     glGetProgramInfoLog(prog(), logLength, 0, &log[0]);
     cout << "PROGRAM LINK ERROR: " << &log[0] << endl;
     return true;

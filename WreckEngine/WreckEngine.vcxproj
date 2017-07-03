@@ -211,6 +211,7 @@
     <ClInclude Include="ComputeEntity.h" />
     <ClInclude Include="CubemapTest.h" />
     <ClInclude Include="DebugBenchmark.h" />
+    <ClInclude Include="DebugGPUBenchmark.h" />
     <ClInclude Include="DrawDebug.h" />
     <ClInclude Include="Event.h" />
     <ClInclude Include="File.h" />

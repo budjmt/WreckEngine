@@ -209,10 +209,9 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         // Load code point
         if (FT_Load_Char(fontFace, cp, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT))
         {
-            std::cout << "Could not load code point " << cp << " (" << static_cast<char>(cp) << ')' << std::endl;
+            std::cout << "Could not load code point " << cp << " (" << static_cast<char32_t>(cp) << ')' << std::endl;
             continue;
         }
-
         auto& glyph = fontFace->glyph;
         auto& bitmap = glyph->bitmap;
 
@@ -220,7 +219,7 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         const auto bitmapHeight = bitmap.rows;
 
         // Create pack rect (inflate it a bit for padding)
-        stbrp_rect rect = {0};
+        stbrp_rect rect {};
         rect.id = cp;
         rect.w = static_cast<stbrp_coord>(bitmapWidth + rectPadding);
         rect.h = static_cast<stbrp_coord>(bitmapHeight + rectPadding);
@@ -560,16 +559,16 @@ void Text::render(Render::MaterialPass* matRenderer)
 {
     if (Text::active)
     {
-		struct X {
-			X(Render::MaterialPass* r) {
-				textIndex = r->addGroup([] {
-					GL_CHECK(glDisable(GL_DEPTH_TEST));
-				}, [] {
-					GL_CHECK(glEnable(GL_DEPTH_TEST));
-				});
-			}
-		};
-		static X addText(matRenderer);
+        struct X {
+            X(Render::MaterialPass* r) {
+                textIndex = r->addGroup([] {
+                    GL_CHECK(glDisable(GL_DEPTH_TEST));
+                }, [] {
+                    GL_CHECK(glEnable(GL_DEPTH_TEST));
+                });
+            }
+        };
+        static X addText(matRenderer);
 
         renderer.renderer = matRenderer;
         renderer.draw();

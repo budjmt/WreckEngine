@@ -314,11 +314,14 @@
     <ClInclude Include="GraphicsWorker.h">
       <Filter>Render</Filter>
     </ClInclude>
+    <ClInclude Include="DebugGPUBenchmark.h">
+      <Filter>Core\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="GLresource.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="GLresource.tpp">
-      <Filter>Utilities</Filter>
-    </None>
   </ItemGroup>
 </Project>

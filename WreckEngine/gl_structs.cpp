@@ -5,6 +5,7 @@
 GLint GLtexture::MAX_TEXTURES = -1;
 GLint GLframebuffer::MAX_COLOR_ATTACHMENTS = -1;
 GLprogram::uivec3 GLprogram::MAX_COMPUTE_WORK_GROUPS {};
+GLint GLattrarr::MAX_VERTEX_ATTRIBS = -1;
 
 GLint GLframebuffer::boundFBO = 0;
 

@@ -17,7 +17,7 @@ void PostProcess::init() {
 
 GLprogram PostProcess::make_program(const char* shaderFile) { return make_program(loadShader(shaderFile, GL_FRAGMENT_SHADER), shaderFile); }
 GLprogram PostProcess::make_program(const GLshader& fragment, const char* path) {
-    assert(fragment.type == GL_FRAGMENT_SHADER);
+    assert(fragment.type == GLshader::Type::Fragment);
     auto prog = HotSwap::Shader::create();
     prog->vertex = defaultVertex;
     prog->fragment.set(fragment, path, GL_FRAGMENT_SHADER);

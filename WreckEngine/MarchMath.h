@@ -92,7 +92,7 @@ public:
 
 private:
     float _theta = 0, sin_t_half = 0;
-    vec3 _axis = vec3(0, 0, 1);
+    vec3 _axis { 0, 0, 1 };
 
     inline void updateAngles();
     inline void updateValues(const vec3& a, float t);

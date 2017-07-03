@@ -29,6 +29,6 @@ private:
 	float _speed = 0, _angSpeed = 0;
 	PROP_GS (private, RigidBody, vec3, vel,    { return _vel;    }, { _speed = glm::length(value);    return _vel = value; });
 	PROP_GS (private, RigidBody, vec3, angVel, { return _angVel; }, { _angSpeed = glm::length(value); return _angVel = value; });
-	ACCS_G(private, vec3, heading)    = vec3(1, 0, 0);
-	ACCS_G(private, vec3, angHeading) = vec3(1, 0, 0);
+    ACCS_G(private, vec3, heading)    { 1, 0, 0 };
+    ACCS_G(private, vec3, angHeading) { 1, 0, 0 };
 };

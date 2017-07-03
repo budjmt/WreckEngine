@@ -497,8 +497,8 @@ vec3 Collider::closestPointBtwnSegments(const vec3 p0, const vec3 p1, const vec3
 		     , e = glm::dot(v, w0)
 		     , D = a * c - b * b;
 
-	float sc, sNumer, sDenom = D;
-	float tc, tNumer, tDenom = D;
+	float sNumer, sDenom = D;
+	float tNumer, tDenom = D;
 
 	//if D ~ 0, i.e. segments are parallel
 	if (D < FLT_EPSILON) {
@@ -549,8 +549,8 @@ vec3 Collider::closestPointBtwnSegments(const vec3 p0, const vec3 p1, const vec3
 	}
 
 	//prevents possible divide by zero
-	sc = epsCheck(sNumer) ? 0 : sNumer / sDenom;
-	tc = epsCheck(tNumer) ? 0 : tNumer / tDenom;
+	float sc = epsCheck(sNumer) ? 0 : sNumer / sDenom;
+	float tc = epsCheck(tNumer) ? 0 : tNumer / tDenom;
 
 	v *= tc;
 	auto wc = w0; 
@@ -567,14 +567,14 @@ void Collider::genVerts() {
 		return;
 	Mesh::FaceData data;//norms and UVs are empty
 	Mesh::FaceIndex indices;
-	data.verts = { vec3( _dims.x,  _dims.y,  _dims.z),
-			  vec3(-_dims.x,  _dims.y,  _dims.z),
-			  vec3( _dims.x, -_dims.y,  _dims.z),
-			  vec3(-_dims.x, -_dims.y,  _dims.z),
-			  vec3( _dims.x,  _dims.y, -_dims.z),
-			  vec3(-_dims.x,  _dims.y, -_dims.z),
-			  vec3( _dims.x, -_dims.y, -_dims.z),
-			  vec3(-_dims.x, -_dims.y, -_dims.z) };
+	data.verts = { {  _dims.x,  _dims.y,  _dims.z },
+			       { -_dims.x,  _dims.y,  _dims.z },
+			       {  _dims.x, -_dims.y,  _dims.z },
+			       { -_dims.x, -_dims.y,  _dims.z },
+			       {  _dims.x,  _dims.y, -_dims.z },
+			       { -_dims.x,  _dims.y, -_dims.z },
+			       {  _dims.x, -_dims.y, -_dims.z },
+			       { -_dims.x, -_dims.y, -_dims.z } };
 
 	indices.verts = { 7, 3, 0, 7, 4, 0,
 					6, 7, 4, 6, 5, 4,

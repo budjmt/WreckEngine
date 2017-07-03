@@ -46,21 +46,21 @@ std::string to_string(const quat& q, size_t precision) {
 //based on the transform inverse shortcut where the mat is [M 0, v 1] (rows) and the inverse is [M^-1 0, -M^-1*v 1]
 mat4 inv_tp_tf(const mat4& m) {
     //the reason we do it this way is to save operations
-    vec4 c0 = m[0], c1 = m[1], c2 = m[2], c3 = m[3];
+    auto c0 = m[0], c1 = m[1], c2 = m[2], c3 = m[3];
     float a = c0.x, b = c1.x, c = c2.x, x = c3.x
         , d = c0.y, e = c1.y, f = c2.y, y = c3.y
         , g = c0.z, h = c1.z, i = c2.z, z = c3.z;
     float ei_fh = e*i - f*h, fg_di = f*g - d*i, dh_eg = d*h - e*g;
     float det = a * ei_fh + b * fg_di + c * dh_eg, _det = 1.f / det;
     //this is already transposed
-    auto tc0 = vec4(ei_fh * _det, (c*h - b*i) * _det, (b*f - c*e) * _det, 0);
-    auto tc1 = vec4(fg_di * _det, (a*i - c*g) * _det, (c*d - a*f) * _det, 0);
-    auto tc2 = vec4(dh_eg * _det, (b*g - a*h) * _det, (a*e - b*d) * _det, 0);
-    auto tc3 = vec4(0, 0, 0, 1);
+    auto tc0 = vec4 { ei_fh * _det, (c*h - b*i) * _det, (b*f - c*e) * _det, 0 };
+    auto tc1 = vec4 { fg_di * _det, (a*i - c*g) * _det, (c*d - a*f) * _det, 0 };
+    auto tc2 = vec4 { dh_eg * _det, (b*g - a*h) * _det, (a*e - b*d) * _det, 0 };
+    auto tc3 = vec4 { 0, 0, 0, 1 };
     tc0.w = -(tc0.x * x + tc0.y * y + tc0.z * z);
     tc1.w = -(tc1.x * x + tc1.y * y + tc1.z * z);
     tc2.w = -(tc2.x * x + tc2.y * y + tc2.z * z);
-    return mat4(tc0, tc1, tc2, tc3);
+    return mat4 { tc0, tc1, tc2, tc3 };
 }
 
 // [from] and [to] are unit vectors representing directions
