@@ -3,13 +3,13 @@
 #include "CollisionManager.h"
 
 ColliderEntity::ColliderEntity(shared<DrawMesh> s)
-	: Entity(s), _collider(make_unique<Collider>(s.get()->mesh(), &transform))
+    : Entity(s), _collider(make_unique<Collider>(shared<Mesh>{s->mesh()}, &transform))
 {
 	CollisionManager::getInstance().addEntity(this);
 }
 
 ColliderEntity::ColliderEntity(vec3 p, vec3 dims, vec3 sc, vec3 rA, float r, shared<DrawMesh> s)
-	: Entity(p, sc, rA, r, s), _collider(make_unique<Collider>(s.get()->mesh(), &transform))
+    : Entity(p, sc, rA, r, s), _collider(make_unique<Collider>(shared<Mesh>{s->mesh()}, &transform))
 {
 	CollisionManager::getInstance().addEntity(this);
 }

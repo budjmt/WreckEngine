@@ -55,9 +55,10 @@ CubemapTest::CubemapTest() : Game(6)
     program->setupProgram();
     noiseMap.prog = program->program();
     noiseMap.prog.use();
-    noiseMap.zoom = GLresource<float, true>(noiseMap.prog, "Zoom", [&] {
-        return cosRange(time * 0.375f, 1, 8);
-    });
+    noiseMap.prog.setOnce("Zoom", cosRange(time * 0.375, 1, 8));
+    //noiseMap.zoom = GLresource<float>(noiseMap.prog, "Zoom", [&] {
+    //    return cosRange(time * 0.375f, 1, 8);
+    //});
 
     // Setup the normal map compute material
     program = HotSwap::Shader::create();
@@ -65,9 +66,10 @@ CubemapTest::CubemapTest() : Game(6)
     program->setupProgram();
     normalMap.prog = program->program();
     normalMap.prog.use();
-    normalMap.camPos = GLresource<vec3, true>(normalMap.prog, "CameraPosition", [&] {
-        return Camera::main->transform.position();
-    });
+    normalMap.camPos = GLresource<GLcamera::position>(normalMap.prog, "CameraPosition");
+    //normalMap.camPos = GLresource<vec3, true>(normalMap.prog, "CameraPosition", [&] {
+    //    return Camera::main->transform.position();
+    //});
     normalMap.radius = normalMap.prog.getUniform<float>("Radius");
     normalMap.radius.value = radius;
 

@@ -18,12 +18,12 @@ private:
     struct NoiseMapData {
         GLtexture tex;
         GLprogram prog;
-        GLresource<float, true> zoom;
+        GLresource<float> zoom;
     };
     struct NormalMapData {
         GLtexture tex;
         GLprogram prog;
-        GLresource<vec3, true> camPos;
+        GLresource<GLcamera::position> camPos;
         GLresource<float> radius;
     };
 

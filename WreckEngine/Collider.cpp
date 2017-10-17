@@ -3,8 +3,8 @@
 #include <iostream>
 
 Collider::Collider(Transform* t, const vec3 d, const bool fudge) : Collider(Type::BOX, nullptr, t, d, fudge) { }
-Collider::Collider(Mesh* m, Transform* t) : Collider(Type::MESH, m, t, m->getPreciseDims()) { }
-Collider::Collider(const Type type, Mesh* m, Transform* t, const vec3 d, const bool fudge) : _type(type), mesh(m), _transform(t), fudgeAABB(fudge) 
+Collider::Collider(shared<Mesh> m, Transform* t) : Collider(Type::MESH, m, t, m->getPreciseDims()) { }
+Collider::Collider(const Type type, shared<Mesh> m, Transform* t, const vec3 d, const bool fudge) : _type(type), mesh(m), _transform(t), fudgeAABB(fudge) 
 {
 	dims(d);
 	base_aabb.center = _transform->getComputed()->position;
@@ -583,7 +583,7 @@ void Collider::genVerts() {
 					0, 1, 5, 0, 4, 5,
 					7, 6, 2, 7, 3, 2 };
 
-	mesh = new Mesh(data, indices);
+	mesh = make_shared<Mesh>(data, indices);
 }
 
 void Collider::genNormals() {

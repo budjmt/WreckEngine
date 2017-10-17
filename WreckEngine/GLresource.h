@@ -1,34 +1,30 @@
 #pragma once
 
-struct GLres { GLres() = default; virtual void update() const = 0; };
+#include <map>
 
-template<typename T, bool custom = false>
+// I cannot reliably enforce this, but:
+// ALL RESOURCES MUST BE BOTH TRIVIALLY COPYABLE AND DESTRUCTIBLE...
+// in the sense that they do not have user-defined copy constructors or destructors
+// it doesn't really matter that they have v-ptrs because their BUFFERS are being copied, not them
+struct GLres {
+    virtual void update() const = 0; 
+};
+
+template<typename T>
 class GLresource : public GLres {
 public:
+    using uniform_t = T;
+
     GLresource() = default;
     GLresource(GLuniform<T> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : GLresource(p.getUniform<T>(name)) {}
 
+    static_assert(std::is_trivially_destructible<T>::value && std::is_trivially_copyable<T>::value, "T must be trivially copyable and destructible");
     T value{};
 
     void update() const override { location.update(value); }
-
 private:
     GLuniform<T> location;
-};
-
-template<typename T>
-class GLresource<T, true> : public GLres {
-public:
-    GLresource() = default;
-    GLresource(GLuniform<T> loc, std::function<T()> update) : location(loc), update_func(update) {}
-    GLresource(const GLprogram& p, const char* name, std::function<T()> update) : GLresource(p.getUniform<T>(name), update) {}
-
-    void update() const override { location.update(update_func()); }
-
-private:
-    GLuniform<T> location;
-    std::function<T()> update_func;
 };
 
 struct GLtime;
@@ -42,6 +38,8 @@ struct GLcamera {
 template<>
 class GLresource<GLtime> : public GLres {
 public:
+    using uniform_t = float;
+
     GLresource() = default;
     GLresource(GLuniform<float> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : GLresource(p.getUniform<float>(name)) {}
@@ -59,6 +57,8 @@ private:
 template<>
 class GLresource<GLresolution> : public GLres {
 public:
+    using uniform_t = vec2;
+
     GLresource() = default;
     GLresource(GLuniform<vec2> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : GLresource(p.getUniform<vec2>(name)) {}
@@ -70,3 +70,12 @@ private:
 };
 
 // Camera resource definitions are in the Render.h
+
+namespace std {
+    template<>
+    struct hash<GLprogram> {
+        size_t operator()(const GLprogram& prog) const {
+            return std::hash<GLuint>{}(prog.program->id);
+        }
+    };
+}

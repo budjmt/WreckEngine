@@ -148,6 +148,8 @@ namespace Render {
 template<>
 class GLresource<GLcamera::matrix> : public GLres {
 public:
+    using uniform_t = mat4;
+
     GLresource() = default;
     GLresource(GLuniform<mat4> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : GLresource(p.getUniform<mat4>(name)) {}
@@ -161,6 +163,8 @@ private:
 template<>
 class GLresource<GLcamera::position> : public GLres {
 public:
+    using uniform_t = vec3;
+
     GLresource() = default;
     GLresource(GLuniform<vec3> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : GLresource(p.getUniform<vec3>(name)) {}
@@ -174,6 +178,8 @@ private:
 template<>
 class GLresource<GLcamera::direction> : public GLres {
 public:
+    using uniform_t = vec3;
+
     GLresource() = default;
     GLresource(GLuniform<vec3> loc) : location(loc) {}
     GLresource(const GLprogram& p, const char* name) : GLresource(p.getUniform<vec3>(name)) {}

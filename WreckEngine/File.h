@@ -205,7 +205,7 @@ namespace File {
         }
 
         printf("Complete!\n");
-        return make_shared<Mesh>(data, indices);
+        return make_shared<Mesh>(std::move(data), std::move(indices));
     }
 
     template<>

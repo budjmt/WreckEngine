@@ -17,6 +17,6 @@ public:
     size_t renderGroup = 0;
 private:
     GLbuffer vertBuffer, elBuffer;
-    ACCS_GS_T_C (private, shared<Mesh>, Mesh*, Mesh*, mesh, { return _mesh.get(); }, { _mesh.reset(value); });
+    ACCS_GS_T_C (private, shared<Mesh>, weak<Mesh>, shared<Mesh>, mesh, { return _mesh; }, { _mesh = value; });
 };
 

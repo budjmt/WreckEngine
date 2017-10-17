@@ -45,7 +45,7 @@ public:
 	enum class Type { SPHERE, BOX, MESH };
 
 	Collider(Transform* t, const vec3 d, const bool fudge = true);
-	Collider(Mesh* m, Transform* t);
+	Collider(shared<Mesh> m, Transform* t);
 	
 	const AABB& aabb = transformed_aabb;
 	const Type& type = _type;
@@ -86,7 +86,7 @@ public:
 	EdgeManifold overlayGaussMaps(Collider* other);
 
 private:
-	Collider(const Type type, Mesh* m, Transform* t, const vec3 d, const bool fudge = true);
+	Collider(const Type type, shared<Mesh> m, Transform* t, const vec3 d, const bool fudge = true);
 
 	ACCS_G    (private, Transform*, transform);
 	ACCS_G    (private, vec3,  framePos);
@@ -100,7 +100,7 @@ private:
 	std::vector<vec3> faceNormals, currNormals, edges, currEdges;//these are vec3s to avoid constant typecasting, and b/c cross product doesn't work for 4d vectors
 	std::unordered_map<std::string, GLuint> edgeMap;//maps the edge pairs to the indices in edges
 	GaussMap gauss;
-	Mesh* mesh;
+	shared<Mesh> mesh;
 
 	void setEdge(std::pair<GLuint, GLuint> e, const GLuint index);
 };
