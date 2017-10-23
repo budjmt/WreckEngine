@@ -240,7 +240,7 @@ int PlanetCSphere::update(const vec3& pos, const Camera* cam) {
 
     int activeCounter = 0;
     for (auto& plane : planes) {
-        //DrawDebug::getInstance().drawDebugVector(plane.entity->transform.getComputed()->position(), plane.boundingPoint);
+        //DrawDebug::get().drawDebugVector(plane.entity->transform.getComputed()->position(), plane.boundingPoint);
         activeCounter += plane.update(pos, cam, radius, translucent);
     }
     return activeCounter;
@@ -534,8 +534,6 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     cameraNav.forward = camera->forward();
 
-    if (DEBUG) DrawDebug::getInstance().camera(camera.get());
-
     noiseEntity->draw();
     normalEntity->draw();
     atmosLookupEntity->draw();
@@ -583,9 +581,9 @@ void TessellatorTest::update(double delta) {
         });
     }
 
-    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
-    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 1, 0));
-    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 0, 1));
+    DrawDebug::get().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
+    DrawDebug::get().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 1, 0));
+    DrawDebug::get().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 0, 1));
 
     auto cam = Camera::main;
 
@@ -627,7 +625,7 @@ void TessellatorTest::update(double delta) {
                           + "\nSeed: " + std::to_string(noiseData.seed->value)
                           + "\nExposure: " + std::to_string(exposure->value));
 
-    //DrawDebug::getInstance().drawDebugVector(pos + forward, pos + forward + normalize(vec3(-1, -1, -0.5f)));
+    //DrawDebug::get().drawDebugVector(pos + forward, pos + forward + normalize(vec3(-1, -1, -0.5f)));
 }
 
 void TessellatorTest::postUpdate() {
@@ -777,6 +775,6 @@ void moveSun(float radius) {
     }
 
     if (moved) Thread::Render::runNextFrame([] { sun.group->updateLight(sun.index, Light::UpdateFreq::SOMETIMES, sun.light); });
-    DrawDebug::getInstance().drawDebugSphere(sun.helper.position, sun.light.falloff.x, vec3(1));
-    DrawDebug::getInstance().drawDebugSphere(sun.helper.position, sun.light.falloff.y, vec3(1,1,0));
+    DrawDebug::get().drawDebugSphere(sun.helper.position, sun.light.falloff.x, vec3(1));
+    DrawDebug::get().drawDebugSphere(sun.helper.position, sun.light.falloff.y, vec3(1,1,0));
 }

@@ -43,29 +43,26 @@ DrawDebug::DrawDebug() {
         attrSetup.add<mat4>(1, 1);
     };
 
-    arrows = InstMesh<m_MeshData>(arrow.get(), MAX_VECTORS, 1, mSetup);
-    spheres = InstMesh<m_MeshData>(sphere.get(), MAX_SPHERES, 1, mSetup);
-    boxes = InstMesh<m_MeshData>(box.get(), MAX_BOXES, 1, mSetup);
+    arrows  = InstMesh<MeshData>(*arrow,  MAX_VECTORS, 1, mSetup);
+    spheres = InstMesh<MeshData>(*sphere, MAX_SPHERES, 1, mSetup);
+    boxes   = InstMesh<MeshData>(*box,    MAX_BOXES,   1, mSetup);
 
     vecVAO.unbind();
 
-    vecCam  = vecShader.getUniform<mat4>("cameraMatrix");
-    meshCam = meshShader.getUniform<mat4>("cameraMatrix");
-
     vecMat.setShaders(vecShader);
     vecMat.setTextures();
+    vecMat.addResource<GLcamera::matrix>("cameraMatrix");
 
     meshMat.setShaders(meshShader);
     meshMat.setTextures();
+    meshMat.addResource<GLcamera::matrix>("cameraMatrix");
 #endif
 }
 
-DrawDebug& DrawDebug::getInstance() {
+DrawDebug& DrawDebug::get() {
     static DrawDebug instance;
     return instance;
 }
-
-void DrawDebug::camera(Camera* c) { cam = c; }
 
 void DrawDebug::setRenderers(Render::MaterialPass* deferred, Render::MaterialPass* forward) {
     struct X { 
@@ -105,14 +102,8 @@ void DrawDebug::postUpdate() {
 void DrawDebug::draw(Render::MaterialPass* o, Render::MaterialPass* a) {
 #if DEBUG
     setRenderers(o, a);
-    
-    if (cam) {
-        auto c = cam->getCamMat();
-        vecMat.shaders->program.use();
-        vecCam.update(c);
-        meshMat.shaders->program.use();
-        meshCam.update(c);
-    }
+    vecMat.apply();
+    meshMat.apply();
 
     drawVectors();
     drawSpheres();
@@ -122,40 +113,38 @@ void DrawDebug::draw(Render::MaterialPass* o, Render::MaterialPass* a) {
 
 void DrawDebug::drawVectors() {
     debugVectors.consumeAll([this](auto& debugVectors) {
-        vectorInsts.insert(vectorInsts.end(), debugVectors.begin(), debugVectors.end());
-        for (size_t i = 0, numVecs = debugVectors.size(); i < numVecs; i += 4) {
-            constexpr auto sfact = 0.05f;
-            const auto s = debugVectors[i], c1 = debugVectors[i + 1]
-                , e = debugVectors[i + 2], c2 = debugVectors[i + 3];
+        vectorInsts.insert(end(vectorInsts), begin(debugVectors), end(debugVectors));
+        for (const auto& vec : debugVectors) {
+            constexpr auto scaleFactor = 0.05f;
 
-            const auto es = e - s;
-            const auto v = e - es * (sfact * 0.5f / length(es));
+            const auto bet = vec.end.pos - vec.start.pos;
+            const auto arrowLoc = vec.end.pos - bet * (scaleFactor * 0.5f / length(bet));
 
-            const auto translate = glm::translate(v);
-            const auto rotate = rotateBetween(vec3(0, 1, 0), glm::normalize(es));
-            const auto scale = glm::scale(vec3(0.5f, 1.f, 0.5f) * sfact);
-            arrows.instances.push_back({ vec4(c2, 1), translate * rotate * scale });
+            const auto translate = glm::translate(arrowLoc);
+            const auto rotate    = rotateBetween(vec3(0, 1, 0), normalize(bet));
+            const auto scale     = glm::scale(vec3(0.5f, 1.f, 0.5f) * scaleFactor);
+            arrows.instances.push_back({ vec4(vec.end.color, 1), translate * rotate * scale });
         }
     });
 
     vecBuffer.bind();
     vecBuffer.data(vectorInsts.data());
-    forward->scheduleDrawArrays(wireframeIndex, nullptr, &vecVAO, &vecMat, GL_LINES, vectorInsts.size());
-    
+    forward->scheduleDrawArrays(wireframeIndex, nullptr, &vecVAO, &vecMat, GL_LINES, vectorInsts.size() * 2); // there are 2 points per vector fed as elements to GL_LINES
+
     vectorInsts.clear();
-    vecsAdded -= arrows.instances.size(); // the number of complete vectors == the number of arrows rendered (vectorInsts.size() / 2)
+    vecsAdded -= arrows.instances.size(); // the number of complete vectors == the number of arrows rendered
 
     arrows.update();
     arrows.draw(forward, &meshMat, fillIndex);
     arrows.instances.clear();
 }
 
-void DrawDebug::drawSpheres() {	
+void DrawDebug::drawSpheres() {
     debugSpheres.consumeAll([this](auto& debugSpheres) {
-        for (const auto& s : debugSpheres) {
-            const auto translate = glm::translate(s.center);
-            const auto scale = glm::scale(vec3(s.rad * 2));
-            spheres.instances.push_back({ s.color, translate * scale });
+        for (const auto& sphere : debugSpheres) {
+            const auto translate = glm::translate(sphere.center);
+            const auto scale     = glm::scale(vec3(sphere.rad * 2));
+            spheres.instances.push_back({ sphere.color, translate * scale });
         }
     });
 
@@ -169,16 +158,16 @@ void DrawDebug::drawSpheres() {
 
 void DrawDebug::drawBoxes() {
     debugBoxes.consumeAll([this](auto& debugBoxes) {
-        for (size_t i = 0, numBoxes = debugBoxes.size(); i < numBoxes; i += 3) {
-            const auto translate = glm::translate(vec3(debugBoxes[i]));
-            const auto scale = glm::scale(vec3(debugBoxes[i + 1]));
-            boxes.instances.push_back({ debugBoxes[i + 2], translate * scale });
+        for (const auto& box : debugBoxes) {
+            const auto translate = glm::translate(box.pos);
+            const auto scale     = glm::scale(box.dims);
+            boxes.instances.push_back({ box.color, translate * scale });
         }
     });
 
     boxes.update();
     boxes.draw(forward, &meshMat, wireframeIndex);
-    
+
     auto boxesRendered = boxes.instances.size();
     boxes.instances.clear();
     boxesAdded -= boxesRendered;
@@ -186,32 +175,24 @@ void DrawDebug::drawBoxes() {
 
 void DrawDebug::drawDebugVector(vec3 start, vec3 end, vec3 color) {
 #if DEBUG
-    if (vecsAdded > MAX_VECTORS) return;
+    if (++vecsAdded > MAX_VECTORS) { --vecsAdded; return; }
     auto& v = debugVectors.get();
-    v.push_back(start);
-    v.push_back(color);
-    v.push_back(end);
-    v.push_back(color);
-    ++vecsAdded;
+    v.push_back({ { start, color }, { end, color } });
 #endif
 }
 
 void DrawDebug::drawDebugSphere(vec3 pos, float rad, vec3 color, float opacity) {
 #if DEBUG
-    if (spheresAdded > MAX_SPHERES) return;
+    if (++spheresAdded > MAX_SPHERES) { --spheresAdded; return; }
     auto& s = debugSpheres.get();
     s.push_back({ { color, opacity }, pos, rad });
-    ++spheresAdded;
 #endif
 }
 
 void DrawDebug::drawDebugBox(vec3 pos, float w, float h, float d, vec3 color, float opacity) {
 #if DEBUG
-    if (boxesAdded > MAX_BOXES) return;
+    if (++boxesAdded > MAX_BOXES) { --boxesAdded; return; }
     auto& b = debugBoxes.get();
-    b.push_back({ pos, 0 });
-    b.push_back({ w, h, d, 0 });
-    b.push_back({ color, opacity });
-    ++boxesAdded;
+    b.push_back({ pos, { w, h, d }, { color, opacity } });
 #endif
 }

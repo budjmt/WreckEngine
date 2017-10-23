@@ -136,8 +136,6 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     camera->transform.rotate(0, PI, 0);
     mainState->addEntity(camera);
 
-    if(DEBUG) DrawDebug::getInstance().camera(camera.get());
-
     setupLights();
     setupPostProcess();
 }
@@ -312,9 +310,9 @@ void TriPlay::update(double delta) {
 
     updateLights();
 
-    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
-    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
-    DrawDebug::getInstance().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
+    DrawDebug::get().drawDebugVector(vec3(), vec3(1, 0, 0), vec3(1, 0, 0));
+    DrawDebug::get().drawDebugVector(vec3(), vec3(0, 1, 0), vec3(0, 0, 1));
+    DrawDebug::get().drawDebugVector(vec3(), vec3(0, 0, 1), vec3(0, 1, 0));
 }
 
 void TriPlay::updateLights() {

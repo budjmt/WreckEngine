@@ -31,7 +31,7 @@ struct InstMesh {
     std::vector<T> instances;
 
     InstMesh() = default;
-    InstMesh(const Mesh* mesh, const size_t numInsts, const size_t baseIndex, const std::function<void(GLattrarr&)>& attrs) {
+    InstMesh(const Mesh& mesh, const size_t numInsts, const size_t baseIndex, const std::function<void(GLattrarr&)>& attrs) {
         GLattrarr attrSetup;
 
         vao.create();
@@ -40,12 +40,15 @@ struct InstMesh {
         insts.create(GL_ARRAY_BUFFER, GL_STREAM_DRAW);
         elems.create(GL_ELEMENT_ARRAY_BUFFER);
 
+        auto& meshIndices = mesh.indices().verts;
+        auto& meshVerts = mesh.data().verts;
+
         elems.bind();
-        numVerts = mesh->indices().verts.size();
-        elems.data(sizeof(GLuint) * numVerts, &mesh->indices().verts[0]);
+        numVerts = meshIndices.size();
+        elems.data(sizeof(GLuint) * numVerts, meshIndices.data());
 
         verts.bind();
-        verts.data(sizeof(vec3) * mesh->data().verts.size(), &mesh->data().verts[0]);
+        verts.data(sizeof(vec3) * meshVerts.size(), meshVerts.data());
 
         attrSetup.add<vec3>(1);
         attrSetup.apply();
@@ -74,8 +77,7 @@ private:
 
 class DrawDebug {
 public:
-    static DrawDebug& getInstance();
-    void camera(Camera* c);
+    static DrawDebug& get();
 
     void flush();
     void postUpdate();
@@ -100,27 +102,29 @@ private:
     void drawSpheres();
     void drawBoxes();
 
-    Camera* cam = nullptr;
-    GLuniform<mat4> vecCam, meshCam;
-
     shared<Mesh> arrow, sphere, box;
 
     void setRenderers(Render::MaterialPass* deferred, Render::MaterialPass* forward);
     Render::MaterialPass* deferred, * forward;
     Render::Info vecMat, meshMat;
     
-    struct m_MeshData { vec4 color; mat4 transform; };
+    struct MeshData { vec4 color; mat4 transform; };
 
     GLVAO vecVAO;
     GLbuffer vecBuffer;
-    
-    InstMesh<m_MeshData> arrows, spheres, boxes;
-    std::vector<vec3> vectorInsts;
-    std::atomic<size_t> vecsAdded, spheresAdded, boxesAdded;
-    
+
+    struct Vector {
+        struct Point { vec3 pos, color; };
+        Point start, end;
+    };
+    struct Box { vec3 pos, dims; vec4 color; };
     struct Sphere { vec4 color; vec3 center; float rad; };
 
-    thread_frame_vector<vec3> debugVectors;
-    thread_frame_vector<vec4> debugBoxes;
+    InstMesh<MeshData> arrows, spheres, boxes;
+    std::vector<Vector> vectorInsts;
+    std::atomic<size_t> vecsAdded, spheresAdded, boxesAdded;
+
+    thread_frame_vector<Vector> debugVectors;
     thread_frame_vector<Sphere> debugSpheres;
+    thread_frame_vector<Box> debugBoxes;
 };

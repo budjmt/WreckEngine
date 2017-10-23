@@ -41,8 +41,8 @@ void Collider::update() {
 	updateNormals();
 	updateEdges();
 	
-	//DrawDebug::getInstance().drawDebugSphere(_framePos, _radius);
-	DrawDebug::getInstance().drawDebugBox(transformed_aabb.center, transformed_aabb.halfDims.x * 2.f, transformed_aabb.halfDims.y * 2.f, transformed_aabb.halfDims.z * 2.f);
+	//DrawDebug::get().drawDebugSphere(_framePos, _radius);
+	DrawDebug::get().drawDebugBox(transformed_aabb.center, transformed_aabb.halfDims.x * 2.f, transformed_aabb.halfDims.y * 2.f, transformed_aabb.halfDims.z * 2.f);
 }
 
 //gets the vertex of the collider furthest in the direction of dir
@@ -254,8 +254,8 @@ Manifold Collider::intersects(Collider* other) {
 			      , v2  = (vec3)(world * vec4(getVert(minEdge.edgePair.first.edge.second), 1))
 			      , ov1 = (vec3)(oworld * vec4(other->getVert(minEdge.edgePair.second.edge.first), 1))
 			      , ov2 = (vec3)(oworld * vec4(other->getVert(minEdge.edgePair.second.edge.second), 1));
-		DrawDebug::getInstance().drawDebugVector(v1, v2, vec3(1, 0, 0));
-		DrawDebug::getInstance().drawDebugVector(ov1, ov2, vec3(1, 1, 0));
+		DrawDebug::get().drawDebugVector(v1, v2, vec3(1, 0, 0));
+		DrawDebug::get().drawDebugVector(ov1, ov2, vec3(1, 1, 0));
 		//std::cout << "Edge: " << minEdge.pen << '\n';
 		return Manifold();
 	}
@@ -275,7 +275,7 @@ Manifold Collider::intersects(Collider* other) {
 
 		//find the closest point between the two edges
 		minEdge.colPoints.push_back(closestPointBtwnSegments(p0, p1, q0, q1));
-		DrawDebug::getInstance().drawDebugSphere(minEdge.colPoints[0], 0.2f, vec3(0,1,0), 0.8f);
+		DrawDebug::get().drawDebugSphere(minEdge.colPoints[0], 0.2f, vec3(0,1,0), 0.8f);
 		return minEdge;
 	}
 	//face-* collision
@@ -290,7 +290,7 @@ Manifold Collider::intersects(Collider* other) {
 		minFace.originator->clipPolygons(minFace, incidents);
 
 		for (const auto& colPoint : minFace.colPoints)
-			DrawDebug::getInstance().drawDebugSphere(colPoint, 0.1f, vec3(1,0,0), 0.8f);
+			DrawDebug::get().drawDebugSphere(colPoint, 0.1f, vec3(1,0,0), 0.8f);
 
 		return minFace;
 	}
@@ -340,7 +340,7 @@ void Collider::clipPolygons(FaceManifold& reference, const std::vector<GLuint>& 
 	auto refCenter = getVert(vertFaces[index]) + getVert(vertFaces[index + 1]) + getVert(vertFaces[index + 2]);
 	refCenter = trans->getTransformed(refCenter / 3.f);
 
-	//DrawDebug::getInstance().drawDebugVector(refCenter, refCenter + refNorm);
+	//DrawDebug::get().drawDebugVector(refCenter, refCenter + refNorm);
 
 	//get the side planes of the reference face
 	//These are supposed to be the normals of the faces adjacent to the reference face, at least according to Bullet
@@ -358,8 +358,8 @@ void Collider::clipPolygons(FaceManifold& reference, const std::vector<GLuint>& 
 		sidePlanes.push_back(norm);
 		sideVerts.push_back(vert);
 
-		//DrawDebug::getInstance().drawDebugVector(vert, vert + edge, vec3(1, 1, 0));
-		//DrawDebug::getInstance().drawDebugVector(vert, vert + norm, vec3(1, 0, 1));
+		//DrawDebug::get().drawDebugVector(vert, vert + edge, vec3(1, 1, 0));
+		//DrawDebug::get().drawDebugVector(vert, vert + norm, vec3(1, 0, 1));
 	}
 
 	const auto oworld = otherTrans->getMats()->world;
@@ -715,7 +715,7 @@ void Collider::updateNormals() {
 			//	      , c = _transform->getTransformed(getVert(faceVerts[i * 3 + 2]));
 			//auto center = a + b + c;
 			//center /= 3;
-			//DrawDebug::getInstance().drawDebugVector(center, center + currNormals[i]);
+			//DrawDebug::get().drawDebugVector(center, center + currNormals[i]);
 		}
 		break;
 	}
@@ -737,7 +737,7 @@ void Collider::updateEdges() {
 				auto a = pair.second[i];
 				auto s = _transform->getTransformed(getVert(a.edge[0]));
 				auto edge = getEdge(a.edge);
-				DrawDebug::getInstance().drawDebugVector(s, s + edge);
+				DrawDebug::get().drawDebugVector(s, s + edge);
 			}
 		}*/
 		break;

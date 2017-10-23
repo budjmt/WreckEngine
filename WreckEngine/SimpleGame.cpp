@@ -28,8 +28,6 @@ SimpleGame::SimpleGame(GLprogram prog) : Game(6) {
     camera->transform.rotate(0, PI, 0);
     mainState->addEntity(camera);
 
-    if (DEBUG) DrawDebug::getInstance().camera(camera.get());
-
     Light::Group<Light::Directional> directional;
     Light::Directional d;
     d.direction = normalize(vec3(-1, -1, -0.5f));

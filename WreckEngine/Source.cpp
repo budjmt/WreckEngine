@@ -68,7 +68,7 @@ void init() {
     //game = make_unique<TessellatorTest>();
     //game = make_unique<SimpleGame>(shaderProg);
 
-    DrawDebug::getInstance().flush();
+    DrawDebug::get().flush();
     Text::flush();
 }
 

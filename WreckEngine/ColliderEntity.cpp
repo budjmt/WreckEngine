@@ -61,8 +61,8 @@ void ColliderEntity::handleCollision(ColliderEntity* other, Manifold& m, double 
 	auto F = j * m.axis;
 	//body.netForce +=  F;
 	//oRB.netForce  -=  F;
-	//DrawDebug::getInstance().drawDebugVector(_transform.position, _transform.position() + F, vec3(0,1,1));
-	//DrawDebug::getInstance().drawDebugVector(other->transform.position, other->transform.position() - F, vec3(1,1,0));
+	//DrawDebug::get().drawDebugVector(_transform.position, _transform.position() + F, vec3(0,1,1));
+	//DrawDebug::get().drawDebugVector(other->transform.position, other->transform.position() - F, vec3(1,1,0));
 
 	//they have the same collision points by definition, but vecs to those points change, meaning torque and covariance also change
 	body.netAngAccel += calcAngularAccel(m, F);

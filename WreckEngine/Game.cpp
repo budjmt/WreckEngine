@@ -15,7 +15,7 @@ void Game::update(double dt) {
 void Game::postUpdate() {
 #if DEBUG
 if(drawDebug)
-    DrawDebug::getInstance().postUpdate();
+    DrawDebug::get().postUpdate();
 #endif
 }
 
@@ -27,7 +27,7 @@ void Game::draw() {
     currState->draw();
 #if DEBUG
     if (drawDebug)
-        DrawDebug::getInstance().draw(&renderer.deferred.objects, &renderer.forward.objects);
+        DrawDebug::get().draw(&renderer.deferred.objects, &renderer.forward.objects);
 #endif
     renderer.render();
 }
