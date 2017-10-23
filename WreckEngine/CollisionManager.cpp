@@ -64,9 +64,9 @@ size_t CollisionManager::narrowPhase(float dt) {
 			++numCollisions;
 
 			std::cout << "collision! " << a->id << ", " << b->id << "; " << (m.originator == a->collider() ? a->id : b->id) << ", "
-				<< m.pen << "; contact points: " << m.colPoints.size() << std::endl;
+				<< m.pen << "; contact points: " << m.colPoints.size() << '\n';
 		}
-		//std::cout << "Collision Check Time: " << DebugBenchmark::end() << std::endl;
+		//std::cout << "Collision Check Time: " << DebugBenchmark::end() << '\n';
 	}
 	return numCollisions;
 }

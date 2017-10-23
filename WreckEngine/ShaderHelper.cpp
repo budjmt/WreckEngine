@@ -20,24 +20,24 @@ GLprogram loadProgram(const char* vertexFile, const char* fragmentFile) {
     auto shaderProg = HotSwap::Shader::create();
     shaderProg->vertex.set(LOAD_HOTSWAP_PARAMS(vertexFile, GL_VERTEX_SHADER));
     if (!shaderProg->vertex.get().valid()) {
-        cout << "Error: Vertex shader from " << vertexFile << " could not be used." << endl;
+        cout << "Error: Vertex shader from " << vertexFile << " could not be used.\n";
         return GLprogram();
     }
     shaderProg->fragment.set(LOAD_HOTSWAP_PARAMS(fragmentFile, GL_FRAGMENT_SHADER));
     if (!shaderProg->fragment.get().valid()) {
-        cout << "Error: Fragment shader from " << fragmentFile << " could not be used." << endl;
+        cout << "Error: Fragment shader from " << fragmentFile << " could not be used.\n";
         return GLprogram();
     }
-    //cout << "Files read successfully." << endl;
+    //cout << "Files read successfully.\n";
     shaderProg->setupProgram();
     auto prog = shaderProg->program();
 
     if (checkProgLinkError(prog)) {
-        cout << "^^ Error found in " << vertexFile << " and " << fragmentFile << endl;
+        cout << "^^ Error found in " << vertexFile << " and " << fragmentFile << '\n';
         return GLprogram();
     }
     
-    cout << "Successfully loaded " << vertexFile << " and " << fragmentFile << endl;
+    cout << "Successfully loaded " << vertexFile << " and " << fragmentFile << '\n';
     return prog;
 }
 
@@ -49,6 +49,6 @@ bool checkProgLinkError(const GLprogram& prog) {
     auto logLength = prog.getVal(GL_INFO_LOG_LENGTH);
     std::vector<char> log(logLength);
     glGetProgramInfoLog(prog(), logLength, 0, &log[0]);
-    cout << "PROGRAM LINK ERROR: " << &log[0] << endl;
+    cout << "PROGRAM LINK ERROR: " << &log[0] << '\n';
     return true;
 }

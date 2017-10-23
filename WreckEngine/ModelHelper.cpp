@@ -19,7 +19,7 @@ shared<Mesh> loadOBJ(const char* file) {
 
 void genOBJ(const char* file, Mesh::FaceData& data, Mesh::FaceIndex& indices) {
 
-	//cout << "Generating " << file << endl;
+	//cout << "Generating " << file << '\n';
 
 	string fileContents = "";
 	for (const auto vert : data.verts) {
@@ -51,11 +51,11 @@ void genOBJ(const char* file, Mesh::FaceData& data, Mesh::FaceIndex& indices) {
 	}
 	fileContents += "# " + to_string(indices.verts.size() / FLOATS_PER_VERT) + " faces\n\n";
 
-	//cout << "Writing..." << endl;
+	//cout << "Writing...\n";
 	//write fileContents to the file, overwrite its contents
 	std::ofstream ofile(file, ios::out | ios::trunc);
 	ofile.write(fileContents.c_str(), fileContents.length());
-	//cout << "File successfully generated." << endl;
+	//cout << "File successfully generated.\n";
 }
 
 void genPlane(const char* file, const size_t subdivisions) {

@@ -109,6 +109,8 @@ void update() {
     game->update(Time::delta);
     game->postUpdate();
 
+    std::cout << std::flush; // flush all buffered output at least once per frame
+
     if (Keyboard::keyPressed(Keyboard::Key::F11))
         Thread::Main::runAsync([] { Window::toggleFullScreen(); });
     if (Keyboard::keyPressed(Keyboard::Key::F10)) {

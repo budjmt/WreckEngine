@@ -104,17 +104,17 @@ Text::FontFace::FontFace(const std::string& font) {
     auto error = FT_New_Face(FT.lib, font.c_str(), nextFontIndex++, &fontFace);
     if (error) {
         fontFace = nullptr;
-        std::cout << "Font face \"" << font << "\" failed to load: " << std::endl;
+        std::cout << "Font face \"" << font << "\" failed to load: \n";
         switch (error) {
             case FT_Err_Unknown_File_Format:
-                std::cout << "The file format could not be read." << std::endl;
+                std::cout << "The file format could not be read.\n";
                 break;
             default:
-                std::cout << "Error code: " << error << std::endl;
+                std::cout << "Error code: " << error << '\n';
         }
     }
     else
-        std::cout << "Successfully loaded \"" << font << "\"" << std::endl;
+        std::cout << "Successfully loaded \"" << font << "\"\n";
 }
 
 Text::FontFace::~FontFace() {
@@ -182,7 +182,7 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end) {
     for (uint32_t cp = begin; cp <= end; ++cp) {
         // Load code point
         if (FT_Load_Char(fontFace, cp, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT)) {
-            std::cout << "Could not load code point " << cp << " (" << static_cast<char32_t>(cp) << ')' << std::endl;
+            std::cout << "Could not load code point " << cp << " (" << static_cast<char32_t>(cp) << ")\n";
             continue;
         }
         auto& glyph = fontFace->glyph;
@@ -254,7 +254,7 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end) {
             tex.setSub2D<GLubyte>(&pixelBuffer[0], rect.x, rect.y, rect.w, rect.h, GL_RED, 0);
 #if defined(_DEBUG)
         else
-            std::cout << "[WARN] Character " << cp << " ('" << static_cast<char>(cp) << "') does not have bitmap data!" << std::endl;
+            std::cout << "[WARN] Character " << cp << " ('" << static_cast<char>(cp) << "') does not have bitmap data!\n";
 #endif
     }
     

@@ -233,14 +233,14 @@ Manifold Collider::intersects(Collider* other) {
 	//axis of min pen on this collider
 	auto minAxis = getAxisMinPen(other);
 	if (minAxis.pen > COLLISION_PEN_TOLERANCE) {
-		//std::cout << "This: " << minAxis.pen << "; " << minAxis.axis.x << ", " << minAxis.axis.y << ", " << minAxis.axis.z << std::endl;
+		//std::cout << "This: " << minAxis.pen << "; " << minAxis.axis.x << ", " << minAxis.axis.y << ", " << minAxis.axis.z << '\n';
 		return Manifold();
 	}
 
 	//axis of min pen on other collider
 	auto otherMinAxis = other->getAxisMinPen(this);
 	if (otherMinAxis.pen > COLLISION_PEN_TOLERANCE) {
-		//std::cout << "Other: " << otherMinAxis.pen << "; " << otherMinAxis.axis.x << ", " << otherMinAxis.axis.y << ", " << otherMinAxis.axis.z << std::endl;
+		//std::cout << "Other: " << otherMinAxis.pen << "; " << otherMinAxis.axis.x << ", " << otherMinAxis.axis.y << ", " << otherMinAxis.axis.z << '\n';
 		return Manifold();
 	}
 
@@ -256,7 +256,7 @@ Manifold Collider::intersects(Collider* other) {
 			      , ov2 = (vec3)(oworld * vec4(other->getVert(minEdge.edgePair.second.edge.second), 1));
 		DrawDebug::getInstance().drawDebugVector(v1, v2, vec3(1, 0, 0));
 		DrawDebug::getInstance().drawDebugVector(ov1, ov2, vec3(1, 1, 0));
-		//std::cout << "Edge: " << minEdge.pen << std::endl;
+		//std::cout << "Edge: " << minEdge.pen << '\n';
 		return Manifold();
 	}
 
