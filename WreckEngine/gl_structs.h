@@ -104,7 +104,7 @@ template<> struct GLuniform<mat4>      : public GLuniform_t { inline void update
 struct GLtexture {
     using handle_t = GLhandle<GLtexture>;
     shared<handle_t> texture = make_shared<handle_t>();
-    GLenum target;
+    GLenum target = def;
     inline WR_GL_OP_PARENS(texture);
     inline WR_GL_OP_EQEQ(GLtexture, texture);
 
@@ -710,7 +710,7 @@ class GLattrarr {
         GLenum type; GLuint size, bytes, divisor; bool normalize, castToFloat;
     };
     inline void reset() {
-        attrs = std::vector<GLattr>();
+        attrs.clear();
     }
 
     static GLint MAX_VERTEX_ATTRIBS;
@@ -804,5 +804,3 @@ public:
         return finalIndex;
     }
 };
-
-#undef GL_HANDLE_DEF

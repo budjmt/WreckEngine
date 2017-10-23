@@ -141,9 +141,6 @@
     <ClCompile Include="TessellatorTest.cpp">
       <Filter>Games</Filter>
     </ClCompile>
-    <ClCompile Include="CubemapTest.cpp">
-      <Filter>Games</Filter>
-    </ClCompile>
     <ClCompile Include="File.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
@@ -161,6 +158,9 @@
     </ClCompile>
     <ClCompile Include="stb.cpp">
       <Filter>ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleGame.cpp">
+      <Filter>Games</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -299,9 +299,6 @@
     <ClInclude Include="TessellatorTest.h">
       <Filter>Games</Filter>
     </ClInclude>
-    <ClInclude Include="CubemapTest.h">
-      <Filter>Games</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Entities</Filter>
     </ClInclude>
@@ -318,6 +315,12 @@
       <Filter>Core\Debug</Filter>
     </ClInclude>
     <ClInclude Include="GLresource.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="SimpleGame.h">
+      <Filter>Games</Filter>
+    </ClInclude>
+    <ClInclude Include="proxy_ptr.h">
       <Filter>Utilities</Filter>
     </ClInclude>
   </ItemGroup>

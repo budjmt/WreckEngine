@@ -12,15 +12,7 @@ namespace {
     }
 }
 
-struct RenderData {
-    GLprogram prog;
-    GLresource<GLcamera::matrix> mat;
-    GLresource<GLcamera::position> pos;
-};
-
-static RenderData objectData, normalMapData, forwardData;
-
-static GLresource<float> exposure;
+static proxy<GLresource<float>> exposure;
 
 TriPlay::TriPlay(GLprogram prog) : Game(6)
 {
@@ -51,14 +43,11 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     };
     addState(mainState);
 
-    objectData.prog = prog;
-    objectData.mat = prog.getUniform<mat4>("cameraMatrix");
-
     auto m = loadOBJ("Assets/basic.obj");
     m->translateTo(vec3());
-    auto ndm = make_shared<DrawMesh>(&renderer.deferred.objects, m, "Assets/texture.png", objectData.prog);
+    auto ndm = make_shared<DrawMesh>(&renderer.deferred.objects, m, "Assets/texture.png", prog);
     auto mesh = make_shared<ColliderEntity>(ndm);
-    ndm->material.addResource(&objectData.mat);
+    ndm->material.addResource<GLcamera::matrix>("cameraMatrix");
     mesh->id = (void*)0xcaca;
     mainState->addEntity(mesh);
     //me = mesh;
@@ -77,7 +66,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     //genCone("Assets/cone.obj", 8);
     //auto bezier = loadOBJ("Assets/bezier.obj");
     auto cone = loadOBJ("Assets/cone.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cone, "Assets/texture.png", objectData.prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cone, ndm->material));
     mesh->transform.position = vec3(2.5f, 0, 0);
     //mesh->id = (void*)0xb;
     mesh->id = (void*)0xc1;
@@ -85,7 +74,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     //genCylinder("Assets/cylinder.obj", 64);
     auto cylinder = loadOBJ("Assets/cylinder.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cylinder, "Assets/texture.png", objectData.prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cylinder, ndm->material));
     mesh->id = (void*)0xc;
     mesh->transform.position = vec3(-2.5f, 0, 0);
     mainState->addEntity(mesh);
@@ -93,7 +82,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     //genSphere("Assets/sphere.obj", 16);
     auto sphere = loadOBJ("Assets/sphere.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, sphere, "Assets/texture.png", objectData.prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, sphere, ndm->material));
     mesh->id = (void*)0xcc;
     mesh->transform.position = vec3(0, 2.5f, 0);
     mainState->addEntity(mesh);
@@ -101,7 +90,7 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
 
     //genCube("Assets/cube.obj");
     auto cube = loadOBJ("Assets/cube.obj");
-    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cube, "Assets/texture.png", objectData.prog));
+    mesh = make_shared<ColliderEntity>(make_shared<DrawMesh>(&renderer.deferred.objects, cube, ndm->material));
     mesh->id = (void*)0xc2fb;
     mesh->transform.position = vec3(0, -5.f, 0);
     mesh->transform.scale = vec3(64, 1.5f, 64);
@@ -109,17 +98,16 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     mesh->rigidBody.mass(100000);
     mainState->addEntity(mesh);
 
-    normalMapData.prog = loadProgram("Shaders/normalMapTest_v.glsl", "Shaders/normalMapTest_f.glsl");
-    //normalMapData.prog = prog;
-    normalMapData.mat = normalMapData.prog.getUniform<mat4>("cameraMatrix");
+    auto normalMapProg = loadProgram("Shaders/normalMapTest_v.glsl", "Shaders/normalMapTest_f.glsl");
+    //auto normalMapProg = prog;
 
     //auto cube2 = make_shared<Mesh>(*cube);
     //auto cube2 = make_shared<Mesh>(*cylinder);
     //cube2->resetRenderData();
     auto cube2 = loadOBJ("Assets/phone.obj");
     cube2->scaleTo(vec3(1.0f));
-    auto dm = make_shared<DrawMesh>(&renderer.deferred.objects, cube2, "Assets/butt.png", normalMapData.prog, true);
-    dm->material.addResource(&normalMapData.mat);
+    auto dm = make_shared<DrawMesh>(&renderer.deferred.objects, cube2, "Assets/butt.png", normalMapProg, true);
+    dm->material.addResource<GLcamera::matrix>("cameraMatrix");
     //dm->material.addTexture(Renderable::genTexture2D("Assets/face_nm.png"));
     dm->material.addTexture(Renderable::genTexture2D("Assets/phone_nm.png"));
     
@@ -130,16 +118,14 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     mainState->addEntity(mesh);
     me = mesh;
 
-    forwardData.prog = loadProgram("Shaders/forwardTest_v.glsl", "Shaders/forwardTest_f.glsl");
-    forwardData.mat = forwardData.prog.getUniform<mat4>("cameraMatrix");
-    forwardData.pos = forwardData.prog.getUniform<vec3>("camPos");
+    auto forwardProg = loadProgram("Shaders/forwardTest_v.glsl", "Shaders/forwardTest_f.glsl");
 
-    dm = make_shared<DrawMesh>(&renderer.forward.objects, sphere, "Assets/butt.png", forwardData.prog);
+    dm = make_shared<DrawMesh>(&renderer.forward.objects, sphere, "Assets/butt.png", forwardProg);
     mesh = make_shared<ColliderEntity>(dm);
-    renderer.lights.connectLightBlocks(forwardData.prog, "PointBlock", "SpotlightBlock", "DirectionalBlock");
-    dm->color = vec4(0, 1, 0.5f, 0.5f);
-    dm->material.addResource(&forwardData.mat);
-    dm->material.addResource(&forwardData.pos);
+    renderer.lights.connectLightBlocks(forwardProg, "PointBlock", "SpotlightBlock", "DirectionalBlock");
+    dm->color(vec4(0, 1, 0.5f, 0.5f));
+    dm->material.addResource<GLcamera::matrix>("cameraMatrix");
+    dm->material.addResource<GLcamera::position>("camPos");
     mesh->transform.position = vec3(-5.f, 0, 0);
     mesh->rigidBody.floating(1);
     mainState->addEntity(mesh);
@@ -247,10 +233,9 @@ void TriPlay::setupPostProcess() {
 
     // HDR
     auto hdr = make_shared<PostProcess>();
-    auto hdrProg = PostProcess::make_program("Shaders/postProcess/hdr.glsl");
-    exposure = hdrProg.getUniform<float>("exposure");
-    exposure.value = 2;
-    hdr->data.setShaders(hdrProg, &exposure);
+    hdr->data.setShaders(PostProcess::make_program("Shaders/postProcess/hdr.glsl"));
+    exposure = hdr->data.addResource<float>("exposure");
+    exposure->value = 2;
     hdr->data.setTextures(blurTarget);
     hdr->renderToTextures(brightRender);
 
@@ -262,11 +247,11 @@ void TriPlay::setupPostProcess() {
 
     // CRT
     auto crt = make_shared<PostProcess>();
-    crt->data.setShaders(PostProcess::make_program("Shaders/postProcess/crt.glsl"), &crtTime, &crtRes);
+    crt->data.setShaders(PostProcess::make_program("Shaders/postProcess/crt.glsl"));
     crt->data.setTextures(colorRender);
     crt->renderToTextures(renderer.forward.postProcess.output);
-    crtTime = GLresource<GLtime>(crt->data.shaders->program, "time");
-    crtRes  = GLresource<GLresolution>(crt->data.shaders->program, "resolution");
+    crt->data.addResource<GLtime>("time");
+    crt->data.addResource<GLresolution>("resolution");
 
     renderer.forward.postProcess.entry.chainsTo(brightPass)->chainsTo(blurH)->cyclesWith(2, blurV)->chainsTo(bloom)->chainsTo(chromaticAberration)->chainsTo(crt);
 }
@@ -285,8 +270,10 @@ void TriPlay::update(double delta) {
     bool shift = Keyboard::shiftDown();
     bool ctrl  = Keyboard::controlDown();
 
-    if (Keyboard::keyDown(Keyboard::Key::Code::RBracket)) exposure.value += 10 * dt;
-    if (Keyboard::keyDown(Keyboard::Key::Code::LBracket)) exposure.value -= 10 * dt;
+    if (exposure) {
+        if (Keyboard::keyDown(Keyboard::Key::Code::RBracket)) exposure->value += 10 * dt;
+        if (Keyboard::keyDown(Keyboard::Key::Code::LBracket)) exposure->value -= 10 * dt;
+    }
 
     if (Keyboard::keyDown(Keyboard::Key::Code::I)) {
         if (shift)

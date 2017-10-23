@@ -12,6 +12,7 @@ uniform vec2 resolution;
 // object render targets
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
+uniform samplerCube occlusionMap;
 
 // light accumulation targets
 layout (location = 0) out vec4 diffuseColor;

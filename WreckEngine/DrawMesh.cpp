@@ -1,12 +1,23 @@
 #include "DrawMesh.h"
 
-DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, const char* texFile, GLprogram shader, bool hasTangent) : DrawMesh(r, m, genTexture2D(texFile), shader, hasTangent) {}
-DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, GLtexture tex, GLprogram shader, bool hasTangent) : _mesh(m) { renderer = r; setup(tex, shader, hasTangent); }
-DrawMesh::DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, const char* texFile, GLprogram shader, bool hasTangent) : DrawMesh(r, make_shared<Mesh>(fd, fi), texFile, shader, hasTangent) {}
-DrawMesh::DrawMesh(Render::MaterialPass* r, Mesh::FaceData& fd, Mesh::FaceIndex& fi, GLtexture tex, GLprogram shader, bool hasTangent) : DrawMesh(r, make_shared<Mesh>(fd, fi), tex, shader, hasTangent) {}
+static Render::Info gen_mat(GLtexture tex, GLprogram shader) {
+    Render::Info material;
+    material.setShaders(shader);
+    material.setTextures(tex);
+    return material;
+}
 
-void DrawMesh::setup(GLtexture tex, GLprogram shader, bool hasTangent) {
-    
+DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, const char* texFile, GLprogram shader, bool hasTangent) : DrawMesh(r, m, genTexture2D(texFile), shader, hasTangent) {}
+DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, GLtexture tex, GLprogram shader, bool hasTangent) : DrawMesh(r, m, gen_mat(tex, shader), hasTangent) {}
+
+DrawMesh::DrawMesh(Render::MaterialPass* r, shared<Mesh> m, Render::Info _material, bool hasTangent) : _mesh(m) { 
+    renderer = r; 
+    material = std::move(_material);
+    setupMesh(hasTangent);
+    setupMaterial();
+}
+
+void DrawMesh::setupMesh(bool hasTangent) {
     auto renderData = _mesh->getRenderData(hasTangent);
 
     vArray.create();
@@ -14,11 +25,11 @@ void DrawMesh::setup(GLtexture tex, GLprogram shader, bool hasTangent) {
 
     vertBuffer.create(GL_ARRAY_BUFFER);
     vertBuffer.bind();
-    vertBuffer.data(sizeof(GLfloat) * renderData->vbuffer.size(), &renderData->vbuffer[0]);
+    vertBuffer.data(sizeof(GLfloat) * renderData->vbuffer.size(), renderData->vbuffer.data());
 
     elBuffer.create(GL_ELEMENT_ARRAY_BUFFER);
     elBuffer.bind();
-    elBuffer.data(sizeof(GLuint) * renderData->ebuffer.size(), &renderData->ebuffer[0]);
+    elBuffer.data(sizeof(GLuint) * renderData->ebuffer.size(), renderData->ebuffer.data());
 
     //set up an attribute for how the coordinates will be read
     GLattrarr attrSetup;
@@ -30,15 +41,13 @@ void DrawMesh::setup(GLtexture tex, GLprogram shader, bool hasTangent) {
     attrSetup.apply();
 
     vArray.unbind();
+}
 
-    shader.use();
-    worldMatrix   = GLresource<mat4>(shader, "worldMatrix");
-    iTworldMatrix = GLresource<mat4>(shader, "iTworldMatrix");
-    _color = GLresource<vec4>(shader, "tint");
-    _color.value = vec4(1);
-
-    material.setShaders(shader, &worldMatrix, &iTworldMatrix, &_color);
-    material.setTextures(tex);
+void DrawMesh::setupMaterial() {
+    worldMatrix   = material.addResource<mat4>("worldMatrix");
+    iTworldMatrix = material.addResource<mat4>("iTworldMatrix");
+    _color = material.addResource<vec4>("tint");
+    color(vec4(1));
 }
 
 void DrawMesh::draw(const mat4& world, Entity* entity) {

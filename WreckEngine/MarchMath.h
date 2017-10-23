@@ -34,15 +34,6 @@ typedef glm::mat3 mat3;
 typedef glm::mat4 mat4;
 class quat;
 
-std::string to_string(const vec2&);
-std::string to_string(const vec2&, size_t precision);
-std::string to_string(const vec3&);
-std::string to_string(const vec3&, size_t precision);
-std::string to_string(const vec4&);
-std::string to_string(const vec4&, size_t precision);
-std::string to_string(const quat&);
-std::string to_string(const quat&, size_t precision);
-
 mat4 inv_tp_tf(const mat4& m);
 mat4 rotateBetween(const vec3 from, const vec3 to);
 
@@ -104,3 +95,27 @@ quat operator*(const quat& q, float f);
 inline quat operator*(float f, const quat& q) { return q * f; }
 quat operator/(const quat& q, float f);
 quat operator*(const quat& a, const quat& b);
+
+template<typename T> inline std::string to_string(const T& obj) { return std::to_string(obj); }
+template<> inline std::string to_string<vec2>(const vec2& v) { return std::to_string(v.x) + "," + std::to_string(v.y); };
+std::string to_string(const vec2&, size_t precision);
+template<> inline std::string to_string<vec3>(const vec3& v) { return std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z); };
+std::string to_string(const vec3&, size_t precision);
+template<> inline std::string to_string<vec4>(const vec4& v) { return std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z) + "," + std::to_string(v.w); };
+std::string to_string(const vec4&, size_t precision);
+template<> inline std::string to_string<quat>(const quat& q) { return std::to_string(q.x) + "," + std::to_string(q.y) + "," + std::to_string(q.z) + "," + std::to_string(q.w); };
+std::string to_string(const quat&, size_t precision);
+
+template<> inline std::string to_string<mat3>(const mat3& m) {
+    auto col0 = m[0], col1 = m[1], col2 = m[2];
+    return std::to_string(col0[0]) + "," + std::to_string(col1[0]) + "," + std::to_string(col2[0]) + "\n"
+         + std::to_string(col0[1]) + "," + std::to_string(col1[1]) + "," + std::to_string(col2[1]) + "\n"
+         + std::to_string(col0[2]) + "," + std::to_string(col1[2]) + "," + std::to_string(col2[2]);
+}
+template<> inline std::string to_string<mat4>(const mat4& m) {
+    auto col0 = m[0], col1 = m[1], col2 = m[2], col3 = m[3];
+    return std::to_string(col0[0]) + "," + std::to_string(col1[0]) + "," + std::to_string(col2[0]) + "," + std::to_string(col3[0]) + "\n"
+         + std::to_string(col0[1]) + "," + std::to_string(col1[1]) + "," + std::to_string(col2[1]) + "," + std::to_string(col3[1]) + "\n"
+         + std::to_string(col0[2]) + "," + std::to_string(col1[2]) + "," + std::to_string(col2[2]) + "," + std::to_string(col3[2]) + "\n"
+         + std::to_string(col0[3]) + "," + std::to_string(col1[3]) + "," + std::to_string(col2[3]) + "," + std::to_string(col3[3]);
+}

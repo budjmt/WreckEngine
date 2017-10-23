@@ -93,8 +93,8 @@ namespace Text
             offset.y = Window::height - _y;
         }
         inline void setScale(float _scale) {
-            if (scale.value != _scale) {
-                scale.value = _scale;
+            if (scale->value != _scale) {
+                scale->value = _scale;
                 dirtyAlign = true;
             }
         }
@@ -119,9 +119,9 @@ namespace Text
         vec4 color;
         std::mutex textMutex;
 
-        GLresource<vec2> fullOffset;
+        proxy<GLresource<vec2>> fullOffset;
         vec2 offset, alignOffset;
-        GLresource<float> scale;
+        proxy<GLresource<float>> scale;
         
         GLuint arrayCount = 0;
         
@@ -141,11 +141,8 @@ namespace Text
         Render::MaterialPass* renderer;
     private:
         struct Shader {
-            GLprogram program;
-            GLuniform<GLsampler> sampler;
-            GLresource<mat4> cam;
-            GLuniform<vec2> offset;
-            GLuniform<float> scale;
+            proxy<GLresource<mat4>> cam;
+            Render::Info renderInfo;
         };
         static Shader shader;
 

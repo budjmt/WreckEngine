@@ -13,8 +13,8 @@ void Renderable::draw(const mat4& world, Entity* entity) {
 }
 
 void Renderable::setWorldMatrix(const mat4& world) {
-    worldMatrix.value = world;
-    iTworldMatrix.value = inv_tp_tf(world);
+    worldMatrix->value   = world;
+    iTworldMatrix->value = inv_tp_tf(world);
 }
 
 std::unordered_map<const char*, GLtexture> Renderable::loadedTextures;

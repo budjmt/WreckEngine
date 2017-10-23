@@ -8,7 +8,7 @@ namespace Render {
     struct LitRenderer {
         Renderer deferred, forward;
         Light::System lights;
-        GLresource<vec3> ambientColor;
+        proxy<GLresource<vec3>> ambientColor;
         bool lightingOn = true;
 
         explicit LitRenderer(size_t gBufferSize) : deferred({ 0, 1, 2, 3 }), forward(gBufferSize), lightR({ 4, 5 }) {
@@ -78,9 +78,9 @@ namespace Render {
             auto accumulate = make_shared<PostProcess>();
             auto accProg = PostProcess::make_program("Shaders/light/accumulate.glsl");
             accProg.use();
-            ambientColor = accProg.getUniform<vec3>("ambient");
-            accumulate->data.setShaders(accProg, &ambientColor);
             accumulate->data.setTextures(gBuffer[2], gBuffer[3], gBuffer[4], gBuffer[5]);
+            accumulate->data.setShaders(accProg);
+            ambientColor = accumulate->data.addResource<vec3>("ambient");
             accumulate->renderToTextures(lightR.postProcess.output);
             //accumulate->data.shaders->program.use();
             //accumulate->data.setSamplers(0, "diffuseColor", "specularColor", "diffuseLight", "specularLight");
@@ -94,7 +94,6 @@ namespace Render {
         void render() { 
             lights.update();
             if (lightingOn && Camera::main) {
-                lights.updateCamera(Camera::main);
                 lights.forward();
                 lights.defer(&lightR.objects, lightGroup);
             }

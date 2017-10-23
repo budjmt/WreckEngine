@@ -6,6 +6,7 @@ in Spotlight {
     vec3 color;
     vec2 falloffRad;
     vec2 falloffLen;
+    bool castsShadow;
 } light;
 
 uniform vec3 camPos;
@@ -14,6 +15,7 @@ uniform vec2 resolution;
 // object render targets
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
+uniform sampler2D occlusionMap;
 
 // light accumulation targets
 layout (location = 0) out vec4 diffuseColor;
@@ -54,6 +56,10 @@ void main() {
 	float spec    = pow(max(dot(normal, hDir), 0.), 16.);
 	vec3 specular = spec * atten * light.color;
 	
+    if(light.castsShadow) {
+        //float occludedDepth = texture(occlusionMap, );
+    }
+    
 	diffuseColor  = vec4(diffuse, 1);
 	specularColor = vec4(specular, 1);
 }

@@ -81,7 +81,7 @@ vec3 Mesh::getCentroid(const std::vector<vec3>& verts) {
 void Mesh::translate(const vec3 t) {
     const auto trans = glm::translate(t);
     for (auto& vert : _data.verts) vert = (vec3)(trans * vec4(vert, 1));
-    renderData.reset();
+    resetRenderData();
 }
 
 void Mesh::translateTo(const vec3 t) {
@@ -92,7 +92,7 @@ void Mesh::translateTo(const vec3 t) {
 void Mesh::scale(const vec3 s) {
     const auto sc = glm::scale(s);
     for (auto& vert : _data.verts) vert = (vec3)(sc * vec4(vert, 0));
-    renderData.reset();
+    resetRenderData();
     if (s.x != s.y || s.x != s.z) {
         const auto inv_sc = inv_tp_tf(sc);
         for (auto& normal : _data.normals) normal = (vec3)(inv_sc * vec4(normal, 0));
@@ -108,7 +108,7 @@ void Mesh::rotate(const quat& q) {
     const auto rot = glm::rotate(q.theta(), q.axis());
     for (auto& vert : _data.verts) vert = (vec3)(rot * vec4(vert, 0));
     for (auto& normal : _data.normals) normal = (vec3)(rot * vec4(normal, 0));
-    renderData.reset();
+    resetRenderData();
 }
 
 shared<Mesh::RenderData> Mesh::getRenderData(bool needsTangents) {
@@ -170,5 +170,5 @@ shared<Mesh::RenderData> Mesh::getRenderData(bool needsTangents) {
         render.ebuffer.push_back(index);
     }
 
-    return renderData = make_shared<RenderData>(render);
+    return renderData = make_shared<RenderData>(std::move(render));
 }

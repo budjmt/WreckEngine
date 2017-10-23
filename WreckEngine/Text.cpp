@@ -13,12 +13,9 @@
 
 #include "safe_queue.h"
 
-namespace
-{
-    struct FT_Wrapper
-    {
-        void init()
-        {
+namespace {
+    struct FT_Wrapper {
+        void init() {
             if (lib)
                 return;
 
@@ -27,10 +24,8 @@ namespace
                 printf("FreeType initialization failed. Error Code: %d\n", error);
         }
 
-        ~FT_Wrapper()
-        {
-            if (lib)
-            {
+        ~FT_Wrapper() {
+            if (lib) {
                 FT_Done_FreeType(lib);
                 lib = nullptr;
             }
@@ -55,10 +50,8 @@ namespace
         const auto bitmapHeight = bmp.rows;
         auto pixels = bmp.buffer;
 
-        for (uint32_t y = 0; y < bitmapHeight; ++y)
-        {
-            for (uint32_t x = 0; x < bitmapWidth; ++x)
-            {
+        for (uint32_t y = 0; y < bitmapHeight; ++y) {
+            for (uint32_t x = 0; x < bitmapWidth; ++x) {
                 const size_t index = (x + rectPaddingPerSide) + (y + rectPaddingPerSide) * pitch;
                 auto isBitSet = (pixels[x / 8]) & (1 << (7 - (x % 8)));
                 glyphPixels[index] = isBitSet ? 255 : 0;
@@ -72,10 +65,8 @@ namespace
         const auto bitmapHeight = bmp.rows;
         auto pixels = bmp.buffer;
 
-        for (uint32_t y = 0; y < bitmapHeight; ++y)
-        {
-            for (uint32_t x = 0; x < bitmapWidth; ++x)
-            {
+        for (uint32_t y = 0; y < bitmapHeight; ++y) {
+            for (uint32_t x = 0; x < bitmapWidth; ++x) {
                 const size_t index = (x + rectPaddingPerSide) + (y + rectPaddingPerSide) * pitch;
                 glyphPixels[index] = pixels[x];
             }
@@ -103,22 +94,18 @@ struct GlyphData {
     uint32_t cp;
 };
 
-void Text::init()
-{
+void Text::init() {
     FT.init();
     renderer.init();
 }
 
-Text::FontFace::FontFace(const std::string& font)
-{
+Text::FontFace::FontFace(const std::string& font) {
     // Attempt to load the font
     auto error = FT_New_Face(FT.lib, font.c_str(), nextFontIndex++, &fontFace);
-    if (error)
-    {
+    if (error) {
         fontFace = nullptr;
         std::cout << "Font face \"" << font << "\" failed to load: " << std::endl;
-        switch (error)
-        {
+        switch (error) {
             case FT_Err_Unknown_File_Format:
                 std::cout << "The file format could not be read." << std::endl;
                 break;
@@ -127,13 +114,10 @@ Text::FontFace::FontFace(const std::string& font)
         }
     }
     else
-    {
         std::cout << "Successfully loaded \"" << font << "\"" << std::endl;
-    }
 }
 
-Text::FontFace::~FontFace()
-{
+Text::FontFace::~FontFace() {
     // the lib, on destruction, takes care of all its children
     if (FT.lib)
         FT_Done_Face(fontFace);
@@ -142,21 +126,16 @@ Text::FontFace::~FontFace()
     // Load fonts A, B, C. Unload font B. Load font D. Fonts C and D now share an index.
 }
 
-shared<Text::FontFace> Text::loadWinFont(const std::string& font, const uint32_t height, const uint32_t width)
-{
+shared<Text::FontFace> Text::loadWinFont(const std::string& font, const uint32_t height, const uint32_t width) {
     return loadFont(WIN_DIR + "\\Fonts\\" + font, height, width);
 }
 
-shared<Text::FontFace> Text::loadFont(const std::string& font, const uint32_t height, const uint32_t width)
-{
+shared<Text::FontFace> Text::loadFont(const std::string& font, const uint32_t height, const uint32_t width) {
     shared<Text::FontFace> f;
 
     if (fontFaces.count(font))
-    {
         f = fontFaces.at(font);
-    }
-    else
-    {
+    else {
         f = make_shared<FontFace>(font);
         if (!f->fontFace)
             return nullptr;
@@ -167,8 +146,7 @@ shared<Text::FontFace> Text::loadFont(const std::string& font, const uint32_t he
     return f;
 }
 
-void Text::FontFace::setSize(const uint32_t _height, const uint32_t _width)
-{
+void Text::FontFace::setSize(const uint32_t _height, const uint32_t _width) {
     if (height == _height && width == _width)
         return;
 
@@ -177,8 +155,7 @@ void Text::FontFace::setSize(const uint32_t _height, const uint32_t _width)
     // Get the size of a space
     FT_Glyph glyph = nullptr;
     if (!FT_Load_Char(fontFace, ' ', FT_LOAD_DEFAULT) &&
-        !FT_Get_Glyph(fontFace->glyph, &glyph))
-    {
+        !FT_Get_Glyph(fontFace->glyph, &glyph)) {
         spaceWidth = fontFace->glyph->metrics.horiAdvance * kerningScale;
     }
 
@@ -189,14 +166,12 @@ void Text::FontFace::setSize(const uint32_t _height, const uint32_t _width)
     loadGlyphs();
 }
 
-void Text::FontFace::loadGlyphs()
-{
+void Text::FontFace::loadGlyphs() {
     // Loads all basic, printable ASCII characters
     loadGlyphRange(0, 255);
 }
 
-void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
-{
+void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end) {
     // TODO - (M)SDF conversion?
     // TODO - Currently assumes the texture is empty. Expected functionality would be to have
     //        multiple glyph ranges loaded at a time
@@ -204,24 +179,22 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
     // Load each of the glyphs in the range
     std::vector<stbrp_rect> packRects;
     std::vector<GlyphData> loadedGlyphs;
-    for (uint32_t cp = begin; cp <= end; ++cp)
-    {
+    for (uint32_t cp = begin; cp <= end; ++cp) {
         // Load code point
-        if (FT_Load_Char(fontFace, cp, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT))
-        {
+        if (FT_Load_Char(fontFace, cp, FT_LOAD_RENDER | FT_LOAD_FORCE_AUTOHINT)) {
             std::cout << "Could not load code point " << cp << " (" << static_cast<char32_t>(cp) << ')' << std::endl;
             continue;
         }
         auto& glyph = fontFace->glyph;
         auto& bitmap = glyph->bitmap;
 
-        const auto bitmapWidth = bitmap.width;
+        const auto bitmapWidth  = bitmap.width;
         const auto bitmapHeight = bitmap.rows;
 
         // Create pack rect (inflate it a bit for padding)
         stbrp_rect rect {};
         rect.id = cp;
-        rect.w = static_cast<stbrp_coord>(bitmapWidth + rectPadding);
+        rect.w = static_cast<stbrp_coord>(bitmapWidth  + rectPadding);
         rect.h = static_cast<stbrp_coord>(bitmapHeight + rectPadding);
         packRects.push_back(rect);
 
@@ -231,14 +204,12 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         glyphData.cp = cp;
         glyphData.bitmap.resize(rect.w * rect.h, 0); // texture is only alpha values
         glyphData.glyph.advance = glyphMetrics.horiAdvance * kerningScale;
-        glyphData.glyph.bearing = {
-            glyphMetrics.horiBearingX * kerningScale,
-            glyphMetrics.horiBearingY * kerningScale
-        };
-        glyphData.glyph.size = {
-            glyphMetrics.width        * kerningScale,
-            glyphMetrics.height       * kerningScale
-        };
+
+        vec2 horiBearing = { glyphMetrics.horiBearingX, glyphMetrics.horiBearingY };
+        glyphData.glyph.bearing =  horiBearing * kerningScale;
+
+        vec2 size = { glyphMetrics.width, glyphMetrics.height };
+        glyphData.glyph.size    = size * kerningScale;
 
         // Copy glyph buffer data (all pixels are white with varying alpha levels)
         if (bitmap.pixel_mode == FT_PIXEL_MODE_MONO)
@@ -266,8 +237,7 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
     tex.param(GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // Iterate the packed rectangles and build the texture
-    for (const auto& rect : packRects)
-    {
+    for (const auto& rect : packRects) {
         auto cp = static_cast<uint32_t>(rect.id);
         auto& glyphData = loadedGlyphs[cp - begin];
         auto& glyph = glyphData.glyph;
@@ -281,14 +251,10 @@ void Text::FontFace::loadGlyphRange(uint32_t begin, uint32_t end)
         // Update the sub-region of the texture
         auto& pixelBuffer = glyphData.bitmap;
         if (pixelBuffer.size() && rect.was_packed)
-        {
             tex.setSub2D<GLubyte>(&pixelBuffer[0], rect.x, rect.y, rect.w, rect.h, GL_RED, 0);
-        }
 #if defined(_DEBUG)
         else
-        {
             std::cout << "[WARN] Character " << cp << " ('" << static_cast<char>(cp) << "') does not have bitmap data!" << std::endl;
-        }
 #endif
     }
     
@@ -314,14 +280,13 @@ Text::Instance::Instance() {
     vao.unbind();
 
     auto& shader = Renderer::shader;
-    fullOffset = GLresource<vec2>(shader.offset);
-    scale = GLresource<float>(shader.scale);
-    scale.value = 1;
-    renderInfo.setShaders(shader.program, &shader.cam, &fullOffset, &scale);
+    renderInfo = Renderer::shader.renderInfo;
+    fullOffset = renderInfo.getResource<vec2>("offset");
+    scale = renderInfo.getResource<float>("scale");
+    scale->value = 1;
 }
 
-void Text::Instance::queueForDraw(Entity* entity)
-{
+void Text::Instance::queueForDraw(Entity* entity) {
     this->entity = entity;
     instances.get().push_back(this);
 }
@@ -338,10 +303,9 @@ void Text::Instance::updateAlignment() {
     if (vert != START || horiz != START) {
 
         int lineCount; // Guaranteed to at least be 1
-        auto dims = getDims(text, font, scale.value, lineCount);
+        auto dims = getDims(text, font, scale->value, lineCount);
         
-        switch (horiz)
-        {
+        switch (horiz) {
         case MIDDLE:
             alignOffset.x = -dims.x * 0.5f;
             break;
@@ -350,8 +314,7 @@ void Text::Instance::updateAlignment() {
             break;
         }
 
-        switch (vert)
-        {
+        switch (vert) {
         case MIDDLE:
             alignOffset.y = dims.y * 0.5f;
             break;
@@ -365,19 +328,16 @@ void Text::Instance::updateAlignment() {
 }
 
 void Text::Instance::updateBuffer() {
-    if (!dirtyBuffer || !font) {
-        return;
-    }
+    if (!dirtyBuffer || !font) return;
 
     // Put a lock on the text
     std::lock_guard<std::mutex> textLock(textMutex);
 
     // Get some helper variables
     const uint32_t packedColor = Color::pack(color);
-    const float xSpace = font->spaceWidth;
-    const float ySpace = font->lineHeight;
-    float x = 0.0f;
-    float y = 0.0f;
+    const float xSpace = font->spaceWidth
+              , ySpace = font->lineHeight;
+    float x{}, y{};
     uint32_t prevCP = 0;
     std::vector<CharVertex> vertices;
 
@@ -435,7 +395,7 @@ void Text::Instance::updateBuffer() {
 
     // Update the mesh
     const size_t  dataSize = sizeof(CharVertex) * vertices.size();
-    const GLvoid* dataPtr  = dataSize ? &vertices[0] : nullptr;
+    const GLvoid* dataPtr  = dataSize ? vertices.data() : nullptr;
     buffer.bind();
     buffer.invalidate();
     buffer.data(dataSize, dataPtr);
@@ -445,35 +405,26 @@ void Text::Instance::updateBuffer() {
     dirtyBuffer = false;
 }
 
-void Text::Renderer::init()
-{
-    shader.program = loadProgram("Shaders/text_v.glsl", "Shaders/text_f.glsl");
-    shader.program.use();
-    shader.sampler  = shader.program.getUniform<GLsampler>("text");
-    shader.cam      = GLresource<mat4> (shader.program, "camera");
-    shader.offset   = shader.program.getUniform<vec2>("offset");
-    shader.scale    = shader.program.getUniform<float>("scale");
+void Text::Renderer::init() {
+    shader.renderInfo.setShaders(loadProgram("Shaders/text_v.glsl", "Shaders/text_f.glsl"));
+    shader.renderInfo.shaders->program.use();
+    shader.cam = shader.renderInfo.addResource<mat4>("camera", true);
+    shader.renderInfo.addResource<vec2>("offset");
+    shader.renderInfo.addResource<float>("scale");
 }
 
-vec2 Text::getDims(char ch, const FontFace* font, float scale)
-{
+vec2 Text::getDims(char ch, const FontFace* font, float scale) {
     return getDims(static_cast<uint32_t>(ch), font, scale);
 }
 
-vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale)
-{
+vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale) {
     vec2 dims;
 
     if (cp == ' ')
-    {
         dims.x = font->spaceWidth;
-    }
     else if (cp == '\t')
-    {
         dims.x = font->spaceWidth * 4;
-    }
-    else if (font->glyphs.count(cp))
-    {
+    else if (font->glyphs.count(cp)) {
         const auto& glyph = font->glyphs.at(cp);
         dims = {glyph.advance, glyph.size.y - glyph.bearing.y * 2};
     }
@@ -481,31 +432,24 @@ vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale)
     return dims * scale;
 }
 
-vec2 Text::getDims(const std::string& text, const FontFace* font, float scale)
-{
+vec2 Text::getDims(const std::string& text, const FontFace* font, float scale) {
     int lineCount = 0;
     return getDims(text, font, scale, lineCount);
 }
 
-vec2 Text::getDims(const std::string& text, const FontFace* font, float scale, int& lineCount)
-{
-    float x = 0, maxX = 0;
-    float firstLineHeight = 0;
+vec2 Text::getDims(const std::string& text, const FontFace* font, float scale, int& lineCount) {
+    float x{}, maxX{};
+    float firstLineHeight{};
     lineCount = 1;
 
-    for (char cp : text)
-    {
-        if (cp == '\n')
-        {
+    for (char cp : text) {
+        if (cp == '\n') {
             x = 0.0f;
             ++lineCount;
         }
         else if (cp == '\r' || cp == '\b')
-        {
             continue;
-        }
-        else
-        {
+        else {
             auto dims = getDims(cp, font, scale);
             x += dims.x;
             if (lineCount == 1 && dims.y > firstLineHeight)
@@ -520,18 +464,15 @@ vec2 Text::getDims(const std::string& text, const FontFace* font, float scale, i
     return vec2(maxX, ((lineCount / 2) * font->lineHeight + firstLineHeight) * scale);
 }
 
-float Text::getKerning(char ch1, char ch2, const FontFace* font)
-{
+float Text::getKerning(char ch1, char ch2, const FontFace* font) {
     return getKerning(static_cast<uint32_t>(ch1), static_cast<uint32_t>(ch2), font);
 }
 
-float Text::getKerning(uint32_t cp1, uint32_t cp2, const FontFace* font)
-{
-    float kerning = 0.0f;
+float Text::getKerning(uint32_t cp1, uint32_t cp2, const FontFace* font) {
+    float kerning{};
     auto ff = font->fontFace;
 
-    if (FT_HAS_KERNING(ff))
-    {
+    if (FT_HAS_KERNING(ff)) {
         auto ind1 = FT_Get_Char_Index(ff, cp1);
         auto ind2 = FT_Get_Char_Index(ff, cp2);
 
@@ -555,10 +496,8 @@ void Text::postUpdate() {
 
 uint32_t textIndex;
 
-void Text::render(Render::MaterialPass* matRenderer)
-{
-    if (Text::active)
-    {
+void Text::render(Render::MaterialPass* matRenderer) {
+    if (Text::active) {
         struct X {
             X(Render::MaterialPass* r) {
                 textIndex = r->addGroup([] {
@@ -580,7 +519,7 @@ void Text::render(Render::MaterialPass* matRenderer)
 
 void Text::Renderer::draw() {
 
-    shader.cam.value = glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height);
+    shader.cam->value = glm::ortho(0.f, (float)Window::width, 0.f, (float)Window::height);
 
     instances.consumeAll([this](auto& instances) {
         for (auto inst : instances) {
@@ -588,7 +527,7 @@ void Text::Renderer::draw() {
             inst->updateAlignment();
             inst->updateBuffer();
 
-            inst->fullOffset.value = inst->offset + inst->alignOffset;
+            inst->fullOffset->value = inst->offset + inst->alignOffset;
 
             this->renderer->scheduleDrawArrays(textIndex, inst->entity, &inst->vao, &inst->renderInfo, GL_TRIANGLES, inst->arrayCount);
         }

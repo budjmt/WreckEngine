@@ -13,7 +13,6 @@ constexpr size_t FLOATS_PER_UV = 2;
 class Renderable : public GraphicsWorker {
 public:
     Render::MaterialPass* renderer;
-    vec4& color = _color.value;
 
     void draw(Transform* t, Entity* entity) override;
     virtual void draw(const mat4& world, Entity* entity);
@@ -23,8 +22,8 @@ public:
     static void unloadTextures();
 protected:
     GLVAO vArray;
-    GLresource<vec4> _color;
-    GLresource<mat4> worldMatrix, iTworldMatrix;
+    ACCS_GS_T_C (protected, proxy<GLresource<vec4>>, vec4, vec4&, color, { return _color->value; }, { _color->value = value; });
+    proxy<GLresource<mat4>> worldMatrix, iTworldMatrix;
 
     static std::unordered_map<const char*, GLtexture> loadedTextures; // all currently loaded textures
 };

@@ -16,7 +16,7 @@ shared<Shader> Shader::create(std::function<void()> callback) {
     return s;
 }
 
-void Shader::setupProgram() {
+GLprogram Shader::setupProgram() {
     _program.vertex      = vertex.get();
     _program.tessControl = tessControl.get();
     _program.tessEval    = tessEval.get();
@@ -26,6 +26,7 @@ void Shader::setupProgram() {
 
     _program.create();
     _program.link();
+    return _program;
 }
 
 void Shader::update() {

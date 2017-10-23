@@ -8,15 +8,29 @@ class Entity;
 
 namespace Render {
 
-    struct Info {
-
+    class Info {
+        proxy_buffer<uint8_t> uniqueVars;
+    public:
         struct ShaderBinding {
-            std::vector<GLres*> resources;
+            struct Variable {
+                uint32_t offset;
+                bool isShared;
+
+                template<typename T> struct is_shared_t            { static constexpr bool value = false; };
+                template<> struct is_shared_t<GLresolution>        { static constexpr bool value = true; };
+                template<> struct is_shared_t<GLtime>              { static constexpr bool value = true; };
+                template<> struct is_shared_t<GLcamera::matrix>    { static constexpr bool value = true; };
+                template<> struct is_shared_t<GLcamera::position>  { static constexpr bool value = true; };
+                template<> struct is_shared_t<GLcamera::direction> { static constexpr bool value = true; };
+            };
             GLprogram program;
 
-            void update() const;
+        private:
+            std::map<std::string, Variable> varLookup;
+            proxy_buffer<uint8_t> sharedVars;
+            friend class Info;
         };
-
+    
         struct TextureBinding {
             std::vector<GLtexture> bindings; // push textures in the order they should be bound
 
@@ -34,29 +48,55 @@ namespace Render {
         shared<ShaderBinding>  shaders;
         shared<TextureBinding> textures;
 
-        template<typename... GLResourcePtrs>
-        void setShaders(GLprogram prog, GLResourcePtrs... resources) {
-            shaders.reset(new ShaderBinding);
+        void setShaders(GLprogram prog) {
+            shaders = make_shared<ShaderBinding>();
             shaders->program = prog;
-            shaders->resources = { resources... };
         }
 
-        void addResource(GLres* resource) { shaders->resources.push_back(resource); }
-        void removeResource(GLres* resource) {
-            auto& resources = shaders->resources;
-            resources.erase(std::find(resources.begin(), resources.end(), resource));
+        template<typename T>
+        proxy<GLresource<T>> addResource(const std::string& varName, bool shared = ShaderBinding::Variable::is_shared_t<T>::value) {
+            return addResource<T>(varName, shaders->program.getUniform<typename GLresource<T>::uniform_t>(varName.c_str()), shared);
+        }
+
+        template<typename T>
+        proxy<GLresource<T>> addResource(const std::string& varName, GLuniform<typename GLresource<T>::uniform_t> location, bool shared = ShaderBinding::Variable::is_shared_t<T>::value) {
+            if (shaders->varLookup.count(varName))
+                return getResource<T>(varName);
+
+            using resource_t = GLresource<T>;
+            auto& resources = shared ? shaders->sharedVars : uniqueVars;
+            auto bytesUsed = resources.size();
+
+            shaders->varLookup[varName] = { bytesUsed, shared };
+            resources.resize(bytesUsed + sizeof(resource_t));
+
+            resource_t resource(location);
+            std::memcpy(resources.data() + bytesUsed, &resource, sizeof(resource_t));
+            return reinterpret_cast<proxy<resource_t>&>(resources(bytesUsed));
+        }
+
+        template<typename T>
+        proxy<GLresource<T>> getResource(const std::string& varName) {
+            using resource_t = GLresource<T>;
+            auto& lookup = shaders->varLookup;
+            assert(lookup.count(varName));
+            auto varData = lookup.at(varName);
+
+            auto& resources = varData.isShared ? shaders->sharedVars : uniqueVars;
+            assert(dynamic_cast<resource_t*>((GLres*)(resources.data() + varData.offset)) != nullptr); // asserts the correct type based on the vptr
+            return reinterpret_cast<proxy<resource_t>&>(resources(varData.offset));
         }
 
         template<typename... GLTextures>
         void setTextures(GLTextures... textures) {
-            textures.reset(new TextureBinding);
+            textures = make_shared<TextureBinding>();
             textures->bindings = { textures... };
         }
 
         void addTexture(const GLtexture& tex) { textures->bindings.push_back(tex); }
         void removeTexture(GLtexture& resource) {
             auto& bindings = textures->bindings;
-            bindings.erase(std::find(bindings.begin(), bindings.end(), resource));
+            bindings.erase(std::find(begin(bindings), end(bindings), resource));
         }
 
         template<typename... Names>
@@ -66,7 +106,13 @@ namespace Render {
 
         void apply() const {
             assert(shaders && textures); // shaders and textures must be initialized
-            shaders->update();
+            shaders->program.use();
+            auto& sharedVars = shaders->sharedVars;
+            for (auto& varData : shaders->varLookup) {
+                auto data = varData.second;
+                auto& resources = data.isShared ? sharedVars : uniqueVars;
+                reinterpret_cast<const GLres&>(resources[data.offset]).update();
+            }
             textures->bind();
         }
     };

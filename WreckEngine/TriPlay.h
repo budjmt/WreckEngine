@@ -35,6 +35,4 @@ private:
 
     void setupLights();
     void setupPostProcess();
-    GLresource<GLtime> crtTime;
-    GLresource<GLresolution> crtRes;
 };

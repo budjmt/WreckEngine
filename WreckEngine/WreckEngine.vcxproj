@@ -181,7 +181,6 @@
     <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="Color.cpp" />
     <ClCompile Include="ComputeEntity.cpp" />
-    <ClCompile Include="CubemapTest.cpp" />
     <ClCompile Include="Renderable.cpp" />
     <ClCompile Include="DrawDebug.cpp" />
     <ClCompile Include="DrawMesh.cpp" />
@@ -198,6 +197,7 @@
     <ClCompile Include="PostProcess.cpp" />
     <ClCompile Include="Random.cpp" />
     <ClCompile Include="Render.cpp" />
+    <ClCompile Include="SimpleGame.cpp" />
     <ClCompile Include="stb.cpp" />
     <ClCompile Include="TessellatorTest.cpp" />
     <ClCompile Include="ThirdParty\Source\imgui\imgui.cpp" />
@@ -209,7 +209,6 @@
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="ComputeEntity.h" />
-    <ClInclude Include="CubemapTest.h" />
     <ClInclude Include="DebugBenchmark.h" />
     <ClInclude Include="DebugGPUBenchmark.h" />
     <ClInclude Include="DrawDebug.h" />
@@ -234,6 +233,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Collider.h" />
     <ClInclude Include="ColliderEntity.h" />
+    <ClInclude Include="proxy_ptr.h" />
     <ClInclude Include="Renderable.h" />
     <ClInclude Include="DrawMesh.h" />
     <ClInclude Include="Entity.h" />
@@ -243,6 +243,7 @@
     <ClInclude Include="GLstate.h" />
     <ClInclude Include="gl_structs.h" />
     <ClInclude Include="GraphicsWorker.h" />
+    <ClInclude Include="SimpleGame.h" />
     <ClInclude Include="TessellatorTest.h" />
     <ClInclude Include="HotSwap.h" />
     <ClInclude Include="Light.h" />

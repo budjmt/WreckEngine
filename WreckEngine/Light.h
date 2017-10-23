@@ -21,8 +21,12 @@ namespace Light {
             return T::setupAttrsImpl(attrs, offset, baseIndex);
         }
 
-        static void bindGeometry() {
-            return T::bindGeometryImpl();
+        static GLuint setupDeferredAttrs(GLattrarr& attrs, GLuint baseIndex = 0) {
+            return T::setupDeferredAttrsImpl(attrs, baseIndex);
+        }
+
+        static GLuint setupGeometry(GLattrarr& attrs) {
+            return T::setupGeometryImpl(attrs);
         }
 
         static void draw(Render::MaterialPass* r, const uint32_t group, const GLVAO* vao, const Render::Info* info, size_t instances) {
@@ -37,7 +41,12 @@ namespace Light {
         vec3 color; // lights can't have opacity
         GLuint tag;
         vec2 falloff; // light radius; inner = x, outer = y
-        PADF2;
+        int castsShadow = 0;
+        PADF1;
+
+        struct DeferredData {
+            mat4 world;
+        };
 
         static GLuint setupAttrsImpl(GLattrarr& attrs, size_t offset, GLuint baseIndex) {
             attrs.add<vec3>(1, 1);
@@ -45,10 +54,16 @@ namespace Light {
             attrs.add<vec3>(1, 1);
             attrs.add<GLuint>(1, 1);
             attrs.add<vec2>(1, 1);
-            return attrs.apply(baseIndex, sizeof(float) * 2, offset);
+            attrs.add<int>(1, 1);
+            return attrs.apply(baseIndex, sizeof(float) * 1, offset);
         }
 
-        static void bindGeometryImpl();
+        static GLuint setupDeferredAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
+            attrs.add<mat4>(1, 1);
+            return attrs.apply(baseIndex, sizeof(float) * 0);
+        }
+
+        static GLuint setupGeometryImpl(GLattrarr& attrs);
 
         static void drawImpl(Render::MaterialPass* r, const uint32_t group, const GLVAO* vao, const Render::Info* info, size_t instances) {
             r->scheduleDrawElements(0, nullptr, vao, info, GL_TRIANGLES, count, GLtype<GLuint>(), instances);
@@ -58,8 +73,10 @@ namespace Light {
             return position != update.position;
         }
 
-        mat4 getTransform() const {
-            return glm::translate(position) * glm::scale(vec3(falloff.y * 2 + 0.1f));
+        DeferredData getDeferredData() const {
+            DeferredData data;
+            data.world = glm::translate(position) * glm::scale(vec3(falloff.y * 2 + 0.1f));
+            return data;
         }
 
     private:
@@ -72,20 +89,35 @@ namespace Light {
         int isOff = 0;
         vec3 color;
         GLuint tag;
+        int castsShadow = 0;
+        PADF3;
+
+        struct DeferredData {
+            mat4 lightWorldViewProj;
+        };
 
         static GLuint setupAttrsImpl(GLattrarr& attrs, size_t offset, GLuint baseIndex) {
             attrs.add<vec3>(1, 1);
             attrs.add<int>(1, 1);
             attrs.add<vec3>(1, 1);
             attrs.add<GLuint>(1, 1);
-            return attrs.apply(baseIndex, 0, offset);
+            attrs.add<int>(1, 1);
+            return attrs.apply(baseIndex, sizeof(float) * 3, offset);
         }
 
-        static void bindGeometryImpl();
+        static GLuint setupDeferredAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
+            attrs.add<mat4>(1, 1);
+            return attrs.apply(baseIndex, sizeof(float) * 0);
+        }
+
+        static GLuint setupGeometryImpl(GLattrarr& attrs);
 
         static void drawImpl(Render::MaterialPass* r, const uint32_t group, const GLVAO* vao, const Render::Info* info, size_t instances) {
             r->scheduleDrawArrays(group, nullptr, vao, info, GL_TRIANGLES, 3, instances);
         }
+
+        bool isTransformed(const Directional& update) const;
+        DeferredData getDeferredData() const;
     };
 
     // expands conically from a point and direction
@@ -97,7 +129,13 @@ namespace Light {
         vec2 falloffRad;
         vec2 falloffLen;
         vec3 color;
+        //int castsShadow = 0;
         PADF1;
+
+        struct DeferredData {
+            mat4 world;
+            mat4 lightViewProj;
+        };
 
         static GLuint setupAttrsImpl(GLattrarr& attrs, size_t offset, GLuint baseIndex) {
             attrs.add<vec3>(1, 1);
@@ -106,10 +144,16 @@ namespace Light {
             attrs.add<GLuint>(1, 1);
             attrs.add<vec2>(2, 1);
             attrs.add<vec3>(1, 1);
-            return attrs.apply(baseIndex, sizeof(float), offset);
+            //attrs.add<int>(1, 1);
+            return attrs.apply(baseIndex, sizeof(float) * 1, offset);
         }
 
-        static void bindGeometryImpl();
+        static GLuint setupDeferredAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
+            attrs.add<mat4>(2, 1);
+            return attrs.apply(baseIndex, sizeof(float) * 0);
+        }
+
+        static GLuint setupGeometryImpl(GLattrarr& attrs);
 
         static void drawImpl(Render::MaterialPass* r, const uint32_t group, const GLVAO* vao, const Render::Info* info, size_t instances) {
             r->scheduleDrawElements(0, nullptr, vao, info, GL_TRIANGLES, count, GLtype<GLuint>(), instances);
@@ -119,8 +163,11 @@ namespace Light {
             return direction != update.direction || position != update.position;
         }
 
-        mat4 getTransform() const {
-            return glm::translate(position) * rotateBetween(vec3(0,-1,0), direction) * glm::scale(vec3(falloffRad.y * 2 + 0.1f, falloffLen.y + 0.1f, falloffRad.y * 2 + 0.1f));
+        DeferredData getDeferredData() const {
+            DeferredData data;
+            data.world = glm::translate(position) * rotateBetween(vec3(0,-1,0), direction) * glm::scale(vec3(falloffRad.y * 2 + 0.1f, falloffLen.y + 0.1f, falloffRad.y * 2 + 0.1f));
+            data.lightViewProj = glm::lookAt(position, position + direction, { 0, 1, 0 });
+            return data;
         }
 
     private:
@@ -138,15 +185,15 @@ namespace Light {
     class Group {
     public:
 
-        GLbuffer subBuffer, subTransformBuffer;
+        GLbuffer subBuffer, subDeferredInstanceBuffer;
         size_t bufferIndex = 0;
 
         // sets the buffer used and updates the local internal data; returns the number of bytes used
-        size_t setBuffers(GLbuffer buffer, GLbuffer transform) {
+        size_t setBuffers(GLbuffer buffer, GLbuffer deferredInstances) {
             subBuffer = buffer;
             subBuffer.set(GL_ARRAY_BUFFER, GL_STREAM_DRAW);
-            subTransformBuffer = transform;
-            subTransformBuffer.size = sizeof(mat4) * lights.size();
+            subDeferredInstanceBuffer = deferredInstances;
+            subDeferredInstanceBuffer.size = sizeof(T::DeferredData) * lights.size();
             return subBuffer.size = sizeof(T) * lights.size();
         }
 
@@ -192,9 +239,9 @@ namespace Light {
             assert(index >= freqData[frequency].offset && index < freqData[frequency].offset + freqData[frequency].size); // the index falls outside the allocated range
             
             if (lights[index].isTransformed(light)) {
-                auto transform = light.getTransform();
-                subTransformBuffer.bind();
-                subTransformBuffer.subdata(&transform, sizeof(mat4), (bufferIndex + index) * sizeof(mat4));
+                auto instanceData = light.getDeferredData();
+                subDeferredInstanceBuffer.bind();
+                subDeferredInstanceBuffer.subdata(&instanceData, sizeof(instanceData), (bufferIndex + index) * sizeof(instanceData));
             }
             
             lights[index] = light; 
@@ -207,27 +254,16 @@ namespace Light {
         struct { size_t size, offset; } freqData[4]{};
         UpdateFreq neededUpdates = (UpdateFreq) (OFTEN + 1);
 
-        void setupTransformBuffer() const {
-            std::vector<mat4> mats;
-            mats.reserve(lights.size());
+        void setupDeferredInstanceBuffer() const {
+            std::vector<T::DeferredData> deferredData;
+            deferredData.reserve(lights.size());
             for (auto& light : lights)
-                mats.push_back(light.getTransform());
-            subTransformBuffer.subdata(&mats[0], sizeof(mat4) * mats.size(), bufferIndex * sizeof(mat4));
+                deferredData.push_back(light.getDeferredData());
+            subDeferredInstanceBuffer.subdata(deferredData.data(), sizeof(T::DeferredData) * deferredData.size(), bufferIndex * sizeof(T::DeferredData));
         }
 
         friend class Manager<T>;
     };
-
-    template<> void Group<Directional>::updateLight(const uint32_t index, const UpdateFreq frequency, const Directional& light) {
-        assert(frequency != NEVER);
-        assert(index >= freqData[frequency].offset && index < freqData[frequency].offset + freqData[frequency].size);
-
-        lights[index] = light;
-        if (frequency < neededUpdates)
-            neededUpdates = frequency;
-    }
-
-    template<> void Group<Directional>::setupTransformBuffer() const {}
 
     template<typename T>
     class Manager {
@@ -235,13 +271,11 @@ namespace Light {
         Manager() { 
             deferredVao.create();
             forwardBlock.create();
-            transformBuffer.create(GL_ARRAY_BUFFER, GL_STREAM_DRAW); 
+            deferredInstanceBuffer.create(GL_ARRAY_BUFFER, GL_STREAM_DRAW); 
         }
 
         GLuniformblock<T> forwardBlock;
         Render::Info renderInfo;
-        GLuniform<mat4> camMat;
-        GLuniform<vec3> camPos;
 
         auto& getGroup(uint32_t index) {
             return groups[index];
@@ -273,22 +307,16 @@ namespace Light {
         void finishGroups() {
             auto numLights = finishMainBuffer();
 
-            transformBuffer.bind();
-            transformBuffer.data(numLights * sizeof(mat4), nullptr);
+            deferredInstanceBuffer.bind();
+            deferredInstanceBuffer.data(numLights * sizeof(T::DeferredData), nullptr);
             for (auto& group : groups)
-                group.setupTransformBuffer();
+                group.setupDeferredInstanceBuffer();
         }
 
         void update() {
             forwardBlock.block.bindAs(GL_ARRAY_BUFFER);
             for (auto& group : groups)
                 group.update();
-        }
-
-        void updateCamera(Camera* camera) const {
-            renderInfo.shaders->program.use();
-            camMat.update(camera->getCamMat());
-            camPos.update(camera->transform.getComputed()->position);
         }
 
         void forward(const GLuint index) {
@@ -305,12 +333,12 @@ namespace Light {
         std::vector<Group<T>> groups;
         
         GLVAO deferredVao;
-        GLbuffer transformBuffer;
+        GLbuffer deferredInstanceBuffer;
 
         void addGroupImpl(Group<T>& g) {
             g.neededUpdates = UpdateFreq::NEVER;
             g.bufferIndex = forwardBlock.block.size / sizeof(T);
-            forwardBlock.block.size += g.setBuffers(forwardBlock.block, transformBuffer);
+            forwardBlock.block.size += g.setBuffers(forwardBlock.block, deferredInstanceBuffer);
         }
 
         uint32_t finishMainBuffer() {
@@ -329,13 +357,10 @@ namespace Light {
         void setupDeferred(GLattrarr& attrs) const {
             deferredVao.bind();
 
-            Base<T>::bindGeometry(); // vertices + elements
-            attrs.add<vec3>(1);
-            auto index = attrs.apply();
+            auto index = Base<T>::setupGeometry(attrs); // vertices + elements (if applicable)
 
-            transformBuffer.bind();
-            attrs.add<mat4>(1, 1);
-            index = attrs.apply(index);
+            deferredInstanceBuffer.bind();
+            index = Base<T>::setupDeferredAttrs(attrs, index); // per-instance data that isn't in the light struct
 
             forwardBlock.block.bindAs(GL_ARRAY_BUFFER); // instances
             Base<T>::setupAttrs(attrs, sizeof(vec4), index);
@@ -343,18 +368,6 @@ namespace Light {
 
         friend class System;
     };
-
-    template<> 
-    void Manager<Directional>::setupDeferred(GLattrarr& attrs) const {
-        deferredVao.bind();
-
-        Directional::bindGeometry(); // vertices
-        attrs.add<vec2>(2);
-        auto index = attrs.apply();
-
-        forwardBlock.block.bindAs(GL_ARRAY_BUFFER); // instances
-        Directional::setupAttrs(attrs, sizeof(vec4), index);
-    }
 
     template<> void Manager<Directional>::finishGroups() {
         finishMainBuffer();
@@ -388,12 +401,6 @@ namespace Light {
             pointLights.update();
             spotLights.update();
             directionalLights.update();
-        }
-
-        void updateCamera(Camera* camera) const {
-            pointLights.updateCamera(camera);
-            spotLights.updateCamera(camera);
-            directionalLights.updateCamera(camera);
         }
 
         void forward() {

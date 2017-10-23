@@ -11,7 +11,7 @@ bool isVisibleHorizon(const vec3 view, const vec3 boundingPoint, const float rad
 
 constexpr float RADIUS = 2;
 bool wireframe = false;
-static GLresource<float> exposure;
+static proxy<GLresource<float>> exposure;
 
 struct CubemapData {
     File::ImageData front, back, up, down, left, right;
@@ -36,33 +36,26 @@ struct CubemapData {
 
 struct RenderData {
     GLprogram prog;
-    GLresource<GLcamera::matrix> mat;
-    GLresource<GLcamera::position> pos;
-    GLresource<float> radius;
+    proxy<GLresource<float>> radius;
 };
 static RenderData planetData;
 
 struct {
     GLprogram prog;
-    GLresource<float> tessRadius;
-    GLresource<vec2> atmosRadius, K;
-    GLresource<vec3> sunPos, sunColor;
-    GLresource<GLcamera::position> camPos;
-    GLresource<GLcamera::matrix> camMat;
+    proxy<GLresource<float>> tessRadius;
+    proxy<GLresource<vec2>> atmosRadius, K;
+    proxy<GLresource<vec3>> sunPos, sunColor;
 } atmosData;
 
 struct {
     GLprogram prog;
-    GLresource<vec2> atmosRadius;
+    proxy<GLresource<vec2>> atmosRadius;
     GLtexture depthLookup;
 } atmosLookupData;
 
 struct WaterRenderData {
     GLprogram prog;
-    GLresource<float> time;
-    GLresource<float> radius;
-    GLresource<GLcamera::matrix> mat;
-    GLresource<GLcamera::position> camPos;
+    proxy<GLresource<float>> time, radius;
     GLuniform<vec3> sunPos;
     GLtexture normalMap;
 };
@@ -70,7 +63,7 @@ static WaterRenderData waterData;
 
 struct SkyboxRenderData {
     GLprogram prog;
-    GLresource<vec2> atmosRadius;
+    proxy<GLresource<vec2>> atmosRadius;
     GLuniform<mat4> viewProjection;
     GLuniform<float> camHeight;
     GLtexture planetTex;
@@ -80,14 +73,14 @@ static SkyboxRenderData skyboxData;
 
 struct {
     GLprogram prog;
-    GLresource<float> zoom;
-    GLresource<int> seed;
+    proxy<GLresource<float>> zoom;
+    proxy<GLresource<int>> seed;
     GLtexture cubemap;
 } noiseData;
 
 struct {
     GLprogram prog;
-    GLresource<float> radius;
+    proxy<GLresource<float>> radius;
     GLtexture cubemap;
 } normalData;
 
@@ -212,13 +205,13 @@ GLtexture loadSkybox(const std::string& name) {
     return tex;
 }
 
-shared<Entity> PlanetCSphere::genPlane(const vec3 dir, Render::MaterialPass* renderer, const size_t group, std::function<void(DrawMesh*)>& drawSetup) {
+shared<Entity> PlanetCSphere::genPlane(const vec3 dir, Render::MaterialPass* renderer, const size_t group, std::function<void(DrawMesh&)>& drawSetup) {
     static auto planeMesh = loadOBJ("Assets/plane.obj");
 
     auto dm = make_shared<DrawMesh>(renderer, planeMesh, "Assets/texture.png", prog);
     dm->tesselPrim = GL_PATCHES;
     dm->renderGroup = group;
-    drawSetup(dm.get());
+    drawSetup(*dm);
 
     auto plane = make_shared<Entity>(dm);
     plane->active = false;
@@ -228,17 +221,17 @@ shared<Entity> PlanetCSphere::genPlane(const vec3 dir, Render::MaterialPass* ren
     const auto scale = radius * 2.02f;
     plane->transform.scale = vec3(scale, scale, 1);
 
-    planes.push_back(TerrainPlane(plane.get(), planeMesh.get(), dir, radius));
+    planes.push_back({ plane.get(), planeMesh.get(), dir, radius });
     return plane;
 }
 
 PlanetCSphere::PlanetCSphere(const float _radius, GLprogram _prog
-                           , State* state, Render::MaterialPass* renderer, const size_t group, std::function<void(DrawMesh*)> drawSetup) : radius(_radius), prog(_prog) {
-    static const vec3 cubeDirs[] = { vec3(0, 0, 1), vec3(0,  0, -1)
-                                   , vec3(0, 1, 0), vec3(0, -1,  0)
-                                   , vec3(1, 0, 0), vec3(-1, 0,  0) };
+                           , State& state, Render::MaterialPass* renderer, const size_t group, std::function<void(DrawMesh&)> drawSetup) : radius(_radius), prog(_prog) {
+    static const vec3 cubeDirs[] = { { 0, 0, 1 }, { 0, 0, -1 }
+                                   , { 0, 1, 0 }, { 0, -1, 0 }
+                                   , { 1, 0, 0 }, { -1, 0, 0 } };
     for (auto& dir : cubeDirs)
-        state->addEntity(genPlane(dir, renderer, group, drawSetup));
+        state.addEntity(genPlane(dir, renderer, group, drawSetup));
 };
 
 // returns the number of active planes
@@ -271,19 +264,18 @@ TessellatorTest::TessellatorTest() : Game(6) {
     using ShaderRes = decltype(cubemapProg->vertex);
 
     cubemapProg->compute = ShaderRes("Shaders/noisemap_c.glsl", GL_COMPUTE_SHADER);
-    cubemapProg->setupProgram();
-    noiseData.prog = cubemapProg->program();
-    noiseData.prog.use();
-    noiseData.seed = noiseData.prog.getUniform<int>("Seed");
-    noiseData.seed.value = genPlanetSeed();
+    noiseData.prog = cubemapProg->setupProgram();
 
     constexpr size_t texSize = 1024; // guaranteed minimum max texture size by GL 4 is 1024
     constexpr GLenum noiseCubemapFormat = GL_RGBA32F;
     initCubemap(noiseData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, noiseCubemapFormat);
 
     auto computeDispatcher = make_shared<GraphicsWorker>();
-    computeDispatcher->material.setShaders(noiseData.prog, &noiseData.seed);
+    computeDispatcher->material.setShaders(noiseData.prog);
     computeDispatcher->material.setTextures();
+
+    noiseData.seed = computeDispatcher->material.addResource<int>("Seed");
+    noiseData.seed->value = genPlanetSeed();
 
     noiseEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     noiseEntity->dispatchSize = { texSize, texSize, 6 };
@@ -299,18 +291,17 @@ TessellatorTest::TessellatorTest() : Game(6) {
         normalEntity->draw();
     });
     normalmapProg->compute = ShaderRes("Shaders/normalmap_c.glsl", GL_COMPUTE_SHADER);
-    normalmapProg->setupProgram();
-    normalData.prog = normalmapProg->program();
-    normalData.prog.use();
-    normalData.radius = normalData.prog.getUniform<float>("Radius");
-    normalData.radius.value = RADIUS;
+    normalData.prog = normalmapProg->setupProgram();
 
     constexpr GLenum normalCubemapFormat = GL_RGBA32F;
     initCubemap(normalData.cubemap, GL_FLOAT, texSize, texSize, GL_RGBA, normalCubemapFormat);
 
     computeDispatcher = make_shared<GraphicsWorker>();
-    computeDispatcher->material.setShaders(normalData.prog, &normalData.radius);
+    computeDispatcher->material.setShaders(normalData.prog);
     computeDispatcher->material.setTextures(noiseData.cubemap);
+
+    normalData.radius = computeDispatcher->material.addResource<float>("Radius");
+    normalData.radius->value = RADIUS;
 
     normalEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     normalEntity->dispatchSize = { texSize, texSize, 6 };
@@ -333,16 +324,14 @@ TessellatorTest::TessellatorTest() : Game(6) {
         atmosLookupEntity->draw();
     });
     atmosLookupProg->compute = ShaderRes("Shaders/atmosScatter_c.glsl", GL_COMPUTE_SHADER);
-    atmosLookupProg->setupProgram();
-
-    atmosLookupData.prog = atmosLookupProg->program();
-    atmosLookupData.prog.use();
-    atmosLookupData.atmosRadius = atmosLookupData.prog.getUniform<vec2>("atmosRadius");
-    atmosLookupData.atmosRadius.value = vec2(RADIUS, RADIUS + 2);
+    atmosLookupData.prog = atmosLookupProg->setupProgram();
 
     computeDispatcher = make_shared<GraphicsWorker>();
-    computeDispatcher->material.setShaders(atmosLookupData.prog, &atmosLookupData.atmosRadius);
+    computeDispatcher->material.setShaders(atmosLookupData.prog);
     computeDispatcher->material.setTextures();
+
+    atmosLookupData.atmosRadius = computeDispatcher->material.addResource<vec2>("atmosRadius");
+    atmosLookupData.atmosRadius->value = vec2(RADIUS, RADIUS + 2);
 
     atmosLookupEntity = make_shared<ComputeTextureEntity>(computeDispatcher);
     atmosLookupEntity->dispatchSize = { lookupSize, lookupSize, 1 };
@@ -356,16 +345,9 @@ TessellatorTest::TessellatorTest() : Game(6) {
     tessProg->tessControl = ShaderRes("Shaders/planet_tc.glsl", GL_TESS_CONTROL_SHADER);
     tessProg->tessEval    = ShaderRes("Shaders/planet_te.glsl", GL_TESS_EVALUATION_SHADER);
     tessProg->fragment    = ShaderRes("Shaders/planet_f.glsl",  GL_FRAGMENT_SHADER);
-    tessProg->setupProgram();
+    planetData.prog = tessProg->setupProgram();
 
-    planetData.prog = tessProg->program();
     checkProgLinkError(planetData.prog);
-
-    planetData.prog.use();
-    planetData.mat    = planetData.prog.getUniform<mat4>("cameraMatrix");
-    planetData.pos    = planetData.prog.getUniform<vec3>("camPos");
-    planetData.radius = planetData.prog.getUniform<float>("Radius");
-    planetData.radius.value = RADIUS;
 
     //genPlane("Assets/plane.obj", 5);
     auto* rendererUsed = &renderer.deferred.objects;
@@ -379,15 +361,18 @@ TessellatorTest::TessellatorTest() : Game(6) {
     });
 
     surface = make_unique<PlanetCSphere>(RADIUS, planetData.prog
-        , mainState.get(), rendererUsed, planetGroup, [](DrawMesh* dm) {
-            dm->material.addResource(&planetData.mat);
-            dm->material.addResource(&planetData.pos);
-            dm->material.addResource(&planetData.radius);
-            dm->material.addTexture(noiseData.cubemap);
-            dm->material.addTexture(normalData.cubemap);
-            dm->material.addTexture(Renderable::genTexture2D("Assets/grass.jpg"));
-            dm->material.addTexture(Renderable::genTexture2D("Assets/mountain.jpg"));
-            dm->material.addTexture(Renderable::genTexture2D("Assets/snow.jpg"));
+        , *mainState, rendererUsed, planetGroup, [](DrawMesh& dm) {
+            dm.material.addResource<GLcamera::matrix>("cameraMatrix");
+            dm.material.addResource<GLcamera::position>("camPos");
+
+            planetData.radius = dm.material.addResource<float>("Radius");
+            planetData.radius->value = RADIUS;
+
+            dm.material.addTexture(noiseData.cubemap);
+            dm.material.addTexture(normalData.cubemap);
+            dm.material.addTexture(Renderable::genTexture2D("Assets/grass.jpg"));
+            dm.material.addTexture(Renderable::genTexture2D("Assets/mountain.jpg"));
+            dm.material.addTexture(Renderable::genTexture2D("Assets/snow.jpg"));
         });
 
     ///////////////////////////////////////////////////////////////////////////
@@ -403,17 +388,10 @@ TessellatorTest::TessellatorTest() : Game(6) {
     auto skyboxProg = HotSwap::Shader::create();
     skyboxProg->vertex = ShaderRes("Shaders/skybox_v.glsl", GL_VERTEX_SHADER);
     skyboxProg->fragment = ShaderRes("Shaders/skybox_f.glsl", GL_FRAGMENT_SHADER);
-    skyboxProg->setupProgram();
+    skyboxData.prog = skyboxProg->setupProgram();
 
     // Check the program for errors
-    skyboxData.prog = skyboxProg->program();
     checkProgLinkError(skyboxData.prog);
-
-    skyboxData.prog.use();
-    skyboxData.viewProjection = skyboxData.prog.getUniform<mat4>("viewProjection");
-    skyboxData.camHeight = skyboxData.prog.getUniform<float>("camHeight");
-    skyboxData.atmosRadius = skyboxData.prog.getUniform<vec2>("atmosRadius");
-    skyboxData.atmosRadius.value = atmosLookupData.atmosRadius.value;
 
     auto skyboxRenderer = &renderer.forward.objects;
     const auto skyboxGroup = skyboxRenderer->addGroup([] {
@@ -426,7 +404,13 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     auto skyboxMesh = loadOBJ("Assets/cube.obj");
     auto skyboxDM = make_shared<DrawMesh>(skyboxRenderer, skyboxMesh, skyboxData.spaceTex, skyboxData.prog);
-    skyboxDM->material.addResource(&skyboxData.atmosRadius);
+
+    skyboxData.viewProjection = skyboxData.prog.getUniform<mat4>("viewProjection");
+    skyboxData.camHeight      = skyboxData.prog.getUniform<float>("camHeight");
+
+    skyboxData.atmosRadius = skyboxDM->material.addResource<vec2>("atmosRadius");
+    skyboxData.atmosRadius->value = atmosLookupData.atmosRadius->value;
+
     skyboxDM->material.addTexture(skyboxData.planetTex);
     skyboxDM->renderGroup = skyboxGroup;
     auto skyboxEntity = make_shared<Entity>(skyboxDM);
@@ -448,35 +432,29 @@ TessellatorTest::TessellatorTest() : Game(6) {
     waterProg->tessControl  = ShaderRes("Shaders/water_tc.glsl", GL_TESS_CONTROL_SHADER);
     waterProg->tessEval     = ShaderRes("Shaders/water_te.glsl", GL_TESS_EVALUATION_SHADER);
     waterProg->fragment     = ShaderRes("Shaders/water_f.glsl", GL_FRAGMENT_SHADER);
-    waterProg->setupProgram();
+    waterData.prog = waterProg->setupProgram();
 
     // Check the program for compiler errors
-    waterData.prog = waterProg->program();
     checkProgLinkError(waterData.prog);
-
-    // Initialize some water shader variables
-    waterData.prog.use();
-    waterData.mat = waterData.prog.getUniform<mat4>("cameraMatrix");
-    waterData.camPos = waterData.prog.getUniform<vec3>("camPos");
-    waterData.sunPos = waterData.prog.getUniform<vec3>("sunPos");
-    waterData.radius = waterData.prog.getUniform<float>("Radius");
-    waterData.radius.value = RADIUS;
-    waterData.time = waterData.prog.getUniform<float>("time");
-    waterData.time.value = 0.0f;
 
     // Get the water renderer and the water group
     auto waterRenderer = &renderer.forward.objects;
     const auto waterGroup = waterRenderer->addGroup([] {}, [] {});
 
     // Create the water c-sphere
-    water = make_unique<PlanetCSphere>(RADIUS, waterData.prog, mainState.get(), waterRenderer, waterGroup,
-        [](DrawMesh* dm) {
-            dm->material.addResource(&waterData.mat);
-            dm->material.addResource(&waterData.camPos);
-            dm->material.addResource(&waterData.radius);
-            dm->material.addResource(&waterData.time);
-            dm->material.addTexture(waterData.normalMap);
-            dm->material.addTexture(skyboxData.planetTex);
+    water = make_unique<PlanetCSphere>(RADIUS, waterData.prog, *mainState, waterRenderer, waterGroup,
+        [](DrawMesh& dm) {
+            dm.material.addResource<GLcamera::matrix>("cameraMatrix");
+            dm.material.addResource<GLcamera::position>("camPos");
+            waterData.radius = dm.material.addResource<float>("Radius");
+            waterData.time   = dm.material.addResource<float>("time");
+            
+            waterData.radius->value = RADIUS;
+            waterData.time->value = 0.0f;
+
+            waterData.sunPos = waterData.prog.getUniform<vec3>("sunPos");
+            dm.material.addTexture(waterData.normalMap);
+            dm.material.addTexture(skyboxData.planetTex);
         });
 
     ///////////////////////////////////////////////////////////////////////////
@@ -486,24 +464,9 @@ TessellatorTest::TessellatorTest() : Game(6) {
     atmosProg->tessControl = tessProg->tessControl;
     atmosProg->tessEval    = ShaderRes("Shaders/atmosScatter_te.glsl", GL_TESS_EVALUATION_SHADER);
     atmosProg->fragment    = ShaderRes("Shaders/atmosScatter_f.glsl", GL_FRAGMENT_SHADER);
-    atmosProg->setupProgram();
+    atmosData.prog = atmosProg->setupProgram();
 
-    atmosData.prog = atmosProg->program();
     checkProgLinkError(atmosData.prog);
-
-    atmosData.prog.use();
-    atmosData.camPos = atmosData.prog.getUniform<vec3>("camPos");
-    atmosData.camMat = atmosData.prog.getUniform<mat4>("cameraMatrix");
-
-    atmosData.tessRadius  = atmosData.prog.getUniform<float>("Radius");
-    atmosData.K           = atmosData.prog.getUniform<vec2>("K_rm");
-    atmosData.atmosRadius = atmosData.prog.getUniform<vec2>("atmosRadius");
-    atmosData.sunPos      = atmosData.prog.getUniform<vec3>("sunPos");
-    atmosData.sunColor    = atmosData.prog.getUniform<vec3>("sunColor");
-
-    atmosData.K.value = vec2(1);
-    atmosData.atmosRadius.value = atmosLookupData.atmosRadius.value;
-    atmosData.tessRadius.value = atmosData.atmosRadius.value.y;
 
     const auto atmosGroup = renderer.forward.objects.addGroup([] {
         //GL_CHECK(glDisable(GL_CULL_FACE)); // this should really save state and restore afterward
@@ -512,18 +475,23 @@ TessellatorTest::TessellatorTest() : Game(6) {
     }, [] {
         GL_CHECK(glDepthMask(GL_TRUE));
     });
-    //atmosphere = make_unique<PlanetCSphere>(RADIUS + 2, atmosData.prog
-    //    , mainState.get(), &renderer.forward.objects, atmosGroup, [](DrawMesh* dm) {
-    //    dm->material.addResource(&atmosData.camMat);
-    //    dm->material.addResource(&atmosData.camPos);
-    //    dm->material.addResource(&atmosData.tessRadius);
-    //    dm->material.addResource(&atmosData.atmosRadius);
-    //    dm->material.addResource(&atmosData.K);
-    //    dm->material.addResource(&atmosData.sunPos);
-    //    dm->material.addResource(&atmosData.sunColor);
-    //    dm->material.addTexture(atmosLookupData.depthLookup);
-    //});
-    //atmosphere->translucent = true;
+    atmosphere = make_unique<PlanetCSphere>(RADIUS + 2, atmosData.prog
+        , *mainState, &renderer.forward.objects, atmosGroup, [](DrawMesh& dm) {
+        dm.material.addResource<GLcamera::position>("camPos");
+        dm.material.addResource<GLcamera::matrix>("cameraMatrix");
+        atmosData.tessRadius  = dm.material.addResource<float>("Radius");
+        atmosData.K           = dm.material.addResource<vec2>("K_rm");
+        atmosData.atmosRadius = dm.material.addResource<vec2>("atmosRadius");
+        atmosData.sunPos      = dm.material.addResource<vec3>("sunPos");
+        atmosData.sunColor    = dm.material.addResource<vec3>("sunColor");
+
+        atmosData.K->value           = vec2(1);
+        atmosData.atmosRadius->value = atmosLookupData.atmosRadius->value;
+        atmosData.tessRadius->value  = atmosData.atmosRadius->value.y;
+
+        dm.material.addTexture(atmosLookupData.depthLookup);
+    });
+    atmosphere->translucent = true;
 
     cameraControl = make_shared<TransformEntity>();
     cameraControl->transform.position = vec3(0, 0, RADIUS * 2);
@@ -559,7 +527,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     renderer.lights.pointLights.setGroups({ point });
     //renderer.lights.directionalLights.setGroups({ directional });
-    renderer.ambientColor.value = vec3(0.1f);
+    renderer.ambientColor->value = vec3(0.1f);
 
     sun.index = point.getLightIndexByTag(1, Light::UpdateFreq::SOMETIMES);
     sun.group = &renderer.lights.pointLights.getGroup(0);
@@ -573,7 +541,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     atmosLookupEntity->draw();
 
     setupPostProcess();
-    exposure.value = 2;
+    exposure->value = 2;
 }
 
 void TessellatorTest::setupPostProcess() {
@@ -586,8 +554,8 @@ void TessellatorTest::setupPostProcess() {
     // HDR
     auto hdr = make_shared<PostProcess>();
     auto hdrProg = PostProcess::make_program("Shaders/postProcess/hdr.glsl");
-    exposure = hdrProg.getUniform<float>("exposure");
-    hdr->data.setShaders(hdrProg, &exposure);
+    hdr->data.setShaders(hdrProg);
+    exposure = hdr->data.addResource<float>("exposure");
     hdr->data.setTextures(colorRender);
     hdr->renderToTextures(renderer.forward.postProcess.output);
 
@@ -608,8 +576,8 @@ void TessellatorTest::update(double delta) {
 
     if (Keyboard::keyPressed(Keyboard::Key::Code::Equal)) wireframe = !wireframe;
     if (Keyboard::keyPressed(Keyboard::Key::Code::Space)) {
-        noiseData.seed.value = genPlanetSeed();
-        Thread::Render::runNextFrame([]() {
+        noiseData.seed->value = genPlanetSeed();
+        Thread::Render::runNextFrame([] {
             noiseEntity->draw();
             normalEntity->draw();
         });
@@ -623,17 +591,17 @@ void TessellatorTest::update(double delta) {
 
     moveCamera(cameraControl.get(), cam, RADIUS);
     moveSun(RADIUS);
-    atmosData.sunPos.value = sun.light.position;
-    atmosData.sunColor.value = sun.light.color;
+    atmosData.sunPos->value = sun.light.position;
+    atmosData.sunColor->value = sun.light.color;
 
     auto pos = Camera::main->transform.getComputed()->position();
     auto dist = glm::length(pos) - RADIUS;
 
     int activeCounter = surface->update(pos, cam);
-    //atmosphere->update(pos, cam);
+    atmosphere->update(pos, cam);
     water->update(pos, cam);
 
-    waterData.time.value += static_cast<float>(Time::delta);
+    waterData.time->value += static_cast<float>(Time::delta);
 
     // replace with higher res model swap in
     // float scaleFactor;
@@ -641,8 +609,8 @@ void TessellatorTest::update(double delta) {
     // else if (dist < 0.75f) scaleFactor = 3.5;
     // else                   scaleFactor = 7.5;
 
-    if (Keyboard::keyDown(Keyboard::Key::Code::RBracket)) exposure.value += 10 * dt;
-    if (Keyboard::keyDown(Keyboard::Key::Code::LBracket)) exposure.value -= 10 * dt;
+    if (Keyboard::keyDown(Keyboard::Key::Code::RBracket)) exposure->value += 10 * dt;
+    if (Keyboard::keyDown(Keyboard::Key::Code::LBracket)) exposure->value -= 10 * dt;
 
     if (Keyboard::keyPressed(Keyboard::Key::Code::F1)) atmosphere->setActive(!atmosphere->active);
 
@@ -656,8 +624,8 @@ void TessellatorTest::update(double delta) {
                           + "\n" + std::to_string(glm::length(pos))
                           + "\n" + to_string(quat::getEuler(cam->transform.getComputed()->rotation()))
                           + "\nPlanes Active: " + std::to_string(activeCounter)
-                          + "\nSeed: " + std::to_string(noiseData.seed.value)
-                          + "\nExposure: " + std::to_string(exposure.value));
+                          + "\nSeed: " + std::to_string(noiseData.seed->value)
+                          + "\nExposure: " + std::to_string(exposure->value));
 
     //DrawDebug::getInstance().drawDebugVector(pos + forward, pos + forward + normalize(vec3(-1, -1, -0.5f)));
 }
@@ -673,7 +641,7 @@ void TessellatorTest::draw() {
     waterData.sunPos.update(sun.light.position);
 
     auto originView = Camera::main->view();
-    originView[3] = vec4(0, 0, 0, 1);
+    originView[3] = { 0, 0, 0, 1 };
     originView[0][3] = 0;
     originView[1][3] = 0;
     originView[2][3] = 0;

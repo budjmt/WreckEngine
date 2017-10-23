@@ -67,7 +67,7 @@ namespace HotSwap {
 
         Resource<File::Extension::GLSL> vertex, tessControl, tessEval, geometry, fragment, compute;
 
-        void setupProgram();
+        GLprogram setupProgram();
         void update() override;
     private:
         Shader(std::function<void()> _callback) : callback(_callback) {};

@@ -18,7 +18,7 @@ struct PlanetCSphere {
     std::vector<TerrainPlane> planes;
 
     PlanetCSphere(const float _radius, GLprogram _prog
-                , State* state, Render::MaterialPass* renderer, const size_t group, std::function<void(DrawMesh*)> drawSetup);
+                , State& state, Render::MaterialPass* renderer, const size_t group, std::function<void(DrawMesh&)> drawSetup);
     int update(const vec3& pos, const Camera* cam);
 
     void setActive(bool a) {
@@ -33,7 +33,7 @@ struct PlanetCSphere {
     GLprogram prog;
 
 private:
-    shared<Entity> genPlane(const vec3 dir, Render::MaterialPass* renderer, const size_t group, std::function<void(DrawMesh*)>& drawSetup);
+    shared<Entity> genPlane(const vec3 dir, Render::MaterialPass* renderer, const size_t group, std::function<void(DrawMesh&)>& drawSetup);
 };
 
 class TessellatorTest : public Game {

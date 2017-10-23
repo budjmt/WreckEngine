@@ -56,6 +56,10 @@ using alloc = alloc_ptr<T, Deleter>;
 
 template<class T, class Lock> using safe = safe_ptr<T, Lock>;
 
+#include "proxy_ptr.h"
+// use this for thread safety, maybe make it a template parameter?
+template<typename T, class Lock = std::lock_guard<std::mutex>> using safe_proxy = safe<proxy<T>, Lock>;
+
 /*--------------------------------------------------------------------------------------------------
   - Reserved on the heap and can hold anything, with automatic memory management
 

@@ -52,10 +52,10 @@ PostProcess* PostProcess::cyclesWith(size_t numCycles, shared<PostProcess> p) {
     q->chainsTo(p);                             // q chain = {p}
     while (--numCycles) {
         auto qc = make_shared<PostProcess>(*q); // 1st iteration: copy of q, chain = {p}
-        auto pc = new PostProcess(*p);          // copy of p, chain = {}
+        auto pc = make_shared<PostProcess>(*p); // copy of p, chain = {}
         qc->chain.clear();                      // now q copy chain = {}, q still = {p}
         q = p->chainsTo(qc);                    // q now points to q copy, p's chain = {q copy} (never chain to original object), original is in p
-        p.reset(pc);                            // p now points to its copy, chain = {}, original p still in q's chain
+        p = pc;                                 // p now points to its copy, chain = {}, original p still in q's chain
         q->chainsTo(p);                         // q copy chain = {p copy}
     }
     return p.get(); // the actual end of the chain, some copy of the original p
