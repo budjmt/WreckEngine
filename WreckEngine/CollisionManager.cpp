@@ -47,9 +47,8 @@ collisionPairList CollisionManager::broadPhase() {
 //returns the number of collisions found and handled
 size_t CollisionManager::narrowPhase(float dt) {
 	size_t numCollisions = 0;
-	for (auto& pair : collisionPairs) {
+	for (auto& [a, b] : collisionPairs) {
 		//DebugBenchmark::start();
-		auto *a = pair.first, *b = pair.second;
 		if (!(a->active && b->active) || !(a->rigidBody.solid() && b->rigidBody.solid()))
 			continue;
 

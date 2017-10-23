@@ -38,10 +38,10 @@ void Shader::update() {
     if (fragment.checkForUpdate())    updates.push_back({ fragment,    _program.fragment });
     if (compute.checkForUpdate())     updates.push_back({ compute,     _program.compute });
 
-    Thread::Render::runNextFrame([this, updates] {
+    Thread::Render::runNextFrame([this, updates = std::move(updates)] {
         bool needsRelink = false;
-        for (auto& u : updates) {
-            needsRelink = u.first.getUpdate(u.second) || needsRelink;
+        for (auto& [resource, shader] : updates) {
+            needsRelink = resource.getUpdate(shader) || needsRelink;
         }
         if (needsRelink) {
             _program.refresh();

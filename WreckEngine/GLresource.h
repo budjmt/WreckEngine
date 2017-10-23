@@ -2,11 +2,11 @@
 
 #include <map>
 
-// I cannot reliably enforce this, but:
-// ALL RESOURCES MUST BE BOTH TRIVIALLY COPYABLE AND DESTRUCTIBLE...
+// To use resources with materials, they must be "trivially" copyable and destructible...
 // in the sense that they do not have user-defined copy constructors or destructors
-// it doesn't really matter that they have v-ptrs because their BUFFERS are being copied, not them
+// it doesn't really matter that they have v-ptrs in this case because they're just copied data
 struct GLres {
+    virtual ~GLres() {}
     virtual void update() const = 0; 
 };
 

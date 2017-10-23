@@ -198,8 +198,7 @@ EdgeManifold Collider::overlayGaussMaps(Collider* other) {
 
 							const auto pen = glm::dot(edgeNormal, v2 - v1);//does this work regardless of the edges' points used?
 							if (pen > manifold.pen) {
-								manifold.edgePair.first  = curr;
-								manifold.edgePair.second = otherCurr;
+                                manifold.edgePair = { curr, otherCurr };
 								manifold.pen = pen;
 								manifold.axis = edgeNormal;
 								//we found a separating axis boys
@@ -587,55 +586,55 @@ void Collider::genVerts() {
 }
 
 void Collider::genNormals() {
-	switch (_type) {
-	case Type::SPHERE:
-		break;
-	case Type::BOX:
-		faceNormals = { vec3( 1,  0,  0),
-					    vec3(-1,  0,  0),
-					    vec3( 0,  0,  1),
-					    vec3( 0,  0, -1),
-					    vec3( 0,  1,  0),
-					    vec3( 0, -1,  0) };
-		break;
-	case Type::MESH:
-		// generate the face normals from the mesh's vertices
-		// when iterating over normals, to retrieve the vertices of the face corresponding to the normal at index i,
-		// the nth (0, 1, or 2) vertex in the face is meshVerts[faceVerts[i * 3 + n]]
-		// alternatively, if you aren't getting meshVerts, use the function getVert(faceVerts[i * 3 + n])
-		auto& faceVerts = mesh->indices().verts;
-		auto& meshVerts = mesh->data().verts;
-		for (size_t i = 0, numFaces = faceVerts.size(); i < numFaces; i += 3) {
-			auto& v  = meshVerts[faceVerts[i]];
+    switch (_type) {
+    case Type::SPHERE:
+        break;
+    case Type::BOX:
+        faceNormals = { vec3( 1,  0,  0),
+                        vec3(-1,  0,  0),
+                        vec3( 0,  0,  1),
+                        vec3( 0,  0, -1),
+                        vec3( 0,  1,  0),
+                        vec3( 0, -1,  0) };
+        break;
+    case Type::MESH:
+        // generate the face normals from the mesh's vertices
+        // when iterating over normals, to retrieve the vertices of the face corresponding to the normal at index i,
+        // the nth (0, 1, or 2) vertex in the face is meshVerts[faceVerts[i * 3 + n]]
+        // alternatively, if you aren't getting meshVerts, use the function getVert(faceVerts[i * 3 + n])
+        auto& faceVerts = mesh->indices().verts;
+        auto& meshVerts = mesh->data().verts;
+        for (size_t i = 0, numFaces = faceVerts.size(); i < numFaces; i += 3) {
+            const auto v = meshVerts[faceVerts[i]];
 
-			const auto e1 = meshVerts[faceVerts[i + 1]] - v;
-			const auto e2 = meshVerts[faceVerts[i + 2]] - v;
-			
-			const auto cross = glm::cross(e1, e2);			
-			faceNormals.push_back(cross / glm::length(cross));
-		}
-		break;
-	}
-	currNormals = std::vector<vec3>(faceNormals.size());
+            const auto e1 = meshVerts[faceVerts[i + 1]] - v;
+            const auto e2 = meshVerts[faceVerts[i + 2]] - v;
+
+            faceNormals.push_back(normalize(cross(e1, e2)));
+        }
+        break;
+    }
+    currNormals.clear();
+    currNormals.resize(faceNormals.size());
 }
 
 void Collider::genEdges() {
-	switch (_type) {
-	case Type::SPHERE:
-		break;
-	case Type::BOX:
-	case Type::MESH:
-		auto& meshVerts = mesh->data().verts;
-		for (const auto& pair : gauss.adjacencies) {
-			for (size_t i = 0, numAdj = pair.second.size(); i < numAdj; ++i) {
-				const auto& adj = pair.second[i];
-				setEdge(adj.edge, edges.size());
-				edges.push_back(meshVerts[adj.edge.second] - meshVerts[adj.edge.first]);
-			}
-		}
-		break;
-	}
-	currEdges = std::vector<vec3>(edges.size());
+    switch (_type) {
+    case Type::SPHERE:
+        break;
+    case Type::BOX:
+    case Type::MESH:
+        auto& meshVerts = mesh->data().verts;
+        for (const auto& pair : gauss.adjacencies) {
+            for (const auto& adj : pair.second) {
+                setEdge(adj.edge, edges.size());
+                edges.push_back(meshVerts[adj.edge.second] - meshVerts[adj.edge.first]);
+            }
+        }
+        break;
+    }
+    currEdges.clear();
+    currEdges.resize(edges.size());
 }
 
 void Collider::genGaussMap() {

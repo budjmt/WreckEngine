@@ -108,8 +108,7 @@ namespace Render {
             assert(shaders && textures); // shaders and textures must be initialized
             shaders->program.use();
             auto& sharedVars = shaders->sharedVars;
-            for (auto& varData : shaders->varLookup) {
-                auto data = varData.second;
+            for (auto& [name, data] : shaders->varLookup) {
                 auto& resources = data.isShared ? sharedVars : uniqueVars;
                 reinterpret_cast<const GLres&>(resources[data.offset]).update();
             }

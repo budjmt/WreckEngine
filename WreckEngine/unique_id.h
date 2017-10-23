@@ -32,8 +32,8 @@ public:
 	}
 
 	static uint32_t add(const std::string& name) {
-		const auto res = ids.insert({ name, counter() + 1 });
-		if (!res.second) throw "The name \"" + name + "\" is already in use; ID: " + std::to_string(ids[name]);
+		const auto insertInfo = ids.insert({ name, counter() + 1 });
+		if (!insertInfo.second) throw "The name \"" + name + "\" is already in use; ID: " + std::to_string(ids[name]);
 		return ++counter();
 	}
 
