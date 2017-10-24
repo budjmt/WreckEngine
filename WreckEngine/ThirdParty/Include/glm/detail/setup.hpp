@@ -36,11 +36,11 @@
 #define GLM_VERSION_MAJOR			0
 #define GLM_VERSION_MINOR			9
 #define GLM_VERSION_PATCH			8
-#define GLM_VERSION_REVISION		4
+#define GLM_VERSION_REVISION		5
 
 #if GLM_MESSAGES == GLM_MESSAGES_ENABLED && !defined(GLM_MESSAGE_VERSION_DISPLAYED)
 #	define GLM_MESSAGE_VERSION_DISPLAYED
-#	pragma message ("GLM: version 0.9.8.4")
+#	pragma message ("GLM: version 0.9.8.5")
 #endif//GLM_MESSAGES
 
 // Report compiler detection
@@ -740,7 +740,7 @@
 
 #if GLM_HAS_CONSTEXPR || GLM_HAS_CONSTEXPR_PARTIAL
 #	define GLM_CONSTEXPR constexpr
-#	if GLM_COMPILER & GLM_COMPILER_VC // Visual C++ has a bug #594 https://github.com/g-truc/glm/issues/594
+#	if GLM_COMPILER & GLM_COMPILER_VC && GLM_COMPILER < GLM_COMPILER_VC17 // Visual C++ has a bug #594 https://github.com/g-truc/glm/issues/594
 #		define GLM_CONSTEXPR_CTOR
 #	else
 #		define GLM_CONSTEXPR_CTOR constexpr

@@ -91,6 +91,7 @@
 #define GLM_COMPILER_VC12			0x010000B0
 #define GLM_COMPILER_VC14			0x010000C0
 #define GLM_COMPILER_VC15			0x010000D0
+#define GLM_COMPILER_VC17			0x010000E0
 
 // GCC defines
 #define GLM_COMPILER_GCC			0x02000000
@@ -177,7 +178,7 @@
 
 // Clang
 #elif defined(__clang__)
-#	if GLM_PLATFORM & GLM_PLATFORM_APPLE
+#	if defined(__apple_build_version__)
 #		if __clang_major__ == 5 && __clang_minor__ == 0
 #			define GLM_COMPILER GLM_COMPILER_CLANG33
 #		elif __clang_major__ == 5 && __clang_minor__ == 1
@@ -237,8 +238,10 @@
 #		define GLM_COMPILER GLM_COMPILER_VC12
 #	elif _MSC_VER == 1900
 #		define GLM_COMPILER GLM_COMPILER_VC14
-#	elif _MSC_VER >= 1910
+#	elif _MSC_VER == 1910
 #		define GLM_COMPILER GLM_COMPILER_VC15
+#	elif _MSC_VER >= 1911
+#		define GLM_COMPILER GLM_COMPILER_VC17
 #	else//_MSC_VER
 #		define GLM_COMPILER GLM_COMPILER_VC
 #	endif//_MSC_VER
