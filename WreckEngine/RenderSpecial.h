@@ -73,6 +73,7 @@ namespace Render {
             // 3: deferred specular color
             // 4: diffuse  light accumulation
             // 5: specular light accumulation
+            deferred.clearColorIndex = 2;
             lightR.postProcess.output = gBuffer[0];
 
             auto accumulate = make_shared<PostProcess>();

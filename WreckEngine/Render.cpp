@@ -44,7 +44,7 @@ void Renderer::init(const size_t max_gBufferSize) {
 
     gBuffer.reserve(max_gBufferSize);
     for (size_t i = 0; i < max_gBufferSize; ++i) {
-        gBuffer.push_back(Target::create<GLfloat>(GL_RGB16F));
+        gBuffer.push_back(Target::create<GLfloat>(GL_RGBA16F));
     }
 
     fs_triangle.create(GL_ARRAY_BUFFER);
@@ -237,7 +237,7 @@ void PostProcessChain::render() const {
 static CameraData currRenderCamData;
 const CameraData& Renderer::getCamData() { return currRenderCamData; }
 
-GLframebuffer genClearFB() {
+static GLframebuffer genClearFB() {
     GLframebuffer f;
     f.create();
     f.bindPartial();
@@ -247,7 +247,7 @@ GLframebuffer genClearFB() {
     return f;
 }
 
-void clearPrevFrame() {
+static vec4 clearPrevFrame(size_t clearIndex) {
     static GLframebuffer clearFrame = genClearFB();
     
     GLstate<GL_DEPTH, GL_DEPTH_WRITEMASK> maskState;
@@ -260,12 +260,16 @@ void clearPrevFrame() {
     GLframebuffer::clear();
     
     GLframebuffer::setClearColor(color.r, color.g, color.b, color.a);
-    GLframebuffer::clearPartial(GL_COLOR, 0, &color[0]); // clears color to original clear color
+    GLframebuffer::clearPartial(GL_COLOR, clearIndex, &color[0]); // clears color to original clear color
+
+    GLframebuffer::setClearColor(0.f, 0.f, 0.f, 0.f);
+    return color;
 }
 
 void Renderer::render() {
-    clearPrevFrame();
+    auto clearColor = clearPrevFrame(clearColorIndex);
     renderChildren();
+    GLframebuffer::setClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
 }
 
 void Renderer::renderChildren() {

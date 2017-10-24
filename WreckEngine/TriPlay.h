@@ -16,7 +16,7 @@
 class TriPlay : public Game
 {
 public:
-    TriPlay(GLprogram prog);
+    TriPlay();
     void update(double dt);
     void postUpdate();
     void physicsUpdate(double dt);

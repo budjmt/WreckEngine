@@ -14,8 +14,7 @@ vec2 bOffset = vec2(0, offset / 2);
 void main() {
     float rValue = texture2D(render, uv - rOffset).r;  
     float gValue = texture2D(render, uv - gOffset).g;
-    float bValue = texture2D(render, uv - bOffset).b;  
-	float aValue = texture2D(render, uv).a;
+    float bValue = texture2D(render, uv - bOffset).b;
 
-    fragColor = vec4(rValue, gValue, bValue, aValue);
+    fragColor = vec4(rValue, gValue, bValue, 1);
 }

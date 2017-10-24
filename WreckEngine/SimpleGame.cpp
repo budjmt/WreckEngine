@@ -1,10 +1,12 @@
 #include "SimpleGame.h"
 
-SimpleGame::SimpleGame(GLprogram prog) : Game(6) {
+SimpleGame::SimpleGame() : Game(6) {
     auto mainState = make_shared<State>("main");
     addState(mainState);
 
     GLframebuffer::setClearColor(100.f / 255.f, 149.f / 255.f, 237.f / 255.f, 1);
+
+    auto prog = loadProgram("Shaders/matvertexShader.glsl", "Shaders/matfragmentShader.glsl");
 
     auto m = loadOBJ("Assets/cube.obj");
     auto ndm = make_shared<DrawMesh>(&renderer.deferred.objects, m, "Assets/snow.jpg", prog);

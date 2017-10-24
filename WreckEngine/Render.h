@@ -133,6 +133,7 @@ namespace Render {
         MaterialPass objects;
         PostProcessChain postProcess;
         Renderer* next = nullptr;
+        size_t clearColorIndex = 0;
         std::function<void()> setup = [](){};
 
         static void init(size_t max_gBufferSize);

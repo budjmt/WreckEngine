@@ -14,7 +14,7 @@ namespace {
 
 static proxy<GLresource<float>> exposure;
 
-TriPlay::TriPlay(GLprogram prog) : Game(6)
+TriPlay::TriPlay() : Game(6)
 {
     auto menuState = make_shared<State>("menu");
     auto mainState = make_shared<State>("main");
@@ -24,7 +24,8 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
     menuState->handler_func = [this, mainsp, start_game_event](Event::Handler::param_t e) {
         if (e.id == start_game_event) {
             currState = mainsp;
-            Thread::Render::runNextFrame([] { GLframebuffer::setClearColor(0, 0, 0, 1); });
+            vec4 clearColor = Color::fromRgb(160, 5, 56);
+            Thread::Render::runNextFrame([=] { GLframebuffer::setClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a); });
         }
     };
     addState(menuState);
@@ -42,6 +43,8 @@ TriPlay::TriPlay(GLprogram prog) : Game(6)
         //nothing right now
     };
     addState(mainState);
+
+    auto prog = loadProgram("Shaders/matvertexShader.glsl", "Shaders/matfragmentShader.glsl");
 
     auto m = loadOBJ("Assets/basic.obj");
     m->translateTo(vec3());

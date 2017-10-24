@@ -21,8 +21,11 @@ vec4 tonemap(in vec4 color) {
 }
 
 void main() {
-	fragColor = texture(diffuseColor, uv) * (texture(diffuseLight, uv) + vec4(ambient,0)) 
-            + texture(specularColor, uv) * texture(specularLight, uv);
-	//fragColor = texture(diffuseColor, uv);
+    vec4 diffuseLightColor = texture(diffuseLight, uv);
+    vec3 addDiffuse = (diffuseLightColor.a == 0) ? vec3(1) : ambient;
+    fragColor = texture(diffuseColor, uv) * (diffuseLightColor + vec4(addDiffuse, 0)) 
+                + texture(specularColor, uv) * texture(specularLight, uv);
+    fragColor.a = 1;
+    //fragColor = texture(diffuseColor, uv);
     //fragColor = tonemap(fragColor);
 }

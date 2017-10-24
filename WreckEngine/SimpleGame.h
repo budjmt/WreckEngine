@@ -13,7 +13,7 @@
 class SimpleGame : public Game
 {
 public:
-    SimpleGame(GLprogram prog);
+    SimpleGame();
     void update(double dt) override;
 private:
     shared<Entity> me;

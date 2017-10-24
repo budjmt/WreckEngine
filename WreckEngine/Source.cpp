@@ -48,12 +48,6 @@ void init() {
     if (DEBUG)
         initDebug();
 
-    auto shaderProg = loadProgram("Shaders/matvertexShader.glsl","Shaders/matfragmentShader.glsl");
-    if(shaderProg.valid()) {
-        shaderProg.use();
-        shaderProg.setOnce<vec4>("tint", vec4(1));
-    }
-
     Mouse::defaultMove(Window::window, 0, 0);//this is cheating but it works for initializing the mouse
 
     initGraphics();
@@ -63,10 +57,10 @@ void init() {
     Render::Renderer::init(6);
 
     // this won't be initialized until after GLFW/GLEW are
-    game = make_unique<TriPlay>(shaderProg);
+    game = make_unique<TriPlay>();
     //game = make_unique<UiTest>();
     //game = make_unique<TessellatorTest>();
-    //game = make_unique<SimpleGame>(shaderProg);
+    //game = make_unique<SimpleGame>();
 
     DrawDebug::get().flush();
     Text::flush();
