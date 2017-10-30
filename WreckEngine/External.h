@@ -10,6 +10,15 @@
 #include <future>
 
 namespace Thread {
+
+    template<typename Pred>
+    void spinUntil(Pred pred, float spinIntervalMillis) {
+        std::chrono::microseconds waitDuration((size_t)(spinIntervalMillis * 1000.f));
+        while (!pred()) {
+            std::this_thread::sleep_for(waitDuration);
+        }
+    }
+
     // main thread functions are typically related to input and other GLFW functionality
     // they can be run synchronously or asynchronously, depending on the requirements, 
     // e.g. input polling must be synchronous while full screening doesn't need to be
@@ -50,7 +59,8 @@ namespace Thread {
 
 namespace Window {
     extern GLFWwindow* window;
-    extern bool isFullScreen;
+    extern const bool& isFullScreen, &isInFocus;
+    extern const Time::time_point& focusLostTime;
     extern int width, height;
     extern int frameWidth, frameHeight;
     extern float aspect;
@@ -63,6 +73,14 @@ namespace Window {
     inline void close()   { glfwSetWindowShouldClose(window, GLFW_TRUE); }
     inline bool closing() { return glfwWindowShouldClose(Window::window) != 0; }
 
+    inline void focus() { Thread::Main::run([] { glfwFocusWindow(window); }); }
+    // this function polls the GLFW state, whereas the variable depends on event polling working
+    inline bool isFocused() {
+        static bool focused;
+        Thread::Main::run([&] { focused = glfwGetWindowAttrib(window, GLFW_FOCUSED); });
+        return focused;
+    }
+
     void toggleFullScreen(GLFWmonitor* monitor, int x, int y, int width, int height);
     void toggleFullScreen(int width, int height);
     void toggleFullScreen();
@@ -72,11 +90,17 @@ namespace Window {
     inline void viewport(size_t x, size_t y, size_t width, size_t height) { GL_CHECK(glViewport(x, y, width, height)); }
     inline void viewport(size_t width, size_t height) { viewport(0, 0, width, height); }
 
-    inline void resizeCallback(GLFWwindowsizefun f) { glfwSetWindowSizeCallback(window, f); }
+    inline void closeCallback(GLFWwindowclosefun f) { glfwSetWindowCloseCallback(window, f); }
+    inline void resizeCallback(GLFWwindowsizefun f) { glfwSetWindowSizeCallback (window, f); }
+    inline void focusCallback(GLFWwindowfocusfun f) { glfwSetWindowFocusCallback(window, f); }
 
+    void defaultClose(GLFWwindow* window);
     void defaultResize(GLFWwindow* window, int width, int height);
+    void defaultFocus(GLFWwindow* window, int gainedFocus);
 
+    class CloseHandler  {}; // inherit or create handler of type to handle window close events
     class ResizeHandler {}; // inherit or create handler of type to handle window resize events
+    class FocusHandler  {}; // inherit or create handler of type to handle window focus events
 };
 
 namespace Mouse {

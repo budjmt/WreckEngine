@@ -41,5 +41,10 @@ SimpleGame::SimpleGame() : Game(6) {
 
 void SimpleGame::update(double dt) {
     Game::update(dt);
+
+    static vec3 dir(0, 1, 0);
+    me->transform.position += dir * (float)dt;
+    if (abs(me->transform.position().y) > 3.f) dir *= -1;
+
     Camera::mayaControl(Camera::main, dt);
 }

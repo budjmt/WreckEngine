@@ -36,17 +36,19 @@ public:
         condition.notify_one();
     }
 
-    void emplace(T&& value) {
+    T& emplace(T&& value) {
+        T* el;
         {
             std::unique_lock<std::mutex> lock(mut);
-            queue.emplace(std::move(value));
+            el = &queue.emplace(std::move(value));
         }
         condition.notify_one();
+        return *el;
     }
 
     T pop() {
         std::unique_lock<std::mutex> lock(mut);
-        condition.wait(lock, [this]() { return !empty(); });
+        condition.wait(lock, [this] { return !empty(); });
         T front(std::move(queue.front()));
         queue.pop();
         return front;
@@ -84,29 +86,26 @@ public:
     // call at the end of a frame to indicate that the cache should be moved to the next frame
     void seal() {
         ++activeList %= frame_cache;
-        std::unique_lock<std::mutex> lock(mut);
         if (++numSealed == frame_cache) {
-            consumeCondition.wait(lock, [this] { return numSealed < frame_cache || Window::closing(); });
+            Thread::spinUntil([this] { return numSealed < frame_cache || Window::closing(); }, 0.25f);
         }
     }
 
     // [func] is a function that iterates over the list, "consuming" it
     void consume(const std::function<void(std::vector<T>&)>& func) {
+        Thread::spinUntil([this] { return numSealed > 0 || Window::closing(); }, 0.25f);
         if (numSealed == 0) return;
-        
+
         auto& oldest = getOldest();
         func(oldest);
         oldest.clear();
-        
-        std::unique_lock<std::mutex> lock(mut);
+
         --numSealed;
-        consumeCondition.notify_all();
     }
 private:
     std::vector<T> frameLists[frame_cache];
-    size_t activeList = 0, numSealed = 0;
-    std::condition_variable consumeCondition;
-    std::mutex mut;
+    size_t activeList = 0;
+    std::atomic<size_t> numSealed = 0;
 
     std::vector<T>& getOldest() {
         return frameLists[(frame_cache + activeList - numSealed) % frame_cache];
@@ -141,5 +140,4 @@ public:
     void flush() { vectors.clear(); }
 private:
     std::map<std::thread::id, frame_vector<T, frame_cache>> vectors;
-    std::shared_mutex mut;
 };

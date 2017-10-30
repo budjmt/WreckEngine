@@ -30,20 +30,26 @@ long long Time::ctime() {
     return duration_cast<seconds>(Time::now().time_since_epoch()).count();
 }
 
-double Time::elapsed() {
-    using namespace std::chrono;
-    return duration<double>(now() - start).count();
+namespace {
+    thread_local Time::time_point frameBeginTime = Time::start;
+    thread_local double deltaTime = 0.;
+    thread_local double elapsedTime = 0.;
 }
 
-thread_local double deltaTime = 0.;
+thread_local const Time::time_point& Time::frameBegin = frameBeginTime;
 thread_local const double& Time::delta = deltaTime;
+thread_local double Time::nextDeltaOffset = 0;
+thread_local const double& Time::elapsed = elapsedTime;
 
-void Time::updateDelta() {
+void Time::update() {
     using namespace std::chrono;
-    thread_local auto prevFrame = Time::start;
-    auto currFrame = now();
-    deltaTime = duration<double>(currFrame - prevFrame).count();
-    prevFrame = currFrame;
+
+    auto currFrameBegin = now();
+    deltaTime = get_duration(frameBeginTime, currFrameBegin) + nextDeltaOffset;
+    nextDeltaOffset = 0;
+
+    elapsedTime += deltaTime;
+    frameBeginTime = currFrameBegin;
 }
 
 std::mutex UpdateBase::mut;
@@ -91,7 +97,9 @@ GLFWmanager::GLFWmanager(const size_t width, const size_t height) {
     // Center the window
     glfwSetWindowPos(Window::window, (vm->width - width) / 2, (vm->height - height) / 2);
 
+    Window::closeCallback(Window::defaultClose);
     Window::resizeCallback(Window::defaultResize);
+    Window::focusCallback(Window::defaultFocus);
     Mouse::buttonCallback(Mouse::defaultButton);
     Mouse::moveCallback(Mouse::defaultMove);
     Mouse::scrollCallback(Mouse::defaultScroll);
@@ -110,13 +118,13 @@ void GLEWmanager::initGLValues() {
 
 namespace {
     safe_queue<std::packaged_task<void()>> mainCommands;
-    
+
     safe_queue<std::packaged_task<void()>> gfxCommands;
 
     safe_queue<std::function<void()>> preRenderCommands;
     std::mutex frameMutex;
     std::condition_variable frameEndCondition;
-    
+
     bool exiting = false;
 };
 
@@ -190,11 +198,20 @@ void Thread::Render::finishFrame() { frameEndCondition.notify_all(); }
 
 void Thread::Render::waitForFrame() {
     std::unique_lock<std::mutex> lock(frameMutex);
-    frameEndCondition.wait(lock, [] { return true; });
+    frameEndCondition.wait(lock);
+}
+
+namespace {
+    bool windowIsFullScreen;
+    bool windowIsInFocus = true;
+    Time::time_point windowFocusLostTime;
 }
 
 GLFWwindow* Window::window;
-bool Window::isFullScreen;
+const bool& Window::isFullScreen = windowIsFullScreen;
+const bool& Window::isInFocus = windowIsInFocus;
+const Time::time_point& Window::focusLostTime = windowFocusLostTime;
+
 int Window::width;
 int Window::height;
 int Window::frameWidth;
@@ -208,7 +225,7 @@ Mouse::Info Mouse::info;
 Keyboard::Info Keyboard::info;
 
 void Window::toggleFullScreen(GLFWmonitor* monitor, int x, int y, int width, int height) {
-    if (isFullScreen = !isFullScreen)
+    if (windowIsFullScreen = !windowIsFullScreen)
         glfwSetWindowMonitor(window, monitor, 0, 0, width, height, GLFW_DONT_CARE);
     else
         glfwSetWindowMonitor(window, nullptr, x, y, width, height, GLFW_DONT_CARE);
@@ -230,6 +247,11 @@ void Window::toggleFullScreen() {
     toggleFullScreen(oldWidth, oldHeight);
 }
 
+void Window::defaultClose(GLFWwindow* window) {
+    static uint32_t close_id = Message::add("window_close");
+    Dispatcher::central_trigger.sendBulkEvent<CloseHandler>(close_id);
+}
+
 void Window::defaultResize(GLFWwindow* window, int w, int h) {
     width = w;
     height = h;
@@ -244,6 +266,14 @@ void Window::defaultResize(GLFWwindow* window, int w, int h) {
 
     static uint32_t resize_id = Message::add("window_resize");
     Dispatcher::central_trigger.sendBulkEvent<ResizeHandler>(resize_id);
+}
+
+void Window::defaultFocus(GLFWwindow* window, int gainedFocus) {
+    windowIsInFocus = gainedFocus == GLFW_TRUE;
+    if(!windowIsInFocus) windowFocusLostTime = Time::now();
+
+    static uint32_t focus_id = Message::add("window_focus");
+    Dispatcher::central_trigger.sendBulkEvent<FocusHandler>(focus_id, windowIsInFocus, windowFocusLostTime);
 }
 
 void Mouse::update() {
@@ -262,7 +292,7 @@ void Mouse::defaultButton(GLFWwindow* window, int button, int action, int mods) 
         info.setButtonDown(button);
         
         auto& b = info.buttons[button];
-        b.lastDown = Time::elapsed();
+        b.lastDown = Time::elapsed;
         b.downThisFrame = true;
     }
     else if (action == GLFW_RELEASE)
@@ -322,7 +352,7 @@ void Keyboard::defaultKey(GLFWwindow* window, int key, int scancode, int action,
     {
         std::lock_guard<std::shared_mutex> lock(keyboardMut);
         auto& keyData = info.keys[getKeyIndex(key)];
-        keyData = { keyData.pressed || press, press, Time::elapsed() };
+        keyData = { keyData.pressed || press, press, Time::elapsed };
     }
 
     static uint32_t key_id = Message::add("keyboard_key");

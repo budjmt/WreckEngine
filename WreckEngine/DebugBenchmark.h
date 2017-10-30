@@ -1,20 +1,21 @@
 #pragma once
 
-#include "GLFW/glfw3.h"
+#include "Time.h"
 
 class DebugBenchmark
 {
 public:
     static void start() { 
-        timer = Time::elapsed(); 
+        timer = Time::now();
     }
 
     static double end() { 
-        auto time = Time::elapsed() - timer;
+        auto end = Time::now();
+        auto time = Time::get_duration(timer, end);
         return time * 1000;
     }
 private:
-    static thread_local double timer;
+    static thread_local Time::time_point timer;
 };
 
-thread_local double DebugBenchmark::timer = Time::elapsed();
+thread_local Time::time_point DebugBenchmark::timer = Time::now();

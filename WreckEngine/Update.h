@@ -10,14 +10,26 @@
 struct UpdateBase {
 
     explicit UpdateBase(std::thread* thread) { updateThreads.push_back(thread); }
-    static void join() { 
-        exitCondition.notify_all(); 
+    static void join() {
         for (auto thread : updateThreads) thread->join(); 
     }
 
 protected:
     static std::mutex mut;
     static std::condition_variable exitCondition;
+
+    void waitForWindowFocus() {
+        if (Time::frameBegin > Window::focusLostTime) return;
+        
+        auto end = Time::now();
+        auto pauseOverlapWithFrame = std::max(Time::get_duration(Window::focusLostTime, end), 0.0);
+
+        Thread::spinUntil([] { return Window::isInFocus || Window::closing(); }, 0.25f);
+
+        auto pauseLength = Time::get_duration(Window::focusLostTime, Time::now());
+        Time::nextDeltaOffset = pauseOverlapWithFrame - pauseLength;
+    }
+
 private:
     static std::vector<std::thread*> updateThreads;
 };
@@ -32,13 +44,17 @@ public:
     void run() {
         init();
         while (!Window::closing()) {
-            Time::updateDelta();
+            Time::update();
             auto next = Time::now() + interval;
 
             update();
 
-            std::unique_lock<std::mutex> lock(mut);
-            exitCondition.wait_until(lock, next, [] { return Window::closing(); });
+            {
+                std::unique_lock<std::mutex> lock(mut);
+                exitCondition.wait_until(lock, next, [] { return Window::closing(); });
+            }
+
+            waitForWindowFocus();
         }
     }
 
@@ -58,8 +74,9 @@ public:
     void run() {
         init();
         while (!Window::closing()) {
-            Time::updateDelta();
+            Time::update();
             update();
+            waitForWindowFocus();
         }
     }
 

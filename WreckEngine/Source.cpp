@@ -166,6 +166,8 @@ int main(int argc, char** argv) {
 
     glfwShowWindow(Window::window);
     while (!Window::closing()) {
+        Time::update();
+        if (!Window::isInFocus) glfwPollEvents(); // the main thread becomes responsible for event polling when the update thread is paused
         Thread::Main::tryExecute();
     }
     Thread::Main::flush();

@@ -317,7 +317,7 @@ namespace UI
         io.DisplayFramebufferScale = Window::frameScale;
 
         // Setup time step
-        double current_time = Time::elapsed();
+        double current_time = Time::elapsed;
         io.DeltaTime = time > 0.0 ? (float)(current_time - time) : (float)(1.0f / 60.0f);
         time = current_time;
 
