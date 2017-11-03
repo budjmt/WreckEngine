@@ -7,7 +7,7 @@ Collider::Collider(shared<Mesh> m, Transform* t) : Collider(Type::MESH, m, t, m-
 Collider::Collider(const Type type, shared<Mesh> m, Transform* t, const vec3 d, const bool fudge) : _type(type), mesh(m), _transform(t), fudgeAABB(fudge) 
 {
 	dims(d);
-	base_aabb.center = _transform->getComputed()->position;
+	base_aabb.center = _transform->getComputed()->position();
 	transformed_aabb = base_aabb;
 	updateDims();
 	//the order is important;
@@ -33,7 +33,7 @@ void Collider::updateDims() {
 }
 
 void Collider::update() {
-	_framePos = _transform->getComputed()->position;
+	_framePos = _transform->getComputed()->position();
 	base_aabb.center = _framePos;
 	transformed_aabb.center = base_aabb.center;
 	

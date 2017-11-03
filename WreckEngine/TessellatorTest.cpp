@@ -505,7 +505,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     mainState->addEntity(camera);
 
     Light::Group<Light::Point> point;
-    sun.light.position = sun.helper.position = vec3(-50, -100, -50);
+    sun.light.position = (sun.helper.position = vec3(-50, -100, -50))();
     sun.helper.rotation *= quat(rotateBetween(vec3(0, 0, 1), -glm::normalize(sun.helper.position())));
     sun.light.color = vec3(1);
     sun.light.falloff = vec2(100, 500);
@@ -764,8 +764,8 @@ void moveSun(float radius) {
     if (shift) {
         // move away from/towards the surface
         moved = true;
-        if      (Keyboard::keyDown(Keyboard::Key::I)) sun.light.position = sun.helper.position -= pos * (towardSpeed * dt);
-        else if (Keyboard::keyDown(Keyboard::Key::K)) sun.light.position = sun.helper.position += pos * (towardSpeed * dt);
+        if      (Keyboard::keyDown(Keyboard::Key::I)) sun.light.position = (sun.helper.position -= pos * (towardSpeed * dt))();
+        else if (Keyboard::keyDown(Keyboard::Key::K)) sun.light.position = (sun.helper.position += pos * (towardSpeed * dt))();
         else moved = false;
     }
     else {
@@ -775,6 +775,6 @@ void moveSun(float radius) {
     }
 
     if (moved) Thread::Render::runNextFrame([] { sun.group->updateLight(sun.index, Light::UpdateFreq::SOMETIMES, sun.light); });
-    DrawDebug::get().drawDebugSphere(sun.helper.position, sun.light.falloff.x, vec3(1));
-    DrawDebug::get().drawDebugSphere(sun.helper.position, sun.light.falloff.y, vec3(1,1,0));
+    DrawDebug::get().drawDebugSphere(sun.helper.position(), sun.light.falloff.x, vec3(1));
+    DrawDebug::get().drawDebugSphere(sun.helper.position(), sun.light.falloff.y, vec3(1,1,0));
 }
