@@ -323,6 +323,9 @@
     <ClInclude Include="proxy_ptr.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="frame_cache.h">
+      <Filter>Threading</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

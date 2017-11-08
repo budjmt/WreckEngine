@@ -32,11 +32,13 @@ long long Time::ctime() {
 
 namespace {
     thread_local Time::time_point frameBeginTime = Time::start;
+    thread_local size_t frameCountTime = 0;
     thread_local double deltaTime = 0.;
     thread_local double elapsedTime = 0.;
 }
 
 thread_local const Time::time_point& Time::frameBegin = frameBeginTime;
+thread_local const size_t& Time::frameCount = frameCountTime;
 thread_local const double& Time::delta = deltaTime;
 thread_local double Time::nextDeltaOffset = 0;
 thread_local const double& Time::elapsed = elapsedTime;
@@ -50,6 +52,7 @@ void Time::update() {
 
     elapsedTime += deltaTime;
     frameBeginTime = currFrameBegin;
+    ++frameCountTime;
 }
 
 std::mutex UpdateBase::mut;

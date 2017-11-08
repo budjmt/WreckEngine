@@ -8,6 +8,7 @@ namespace Time {
 
     extern const time_point start;
     extern thread_local const time_point& frameBegin;
+    extern thread_local const size_t& frameCount;
     extern thread_local const double& delta; // elapsed seconds since last frame in the current thread, not counting time not in focus
     extern thread_local double nextDeltaOffset; // value used to offset the next frame's delta time in case of pausing or other aberrations
     extern thread_local const double& elapsed; // elapsed seconds since game start at the beginning of the frame in the current thread, not counting time not in focus

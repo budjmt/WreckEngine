@@ -97,25 +97,40 @@ quat operator/(const quat& q, float f);
 quat operator*(const quat& a, const quat& b);
 
 template<typename T> inline std::string to_string(const T& obj) { return std::to_string(obj); }
-template<> inline std::string to_string<vec2>(const vec2& v) { return std::to_string(v.x) + "," + std::to_string(v.y); };
+template<> inline std::string to_string<vec2>(const vec2& v) { return to_string(v.x) + "," + to_string(v.y); };
 std::string to_string(const vec2&, size_t precision);
-template<> inline std::string to_string<vec3>(const vec3& v) { return std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z); };
+template<> inline std::string to_string<vec3>(const vec3& v) { return to_string(v.x) + "," + to_string(v.y) + "," + to_string(v.z); };
 std::string to_string(const vec3&, size_t precision);
-template<> inline std::string to_string<vec4>(const vec4& v) { return std::to_string(v.x) + "," + std::to_string(v.y) + "," + std::to_string(v.z) + "," + std::to_string(v.w); };
+template<> inline std::string to_string<vec4>(const vec4& v) { return to_string(v.x) + "," + to_string(v.y) + "," + to_string(v.z) + "," + to_string(v.w); };
 std::string to_string(const vec4&, size_t precision);
-template<> inline std::string to_string<quat>(const quat& q) { return std::to_string(q.x) + "," + std::to_string(q.y) + "," + std::to_string(q.z) + "," + std::to_string(q.w); };
+template<> inline std::string to_string<quat>(const quat& q) { return to_string(q.x) + "," + to_string(q.y) + "," + to_string(q.z) + "," + to_string(q.w); };
 std::string to_string(const quat&, size_t precision);
 
 template<> inline std::string to_string<mat3>(const mat3& m) {
     auto col0 = m[0], col1 = m[1], col2 = m[2];
-    return std::to_string(col0[0]) + "," + std::to_string(col1[0]) + "," + std::to_string(col2[0]) + "\n"
-         + std::to_string(col0[1]) + "," + std::to_string(col1[1]) + "," + std::to_string(col2[1]) + "\n"
-         + std::to_string(col0[2]) + "," + std::to_string(col1[2]) + "," + std::to_string(col2[2]);
+    return to_string(col0[0]) + "," + to_string(col1[0]) + "," + to_string(col2[0]) + "\n"
+         + to_string(col0[1]) + "," + to_string(col1[1]) + "," + to_string(col2[1]) + "\n"
+         + to_string(col0[2]) + "," + to_string(col1[2]) + "," + to_string(col2[2]);
 }
 template<> inline std::string to_string<mat4>(const mat4& m) {
     auto col0 = m[0], col1 = m[1], col2 = m[2], col3 = m[3];
-    return std::to_string(col0[0]) + "," + std::to_string(col1[0]) + "," + std::to_string(col2[0]) + "," + std::to_string(col3[0]) + "\n"
-         + std::to_string(col0[1]) + "," + std::to_string(col1[1]) + "," + std::to_string(col2[1]) + "," + std::to_string(col3[1]) + "\n"
-         + std::to_string(col0[2]) + "," + std::to_string(col1[2]) + "," + std::to_string(col2[2]) + "," + std::to_string(col3[2]) + "\n"
-         + std::to_string(col0[3]) + "," + std::to_string(col1[3]) + "," + std::to_string(col2[3]) + "," + std::to_string(col3[3]);
+    return to_string(col0[0]) + "," + to_string(col1[0]) + "," + to_string(col2[0]) + "," + to_string(col3[0]) + "\n"
+         + to_string(col0[1]) + "," + to_string(col1[1]) + "," + to_string(col2[1]) + "," + to_string(col3[1]) + "\n"
+         + to_string(col0[2]) + "," + to_string(col1[2]) + "," + to_string(col2[2]) + "," + to_string(col3[2]) + "\n"
+         + to_string(col0[3]) + "," + to_string(col1[3]) + "," + to_string(col2[3]) + "," + to_string(col3[3]);
+}
+
+template<typename T>
+auto hash_bytes(const T& obj) noexcept {
+    const std::string_view bytes(reinterpret_cast<const char*>(&obj), sizeof(T));
+    return std::hash<std::string_view>{}(bytes);
+}
+
+namespace std {
+    template<> struct hash<vec2> { auto operator()(const vec2& t) const noexcept { return hash_bytes(t); } };
+    template<> struct hash<vec3> { auto operator()(const vec3& t) const noexcept { return hash_bytes(t); } };
+    template<> struct hash<vec4> { auto operator()(const vec4& t) const noexcept { return hash_bytes(t); } };
+    template<> struct hash<mat3> { auto operator()(const mat3& t) const noexcept { return hash_bytes(t); } };
+    template<> struct hash<mat4> { auto operator()(const mat4& t) const noexcept { return hash_bytes(t); } };
+    template<> struct hash<quat> { auto operator()(const quat& t) const noexcept { return hash_bytes(t.vals); } };
 }
