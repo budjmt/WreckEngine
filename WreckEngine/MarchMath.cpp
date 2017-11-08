@@ -38,6 +38,15 @@ std::string to_string(const quat& q, size_t precision) {
     return stream.str();
 }
 
+// vec3
+bool fuzzyParallel(vec3 a, vec3 b) {
+    return fuzzyParallelUnit(normalize(a), normalize(b));
+}
+
+bool fuzzyParallelUnit(vec3 a, vec3 b) {
+    return epsCheck<2>(abs(dot(a, b)) - 1);
+}
+
 //mat4
 //based on the transform inverse shortcut where the mat is [M 0, v 1] (rows) and the inverse is [M^-1 0, -M^-1*v 1]
 mat4 inv_tp_tf(const mat4& m) {

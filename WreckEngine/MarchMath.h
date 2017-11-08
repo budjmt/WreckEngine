@@ -15,8 +15,8 @@ template<typename T> constexpr T pi = T(3.14159265358979323846);
 #define NaN_CHECK(x) std::isnan(x)
 
 //use for floating point error correction
-inline bool epsCheck(float x) { return x < FLT_EPSILON && x > -FLT_EPSILON; }
-inline bool epsCheck(double x) { return x < DBL_EPSILON && x > -DBL_EPSILON; }
+template<unsigned short Mult = 1> inline bool epsCheck(float x)  { constexpr float  eps = FLT_EPSILON * (float)Mult;  return x < eps && x > -eps; }
+template<unsigned short Mult = 1> inline bool epsCheck(double x) { constexpr double eps = DBL_EPSILON * (double)Mult; return x < eps && x > -eps; }
 
 int sign(int i);
 int bitsign(int i);
@@ -33,6 +33,9 @@ typedef glm::vec4 vec4;
 typedef glm::mat3 mat3;
 typedef glm::mat4 mat4;
 class quat;
+
+bool fuzzyParallel(vec3 a, vec3 b);
+bool fuzzyParallelUnit(vec3 a, vec3 b);
 
 mat4 inv_tp_tf(const mat4& m);
 mat4 rotateBetween(const vec3 from, const vec3 to);
