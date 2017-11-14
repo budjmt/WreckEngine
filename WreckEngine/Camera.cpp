@@ -87,7 +87,7 @@ void Camera::mayaControl(Camera* camera, double delta, const float speed) {
         auto dx = (float)(mouse.curr.x - mouse.prev.x);
         auto dy = (float)(mouse.curr.y - mouse.prev.y);
 
-        if (mouse.getButtonState(GLFW_MOUSE_BUTTON_LEFT)) {
+        if (mouse.getButtonState(Mouse::Button::Left)) {
 
             dx *= 10.f * dt;
             dy *= 10.f * dt;
@@ -99,21 +99,21 @@ void Camera::mayaControl(Camera* camera, double delta, const float speed) {
             camera->turn(dx, dy);
             camera->transform.position = look - camera->forward();
         }
-        else if (mouse.getButtonState(GLFW_MOUSE_BUTTON_RIGHT)) {
+        else if (mouse.getButtonState(Mouse::Button::Right)) {
             camera->transform.position += (dx + dy) * 0.5f * camera->forward();
         }
-        else if (mouse.getButtonState(GLFW_MOUSE_BUTTON_MIDDLE)) {
+        else if (mouse.getButtonState(Mouse::Button::Middle)) {
             camera->transform.position += camera->right() * -dx + camera->up() * dy;
         }
     }
 
-    if      (Keyboard::keyDown(Keyboard::Key::W))     camera->transform.position += camera->forward() * (speed * dt);
-    else if (Keyboard::keyDown(Keyboard::Key::S))     camera->transform.position -= camera->forward() * (speed * dt);
-    if      (Keyboard::keyDown(Keyboard::Key::D))     camera->transform.position -= camera->right()   * (speed * dt);
-    else if (Keyboard::keyDown(Keyboard::Key::A))     camera->transform.position += camera->right()   * (speed * dt);
+    if      (Keyboard::keyDown(Keyboard::Key::Code::W))     camera->transform.position += camera->forward() * (speed * dt);
+    else if (Keyboard::keyDown(Keyboard::Key::Code::S))     camera->transform.position -= camera->forward() * (speed * dt);
+    if      (Keyboard::keyDown(Keyboard::Key::Code::D))     camera->transform.position -= camera->right()   * (speed * dt);
+    else if (Keyboard::keyDown(Keyboard::Key::Code::A))     camera->transform.position += camera->right()   * (speed * dt);
 
-    if      (Keyboard::keyDown(Keyboard::Key::Up))    camera->transform.position += vec3(0, 1, 0) * (speed * dt);
-    else if (Keyboard::keyDown(Keyboard::Key::Down))  camera->transform.position -= vec3(0, 1, 0) * (speed * dt);
-    if      (Keyboard::keyDown(Keyboard::Key::Left))  camera->transform.position -= vec3(1, 0, 0) * (speed * dt);
-    else if (Keyboard::keyDown(Keyboard::Key::Right)) camera->transform.position += vec3(1, 0, 0) * (speed * dt);
+    if      (Keyboard::keyDown(Keyboard::Key::Code::Up))    camera->transform.position += vec3(0, 1, 0) * (speed * dt);
+    else if (Keyboard::keyDown(Keyboard::Key::Code::Down))  camera->transform.position -= vec3(0, 1, 0) * (speed * dt);
+    if      (Keyboard::keyDown(Keyboard::Key::Code::Left))  camera->transform.position -= vec3(1, 0, 0) * (speed * dt);
+    else if (Keyboard::keyDown(Keyboard::Key::Code::Right)) camera->transform.position += vec3(1, 0, 0) * (speed * dt);
 }

@@ -104,21 +104,45 @@ namespace Window {
 };
 
 namespace Mouse {
+
+    enum class Button : int {
+        _1 = GLFW_MOUSE_BUTTON_1,
+        _2, _3, _4, _5, _6, _7, _8,
+        Left = _1,
+        Right = _2,
+        Middle = _3,
+
+        First = _1,
+        Last = _8
+    };
+
     // this style enables copies to be made, for better concurrency
     struct Info {
         struct button { double lastDown = 0; bool downThisFrame = false; };
         struct cursor { double x = 0, y = 0; };
-        struct wheel  { float frame = 0.f, accum = 0.f; };
+        struct wheel {
+            struct data {
+                float frame, accum; 
+                inline auto& operator=(float f) { frame = accum = f; return *this; }
+                inline void update(float dt) { 
+                    frame = 0.f;
+                    accum = glm::mix(0.f, accum, maxf(1.f - dt * 100.f, 0.f));
+                }
+            };
+            data vertical{}, horizontal{};
+            inline void update(float dt) { vertical.update(dt); horizontal.update(dt); }
+        };
 
         uint32_t down = 0; // bit-field
-        button buttons[3];
+        button buttons[(int)Mouse::Button::Last - (int)Mouse::Button::First + 1]; // make sure this is <= 32 length for bitfield
+
         cursor curr, currPixel, prev;
         const double clickCoolDown = 0.2;
         wheel wheel;
 
-        inline bool getButtonState(int b) { return buttons[b].downThisFrame || (down & (1 << b)) != 0; }
-        inline void setButtonDown(int b) { down |=   1 << b;  }
-        inline void setButtonUp(int b)   { down &= ~(1 << b); }
+        inline bool getButtonState(Mouse::Button b) { return buttons[(int)b].downThisFrame || (down & (1 << (int)b)) != 0; }
+        inline void setButtonDown(Mouse::Button b) { down |=   1 << (int)b;  }
+        inline void setButtonUp(Mouse::Button b)   { down &= ~(1 << (int)b); }
     };
     extern Info info;
 
@@ -141,13 +165,19 @@ namespace Keyboard {
 
     namespace Key {
 
+        enum class Action {
+            Release = GLFW_RELEASE,
+            Press = GLFW_PRESS,
+            Repeat = GLFW_REPEAT
+        };
+
         struct Info {
             bool pressed;
             bool held;
             double lastPress;
         };
 
-        enum Code : int {
+        enum class Code : int {
             ScanKey = GLFW_KEY_UNKNOWN,
 
             Space = GLFW_KEY_SPACE,
@@ -227,7 +257,7 @@ namespace Keyboard {
             Last = Menu
         };
 
-        enum ModBit {
+        enum ModBit : int {
             Shift = GLFW_MOD_SHIFT,
             Control = GLFW_MOD_CONTROL,
             Alt = GLFW_MOD_ALT,
@@ -236,16 +266,16 @@ namespace Keyboard {
     };
 
     struct Info {
-        Key::Info keys[Key::Code::Last - Key::Code::First]{}; // TODO this doesn't give the correct value
+        Key::Info keys[(int)Key::Code::Last - (int)Key::Code::First + 1]{}; // larger than necessary to provide a simple mapping from key code to index
     };
     extern Info info;
 
     void update();
 
     // checks if the key was first pressed this frame
-    bool keyPressed(const Key::Code code);
+    bool keyPressed(Key::Code code);
     
-    bool keyDown(const Key::Code code);
+    bool keyDown(Key::Code code);
     bool shiftDown();
     bool controlDown();
     bool altDown();
@@ -256,9 +286,9 @@ namespace Keyboard {
 
     void defaultKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-    class KeyHandler {};
+    class KeyHandler {}; // inherit or create handler of type to handle key events
 
-    inline int getKeyRaw(const int keyCode) { return glfwGetKey(Window::window, keyCode); }
+    inline int getKeyRaw(int keyCode) { return glfwGetKey(Window::window, keyCode); }
 };
 
 inline std::string getEnvVar(const std::string& var) {

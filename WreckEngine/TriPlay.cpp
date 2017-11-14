@@ -6,7 +6,7 @@
 
 namespace {
     void menu_update(LogicEntity* e, double dt) {
-        if (Keyboard::keyPressed(Keyboard::Key::Space)) {
+        if (Keyboard::keyPressed(Keyboard::Key::Code::Space)) {
             Event::Trigger(e).sendEvent(Event::Handler::get("menu_state"), Event::Message::get("start_game"));
         }
     }

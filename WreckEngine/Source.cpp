@@ -105,20 +105,20 @@ void update() {
 
     std::cout << std::flush; // flush all buffered output at least once per frame
 
-    if (Keyboard::keyPressed(Keyboard::Key::F11))
+    if (Keyboard::keyPressed(Keyboard::Key::Code::F11))
         Thread::Main::runAsync([] { Window::toggleFullScreen(); });
-    if (Keyboard::keyPressed(Keyboard::Key::F10)) {
+    if (Keyboard::keyPressed(Keyboard::Key::Code::F10)) {
         static bool vsync = true;
         vsync = !vsync;
         Thread::Render::runNextFrame([=]() { Window::setVsync(vsync); });
     }
 
     if (Keyboard::altDown()) {
-        if (Keyboard::keyPressed(Keyboard::Key::_0))
+        if (Keyboard::keyPressed(Keyboard::Key::Code::_0))
             fpsInfo.fpsMode = !fpsInfo.fpsMode;
-        else if (Keyboard::keyPressed(Keyboard::Key::Equal))
+        else if (Keyboard::keyPressed(Keyboard::Key::Code::Equal))
             fpsInfo.FPS += (fpsInfo.FPS < 5) ? 1 : ((fpsInfo.FPS < 20) ? 5 : ((fpsInfo.FPS < 60) ? 10 : 0));
-        else if (Keyboard::keyPressed(Keyboard::Key::Minus))
+        else if (Keyboard::keyPressed(Keyboard::Key::Code::Minus))
             fpsInfo.FPS -= (fpsInfo.FPS > 20) ? 10 : ((fpsInfo.FPS > 5) ? 5 : ((fpsInfo.FPS > 1) ? 1 : 0));
     }
 

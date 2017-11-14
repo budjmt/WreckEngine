@@ -282,29 +282,31 @@ void Window::defaultFocus(GLFWwindow* window, int gainedFocus) {
 void Mouse::update() {
     info.prev.x = glm::mix(info.prev.x, info.curr.x, 0.15);
     info.prev.y = glm::mix(info.prev.y, info.curr.y, 0.15);
-    
-    for (int i = 0; i < 3; ++i) 
-        info.buttons[i].downThisFrame = false;
 
-    info.wheel.frame = 0.f;
-    info.wheel.accum = glm::mix(0.f, info.wheel.accum, maxf(1.f - (float) Time::delta * 100, 0.f));
+    for (auto& button : info.buttons) 
+        button.downThisFrame = false;
+
+    info.wheel.update((float)Time::delta);
 }
 
-void Mouse::defaultButton(GLFWwindow* window, int button, int action, int mods) {
-    if (action == GLFW_PRESS) {
+void Mouse::defaultButton(GLFWwindow* window, int rawButton, int rawAction, int rawMods) {
+    Mouse::Button button{ rawButton };
+    bool press = rawAction; // only values are RELEASE and PRESS == false and true
+    Keyboard::Key::ModBit mods{ rawMods };
+
+    if (press) {
         info.setButtonDown(button);
-        
-        auto& b = info.buttons[button];
+
+        auto& b = info.buttons[rawButton];
         b.lastDown = Time::elapsed;
         b.downThisFrame = true;
     }
-    else if (action == GLFW_RELEASE)
-    {
+    else {
         info.setButtonUp(button);
     }
 
     static uint32_t button_id = Message::add("mouse_button");
-    Dispatcher::central_trigger.sendBulkEvent<ButtonHandler>(button_id, button, action, mods);
+    Dispatcher::central_trigger.sendBulkEvent<ButtonHandler>(button_id, button, press, mods);
 }
 
 void Mouse::defaultMove(GLFWwindow* window, double x, double y) {
@@ -321,7 +323,8 @@ void Mouse::defaultMove(GLFWwindow* window, double x, double y) {
 }
 
 void Mouse::defaultScroll(GLFWwindow* window, double xoffset, double yoffset) {
-    info.wheel.frame = info.wheel.accum = (float) yoffset;
+    info.wheel.vertical = (float)yoffset;
+    info.wheel.horizontal = (float) xoffset;
 
     static uint32_t scroll_id = Message::add("mouse_scroll");
     Dispatcher::central_trigger.sendBulkEvent<ScrollHandler>(scroll_id);
@@ -329,10 +332,10 @@ void Mouse::defaultScroll(GLFWwindow* window, double xoffset, double yoffset) {
 
 std::shared_mutex keyboardMut;
 
-constexpr size_t getKeyIndex(const int key) { return key - Keyboard::Key::Code::First; }
+static constexpr size_t getKeyIndex(const int key) { return key - (int)Keyboard::Key::Code::First; }
 
-bool Keyboard::keyPressed(const Key::Code code) { std::shared_lock<std::shared_mutex> lock(keyboardMut); return info.keys[getKeyIndex(code)].pressed; }
-bool Keyboard::keyDown(const Key::Code code)    { std::shared_lock<std::shared_mutex> lock(keyboardMut); return info.keys[getKeyIndex(code)].held; }
+bool Keyboard::keyPressed(const Key::Code code) { std::shared_lock<std::shared_mutex> lock(keyboardMut); return info.keys[getKeyIndex((int)code)].pressed; }
+bool Keyboard::keyDown(const Key::Code code)    { std::shared_lock<std::shared_mutex> lock(keyboardMut); return info.keys[getKeyIndex((int)code)].held; }
 
 bool Keyboard::shiftDown()   { return keyDown(Key::Code::RShift)   || keyDown(Key::Code::LShift);   }
 bool Keyboard::controlDown() { return keyDown(Key::Code::LControl) || keyDown(Key::Code::RControl); }
@@ -341,24 +344,26 @@ bool Keyboard::superDown()   { return keyDown(Key::Code::LSuper)   || keyDown(Ke
 
 void Keyboard::update() {
     std::lock_guard<std::shared_mutex> lock(keyboardMut);
-    constexpr size_t k = getKeyIndex(Key::Code::Last);
-    for (size_t i = 0; i < k; ++i) {
-        info.keys[i].pressed = false;
+    for (auto& key : info.keys) {
+        key.pressed = false;
     }
 }
 
-void Keyboard::defaultKey(GLFWwindow* window, int key, int scancode, int action, int mods) {
+void Keyboard::defaultKey(GLFWwindow* window, int rawKey, int scancode, int rawAction, int rawMods) {
     // works when combined with the scan code, this is difficult to support generally
+    Key::Code key{ rawKey };
     if (key == Key::Code::ScanKey) return;
 
-    bool press = action != GLFW_RELEASE;
+    Key::Action action{ rawAction };
+    Key::ModBit mods{ rawMods };
+
+    bool press = action != Key::Action::Release;
     {
         std::lock_guard<std::shared_mutex> lock(keyboardMut);
-        auto& keyData = info.keys[getKeyIndex(key)];
+        auto& keyData = info.keys[getKeyIndex(rawKey)];
         keyData = { keyData.pressed || press, press, Time::elapsed };
     }
 
     static uint32_t key_id = Message::add("keyboard_key");
     Dispatcher::central_trigger.sendBulkEvent<KeyHandler>(key_id, key, scancode, action, mods);
 }
-

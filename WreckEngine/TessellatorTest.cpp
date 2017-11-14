@@ -724,8 +724,8 @@ void moveCamera(Entity* cameraControl, Entity* camera, float radius) {
         // move away from/towards the surface
         bool camMoved = false;
 
-        if      (Keyboard::keyDown(Keyboard::Key::W)) { cameraControl->transform.position -= pos * (towardSpeed * dt); camMoved = true; }
-        else if (Keyboard::keyDown(Keyboard::Key::S)) { cameraControl->transform.position += pos * (towardSpeed * dt); camMoved = true; }
+        if      (Keyboard::keyDown(Keyboard::Key::Code::W)) { cameraControl->transform.position -= pos * (towardSpeed * dt); camMoved = true; }
+        else if (Keyboard::keyDown(Keyboard::Key::Code::S)) { cameraControl->transform.position += pos * (towardSpeed * dt); camMoved = true; }
 
         if (camMoved) {
             pos = camera->transform.getComputed()->position();
@@ -764,8 +764,8 @@ void moveSun(float radius) {
     if (shift) {
         // move away from/towards the surface
         moved = true;
-        if      (Keyboard::keyDown(Keyboard::Key::I)) sun.light.position = (sun.helper.position -= pos * (towardSpeed * dt))();
-        else if (Keyboard::keyDown(Keyboard::Key::K)) sun.light.position = (sun.helper.position += pos * (towardSpeed * dt))();
+        if      (Keyboard::keyDown(Keyboard::Key::Code::I)) sun.light.position = (sun.helper.position -= pos * (towardSpeed * dt))();
+        else if (Keyboard::keyDown(Keyboard::Key::Code::K)) sun.light.position = (sun.helper.position += pos * (towardSpeed * dt))();
         else moved = false;
     }
     else {

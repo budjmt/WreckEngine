@@ -339,10 +339,10 @@ namespace UI
         {
             // If a mouse press event came, always pass it as "mouse held this frame", so we don't
             // miss click-release events that are shorter than 1 frame.
-            io.MouseDown[i] = Mouse::info.getButtonState(i);
+            io.MouseDown[i] = Mouse::info.getButtonState(Mouse::Button{ i });
         }
 
-        io.MouseWheel = Mouse::info.wheel.accum;
+        io.MouseWheel = Mouse::info.wheel.vertical.accum;
 
         // Hide OS mouse cursor if ImGui is drawing it
         Thread::Main::run([&io] { glfwSetInputMode(Window::window, GLFW_CURSOR, io.MouseDrawCursor ? GLFW_CURSOR_HIDDEN : Window::cursorMode); });
