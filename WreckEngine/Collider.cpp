@@ -19,7 +19,7 @@ Collider::Collider(const Type type, shared<Mesh> m, Transform* t, const vec3 d, 
     update();
 }
 
-// makes sure the radius is up to date
+// makes sure the radius and AABB scale are up to date
 // IMPORTANT NOTE:
 // using non-uniform scaling requires the use of the inverse-transpose of the transformation matrix to transform normals properly
 // additionally, these normals then must be normalized. (the rotation is changed by the scale)
@@ -30,7 +30,13 @@ void Collider::updateDims() {
     _radius = maxf(maxf(_dims.x * scale.x, _dims.y * scale.y), _dims.z * scale.z);
     
     const auto factor = fudgeAABB ? 1.2f : 1.f;
-    transformed_aabb.halfDims = scale * factor * base_aabb.halfDims;
+    const auto rot = _transform->getMats()->rotate;
+    transformed_aabb.halfDims =  scale * factor * base_aabb.halfDims; // scaling is applied before rotation
+
+    // applies the transformation R * (w,h,d) == R0 * w + R1 * h + R2 * d
+    transformed_aabb.halfDims = vec3(abs(rot[0]) * transformed_aabb.halfDims.x 
+                                   + abs(rot[1]) * transformed_aabb.halfDims.y 
+                                   + abs(rot[2]) * transformed_aabb.halfDims.z);
 }
 
 void Collider::update() {

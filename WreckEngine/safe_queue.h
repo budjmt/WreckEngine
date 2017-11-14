@@ -126,7 +126,7 @@ public:
 
     void seal() { 
         const auto id = std::this_thread::get_id();
-        if (vectors.count(id)) vectors.at(id).seal();
+        if (auto vec = vectors.find(id); vec != end(vectors)) vec->second.seal();
     }
 
     // consumes all threads' frame_vectors one at a time

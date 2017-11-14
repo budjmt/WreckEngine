@@ -1,5 +1,6 @@
 #pragma region Local Globals
 
+//#include <vld.h>
 #include "GLmanager.h"
 #include "smart_ptr.h"
 
@@ -10,7 +11,6 @@ unique<GLEWmanager> glew;
 
 #pragma endregion
 
-//#include <vld.h>
 #include <iostream>
 
 #include "GL/glew.h"
@@ -48,7 +48,7 @@ void init() {
     if (DEBUG)
         initDebug();
 
-    Mouse::defaultMove(Window::window, 0, 0);//this is cheating but it works for initializing the mouse
+    Mouse::defaultMove(Window::window, 0, 0); // this is cheating but it works for initializing the mouse
 
     initGraphics();
 

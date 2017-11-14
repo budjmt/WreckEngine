@@ -17,8 +17,8 @@ void Dispatcher::sendToHandler(const uint32_t handler_id, Message e) {
 }
 
 void Dispatcher::sendToType(const uint32_t type_id, Message e) {
-    if (handlerTypes.count(type_id)) {
-        for (const auto handler : handlerTypes.at(type_id)) {
+    if (auto typeHandler = handlerTypes.find(type_id); typeHandler != end(handlerTypes)) {
+        for (const auto handler : typeHandler->second) {
             handler->process(e);
         }
     }

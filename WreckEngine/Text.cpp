@@ -133,8 +133,8 @@ shared<Text::FontFace> Text::loadWinFont(const std::string& font, const uint32_t
 shared<Text::FontFace> Text::loadFont(const std::string& font, const uint32_t height, const uint32_t width) {
     shared<Text::FontFace> f;
 
-    if (fontFaces.count(font))
-        f = fontFaces.at(font);
+    if (auto ff = fontFaces.find(font); ff != end(fontFaces))
+        f = ff->second;
     else {
         f = make_shared<FontFace>(font);
         if (!f->fontFace)
@@ -424,9 +424,9 @@ vec2 Text::getDims(uint32_t cp, const FontFace* font, float scale) {
         dims.x = font->spaceWidth;
     else if (cp == '\t')
         dims.x = font->spaceWidth * 4;
-    else if (font->glyphs.count(cp)) {
-        const auto& glyph = font->glyphs.at(cp);
-        dims = {glyph.advance, glyph.size.y - glyph.bearing.y * 2};
+    else if (auto c = font->glyphs.find(cp); c != end(font->glyphs)) {
+        const auto& glyph = c->second;
+        dims = { glyph.advance, glyph.size.y - glyph.bearing.y * 2 };
     }
 
     return dims * scale;
@@ -502,6 +502,7 @@ void Text::render(Render::MaterialPass* matRenderer) {
             X(Render::MaterialPass* r) {
                 textIndex = r->addGroup([] {
                     GL_CHECK(glDisable(GL_DEPTH_TEST));
+                    // need to disable face culling here
                 }, [] {
                     GL_CHECK(glEnable(GL_DEPTH_TEST));
                 });

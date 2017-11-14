@@ -24,7 +24,7 @@ TriPlay::TriPlay() : Game(6)
     menuState->handler_func = [this, mainsp, start_game_event](Event::Handler::param_t e) {
         if (e.id == start_game_event) {
             currState = mainsp;
-            vec4 clearColor = Color::fromRgb(160, 5, 56);
+            vec4 clearColor = Color::fromRgb(48, 5, 56);
             Thread::Render::runNextFrame([=] { GLframebuffer::setClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a); });
         }
     };
@@ -104,15 +104,15 @@ TriPlay::TriPlay() : Game(6)
     auto normalMapProg = loadProgram("Shaders/normalMapTest_v.glsl", "Shaders/normalMapTest_f.glsl");
     //auto normalMapProg = prog;
 
-    //auto cube2 = make_shared<Mesh>(*cube);
+    auto cube2 = make_shared<Mesh>(*cube);
     //auto cube2 = make_shared<Mesh>(*cylinder);
-    //cube2->resetRenderData();
-    auto cube2 = loadOBJ("Assets/phone.obj");
+    cube2->resetRenderData();
+    //auto cube2 = loadOBJ("Assets/phone.obj");
     cube2->scaleTo(vec3(1.0f));
     auto dm = make_shared<DrawMesh>(&renderer.deferred.objects, cube2, "Assets/butt.png", normalMapProg, true);
     dm->material.addResource<GLcamera::matrix>("cameraMatrix");
-    //dm->material.addTexture(Renderable::genTexture2D("Assets/face_nm.png"));
-    dm->material.addTexture(Renderable::genTexture2D("Assets/phone_nm.png"));
+    dm->material.addTexture(Renderable::genTexture2D("Assets/face_nm.png"));
+    //dm->material.addTexture(Renderable::genTexture2D("Assets/phone_nm.png"));
     
     mesh = make_shared<ColliderEntity>(dm);
     mesh->id = (void*)0xc2;

@@ -26,7 +26,7 @@ public:
     Transform* parent() const; void parent(Transform* p);
     std::unordered_set<Transform*> children;
     safe_tf_ptr getComputed() const;
-    mat_cache* getMats() const;
+    const mat_cache* getMats() const;
 
     void setComputedPosition(const vec3& compPos);
     void setComputedRotation(const quat& compRot);
