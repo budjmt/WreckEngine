@@ -12,7 +12,7 @@ namespace {
     }
 }
 
-static proxy<GLresource<float>> exposure;
+static Render::Info::res_proxy<float> exposure;
 
 TriPlay::TriPlay() : Game(6)
 {

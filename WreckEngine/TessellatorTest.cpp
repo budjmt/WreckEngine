@@ -11,7 +11,7 @@ bool isVisibleHorizon(const vec3 view, const vec3 boundingPoint, const float rad
 
 constexpr float RADIUS = 2;
 bool wireframe = false;
-static proxy<GLresource<float>> exposure;
+static Render::Info::res_proxy<float> exposure;
 
 struct CubemapData {
     File::ImageData front, back, up, down, left, right;
@@ -36,26 +36,26 @@ struct CubemapData {
 
 struct RenderData {
     GLprogram prog;
-    proxy<GLresource<float>> radius;
+    Render::Info::res_proxy<float> radius;
 };
 static RenderData planetData;
 
 struct {
     GLprogram prog;
-    proxy<GLresource<float>> tessRadius;
-    proxy<GLresource<vec2>> atmosRadius, K;
-    proxy<GLresource<vec3>> sunPos, sunColor;
+    Render::Info::res_proxy<float> tessRadius;
+    Render::Info::res_proxy<vec2> atmosRadius, K;
+    Render::Info::res_proxy<vec3> sunPos, sunColor;
 } atmosData;
 
 struct {
     GLprogram prog;
-    proxy<GLresource<vec2>> atmosRadius;
+    Render::Info::res_proxy<vec2> atmosRadius;
     GLtexture depthLookup;
 } atmosLookupData;
 
 struct WaterRenderData {
     GLprogram prog;
-    proxy<GLresource<float>> time, radius;
+    Render::Info::res_proxy<float> time, radius;
     GLuniform<vec3> sunPos;
     GLtexture normalMap;
 };
@@ -63,7 +63,7 @@ static WaterRenderData waterData;
 
 struct SkyboxRenderData {
     GLprogram prog;
-    proxy<GLresource<vec2>> atmosRadius;
+    Render::Info::res_proxy<vec2> atmosRadius;
     GLuniform<mat4> viewProjection;
     GLuniform<float> camHeight;
     GLtexture planetTex;
@@ -73,14 +73,14 @@ static SkyboxRenderData skyboxData;
 
 struct {
     GLprogram prog;
-    proxy<GLresource<float>> zoom;
-    proxy<GLresource<int>> seed;
+    Render::Info::res_proxy<float> zoom;
+    Render::Info::res_proxy<int> seed;
     GLtexture cubemap;
 } noiseData;
 
 struct {
     GLprogram prog;
-    proxy<GLresource<float>> radius;
+    Render::Info::res_proxy<float> radius;
     GLtexture cubemap;
 } normalData;
 

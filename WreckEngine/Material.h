@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include "alias_vector.h"
 
 #include "gl_structs.h"
 
@@ -9,7 +9,7 @@ class Entity;
 namespace Render {
 
     class Info {
-        proxy_buffer<uint8_t> uniqueVars;
+        alias_vector<uint8_t> uniqueVars;
     public:
         struct ShaderBinding {
             struct Variable {
@@ -27,7 +27,7 @@ namespace Render {
 
         private:
             std::map<std::string, Variable> varLookup;
-            proxy_buffer<uint8_t> sharedVars;
+            alias_vector<uint8_t> sharedVars;
             friend class Info;
         };
     
@@ -45,6 +45,9 @@ namespace Render {
             }
         };
 
+        template<typename T>
+        using res_proxy = proxy_ptr<alias_vector<GLresource<T>>>;
+
         shared<ShaderBinding>  shaders;
         shared<TextureBinding> textures;
 
@@ -54,12 +57,12 @@ namespace Render {
         }
 
         template<typename T>
-        proxy<GLresource<T>> addResource(const std::string& varName, bool shared = ShaderBinding::Variable::is_shared_t<T>::value) {
+        res_proxy<T> addResource(const std::string& varName, bool shared = ShaderBinding::Variable::is_shared_t<T>::value) {
             return addResource<T>(varName, shaders->program.getUniform<typename GLresource<T>::uniform_t>(varName.c_str()), shared);
         }
 
         template<typename T>
-        proxy<GLresource<T>> addResource(const std::string& varName, GLuniform<typename GLresource<T>::uniform_t> location, bool shared = ShaderBinding::Variable::is_shared_t<T>::value) {
+        res_proxy<T> addResource(const std::string& varName, GLuniform<typename GLresource<T>::uniform_t> location, bool shared = ShaderBinding::Variable::is_shared_t<T>::value) {
             if (shaders->varLookup.count(varName))
                 return getResource<T>(varName);
 
@@ -72,11 +75,11 @@ namespace Render {
 
             resource_t resource(location);
             std::memcpy(resources.data() + bytesUsed, &resource, sizeof(resource_t));
-            return reinterpret_cast<proxy<resource_t>&>(resources(bytesUsed));
+            return reinterpret_cast<res_proxy<T>&>(make_proxy(resources, bytesUsed));
         }
 
         template<typename T>
-        proxy<GLresource<T>> getResource(const std::string& varName) {
+        res_proxy<T> getResource(const std::string& varName) {
             using resource_t = GLresource<T>;
             auto& lookup = shaders->varLookup;
             assert(lookup.count(varName));
@@ -84,7 +87,7 @@ namespace Render {
 
             auto& resources = varData.isShared ? shaders->sharedVars : uniqueVars;
             assert(dynamic_cast<resource_t*>((GLres*)(resources.data() + varData.offset)) != nullptr); // asserts the correct type based on the vptr
-            return reinterpret_cast<proxy<resource_t>&>(resources(varData.offset));
+            return reinterpret_cast<res_proxy<T>&>(make_proxy(resources, varData.offset));
         }
 
         template<typename... GLTextures>

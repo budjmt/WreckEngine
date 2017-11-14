@@ -119,9 +119,9 @@ namespace Text
         vec4 color;
         std::mutex textMutex;
 
-        proxy<GLresource<vec2>> fullOffset;
+        Render::Info::res_proxy<vec2> fullOffset;
         vec2 offset, alignOffset;
-        proxy<GLresource<float>> scale;
+        Render::Info::res_proxy<float> scale;
         
         GLuint arrayCount = 0;
         
@@ -141,7 +141,7 @@ namespace Text
         Render::MaterialPass* renderer;
     private:
         struct Shader {
-            proxy<GLresource<mat4>> cam;
+            Render::Info::res_proxy<mat4> cam;
             Render::Info renderInfo;
         };
         static Shader shader;

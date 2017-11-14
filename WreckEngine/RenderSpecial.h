@@ -8,7 +8,7 @@ namespace Render {
     struct LitRenderer {
         Renderer deferred, forward;
         Light::System lights;
-        proxy<GLresource<vec3>> ambientColor;
+        Info::res_proxy<vec3> ambientColor;
         bool lightingOn = true;
 
         explicit LitRenderer(size_t gBufferSize) : deferred({ 0, 1, 2, 3 }), forward(gBufferSize), lightR({ 4, 5 }) {

@@ -22,8 +22,8 @@ public:
     static void unloadTextures();
 protected:
     GLVAO vArray;
-    ACCS_GS_T_C (protected, proxy<GLresource<vec4>>, vec4, vec4&, color, { return _color->value; }, { _color->value = value; });
-    proxy<GLresource<mat4>> worldMatrix, iTworldMatrix;
+    ACCS_GS_T_C (protected, Render::Info::res_proxy<vec4>, vec4, vec4&, color, { return _color->value; }, { _color->value = value; });
+    Render::Info::res_proxy<mat4> worldMatrix, iTworldMatrix;
 
     static std::unordered_map<const char*, GLtexture> loadedTextures; // all currently loaded textures
 };

@@ -1,147 +1,78 @@
 #pragma once
 
-#include <cassert>
-#include <unordered_map>
-
 /*------------------------------------------
 PROXY POINTERS
 
-PURPOSE
- - provide a layer of indirection over a pointer to some buffer that 
-   allows the underlying buffer to be reallocated
- - allow for data-oriented buffers that can be reallocated under the hood 
-   without external code worrying about ptr validity
- - allow for references to items in a sorted buffer pre-sorting
- 
-REQUIREMENTS
- - thread-safety; can be opt-in
- - using pointer arithmetic accesses expected memory in the underlying buffer
- - underlying buffer can allocate on cache lines
- 
-IDEAS
- - Proxy pointers request access to grab the pointer in any way
-   - deref MUST copy
-   - getting the pointer goes through the handle mapping
-     - it must lock to be thread-safe
- - implement the arithmetic operators
-   - it would be excessive overhead to manager every pointer in a buffer
-     - proxies store the handle, which refers to the start of the buffer
-     - they also store an offset, which is added to the pointer retrieved from the mapping
+  - A smart pointer that references data within some object while providing more robust 
+    guarantees on validity than a regular reference. 
+      - These guarantees differ with the backing container.
+      - All proxies are invalidated if they outlive their backing container or their data is removed from the container.
+      - Buffer types are invalidated when data is inserted or removed before the proxy data, or if the buffer is reordered.
+      - Map-like and single-object types are never otherwise invalidated.
+      - Proxies are not invalidated if the underlying memory is reallocated or moved.
+  
+  - Proxies are implemented via passing key data to a get function called using a pointer to the container.
+    - This means retrieval is exactly as efficient as retrieving from the container itself.
+
+  - The space used by a proxy is equivalent to a pointer + the size of the key data.
+  - Proxies can be cast to any proxy with the same key data tuple type.
+  - Pointer arithmetic cannot be applied directly to a proxy, get a pointer after retrieving the data and operate on that.
 
 ------------------------------------------*/
 
-template<typename T>
-class proxy_buffer;
+namespace detail {
+    template<typename R, typename T, typename... Args> std::tuple<Args...> args_as_tuple(R(T::*)(Args...)) { return std::tuple<Args...>(); }
+    template<typename R, typename T, typename... Args> std::tuple<Args...> args_as_tuple(R(T::*)(Args...) const) { return std::tuple<Args...>(); }
+    template<typename R, typename... Args> std::tuple<Args...> args_as_tuple(R(*)(Args...)) { return std::tuple<Args...>(); }
 
-template<typename T>
+    template<typename R, typename T, typename... Args> constexpr decltype(auto) get_pure_func(R(T::*foo)(Args...)) { return foo; }
+    template<typename R, typename T, typename... Args> constexpr decltype(auto) get_const_func(R(T::*foo)(Args...) const) { return foo; }
+
+    template<typename T, typename Tuple> struct add_first_type {};
+    template<typename T, typename... Ts> struct add_first_type<T, std::tuple<Ts...>> { using type = std::tuple<T, Ts...>; };
+    template<typename T, typename Tuple> using add_first_type_t = typename add_first_type<T, Tuple>::type;
+
+    template<typename T> struct data_tuple {};
+    template<typename... T> struct data_tuple<std::tuple<T...>> { using type = std::tuple<std::remove_reference_t<std::remove_cv_t<T>>...>; };
+    template<typename T> using data_tuple_t = typename data_tuple<T>::type;
+
+    // can replace with template var when MSVC IS COMPLIANT
+    template<typename Container>
+    struct proxy_get {
+        static constexpr auto func = [] {
+            if constexpr(std::is_const_v<Container>)
+                return get_const_func(&Container::at);
+            else
+                return get_pure_func(&Container::at);
+        }();
+    };
+}
+
+template<typename Container>
 struct proxy_ptr {
-    using proxy_map = std::unordered_map<int, proxy_buffer<T>&>;
+    proxy_ptr() = default; // this is just to enable default constructors up the chain; don't actually use this
+    template<typename... Args> proxy_ptr(Container& owner, Args&&... getArgs) : getParams{ &owner, std::forward<Args>(getArgs)... } {}
+    proxy_ptr(const proxy_ptr& other) = default;
+    proxy_ptr(proxy_ptr&& other) = default;
+    proxy_ptr& operator=(const proxy_ptr& other) = default;
+    proxy_ptr& operator=(proxy_ptr&& other) = default;
 
-    proxy_ptr() = default;
-    proxy_ptr(int _handle, int offset, const proxy_map* _owner = nullptr) : handle(_handle), offsetBytes(offset * sizeof(T)), owner(_owner) {}
+    auto& operator*() const { return get(); }
+    auto* operator->() const { return &get(); }
 
-    proxy_ptr& operator++() { offsetBytes += sizeof(T); return *this; }
-    proxy_ptr operator++(int) { auto pre = *this; offsetBytes += sizeof(T); return pre; }
-    proxy_ptr& operator--() { offsetBytes -= sizeof(T); return *this; }
-    proxy_ptr operator--(int) { auto pre = *this; offsetBytes -= sizeof(T); return pre; }
+    template<typename Other, typename = std::enable_if_t<std::is_same_v<proxy_ptr<Container>::getArgs_t, proxy_ptr<Other>::getArgs_t>>>
+    operator proxy_ptr<Other>&() { return reinterpret_cast<proxy_ptr<Other>&>(*this); }
 
-    proxy_ptr& operator+=(int offset) { offsetBytes += offset * sizeof(T); return *this; };
-    proxy_ptr& operator-=(int offset) { offsetBytes -= offset * sizeof(T); return *this; };
-    proxy_ptr operator+(int offset) const { auto p = *this; return p += offset; };
-    proxy_ptr operator-(int offset) const { auto p = *this; return p -= offset; };
-
-    template<typename = std::enable_if<std::is_copy_constructible<T>::value>>
-    T operator*() const { return *get(); }
-    T* operator->() const { return get(); }
-
-    operator bool() { return get() != nullptr; }
-
+    operator bool() { return owner(); }
+    Container* owner() const { return std::get<0>(getParams); }
 private:
-    // optionally replace ternary with assert
-    // this can also be public for single thread
-    T* get() const { return (owner && owner->count(handle)) ? (T*)((uint8_t*)(owner->at(handle).data()) + offsetBytes) : nullptr; }
+    auto& get() const { return std::apply(detail::proxy_get<Container>::func, getParams); }
 
-    int handle;
-    int offsetBytes = 0;
-    const proxy_map* owner = nullptr;
+    using getArgs_t = detail::data_tuple_t<decltype(detail::args_as_tuple(detail::proxy_get<Container>::func))>;
+    using tuple_t = detail::add_first_type_t<Container*, getArgs_t>;
+    tuple_t getParams{};
 };
 
-template<typename T> using proxy = proxy_ptr<T>;
+template<typename Container> using proxy = proxy_ptr<Container>;
 
-// stores handles to proxy_buffers, which store the data proxy_ptrs point to
-template<typename T>
-class proxy_handler {
-public:
-    using map_t = typename proxy<T>::proxy_map;
-
-    int track(proxy_buffer<T>& buffer) { 
-        // uncomment if wrap-around is a concern (~4 billion buffers of a given type)
-        //while (mapping.count(numHandles)) ++numHandles;
-        mapping.insert({ numHandles, buffer });
-        return numHandles++; 
-    }
-    void erase(int handle) { mapping.erase(handle); }
-
-    const map_t* get() const { return &mapping; }
-
-private:
-    int numHandles = 1;
-    map_t mapping;
-};
-
-template<typename T>
-class proxy_buffer {
-public:
-    proxy_buffer(size_t capacity = 0) : handleMap(get_handler()) { 
-        buffer.reserve(capacity); 
-        handle = handleMap->track(*this); 
-    }
-    ~proxy_buffer() { handleMap->erase(handle); }
-
-    proxy_buffer(const proxy_buffer<T>& other) : buffer(other.buffer) {
-        handleMap = other.handleMap;
-        handle = handleMap->track(*this);
-    }
-
-    proxy_buffer<T>& operator=(const proxy_buffer<T>& other) {
-        buffer = other.buffer;
-        return *this;
-    }
-
-    proxy_buffer(proxy_buffer<T>&& other) : buffer(other.buffer) {
-        handleMap = other.handleMap;
-        handle = handleMap->track(*this);
-    }
-
-    proxy_buffer<T>& operator=(proxy_buffer<T>&& other) {
-        buffer = std::move(other.buffer);
-        return *this;
-    }
-
-    proxy<T> get(int index = 0) const { return { handle, index, handleMap->get() }; }
-    proxy<T> operator()(size_t index) const { return get(index); }
-    // this is intended for modifications of elements; only the buffer itself has permission to do that
-    T& operator[](size_t index) { return buffer[index]; }
-    const T& operator[](size_t index) const { return buffer[index]; }
-
-    T* data() { return buffer.data(); }
-    const T* data() const { return buffer.data(); }
-    size_t size() const { return buffer.size(); }
-
-    void reserve(size_t capacity) { buffer.reserve(capacity); }
-    void resize(size_t count) { buffer.resize(count); }
-
-    void push_back(T t) { buffer.push_back(t); }
-
-    template<typename... Args>
-    void emplace_back(Args&&... args) { buffer.emplace_back(std::forward<Args>(args)...); }
-
-private:
-    std::vector<T> buffer;
-    int handle = -1;
-    shared<proxy_handler<T>> handleMap; // this prevents the handler from being destroyed until all relevant buffers are as well
-    static shared<proxy_handler<T>> get_handler() {
-        static shared<proxy_handler<T>> handler = make_shared<proxy_handler<T>>();
-        return handler;
-    }
-};
+template<typename Container, typename... Args> proxy<Container> make_proxy(Container& c, Args&&... args) { return proxy<Container> { c, std::forward<Args>(args)... }; }
