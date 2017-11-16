@@ -4,9 +4,11 @@ using namespace Random;
 
 thread_local engine_t Random::engine;
 
+bool well512::seeded = false;
 well512::result_type well512::state[16];
 
 well512::result_type well512::seed(result_type seedVal) {
+    seeded = true;
     for (size_t i = 0; i < 16; ++i)
         state[i] = (seedVal >> i) * seedVal;
     return seedVal;
@@ -32,9 +34,11 @@ well512::result_type well512::operator()() {
     return state[index];
 }
 
+bool xorshift128plus::seeded = false;
 xorshift128plus::result_type xorshift128plus::state[2];
 
 xorshift128plus::result_type xorshift128plus::seed(result_type seedVal) {
+    seeded = true;
     state[0] = (seedVal & 0x00000000ffffffff) * seedVal;
     state[1] = (seedVal & 0xffffffff00000000) * seedVal;
     return seedVal;

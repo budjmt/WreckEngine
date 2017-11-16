@@ -6,6 +6,8 @@
 #include <cmath>
 #include <string>
 
+#include "Random.h"
+
 template<typename T> constexpr T pi = T(3.14159265358979323846);
 #define PI_D pi<double>
 #define PI   pi<float>
@@ -136,4 +138,30 @@ namespace std {
     template<> struct hash<mat3> { auto operator()(const mat3& t) const noexcept { return hash_bytes(t); } };
     template<> struct hash<mat4> { auto operator()(const mat4& t) const noexcept { return hash_bytes(t); } };
     template<> struct hash<quat> { auto operator()(const quat& t) const noexcept { return hash_bytes(t.vals); } };
+}
+
+template<typename T> struct is_vec { static constexpr bool value = false; };
+template<> struct is_vec<vec2> { static constexpr bool value = true; };
+template<> struct is_vec<vec3> { static constexpr bool value = true; };
+template<> struct is_vec<vec4> { static constexpr bool value = true; };
+
+template<typename T> constexpr bool is_vec_v = is_vec<T>::value;
+
+namespace Random {
+    namespace detail {
+        template<> struct random_impl<vec2> {
+            static auto get() { return vec2(Random::get<float>(), Random::get<float>()); }
+            static auto getRange(vec2 a, vec2 b) { return vec2(Random::getRange(a.x, b.x), Random::getRange(a.y, b.y)); }
+        };
+
+        template<> struct random_impl<vec3> {
+            static auto get() { return vec3(Random::get<float>(), Random::get<float>(), Random::get<float>()); }
+            static auto getRange(vec3 a, vec3 b) { return vec3(Random::getRange(a.x, b.x), Random::getRange(a.y, b.y), Random::getRange(a.z, b.z)); }
+        };
+
+        template<> struct random_impl<vec4> {
+            static auto get() { return vec4(Random::get<float>(), Random::get<float>(), Random::get<float>(), Random::get<float>()); }
+            static auto getRange(vec4 a, vec4 b) { return vec4(Random::getRange(a.x, b.x), Random::getRange(a.y, b.y), Random::getRange(a.z, b.z), Random::getRange(a.w, b.w)); }
+        };
+    }
 }

@@ -148,8 +148,8 @@ void TriPlay::setupLights() {
 
     for (auto i = 0; i < 100; ++i) {
         Light::Point point;
-        point.position = vec3(Random::getRange(0, 16) - 8, Random::getRange(0, 16) - 8, Random::getRange(0, 16) - 8);
-        point.color = vec3(Random::getf(), Random::getf(), Random::getf());
+        point.position = Random::getRange(vec3(-8.f), vec3(8.f));
+        point.color = Random::getRange(vec3(0), vec3(1));
         point.falloff = vec2(0.5f, 1.f);
         group.addLight(point, Light::UpdateFreq::NEVER);
     }
