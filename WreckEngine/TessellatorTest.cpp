@@ -92,8 +92,8 @@ static shared<ComputeTextureEntity> noiseEntity, normalEntity, atmosLookupEntity
 struct LightData {
     Light::Point light;
     Transform helper;
-    uint32_t index;
-    Light::Group<Light::Point>* group;
+    Light::light_key<Light::Point> key;
+    Light::group_proxy<Light::Point> group;
 };
 static LightData sun;
 
@@ -529,8 +529,8 @@ TessellatorTest::TessellatorTest() : Game(6) {
     //renderer.lights.directionalLights.setGroups({ directional });
     renderer.ambientColor->value = vec3(0.1f);
 
-    sun.index = point.getLightIndexByTag(1, Light::UpdateFreq::SOMETIMES);
-    sun.group = &renderer.lights.pointLights.getGroup(0);
+    sun.key = point.getLightKeyByTag(1, Light::UpdateFreq::SOMETIMES);
+    sun.group = renderer.lights.pointLights.getGroup(0);
 
     cameraNav.forward = camera->forward();
 
@@ -774,7 +774,7 @@ void moveSun(float radius) {
         if (moved) sun.light.position = sun.helper.position();
     }
 
-    if (moved) Thread::Render::runNextFrame([] { sun.group->updateLight(sun.index, Light::UpdateFreq::SOMETIMES, sun.light); });
+    if (moved) Thread::Render::runNextFrame([] { sun.group->updateLight(sun.key, Light::UpdateFreq::SOMETIMES, sun.light); });
     DrawDebug::get().drawDebugSphere(sun.helper.position(), sun.light.falloff.x, vec3(1));
     DrawDebug::get().drawDebugSphere(sun.helper.position(), sun.light.falloff.y, vec3(1,1,0));
 }

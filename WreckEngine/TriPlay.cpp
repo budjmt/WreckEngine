@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include "slot_map.h"
+
 namespace {
     void menu_update(LogicEntity* e, double dt) {
         if (Keyboard::keyPressed(Keyboard::Key::Code::Space)) {
@@ -158,13 +160,15 @@ void TriPlay::setupLights() {
     dLight.light.color = vec3(0,0,1);
     dLight.light.falloff = vec2(1.f, 3.f);
     dLight.light.tag = 1;
-    group.addLight(dLight.light, Light::UpdateFreq::OFTEN);
+    dLight.key = group.addLight(dLight.light, Light::UpdateFreq::OFTEN);
+    dLight.group = renderer.lights.pointLights.getGroup(0);
 
     dLight2.light.position = vec3(0,1,0);
     dLight2.light.color = vec3(1, 0, 0);
     dLight2.light.falloff = vec2(2.75f, 4.5f);
     dLight2.light.tag = 2;
-    group.addLight(dLight2.light, Light::UpdateFreq::SOMETIMES);
+    dLight2.key = group.addLight(dLight2.light, Light::UpdateFreq::SOMETIMES);
+    dLight2.group = dLight.group;
 
     Light::Group<Light::Directional> directional;
     Light::Directional d;
@@ -184,11 +188,6 @@ void TriPlay::setupLights() {
     renderer.lights.pointLights.setGroups({ group });
     renderer.lights.directionalLights.setGroups({ directional });
     renderer.lights.spotLights.setGroups({ spot });
-
-    dLight.index  = group.getLightIndexByTag(1, Light::UpdateFreq::OFTEN);
-    dLight2.index = group.getLightIndexByTag(2, Light::UpdateFreq::SOMETIMES);
-    dLight.group  = &renderer.lights.pointLights.getGroup(0);
-    dLight2.group = dLight.group;
 }
 
 void TriPlay::setupPostProcess() {
@@ -324,11 +323,11 @@ void TriPlay::updateLights() {
 
     dLight.light.position += vec3(mul);
     if (abs(dLight.light.position.x) > 3.f) mul = -mul;
-    Thread::Render::runNextFrame([this] { dLight.group->updateLight(dLight.index, Light::UpdateFreq::OFTEN, dLight.light); });
+    Thread::Render::runNextFrame([this] { dLight.group->updateLight(dLight.key, Light::UpdateFreq::OFTEN, dLight.light); });
 
     if (frameCounter % 30 == 0) {
         dLight2.light.color = vec3(1) - dLight2.light.color;
-        Thread::Render::runNextFrame([this] { dLight2.group->updateLight(dLight2.index, Light::UpdateFreq::SOMETIMES, dLight2.light); });
+        Thread::Render::runNextFrame([this] { dLight2.group->updateLight(dLight2.key, Light::UpdateFreq::SOMETIMES, dLight2.light); });
     }
     ++frameCounter;
 }

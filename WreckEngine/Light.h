@@ -1,9 +1,12 @@
 #pragma once
 
+#include "slot_map.h"
+
 #include "gl_structs.h"
 
 #include "Render.h"
 
+// all lights try to align to vec4 while also being aware of an implicit padding uint32 from slot_map
 #define PADF1 float _pad1_
 #define PADF2 PADF1, _pad2_
 #define PADF3 PADF2, _pad3_
@@ -16,6 +19,8 @@ namespace Light {
     template<class T>
     struct Base {
         // uint32_t priority; // conceptual, cull lower priority lights on lower-end platforms
+
+        static constexpr auto elemSize() { return slot_map<T>::dataSize; }
 
         static GLuint setupAttrs(GLattrarr& attrs, size_t offset = 0, GLuint baseIndex = 0) {
             return T::setupAttrsImpl(attrs, offset, baseIndex);
@@ -42,7 +47,6 @@ namespace Light {
         GLuint tag;
         vec2 falloff; // light radius; inner = x, outer = y
         int castsShadow = 0;
-        PADF1;
 
         struct DeferredData {
             mat4 world;
@@ -55,7 +59,7 @@ namespace Light {
             attrs.add<GLuint>(1, 1);
             attrs.add<vec2>(1, 1);
             attrs.add<int>(1, 1);
-            return attrs.apply(baseIndex, sizeof(float) * 1, offset);
+            return attrs.apply(baseIndex, sizeof(float) * 0 + sizeof(uint32_t), offset);
         }
 
         static GLuint setupDeferredAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
@@ -90,7 +94,7 @@ namespace Light {
         vec3 color;
         GLuint tag;
         int castsShadow = 0;
-        PADF3;
+        PADF2;
 
         struct DeferredData {
             mat4 lightWorldViewProj;
@@ -102,7 +106,7 @@ namespace Light {
             attrs.add<vec3>(1, 1);
             attrs.add<GLuint>(1, 1);
             attrs.add<int>(1, 1);
-            return attrs.apply(baseIndex, sizeof(float) * 3, offset);
+            return attrs.apply(baseIndex, sizeof(float) * 2 + sizeof(uint32_t), offset);
         }
 
         static GLuint setupDeferredAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
@@ -130,7 +134,6 @@ namespace Light {
         vec2 falloffLen;
         vec3 color;
         //int castsShadow = 0;
-        PADF1;
 
         struct DeferredData {
             mat4 world;
@@ -145,7 +148,7 @@ namespace Light {
             attrs.add<vec2>(2, 1);
             attrs.add<vec3>(1, 1);
             //attrs.add<int>(1, 1);
-            return attrs.apply(baseIndex, sizeof(float) * 1, offset);
+            return attrs.apply(baseIndex, sizeof(float) * 0 + sizeof(uint32_t), offset);
         }
 
         static GLuint setupDeferredAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
@@ -179,14 +182,17 @@ namespace Light {
 
     enum UpdateFreq : uint32_t { NEVER = 0, RARELY, SOMETIMES, OFTEN };
 
+    template<typename T> using light_key = typename slot_map<T>::key;
+
     template<typename T> class Manager;
 
     template<typename T>
     class Group {
     public:
-
         GLbuffer subBuffer, subDeferredInstanceBuffer;
         size_t bufferIndex = 0;
+
+        using light_key = light_key<T>;
 
         // sets the buffer used and updates the local internal data; returns the number of bytes used
         size_t setBuffers(GLbuffer buffer, GLbuffer deferredInstances) {
@@ -194,22 +200,21 @@ namespace Light {
             subBuffer.set(GL_ARRAY_BUFFER, GL_STREAM_DRAW);
             subDeferredInstanceBuffer = deferredInstances;
             subDeferredInstanceBuffer.size = sizeof(T::DeferredData) * lights.size();
-            return subBuffer.size = sizeof(T) * lights.size();
+            return subBuffer.size = Base<T>::elemSize() * lights.size();
         }
 
         // updates the group's sub-buffer contents as required; assumes the buffer is bound
         void update() {
             if (neededUpdates > OFTEN) return;
             auto offset = freqData[neededUpdates].offset;
-            subBuffer.subdata(&lights[offset], (lights.size() - offset) * sizeof(T), (bufferIndex + offset) * sizeof(T) + sizeof(vec4));
+            subBuffer.subdata(lights.data() + offset, (lights.size() - offset) * Base<T>::elemSize(), (bufferIndex + offset) * Base<T>::elemSize() + sizeof(vec4));
             neededUpdates = (UpdateFreq) (OFTEN + 1);
         }
 
-        void addLight(T light, const UpdateFreq freq) {
+        light_key addLight(T light, const UpdateFreq freq) {
             auto data = freqData[freq];
             size_t offset = data.offset + data.size;
-            
-            lights.insert(lights.begin() + offset, light);
+
             ++freqData[freq].size;
 
             switch (freq) {
@@ -220,44 +225,51 @@ namespace Light {
             case SOMETIMES:
                 ++freqData[OFTEN].offset;
             }
+
+            return lights.insert(begin(lights) + offset, light);
         }
 
         // get a light index after all lights have been inserted into the group
-        int getLightIndexByTag(const uint32_t tag, const UpdateFreq frequency) const { 
+        light_key getLightKeyByTag(uint32_t tag, UpdateFreq frequency) const { 
             auto data = freqData[frequency];
-            for (auto i = data.offset, end = data.offset + data.size; i < end; ++i) {
-                if (lights[i].tag == tag)
-                    return i;
+            for (auto i = data.offset, end = i + data.size; i < end; ++i) {
+                if (lights.values()[i].tag == tag)
+                    return *lights.key_of_index(i);
             }
-            return -1;
+            return { lights.size(), 0 };
         }
 
-        T getLight(const uint32_t index) const { return lights[index]; }
-        
-        void updateLight(const uint32_t index, const UpdateFreq frequency, const T& light) { 
+        T getLight(light_key key) const { return *lights[key]; }
+
+        // updates the given light with the data passed; if the light was moved, then its deferred data is updated immediately. 
+        // the rest of its data is updated at the end of the render frame
+        void updateLight(light_key key, UpdateFreq frequency, const T& light) {
             assert(frequency != NEVER);
+
+            auto index = lights.index_of_key(key);
             assert(index >= freqData[frequency].offset && index < freqData[frequency].offset + freqData[frequency].size); // the index falls outside the allocated range
-            
-            if (lights[index].isTransformed(light)) {
+
+            auto& lightData = lights.values()[index];
+            if (lightData.isTransformed(light)) {
                 auto instanceData = light.getDeferredData();
                 subDeferredInstanceBuffer.bind();
                 subDeferredInstanceBuffer.subdata(&instanceData, sizeof(instanceData), (bufferIndex + index) * sizeof(instanceData));
             }
-            
-            lights[index] = light; 
+
+            lightData = light; 
             if (frequency < neededUpdates) 
                 neededUpdates = frequency;
         }
 
     private:
-        std::vector<T> lights;
+        slot_map<T> lights;
         struct { size_t size, offset; } freqData[4]{};
         UpdateFreq neededUpdates = (UpdateFreq) (OFTEN + 1);
 
         void setupDeferredInstanceBuffer() const {
             std::vector<T::DeferredData> deferredData;
             deferredData.reserve(lights.size());
-            for (auto& light : lights)
+            for (auto& light : lights.values())
                 deferredData.push_back(light.getDeferredData());
             subDeferredInstanceBuffer.subdata(deferredData.data(), sizeof(T::DeferredData) * deferredData.size(), bufferIndex * sizeof(T::DeferredData));
         }
@@ -267,6 +279,10 @@ namespace Light {
 
     template<typename T>
     class Manager {
+        std::vector<Group<T>> groups;
+
+        GLVAO deferredVao;
+        GLbuffer deferredInstanceBuffer;
     public:
         Manager() { 
             deferredVao.create();
@@ -277,9 +293,9 @@ namespace Light {
         GLuniformblock<T> forwardBlock;
         Render::Info renderInfo;
 
-        auto& getGroup(uint32_t index) {
-            return groups[index];
-        }
+        using group_proxy = proxy<decltype(groups)>;
+
+        group_proxy getGroup(uint32_t index) { return make_proxy(groups, index); }
 
         // equivalent to using resetGroups, addGroup (for each lightGroup), and then finishGroups
         void setGroups(std::vector<Group<T>>&& lightGroups) {
@@ -326,23 +342,22 @@ namespace Light {
         }
 
         void defer(Render::MaterialPass* renderer, const size_t renderGroup) const {
-            Base<T>::draw(renderer, renderGroup, &deferredVao, &renderInfo, forwardBlock.block.size / sizeof(T));
+            // if a light elem is ever <= sizeof(vec4), there will be issues calculating the correct number of instances
+            Base<T>::draw(renderer, renderGroup, &deferredVao, &renderInfo, getNumLights());
         }
 
     private:
-        std::vector<Group<T>> groups;
-        
-        GLVAO deferredVao;
-        GLbuffer deferredInstanceBuffer;
+        size_t getNumLights() const { return forwardBlock.block.size / Base<T>::elemSize(); }
 
         void addGroupImpl(Group<T>& g) {
             g.neededUpdates = UpdateFreq::NEVER;
-            g.bufferIndex = forwardBlock.block.size / sizeof(T);
+            g.bufferIndex = getNumLights();
             forwardBlock.block.size += g.setBuffers(forwardBlock.block, deferredInstanceBuffer);
         }
 
         uint32_t finishMainBuffer() {
-            uint32_t numLights = forwardBlock.block.size / sizeof(T);
+            // the additional numLights data tells the shader how many lights there are for forward rendering
+            uint32_t numLights = getNumLights();
             forwardBlock.block.size += sizeof(vec4);
 
             forwardBlock.block.bind();
@@ -363,7 +378,7 @@ namespace Light {
             index = Base<T>::setupDeferredAttrs(attrs, index); // per-instance data that isn't in the light struct
 
             forwardBlock.block.bindAs(GL_ARRAY_BUFFER); // instances
-            Base<T>::setupAttrs(attrs, sizeof(vec4), index);
+            Base<T>::setupAttrs(attrs, sizeof(vec4), index); // remember to pass the offset from the numLights vec in
         }
 
         friend class System;
@@ -377,9 +392,10 @@ namespace Light {
     Manager<Spotlight>   make_manager_spotlight();
     Manager<Directional> make_manager_directional();
 
+    template<typename T> using group_proxy = typename Manager<T>::group_proxy;
+
     class System {
     public:
-
         System() {
             GLattrarr attrs;
             pointLights.setupDeferred(attrs);

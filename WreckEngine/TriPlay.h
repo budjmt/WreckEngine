@@ -26,8 +26,8 @@ private:
 
     struct LightData {
         Light::Point light;
-        uint32_t index;
-        Light::Group<Light::Point>* group;
+        Light::light_key<Light::Point> key;
+        Light::group_proxy<Light::Point> group;
     };
 
     LightData dLight, dLight2;
