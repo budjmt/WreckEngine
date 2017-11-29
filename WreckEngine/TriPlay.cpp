@@ -161,7 +161,7 @@ void TriPlay::setupLights() {
     dLight.light.falloff = vec2(1.f, 3.f);
     dLight.light.tag = 1;
     dLight.key = group.addLight(dLight.light, Light::UpdateFreq::OFTEN);
-    dLight.group = renderer.lights.pointLights.getGroup(0);
+    dLight.group = renderer.lights.pointLights.getGroupWithIndex(0);
 
     dLight2.light.position = vec3(0,1,0);
     dLight2.light.color = vec3(1, 0, 0);
@@ -319,17 +319,19 @@ void TriPlay::update(double delta) {
 
 void TriPlay::updateLights() {
     static float mul = 0.05f;
-    static uint32_t frameCounter = 1;
+
+    auto frameCount = Time::frameCount;
 
     dLight.light.position += vec3(mul);
     if (abs(dLight.light.position.x) > 3.f) mul = -mul;
+    // strictly speaking, these no longer need to be run on the render thread
+    // but there are possible race conditions when run on the update thread
     Thread::Render::runNextFrame([this] { dLight.group->updateLight(dLight.key, Light::UpdateFreq::OFTEN, dLight.light); });
 
-    if (frameCounter % 30 == 0) {
+    if (frameCount % 30 == 0) {
         dLight2.light.color = vec3(1) - dLight2.light.color;
         Thread::Render::runNextFrame([this] { dLight2.group->updateLight(dLight2.key, Light::UpdateFreq::SOMETIMES, dLight2.light); });
     }
-    ++frameCounter;
 }
 
 void TriPlay::postUpdate() {

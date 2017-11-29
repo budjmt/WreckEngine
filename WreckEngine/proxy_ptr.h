@@ -50,15 +50,20 @@ namespace detail {
 
 template<typename Container>
 struct proxy_ptr {
-    proxy_ptr() = default; // this is just to enable default constructors up the chain; don't actually use this
+    proxy_ptr() = default; // this can be used to create a "null" proxy, but should not be used otherwise
     template<typename... Args> proxy_ptr(Container& owner, Args&&... getArgs) : getParams{ &owner, std::forward<Args>(getArgs)... } {}
     proxy_ptr(const proxy_ptr& other) = default;
     proxy_ptr(proxy_ptr&& other) = default;
     proxy_ptr& operator=(const proxy_ptr& other) = default;
     proxy_ptr& operator=(proxy_ptr&& other) = default;
 
-    auto& operator*() const { return get(); }
-    auto* operator->() const { return &get(); }
+    decltype(auto) operator*() const { return get(); }
+    decltype(auto) operator->() const { 
+        if constexpr(std::is_pointer_v<decltype(((decltype(this))nullptr)->get())>)
+            return get();
+        else
+            return &get(); 
+    }
 
     template<typename Other, typename = std::enable_if_t<std::is_same_v<proxy_ptr<Container>::getArgs_t, proxy_ptr<Other>::getArgs_t>>>
     operator proxy_ptr<Other>&() { return reinterpret_cast<proxy_ptr<Other>&>(*this); }
@@ -66,11 +71,13 @@ struct proxy_ptr {
     operator bool() { return owner(); }
     Container* owner() const { return std::get<0>(getParams); }
 private:
-    auto& get() const { return std::apply(detail::proxy_get<Container>::func, getParams); }
+    decltype(auto) get() const { return std::apply(detail::proxy_get<Container>::func, getParams); }
 
     using getArgs_t = detail::data_tuple_t<decltype(detail::args_as_tuple(detail::proxy_get<Container>::func))>;
     using tuple_t = detail::add_first_type_t<Container*, getArgs_t>;
     tuple_t getParams{};
+public:
+    tuple_t params() const { return getParams; }
 };
 
 template<typename Container> using proxy = proxy_ptr<Container>;

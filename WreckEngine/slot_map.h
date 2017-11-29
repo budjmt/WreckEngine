@@ -307,10 +307,16 @@ private:
         const T& operator[](size_t index) const { return values[index].value; }
 
         iterator begin() { return { values.data() }; }
-        iterator end() { return { &values.back() + 1 }; }
+        iterator end()   { return { &values.back() + 1 }; }
 
         const_iterator begin() const { return { values.data() }; }
         const_iterator end()   const { return { &values.back() + 1 }; }
+
+        std::reverse_iterator<iterator> rbegin() { return end(); }
+        std::reverse_iterator<iterator> rend()   { return begin(); }
+
+        std::reverse_iterator<const_iterator> rbegin() const { return end(); }
+        std::reverse_iterator<const_iterator> rend()   const { return begin(); }
     private:
         Val_storage& values;
     };
@@ -351,6 +357,32 @@ public:
         }
     }
 
+    slot_map(const slot_map&) = default;
+    slot_map(slot_map&&) = default;
+
+    // copy assignment only duplicates values, invalidating old slots
+    // this means an assigned slot_map can't reuse keys from the other slot_map
+    slot_map& operator=(const slot_map& other) {
+        clear(); 
+        valueData.reserve(other.size());
+        slots.reserve(other.size() + 1);
+        for (auto& val : other.values()) 
+            emplace_back(val);
+        return *this;
+    }
+
+    // move assignment invalidates old slots, but can use slots from other
+    slot_map& operator=(slot_map&& other) = default;
+
+    slot_map& operator=(std::initializer_list<T> ilist) {
+        clear();
+        valueData.reserve(ilist.size());
+        slots.reserve(ilist.size() + 1);
+        for (auto& item : ilist) 
+            push_back(item);
+        return *this;
+    }
+
     // this iterator is meant for reordering operations, as swapping dereferenced iterators will correctly update the slots along with the data
     // do not attempt to reorder the container in any other way; do not use this iterator for value operations, as it's less efficient
     // to accommodate reordering, the value_type will initialize references on construction, and assign them on assignment
@@ -360,7 +392,7 @@ public:
 
     // returns an iterator for reordering the container
     // for simple iteration, go through .values()
-    iterator begin() { return { this, 0 }; } // begin is positioned at the first active slot
+    iterator begin() { return { this, 0 }; }
     iterator end() { return { this, (int)valueData.size() }; }
 
     const_iterator begin() const { return { this, 0 }; }
@@ -390,17 +422,38 @@ public:
         return (slot.version == k.version) ? slot.index : valueData.size();
     }
 
-    T* at(key k) {
-        auto slot = slots[k.index];
-        return (slot.version == k.version) ? &valueData[slot.index].value : nullptr;
-    }
-    T* operator[](key k) { return at(k); }
+    T& front() { return valueData.front().value; }
+    const T& front() const { return valueData.front().value; }
 
-    const T* at(key k) const {
+    T& back() { return valueData.back().value; }
+    const T& back() const { return valueData.back().value; }
+
+    T* try_get(key k) {
         auto slot = slots[k.index];
         return (slot.version == k.version) ? &valueData[slot.index].value : nullptr;
     }
-    const T* operator[](key k) const { return at(k); }
+
+    const T* try_get(key k) const {
+        auto slot = slots[k.index];
+        return (slot.version == k.version) ? &valueData[slot.index].value : nullptr;
+    }
+
+    T& at(key k) { return *try_get(k); }
+    T& operator[](key k) { return at(k); }
+
+    const T& at(key k) const { return *try_get(k); }
+    const T& operator[](key k) const { return at(k); }
+
+    // use for direct indexed access into the underlying container
+    T& valueAt(size_t index) { return valueData[index].value; }
+    const T& valueAt(size_t index) const { return valueData[index].value; }
+
+    void clear() {
+        valueData.clear();
+        freeSlots.reserve(slots.size());
+        uint32_t count = 0;
+        for (auto& slot : slots) freeSlot(slot, count++);
+    }
 
     void reserve(size_t capacity) {
         valueData.reserve(capacity);
@@ -484,15 +537,12 @@ public:
         auto& slot = slots[k.index];
         if (slot.version != k.version) return;
 
-        auto& loc = valueData[slot.index];
-        auto& endSlot = slots[valueData.back().slotIndex];
-
-        using std::swap;
-        swap(slot, endSlot); // swaps indices and ignores active/version
-        swap(loc, valueData.back()); // swaps the actual data
-        valueData.pop_back();
+        auto loc = begin() + slot.index;
+        auto last = end() - 1;
 
         freeSlot(slot, k.index);
+        std::iter_swap(loc, last);
+        valueData.pop_back();
     }
 
     void remove(key k) {

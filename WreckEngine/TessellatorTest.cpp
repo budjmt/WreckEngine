@@ -530,7 +530,7 @@ TessellatorTest::TessellatorTest() : Game(6) {
     renderer.ambientColor->value = vec3(0.1f);
 
     sun.key = point.getLightKeyByTag(1, Light::UpdateFreq::SOMETIMES);
-    sun.group = renderer.lights.pointLights.getGroup(0);
+    sun.group = renderer.lights.pointLights.getGroupWithIndex(0);
 
     cameraNav.forward = camera->forward();
 
