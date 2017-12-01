@@ -4,10 +4,11 @@ layout (location = 0) in vec2 vertPos;
 layout (location = 1) in vec2 vertUv;
 layout (location = 2) in mat4 lightWorldViewProj;
 
-layout (location = 6) in vec3 direction;
-layout (location = 7) in int  isOff;
-layout (location = 8) in vec3 color;
-layout (location = 9) in uint tag;
+layout (location = 6)  in vec3 direction;
+layout (location = 7)  in int  isOff;
+layout (location = 8)  in vec3 color;
+layout (location = 9)  in uint tag;
+layout (location = 10) in int  castsShadow;
 
 uniform mat4 camera;
 

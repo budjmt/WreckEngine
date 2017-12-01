@@ -133,7 +133,8 @@ namespace Light {
         vec2 falloffRad;
         vec2 falloffLen;
         vec3 color;
-        //int castsShadow = 0;
+        int castsShadow = 0;
+        PADF3;
 
         struct DeferredData {
             mat4 world;
@@ -145,10 +146,10 @@ namespace Light {
             attrs.add<int>(1, 1);
             attrs.add<vec3>(1, 1);
             attrs.add<GLuint>(1, 1);
-            attrs.add<vec2>(2, 1);
+            attrs.add<vec4>(1, 1); // merge the two fields into one
             attrs.add<vec3>(1, 1);
-            //attrs.add<int>(1, 1);
-            return attrs.apply(baseIndex, sizeof(float) * 0 + sizeof(uint32_t), offset);
+            attrs.add<int>(1, 1);
+            return attrs.apply(baseIndex, sizeof(float) * 3 + sizeof(uint32_t), offset);
         }
 
         static GLuint setupDeferredAttrsImpl(GLattrarr& attrs, GLuint baseIndex) {
@@ -168,7 +169,8 @@ namespace Light {
 
         DeferredData getDeferredData() const {
             DeferredData data;
-            data.world = glm::translate(position) * rotateBetween(vec3(0,-1,0), direction) * glm::scale(vec3(falloffRad.y * 2 + 0.1f, falloffLen.y + 0.1f, falloffRad.y * 2 + 0.1f));
+            auto radScale = falloffRad.y * 2;
+            data.world = glm::translate(position) * rotateBetween(vec3(0,-1,0), direction) * glm::scale(vec3(radScale, falloffLen.y, radScale) + vec3(0.1f));
             data.lightViewProj = glm::lookAt(position, position + direction, { 0, 1, 0 });
             return data;
         }

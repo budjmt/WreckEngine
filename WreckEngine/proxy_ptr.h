@@ -50,7 +50,7 @@ namespace detail {
 
 template<typename Container>
 struct proxy_ptr {
-    proxy_ptr() = default; // this can be used to create a "null" proxy, but should not be used otherwise
+    proxy_ptr() = default; // this can be used to create a "null"/empty proxy, but should not be used otherwise
     template<typename... Args> proxy_ptr(Container& owner, Args&&... getArgs) : getParams{ &owner, std::forward<Args>(getArgs)... } {}
     proxy_ptr(const proxy_ptr& other) = default;
     proxy_ptr(proxy_ptr&& other) = default;
