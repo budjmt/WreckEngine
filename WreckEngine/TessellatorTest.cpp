@@ -352,12 +352,14 @@ TessellatorTest::TessellatorTest() : Game(6) {
     //genPlane("Assets/plane.obj", 5);
     auto* rendererUsed = &renderer.deferred.objects;
     const auto planetGroup = rendererUsed->addGroup([] {
-        GL_CHECK(glEnable(GL_CULL_FACE));
-        if(wireframe) GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+        GLstate<GL_CULL_FACE, GL_ENABLE_BIT> cull{ true };
+        cull.save(); cull.apply();
+        if (wireframe) GLstate<GL_POLYGON_MODE>{ GL_LINE }.apply();
+
         GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }, [] {
-        GL_CHECK(glDisable(GL_CULL_FACE));
-        if(wireframe) GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
+        GLstate<GL_CULL_FACE, GL_ENABLE_BIT>::restore();
+        if(wireframe) GLstate<GL_POLYGON_MODE>{ GL_FILL }.apply();
     });
 
     surface = make_unique<PlanetCSphere>(RADIUS, planetData.prog
@@ -395,11 +397,11 @@ TessellatorTest::TessellatorTest() : Game(6) {
 
     auto skyboxRenderer = &renderer.forward.objects;
     const auto skyboxGroup = skyboxRenderer->addGroup([] {
-        GL_CHECK(glDepthMask(GL_FALSE));
-        GL_CHECK(glFrontFace(GL_CW));
+        GLstate<GL_DEPTH_TEST, GL_DEPTH_WRITEMASK>{ false }.apply();
+        GLstate<GL_CULL_FACE, GL_FRONT_FACE>{ GL_CW }.apply();
     }, [] {
-        GL_CHECK(glFrontFace(GL_CCW));
-        GL_CHECK(glDepthMask(GL_TRUE));
+        GLstate<GL_DEPTH_TEST, GL_DEPTH_WRITEMASK>{ true }.apply();
+        GLstate<GL_CULL_FACE, GL_FRONT_FACE>{ GL_CCW }.apply();
     });
 
     auto skyboxMesh = loadOBJ("Assets/cube.obj");
@@ -469,11 +471,14 @@ TessellatorTest::TessellatorTest() : Game(6) {
     checkProgLinkError(atmosData.prog);
 
     const auto atmosGroup = renderer.forward.objects.addGroup([] {
-        //GL_CHECK(glDisable(GL_CULL_FACE)); // this should really save state and restore afterward
-        GL_CHECK(glDepthMask(GL_FALSE));
+        GLstate<GL_CULL_FACE, GL_ENABLE_BIT> cull{ false };
+        cull.save(); cull.apply();
+        GLstate<GL_DEPTH_TEST, GL_DEPTH_WRITEMASK>{ false }.apply();
+
         GLsynchro::barrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }, [] {
-        GL_CHECK(glDepthMask(GL_TRUE));
+        GLstate<GL_CULL_FACE, GL_ENABLE_BIT>::restore();
+        GLstate<GL_DEPTH_TEST, GL_DEPTH_WRITEMASK>{ true }.apply();
     });
     atmosphere = make_unique<PlanetCSphere>(RADIUS + 2, atmosData.prog
         , *mainState, &renderer.forward.objects, atmosGroup, [](DrawMesh& dm) {

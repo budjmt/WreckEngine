@@ -202,10 +202,11 @@ void MaterialPass::Group::Helper::draw() {
 }
 
 void PostProcessChain::apply() {
-    GLstate<GL_ENABLE_BIT, GL_DEPTH_TEST> depthSave;
-    GLstate<GL_ENABLE_BIT, GL_CULL_FACE> cullSave;
-    GL_CHECK(glDisable(GL_DEPTH_TEST));
-    GL_CHECK(glDisable(GL_CULL_FACE));
+    GLsavestate<GL_DEPTH_TEST, GL_ENABLE_BIT> depthSave;
+    GLsavestate<GL_CULL_FACE, GL_ENABLE_BIT> cullSave;
+    
+    GLstate<GL_DEPTH_TEST, GL_ENABLE_BIT>{ false }.apply();
+    GLstate<GL_CULL_FACE, GL_ENABLE_BIT>{ false }.apply();
     triangle.bind();
     finish(&entry);
     entry.refresh(); // resets the whole chain
@@ -221,12 +222,13 @@ void PostProcessChain::finish(PostProcess* curr) {
 
 // output the final texture to the screen
 void PostProcessChain::render() const {
-    GLstate<GL_ENABLE_BIT, GL_DEPTH_TEST> depthSave;
-    GLstate<GL_ENABLE_BIT, GL_BLEND> blendSave;
-    GLstate<GL_ENABLE_BIT, GL_CULL_FACE> cullSave;
-    GL_CHECK(glDisable(GL_DEPTH_TEST));
-    GL_CHECK(glDisable(GL_BLEND));
-    GL_CHECK(glDisable(GL_CULL_FACE));
+    GLsavestate<GL_DEPTH_TEST, GL_ENABLE_BIT> depthSave;
+    GLsavestate<GL_BLEND, GL_ENABLE_BIT> blendSave;
+    GLsavestate<GL_CULL_FACE, GL_ENABLE_BIT> cullSave;
+
+    GLstate<GL_DEPTH_TEST, GL_ENABLE_BIT>{ false }.apply();
+    GLstate<GL_BLEND, GL_ENABLE_BIT>{ false }.apply();
+    GLstate<GL_CULL_FACE, GL_ENABLE_BIT>{ false }.apply();
 
     GLframebuffer::unbind(GL_FRAMEBUFFER);
     finalize.use();
@@ -250,8 +252,8 @@ static GLframebuffer genClearFB() {
 static vec4 clearPrevFrame(size_t clearIndex) {
     static GLframebuffer clearFrame = genClearFB();
     
-    GLstate<GL_DEPTH, GL_DEPTH_WRITEMASK> maskState;
-    GL_CHECK(glDepthMask(GL_TRUE));
+    GLsavestate<GL_DEPTH_TEST, GL_DEPTH_WRITEMASK> maskState;
+    GLstate<GL_DEPTH_TEST, GL_DEPTH_WRITEMASK>{ true }.apply();
 
     auto color = GLframebuffer::getClearColor();
     GLframebuffer::setClearColor(0.f, 0.f, 0.f, 0.f);

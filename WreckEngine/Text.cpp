@@ -501,10 +501,12 @@ void Text::render(Render::MaterialPass* matRenderer) {
         struct X {
             X(Render::MaterialPass* r) {
                 textIndex = r->addGroup([] {
-                    GL_CHECK(glDisable(GL_DEPTH_TEST));
-                    // need to disable face culling here
+                    GLstate<GL_DEPTH_TEST, GL_ENABLE_BIT>{ false }.apply();
+                    GLstate<GL_CULL_FACE, GL_ENABLE_BIT> cull{ false };
+                    cull.save(); cull.apply(); // save the previous cull state before applying
                 }, [] {
-                    GL_CHECK(glEnable(GL_DEPTH_TEST));
+                    GLstate<GL_DEPTH_TEST, GL_ENABLE_BIT>{ true }.apply();
+                    GLstate<GL_CULL_FACE, GL_ENABLE_BIT>::restore();
                 });
             }
         };

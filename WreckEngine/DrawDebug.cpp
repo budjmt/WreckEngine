@@ -68,16 +68,18 @@ void DrawDebug::setRenderers(Render::MaterialPass* deferred, Render::MaterialPas
     struct X { 
         X(DrawDebug* d, Render::MaterialPass* r) { 
             d->fillIndex = r->addGroup([] {
-                //GL_CHECK(glEnable(GL_CULL_FACE));
+                GLstate<GL_CULL_FACE, GL_ENABLE_BIT> cull{ true };
+                cull.save(); cull.apply();
             }, [] {
-                //GL_CHECK(glDisable(GL_CULL_FACE));
+                GLstate<GL_CULL_FACE, GL_ENABLE_BIT>::restore();
             });
             d->wireframeIndex = r->addGroup([]() { 
-                GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)); 
-                GL_CHECK(glEnable(GL_CULL_FACE));
+                GLstate<GL_POLYGON_MODE>{ GL_LINE }.apply();
+                GLstate<GL_CULL_FACE, GL_ENABLE_BIT> cull{ true };
+                cull.save(); cull.apply();
             }, []() { 
-                GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)); 
-                GL_CHECK(glDisable(GL_CULL_FACE));
+                GLstate<GL_POLYGON_MODE>{ GL_FILL }.apply();
+                GLstate<GL_CULL_FACE, GL_ENABLE_BIT>::restore();
             });
         }
     };

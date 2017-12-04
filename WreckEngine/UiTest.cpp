@@ -56,7 +56,7 @@ struct UiTestEntity : public Entity
     void testHandler(Event::Handler::param_t e) {
         static uint32_t mouse_button = Event::Message::get("mouse_button");
         if (e.id == mouse_button) {
-            printf("UiTestEntity: Action %d\n", e.data.peek<int>(1));
+            printf("UiTestEntity: Action %s\n", e.data.peek<bool>(1) ? "PRESS" : "RELEASE");
         }
     }
 

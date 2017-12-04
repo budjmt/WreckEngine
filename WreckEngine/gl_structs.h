@@ -11,6 +11,8 @@
 #include "smart_ptr.h"
 #include "External.h"
 
+#include "GLstate.h"
+
 #define local(name) __local__ ## name
 
 typedef GLint GLsampler;
@@ -22,8 +24,6 @@ typedef GLint GLsampler;
 #define WR_GL_RAW_OP_EQEQ(type, handleName) \
 inline bool operator==(const type& it, GLuint id) { return it.handleName->id == id; } \
 inline bool operator==(GLuint id, const type& it) { return it == id; }
-
-inline GLint getGLVal(GLenum value) { GLint val; GL_CHECK(glGetIntegerv(value, &val)); return val; }
 
 #define CHECK_GL_VERSION(major, minor) glewIsSupported("GL_VERSION_" #major "_" #minor)
 
@@ -129,11 +129,11 @@ struct GLtexture {
 
     inline void bind(const GLint index = 0) const {
         assert(index < MAX_TEXTURES);
-        GL_CHECK(glActiveTexture(GL_TEXTURE0 + index));
-        GL_CHECK(glBindTexture(target, texture->id));
+        GLstate<GL_BINDING, GL_ACTIVE_TEXTURE>{ GL_TEXTURE0 + index }.apply();
+        bind_helper(target, texture->id);
     }
     inline void unbind() {
-        GL_CHECK(glBindTexture(target, 0));
+        bind_helper(target, 0);
     }
 
     inline void bindImage(const GLenum access = GL_READ_WRITE, const GLenum format = GL_RGBA, const GLint index = 0, const GLuint level = 0, const GLboolean layered = GL_FALSE, const GLint layer = 0) {
@@ -151,7 +151,7 @@ struct GLtexture {
 
     // last value must be an int or float
     template<typename... Args>
-    inline void param(const GLenum name1, const GLenum name2, Args&&... args) {
+    inline void param(GLenum name1, GLenum name2, Args&&... args) {
         auto tup = std::make_tuple(std::forward<Args>(args)...);
 
         auto val = std::get<sizeof...(args) - 1>(tup);
@@ -159,13 +159,13 @@ struct GLtexture {
         static_assert(std::is_same<val_t, int>::value || std::is_same<val_t, float>::value, "Texture parameter values must be int or float");
 
         param(name1, val);
-        param(name2, std::forward<Args>(args)...); // this is undefined behavior as we've already moved the parameter pack; switch to std::apply in C++17
+        param(name2, std::forward<Args>(args)...); // UB, we've already moved out of the parameter pack; switch to std::apply in C++17?
     }
 
-    inline void param(const GLenum name, const int val) {
+    inline void param(GLenum name, int val) {
         GL_CHECK(glTexParameteri(target, name, val));
     }
-    inline void param(const GLenum name, const float val) {
+    inline void param(GLenum name, float val) {
         GL_CHECK(glTexParameterf(target, name, val));
     }
 
@@ -224,6 +224,22 @@ private:
     static void setMaxTextures() {
         MAX_TEXTURES = local(getMaxNumTextures)();
     }
+
+    static void bind_helper(GLenum target, GLint val) {
+        switch (target) {
+        case GL_TEXTURE_1D:
+            GLstate<GL_BINDING, GL_TEXTURE_BINDING_1D>{ val }.apply();
+            break;
+        case GL_TEXTURE_2D:
+            GLstate<GL_BINDING, GL_TEXTURE_BINDING_2D>{ val }.apply();
+            break;
+        case GL_TEXTURE_3D:
+            GLstate<GL_BINDING, GL_TEXTURE_BINDING_3D>{ val }.apply();
+            break;
+        default:
+            GL_CHECK(glBindTexture(target, val));
+        }
+    }
     friend struct GLEWmanager;
 };
 
@@ -259,7 +275,7 @@ struct GLbuffer {
 
     // allows for binding buffer as alternative target
     inline void bindAs(GLenum _target) const {
-        GL_CHECK(glBindBuffer(_target, buffer->id));
+        bind_helper(_target, buffer->id);
     }
 
     // call to bind the buffer to its target
@@ -267,7 +283,7 @@ struct GLbuffer {
         bindAs(target);
     }
     inline void unbind() {
-        GL_CHECK(glBindBuffer(target, 0));
+        bind_helper(target, 0);
     }
 
     // binds to an index, which resizes when the buffer is resized
@@ -316,6 +332,20 @@ struct GLbuffer {
     inline void storage(const size_t size, const GLvoid* data, const GLbitfield flags) {
         GL_CHECK(glBufferStorage(target, this->size = size, data, flags));
     }
+
+private:
+    static void bind_helper(GLenum target, GLint val) {
+        switch (target) {
+        case GL_ARRAY_BUFFER:
+            GLstate<GL_BINDING, GL_ARRAY_BUFFER>{ val }.apply();
+            break;
+        case GL_ELEMENT_ARRAY_BUFFER:
+            GLstate<GL_BINDING, GL_ELEMENT_ARRAY_BUFFER>{ val }.apply();
+            break;
+        default:
+            GL_CHECK(glBindBuffer(target, val));
+        }
+    }
 };
 
 // wraps a VAO, stores bindings for attributes and buffers after binding
@@ -332,10 +362,14 @@ struct GLVAO {
         GL_CHECK(glGenVertexArrays(1, &vao->id));
     }
     inline void bind() const {
-        GL_CHECK(glBindVertexArray(vao->id));
+        bind_helper(vao->id);
     }
     static inline void unbind() {
-        GL_CHECK(glBindVertexArray(0));
+        bind_helper(0);
+    }
+private:
+    static void bind_helper(GLint val) {
+        GLstate<GL_BINDING, GL_VERTEX_ARRAY>{ val }.apply();
     }
 };
 
@@ -465,7 +499,7 @@ struct GLprogram {
     }
 
     inline void use() const {
-        GL_CHECK(glUseProgram(program->id));
+        GLstate<GL_BINDING, GL_PROGRAM>{ (GLint)program->id }.apply();
     }
 
     inline void dispatch(GLuint xGroups = 1, GLuint yGroups = 1, GLuint zGroups = 1) const {
@@ -543,7 +577,7 @@ struct GLprogram {
 struct GLframebuffer {
     using handle_t = GLhandle<GLframebuffer>;
     shared<handle_t> framebuffer = make_shared<handle_t>();
-    GLenum type = GL_FRAMEBUFFER;
+    GLenum type = GL_DRAW_FRAMEBUFFER;
     inline WR_GL_OP_PARENS(framebuffer);
 
     static void deleter(const GLuint& id) { GL_CHECK(glDeleteFramebuffers(1, &id)); }
@@ -551,16 +585,11 @@ struct GLframebuffer {
 
     inline GLenum check() const { GLenum res; GL_CHECK(res = glCheckFramebufferStatus(type)); return res; }
     inline bool checkComplete() const { return check() == GL_FRAMEBUFFER_COMPLETE; }
-    inline bool isBound() const { return framebuffer->id == boundFBO; }
+    inline bool isBound() const { return framebuffer->id == get_bound(type); }
     inline size_t numOutputs() const { return colorBuffers.size(); }
 
-    static inline vec4 getClearColor() {
-        vec4 color;
-        GL_CHECK(glGetFloatv(GL_COLOR_CLEAR_VALUE, &color.r));
-        return color;
-    }
-
-    static inline void setClearColor(GLclampf r, GLclampf g, GLclampf b, GLclampf a) { GL_CHECK(glClearColor(r, g, b, a)); }
+    static inline vec4 getClearColor() { return GLstate<GL_COLOR_CLEAR_VALUE>{}.state.color; }
+    static inline void setClearColor(GLclampf r, GLclampf g, GLclampf b, GLclampf a) { GLstate<GL_COLOR_CLEAR_VALUE>{ vec4(r, g, b, a) }.apply(); }
 
     static inline void clear() { GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)); }
 
@@ -580,8 +609,7 @@ struct GLframebuffer {
     }
 
     inline void bindPartial() const {
-        boundFBO = framebuffer->id;
-        GL_CHECK(glBindFramebuffer(type, framebuffer->id));
+        bind_helper(type, framebuffer->id);
     }
 
     static inline void setDrawBuffers(const size_t size, const GLenum* drawBuffers) {
@@ -620,7 +648,7 @@ struct GLframebuffer {
     }
 
     void unbind() const { unbind(type); }
-    static void unbind(GLenum type) { boundFBO = 0; GL_CHECK(glBindFramebuffer(type, 0)); }
+    static void unbind(GLenum type) { bind_helper(type, 0); }
 
     // reads [width] x [height] pixels from the frame buffer starting from [x],[y] (lower-left corner) into [dest]
     // relevant to this function: GL_PIXEL_PACK_BUFFER and glPixelStore
@@ -634,7 +662,40 @@ struct GLframebuffer {
 
 private:
     std::vector<GLenum> colorBuffers;
-    static GLint boundFBO;
+
+    static void bind_helper(GLenum target, GLint val) {
+        switch (target) {
+        case GL_DRAW_FRAMEBUFFER:
+            GLstate<GL_BINDING, GL_DRAW_FRAMEBUFFER>{ val }.apply();
+            break;
+        case GL_READ_FRAMEBUFFER:
+            GLstate<GL_BINDING, GL_READ_FRAMEBUFFER>{ val }.apply();
+            break;
+        case GL_FRAMEBUFFER:
+            GLstate<GL_BINDING, GL_DRAW_FRAMEBUFFER>{ val }.apply();
+            GLstate<GL_BINDING, GL_READ_FRAMEBUFFER>{ val }.apply();
+            break;
+        default:
+            GL_CHECK(glBindFramebuffer(target, val));
+        }
+    }
+
+    static GLuint get_bound(GLenum target) {
+        switch (target) {
+        case GL_DRAW_FRAMEBUFFER:
+            return GLstate<GL_BINDING, GL_DRAW_FRAMEBUFFER>{}.state.bound;
+        case GL_READ_FRAMEBUFFER:
+            return GLstate<GL_BINDING, GL_READ_FRAMEBUFFER>{}.state.bound;
+        case GL_FRAMEBUFFER:
+        {
+            auto drawBound = GLstate<GL_BINDING, GL_DRAW_FRAMEBUFFER>{}.state.bound;
+            assert((drawBound == GLstate<GL_BINDING, GL_READ_FRAMEBUFFER>{}.state.bound));
+            return drawBound;
+        }
+        default:
+            return def;
+        }
+    }
 
     // if errors persist, GL_MAX_DRAW_BUFFERS is how many buffers can be drawn to per draw call
     static GLint MAX_COLOR_ATTACHMENTS;

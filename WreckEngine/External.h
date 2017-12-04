@@ -9,6 +9,8 @@
 #include <functional>
 #include <future>
 
+#include "GLstate.h"
+
 namespace Thread {
 
     template<typename Pred>
@@ -87,7 +89,7 @@ namespace Window {
 
     inline void setVsync(bool enabled) { glfwSwapInterval((int) enabled); }
 
-    inline void viewport(size_t x, size_t y, size_t width, size_t height) { GL_CHECK(glViewport(x, y, width, height)); }
+    inline void viewport(size_t x, size_t y, size_t width, size_t height) { GLstate<GL_VIEWPORT>{ GLstate_dims{ (int)x, (int)y, (int)width, (int)height } }.apply(); }
     inline void viewport(size_t width, size_t height) { viewport(0, 0, width, height); }
 
     inline void closeCallback(GLFWwindowclosefun f) { glfwSetWindowCloseCallback(window, f); }

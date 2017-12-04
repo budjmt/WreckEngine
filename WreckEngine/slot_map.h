@@ -307,10 +307,10 @@ private:
         const T& operator[](size_t index) const { return values[index].value; }
 
         iterator begin() { return { values.data() }; }
-        iterator end()   { return { &values.back() + 1 }; }
+        iterator end()   { return begin() + values.size(); }
 
         const_iterator begin() const { return { values.data() }; }
-        const_iterator end()   const { return { &values.back() + 1 }; }
+        const_iterator end()   const { return begin() + values.size(); }
 
         std::reverse_iterator<iterator> rbegin() { return end(); }
         std::reverse_iterator<iterator> rend()   { return begin(); }

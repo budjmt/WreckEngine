@@ -138,7 +138,7 @@ This code allows for the various possible permutations, including AMD cards, whi
 void initDebug() {
 	printf("NOTICE: This application is in DEBUG mode. This allows for OpenGL debug message callbacks, as well as the ability to draw debug primitives through the DrawDebug singleton. ");
 	printf("This may impact the speed and performance of this application, so if this is a final build, it is recommended this mode be turned off. ");
-	printf("To do so, go to the DrawDebug.h file and change the value of the DEBUG constant to false.");
+	printf("To do so, go to the DrawDebug.h file and change the value of the DEBUG constant to false.\n\n");
     if (glewIsSupported("GL_VERSION_4_3")) {
     CORE:
         //works in OpenGL 4.3 and higher

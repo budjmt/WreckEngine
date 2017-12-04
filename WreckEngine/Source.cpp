@@ -68,8 +68,8 @@ void init() {
 
 void initGraphics() {
     // alpha blending
-    GL_CHECK(glEnable(GL_BLEND));
-    GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    GLstate<GL_BLEND, GL_ENABLE_BIT>{ true }.apply();
+    GLstate<GL_BLEND, GL_BLEND_FUNC>{ GLstate_comp{ GL_SRC_ALPHA }, GLstate_comp{ GL_ONE_MINUS_SRC_ALPHA } }.apply();
 
     // texture filtering
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR));
@@ -80,14 +80,12 @@ void initGraphics() {
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
 
     // depth buffering
-    GL_CHECK(glEnable(GL_DEPTH_TEST));
-    GL_CHECK(glDepthFunc(GL_LEQUAL));
+    GLstate<GL_DEPTH_TEST, GL_ENABLE_BIT>{ true }.apply();
+    GLstate<GL_DEPTH_TEST, GL_DEPTH_FUNC>{ GL_LEQUAL }.apply();
 
     // back-face culling
     if (!DEBUG)
-        GL_CHECK(glEnable(GL_CULL_FACE));
-    GL_CHECK(glCullFace(GL_BACK));
-    GL_CHECK(glFrontFace(GL_CCW));
+        GLstate<GL_CULL_FACE, GL_ENABLE_BIT>{ true }.apply();
 }
 
 void physicsUpdate() {

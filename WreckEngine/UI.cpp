@@ -91,7 +91,7 @@ namespace UI
     {
         // NOTE - This function is basically the same as ImGui's GLFW example
 
-        GLsavestate glStateHelper;
+        GLsavestate_broad glStateHelper;
 
         // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
         auto& io = ImGui::GetIO();
@@ -103,24 +103,27 @@ namespace UI
         dd->ScaleClipRects(io.DisplayFramebufferScale);
 
         // Setup render state: alpha-blending enabled, no face culling, no depth testing, scissor enabled
-        GL_CHECK(glEnable(GL_BLEND));
-        GL_CHECK(glBlendEquation(GL_FUNC_ADD));
-        GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-        GL_CHECK(glDisable(GL_CULL_FACE));
-        GL_CHECK(glDisable(GL_DEPTH_TEST));
-        GL_CHECK(glEnable(GL_SCISSOR_TEST));
-        GL_CHECK(glActiveTexture(GL_TEXTURE0));
+        GLstate<GL_BLEND, GL_ENABLE_BIT>{ true }.apply();
+        GLstate<GL_BLEND, GL_BLEND_EQUATION>{ GL_FUNC_ADD }.apply();
+        GLstate<GL_BLEND, GL_BLEND_FUNC>{
+            GLstate_comp{ GL_SRC_ALPHA }
+          , GLstate_comp{ GL_ONE_MINUS_SRC_ALPHA }
+        }.apply();
+
+        GLstate<GL_CULL_FACE, GL_ENABLE_BIT>{ false }.apply();
+        GLstate<GL_DEPTH_TEST, GL_ENABLE_BIT>{ false }.apply();
+        GLstate<GL_SCISSOR_TEST, GL_ENABLE_BIT>{ true }.apply();
+        GLstate<GL_BINDING, GL_ACTIVE_TEXTURE>{ GL_TEXTURE0 }.apply();
 
         // Setup viewport, orthographic projection matrix
         Window::viewport(fb_width, fb_height);
-        
+
         shader.use();
         texLoc.update(0);
         projLoc.update(glm::ortho(0.f, io.DisplaySize.x, io.DisplaySize.y, 0.f));
         vao.bind();
 
-        for (int n = 0, cmdListCount = dd->CmdListsCount; n < cmdListCount; n++)
-        {
+        for (int n = 0, cmdListCount = dd->CmdListsCount; n < cmdListCount; n++) {
             const auto* cmd_list = dd->CmdLists[n];
             const ImDrawIdx* idx_buffer_offset = nullptr;
 
@@ -130,17 +133,19 @@ namespace UI
             elements.bind();
             elements.data((GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), cmd_list->IdxBuffer.Data);
 
-            for (int cmd_i = 0, cmdBufferSize = cmd_list->CmdBuffer.Size; cmd_i < cmdBufferSize; cmd_i++)
-            {
+            for (int cmd_i = 0, cmdBufferSize = cmd_list->CmdBuffer.Size; cmd_i < cmdBufferSize; cmd_i++) {
                 const auto pcmd = &cmd_list->CmdBuffer[cmd_i];
-                if (pcmd->UserCallback)
-                {
+                if (pcmd->UserCallback) {
                     pcmd->UserCallback(cmd_list, pcmd);
                 }
-                else
-                {
-                    GL_CHECK(glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId));
-                    GL_CHECK(glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y)));
+                else {
+                    GLstate<GL_BINDING, GL_TEXTURE_BINDING_2D>{ (GLint)pcmd->TextureId }.apply();
+                    GLstate<GL_SCISSOR_TEST, GL_SCISSOR_BOX>{ GLstate_dims{
+                        (int)pcmd->ClipRect.x
+                      , (int)(fb_height - pcmd->ClipRect.w)
+                      , (int)(pcmd->ClipRect.z - pcmd->ClipRect.x)
+                      , (int)(pcmd->ClipRect.w - pcmd->ClipRect.y)
+                    } }.apply();
                     GL_CHECK(glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, ImGuiDrawType, idx_buffer_offset));
                 }
                 idx_buffer_offset += pcmd->ElemCount;
@@ -165,7 +170,7 @@ namespace UI
         io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
         // Upload texture to graphics system
-        GLstate<GL_BINDING, GL_TEXTURE_BINDING_2D> lastTexture;
+        GLsavestate<GL_BINDING, GL_TEXTURE_BINDING_2D> lastTexture;
         
         fontTex.create(GL_TEXTURE_2D);
         if (!fontTex()) return false;
@@ -211,7 +216,7 @@ namespace UI
      */
     static bool InitializeGraphics()
     {
-        GLsavestate glStateHelper;
+        GLsavestate_broad glStateHelper;
 
         shader.create();
         shader.vertex.create(ImGuiVertexShader, GLshader::Type::Vertex);
@@ -246,25 +251,25 @@ namespace UI
     {
         // Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array.
         auto& io = ImGui::GetIO();
-        io.KeyMap[ImGuiKey_Tab] = GLFW_KEY_TAB;
-        io.KeyMap[ImGuiKey_LeftArrow] = GLFW_KEY_LEFT;
-        io.KeyMap[ImGuiKey_RightArrow] = GLFW_KEY_RIGHT;
-        io.KeyMap[ImGuiKey_UpArrow] = GLFW_KEY_UP;
-        io.KeyMap[ImGuiKey_DownArrow] = GLFW_KEY_DOWN;
-        io.KeyMap[ImGuiKey_PageUp] = GLFW_KEY_PAGE_UP;
-        io.KeyMap[ImGuiKey_PageDown] = GLFW_KEY_PAGE_DOWN;
-        io.KeyMap[ImGuiKey_Home] = GLFW_KEY_HOME;
-        io.KeyMap[ImGuiKey_End] = GLFW_KEY_END;
-        io.KeyMap[ImGuiKey_Delete] = GLFW_KEY_DELETE;
-        io.KeyMap[ImGuiKey_Backspace] = GLFW_KEY_BACKSPACE;
-        io.KeyMap[ImGuiKey_Enter] = GLFW_KEY_ENTER;
-        io.KeyMap[ImGuiKey_Escape] = GLFW_KEY_ESCAPE;
-        io.KeyMap[ImGuiKey_A] = GLFW_KEY_A;
-        io.KeyMap[ImGuiKey_C] = GLFW_KEY_C;
-        io.KeyMap[ImGuiKey_V] = GLFW_KEY_V;
-        io.KeyMap[ImGuiKey_X] = GLFW_KEY_X;
-        io.KeyMap[ImGuiKey_Y] = GLFW_KEY_Y;
-        io.KeyMap[ImGuiKey_Z] = GLFW_KEY_Z;
+        io.KeyMap[ImGuiKey_Tab]        = (int) Keyboard::Key::Code::Tab;
+        io.KeyMap[ImGuiKey_LeftArrow]  = (int) Keyboard::Key::Code::Left;
+        io.KeyMap[ImGuiKey_RightArrow] = (int) Keyboard::Key::Code::Right;
+        io.KeyMap[ImGuiKey_UpArrow]    = (int) Keyboard::Key::Code::Up;
+        io.KeyMap[ImGuiKey_DownArrow]  = (int) Keyboard::Key::Code::Down;
+        io.KeyMap[ImGuiKey_PageUp]     = (int) Keyboard::Key::Code::PageUp;
+        io.KeyMap[ImGuiKey_PageDown]   = (int) Keyboard::Key::Code::PageDown;
+        io.KeyMap[ImGuiKey_Home]       = (int) Keyboard::Key::Code::Home;
+        io.KeyMap[ImGuiKey_End]        = (int) Keyboard::Key::Code::End;
+        io.KeyMap[ImGuiKey_Delete]     = (int) Keyboard::Key::Code::Delete;
+        io.KeyMap[ImGuiKey_Backspace]  = (int) Keyboard::Key::Code::Backspace;
+        io.KeyMap[ImGuiKey_Enter]      = (int) Keyboard::Key::Code::Enter;
+        io.KeyMap[ImGuiKey_Escape]     = (int) Keyboard::Key::Code::Escape;
+        io.KeyMap[ImGuiKey_A]          = (int) Keyboard::Key::Code::A;
+        io.KeyMap[ImGuiKey_C]          = (int) Keyboard::Key::Code::C;
+        io.KeyMap[ImGuiKey_V]          = (int) Keyboard::Key::Code::V;
+        io.KeyMap[ImGuiKey_X]          = (int) Keyboard::Key::Code::X;
+        io.KeyMap[ImGuiKey_Y]          = (int) Keyboard::Key::Code::Y;
+        io.KeyMap[ImGuiKey_Z]          = (int) Keyboard::Key::Code::Z;
 
         // Alternatively you can set this to NULL and call ImGui::GetDrawData() after ImGui::Render() to get the same ImDrawData pointer.
         io.RenderDrawListsFn = ImGuiRenderImpl;
@@ -323,20 +328,15 @@ namespace UI
 
         // Setup inputs
         // (We've already got mouse wheel, keyboard keys & characters from GLFW callbacks polled in glfwPollEvents())
-        int focused;
-        Thread::Main::run([&focused] { focused = glfwGetWindowAttrib(Window::window, GLFW_FOCUSED); });
-        if (focused)
-        {
+        if (Window::isInFocus) {
             // Mouse position in screen coordinates
             io.MousePos = ImVec2((float)Mouse::info.currPixel.x, (float)Mouse::info.currPixel.y);
         }
-        else
-        {
+        else {
             io.MousePos = ImVec2(-1, -1);
         }
 
-        for (int i = 0; i < 3; i++)
-        {
+        for (int i = 0; i < 3; i++) {
             // If a mouse press event came, always pass it as "mouse held this frame", so we don't
             // miss click-release events that are shorter than 1 frame.
             io.MouseDown[i] = Mouse::info.getButtonState(Mouse::Button{ i });

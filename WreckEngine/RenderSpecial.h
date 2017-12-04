@@ -13,7 +13,7 @@ namespace Render {
 
         explicit LitRenderer(size_t gBufferSize) : deferred({ 0, 1, 2, 3 }), forward(gBufferSize), lightR({ 4, 5 }) {
             deferred.setup = [this]() {
-                GL_CHECK(glDisable(GL_BLEND));
+                GLstate<GL_BLEND, GL_ENABLE_BIT>{ false }.apply();
 
                 const auto camDir = Renderer::getCamData().forward;
                 deferred.objects.preprocess([&](auto& drawCalls) {
@@ -28,32 +28,32 @@ namespace Render {
             
             lightR.setup = []() {
                 // prevents lights from culling each other
-                GL_CHECK(glDepthMask(GL_FALSE));
-                GL_CHECK(glDepthFunc(GL_GREATER));
+                GLstate<GL_DEPTH_TEST, GL_DEPTH_WRITEMASK>{ false }.apply();
+                GLstate<GL_DEPTH_TEST, GL_DEPTH_FUNC>{ GL_GREATER }.apply();
 
                 // additive blending for accumulation
-                GL_CHECK(glEnable(GL_BLEND));
-                GL_CHECK(glBlendFunc(GL_ONE, GL_ONE));
+                GLstate<GL_BLEND, GL_ENABLE_BIT>{ true }.apply();
+                GLstate<GL_BLEND, GL_BLEND_FUNC>{ GLstate_comp{ GL_ONE }, GLstate_comp{ GL_ONE } }.apply();
                 
                 // clockwise winding for back-lit faces
-                GL_CHECK(glFrontFace(GL_CW));
+                GLstate<GL_CULL_FACE, GL_FRONT_FACE>{ GL_CW }.apply();
             };
             lightGroup = lightR.objects.addGroup([]() {
-                GL_CHECK(glDisable(GL_DEPTH_TEST));
+                GLstate<GL_DEPTH_TEST, GL_ENABLE_BIT>{ false }.apply();
             }, []() {
-                GL_CHECK(glEnable(GL_DEPTH_TEST));
-                GL_CHECK(glDisable(GL_BLEND));
+                GLstate<GL_DEPTH_TEST, GL_ENABLE_BIT>{ true }.apply();
+                GLstate<GL_BLEND, GL_ENABLE_BIT>{ false }.apply();
             });
 
             forward.setup = [this]() {
                 // undoing the light-specific settings
-                GL_CHECK(glFrontFace(GL_CCW));
-                GL_CHECK(glDepthMask(GL_TRUE));
-                GL_CHECK(glDepthFunc(GL_LEQUAL));
+                GLstate<GL_CULL_FACE, GL_FRONT_FACE>{ GL_CCW }.apply();
+                GLstate<GL_DEPTH_TEST, GL_DEPTH_WRITEMASK>{ true }.apply();
+                GLstate<GL_DEPTH_TEST, GL_DEPTH_FUNC>{ GL_LEQUAL }.apply();
 
                 // re-enable blend after the accumulation PP and change blend func
-                GL_CHECK(glEnable(GL_BLEND));
-                GL_CHECK(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+                GLstate<GL_BLEND, GL_ENABLE_BIT>{ true }.apply();
+                GLstate<GL_BLEND, GL_BLEND_FUNC>{ GLstate_comp{ GL_SRC_ALPHA }, GLstate_comp{ GL_ONE_MINUS_SRC_ALPHA } }.apply();
 
                 const auto camDir = Renderer::getCamData().forward;
                 deferred.objects.preprocess([&](auto& drawCalls) {

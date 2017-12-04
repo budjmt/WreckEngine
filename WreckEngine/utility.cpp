@@ -117,6 +117,8 @@ void GLEWmanager::initGLValues() {
     GLprogram::setMaxWorkGroups();
     GLframebuffer::setMaxColorAttachments();
     GLattrarr::setMaxColorAttachments();
+    GLstate<GL_VIEWPORT>{}.fetch();
+    GLstate<GL_SCISSOR_TEST, GL_SCISSOR_BOX>{}.fetch();
 }
 
 namespace {
